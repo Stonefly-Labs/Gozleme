@@ -1,0 +1,259 @@
+{
+  "sourceSpec": "GOZ-0000",
+  "implementationRevision": "e7904ad (chore/goz-0000-bootstrap; demo run recorded at 01fc90b, e7904ad adds only regenerated evidence)",
+  "analyzedAt": "2026-11-14",
+  "findings": [
+    {
+      "id": "GOZ-0000-IF-01",
+      "severity": "high",
+      "title": "GOZ-0000 boundary tests will intentionally fail as product surfaces arrive",
+      "evidence": [
+        "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:22-38 asserts 404 for /api/v1/catalog, /api/v1/capabilities, /api/v1/organizations, /api/v1/users, /api/v1/search?q=mcp, POST /api/v1/auth/login, POST /api/v1/publish, /login",
+        "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:40-57 asserts zero tables in schema gozleme and only public.__EFMigrationsHistory",
+        "e2e/tests/bootstrap-demo.spec.ts:102-120 asserts 404s, /login,/catalog,/organizations pages 404, no links and no 'sign in' text on /",
+        "Every future prompt requires 'Keep existing demos and smoke tests working'"
+      ],
+      "affectedSpecs": ["GOZ-0001", "GOZ-0002", "GOZ-0005", "GOZ-0007", "GOZ-0012", "GOZ-0013"],
+      "recommendation": "Each spec introducing one of these surfaces narrows only the assertions it supersedes, keeps the rest, and adds its own boundary test; never delete or weaken the suite wholesale.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-02",
+      "severity": "high",
+      "title": "Anonymous status/health surfaces and container healthchecks versus GOZ-0001 protected dashboard",
+      "evidence": [
+        "src/Gozleme.Api/GozlemeApp.cs:40-47 maps /health/live, /health/ready, /api/v1/status with no authentication",
+        "web/src/app/page.tsx renders StatusDashboard at /; web/src/app/api/backend-status/route.ts proxies server-side via GOZLEME_API_URL",
+        "compose.yaml:53 api healthcheck uses /health/live; compose.yaml:73 web healthcheck fetches /api/backend-status",
+        "deploy/helm/gozleme/templates/api.yaml:34-39 liveness/readiness probes on /health/live and /health/ready",
+        "e2e/tests/bootstrap-demo.spec.ts healthy/degraded/recovery/unreachable scenarios browse / anonymously"
+      ],
+      "affectedSpecs": ["GOZ-0001"],
+      "recommendation": "GOZ-0001 keeps /health/* anonymous, decides and documents whether the status dashboard and /api/v1/status become authenticated, and keeps container healthchecks and the four GOZ-0000 demo scenarios passing (sign in with a seeded synthetic account if protected). Session design must fit the same-origin Next.js route-handler pattern.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-03",
+      "severity": "high",
+      "title": "Role, ownership and default-privilege facts; no RLS or tenant context yet; app role can set arbitrary GUCs",
+      "evidence": [
+        "deploy/postgres/init/01-roles.sh:16-21 gozleme_migrator NOSUPERUSER NOBYPASSRLS owns database; gozleme_app NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOINHERIT",
+        "src/Gozleme.Api/Persistence/Migrations/20261114000000_Foundation.cs:18-24 creates schema gozleme and ALTER DEFAULT PRIVILEGES granting SELECT, INSERT, UPDATE, DELETE on all future tables to gozleme_app",
+        "Live stack: pg_default_acl shows gozleme_app=arwd/gozleme_migrator and rU on sequences; schema gozleme owned by gozleme_migrator",
+        "Live stack (rolled-back transaction): SET ROLE gozleme_app; SET LOCAL app.tenant_id = 'x' succeeds",
+        "No RLS policy, tenant column or tenant-context code exists at e7904ad"
+      ],
+      "affectedSpecs": ["GOZ-0001", "GOZ-0002", "GOZ-0003", "GOZ-0012", "GOZ-0014"],
+      "recommendation": "Tenant-owned tables enable RLS and policies in the same migration that creates them; GOZ-0003 decides FORCE RLS explicitly (migrator owns all tables), adds a catalog test for relrowsecurity, retrofits GOZ-0001/0002 tables, and treats the tenant GUC as defence in depth only.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-04",
+      "severity": "medium",
+      "title": "Default privileges grant UPDATE/DELETE on every future table, including those that must be immutable or append-only",
+      "evidence": [
+        "src/Gozleme.Api/Persistence/Migrations/20261114000000_Foundation.cs:21",
+        "docs/architecture/security-invariants.md invariant 6 (immutable signed publications)"
+      ],
+      "affectedSpecs": ["GOZ-0007", "GOZ-0009", "GOZ-0023", "GOZ-0032"],
+      "recommendation": "Creating migrations for immutable/append-only tables REVOKE UPDATE, DELETE from gozleme_app (or enforce equivalently) and prove database-level rejection with an integration test as gozleme_app.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-05",
+      "severity": "high",
+      "title": "pgvector cannot be created by the migrator role; pg_trgm can",
+      "evidence": [
+        "Live stack: /usr/share/postgresql/17/extension/vector.control (default_version 0.8.6) has no 'trusted = true'",
+        "Live stack (rolled-back transaction): SET ROLE gozleme_migrator; CREATE EXTENSION vector -> ERROR permission denied to create extension \"vector\", HINT Must be superuser",
+        "Live stack (rolled-back transaction): SET ROLE gozleme_migrator; CREATE EXTENSION pg_trgm SCHEMA gozleme succeeds (pg_trgm.control trusted = true)",
+        "src/Gozleme.Api/Status/DatabaseProbe.cs:22-27 vector.available = pg_available_extensions, vector.enabled = pg_extension",
+        "tests/Gozleme.Api.IntegrationTests/OptionalVectorTests.cs proves health on postgres:17-alpine"
+      ],
+      "affectedSpecs": ["GOZ-0013", "GOZ-0015", "GOZ-0017", "GOZ-0039"],
+      "recommendation": "GOZ-0015 provides an operator/superuser provisioning step for vector (opt-in Compose init script, Helm prerequisite), keeps vector objects conditional, and exposes semantic-search state separately from vector.enabled via contract revision. Granting superuser to either application role requires human approval and is not recommended.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-06",
+      "severity": "medium",
+      "title": "Status contract v1 extension rules for new dependencies",
+      "evidence": [
+        "docs/specs/000-repository-bootstrap/contracts/status-api.openapi.yaml: ServiceStatus and DependencyStatus additionalProperties false; dependency status enum healthy|unavailable",
+        "src/Gozleme.Api/Status/StatusService.cs:24-25 degraded only when a required dependency is unhealthy",
+        "web/src/lib/status.ts:42-74 strict structural validation; unknown shapes become invalid-response"
+      ],
+      "affectedSpecs": ["GOZ-0009", "GOZ-0010", "GOZ-0011", "GOZ-0015", "GOZ-0016"],
+      "recommendation": "Add new dependencies as dependencies[] entries, optional providers with required:false; any new field or status value is a contract revision updating OpenAPI, web validator and tests together.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-07",
+      "severity": "low",
+      "title": "Web status validator is stricter than the OpenAPI contract for capabilities",
+      "evidence": [
+        "docs/specs/000-repository-bootstrap/contracts/status-api.openapi.yaml: capabilities is object|null with optional property vector (no required list)",
+        "web/src/lib/status.ts:44-50 rejects any non-null capabilities lacking a valid vector object, so a contract-valid {} renders as invalid-response/unreachable"
+      ],
+      "affectedSpecs": ["GOZ-0000", "GOZ-0009", "GOZ-0010", "GOZ-0011", "GOZ-0015"],
+      "recommendation": "Corrective change in GOZ-0000: either mark vector required inside capabilities in the OpenAPI, or relax isDependency to accept capabilities objects where vector is absent or valid; add a Vitest case for the chosen rule.",
+      "disposition": "corrective-implementation-recommended"
+    },
+    {
+      "id": "GOZ-0000-IF-08",
+      "severity": "medium",
+      "title": "Demo runner and evidence layout are hard-coded to GOZ-0000; no seed mechanism",
+      "evidence": [
+        "scripts/demo/run-demo.sh:8 SPEC_DIR=docs/specs/000-repository-bootstrap; :41 --spec GOZ-0000",
+        "e2e/tests/bootstrap-demo.spec.ts:10 hard-coded screenshot directory",
+        ".github/workflows/ci.yml:98-99 e2e-demo runs scripts/demo/run-demo.sh",
+        "Makefile:56-57 demo target documents GOZ-0000 evidence path",
+        "docs/engineering/demo-contract.md requires deterministic seeded data; no seed command exists"
+      ],
+      "affectedSpecs": ["GOZ-0001", "GOZ-0039"],
+      "recommendation": "GOZ-0001 generalizes the runner to a spec parameter writing docs/specs/<spec-dir>/evidence, runs prior suites cumulatively, and introduces one deterministic synthetic seed path separate from schema migrations.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-09",
+      "severity": "medium",
+      "title": "Reusable Testcontainers fixture defaults to superuser, which would silently bypass RLS",
+      "evidence": [
+        "tests/Gozleme.Api.IntegrationTests/Infrastructure/GozlemeDatabase.cs:30-62 applies 01-roles.sh then the real migrator; exposes Superuser/Migrator/App connection strings",
+        "tests/Gozleme.Api.IntegrationTests/Infrastructure/GozlemeDatabase.cs:70 ScalarAsync defaults to SuperuserConnectionString",
+        "tests/Gozleme.Api.IntegrationTests/Infrastructure/Fixtures.cs:3 assembly-wide shared PgvectorDatabaseFixture"
+      ],
+      "affectedSpecs": ["GOZ-0003", "GOZ-0012", "GOZ-0013", "GOZ-0015", "GOZ-0017"],
+      "recommendation": "Reuse the fixture; isolation and leak tests must use AppConnectionString or the API; mutating tests use isolated data or their own database.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-10",
+      "severity": "medium",
+      "title": "Migration mechanism, single host project and out-of-band role creation",
+      "evidence": [
+        "src/Gozleme.Api/Persistence/GozlemeDbContext.cs (no entities), MigrationRunner.cs (migrate command, GozlemeMigrator connection string)",
+        "compose.yaml:27-40 one-shot migrate service; api depends_on service_completed_successfully",
+        "deploy/helm/gozleme/templates/migrate-job.yaml:10 pre-install,pre-upgrade hook (old pods still serve during upgrade)",
+        "deploy/postgres/init/01-roles.sh runs only on a fresh volume; migrator NOCREATEROLE",
+        "deploy/helm/gozleme/README.md roles are an operator prerequisite"
+      ],
+      "affectedSpecs": ["GOZ-0001", "GOZ-0003", "GOZ-0004"],
+      "recommendation": "New tables via new EF migrations in schema gozleme, never migrate on API start-up, keep migrations backward compatible for pre-upgrade; any new DB role goes into 01-roles.sh and the Helm README with make reset locally; establish module layout only as needed.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-11",
+      "severity": "medium",
+      "title": "OpenTelemetry has no owning spec",
+      "evidence": [
+        "docs/architecture/technology-stack.md lists OpenTelemetry as part of the stack",
+        "docs/specs/000-repository-bootstrap/research.md R9 defers OpenTelemetry to 'the operational spec that needs traces/metrics'",
+        "No prompt in docs/prompts/spec-0001.md..spec-0039.md mentions OpenTelemetry, tracing or metrics",
+        "src/Gozleme.Api/GozlemeApp.cs:18-23 JSON console logging only"
+      ],
+      "affectedSpecs": ["GOZ-0023", "GOZ-0039"],
+      "recommendation": "Human decides ownership: add OpenTelemetry (with secret-free trace attributes per invariant 8) to an existing MVP spec such as GOZ-0039, or record it as post-MVP. No prompt edited.",
+      "disposition": "requires-human-approval"
+    },
+    {
+      "id": "GOZ-0000-IF-12",
+      "severity": "high",
+      "title": "Protected main not applied or verified (security invariant 12)",
+      "evidence": [
+        "docs/specs/000-repository-bootstrap/research.md R8: rulesets and branch protection APIs return HTTP 403 on this private repository plan",
+        "docs/specs/000-repository-bootstrap/progress.yaml blocker GOZ-0000-B1",
+        "docs/engineering/github-protection.md status NOT VERIFIED"
+      ],
+      "affectedSpecs": ["GOZ-0000", "GOZ-0001", "GOZ-0039"],
+      "recommendation": "Human owner enables rulesets (plan upgrade or public visibility), applies the documented ruleset and records verification. No future-prompt change; every spec's completion still depends on verified human merge.",
+      "disposition": "requires-human-action"
+    },
+    {
+      "id": "GOZ-0000-IF-13",
+      "severity": "medium",
+      "title": "Deployment conventions: Secret references, read-only root filesystem, Compose service conventions",
+      "evidence": [
+        "deploy/helm/gozleme/values.yaml:13-16 database.existingSecret with app-connection-string and migrator-connection-string keys",
+        "deploy/helm/gozleme/values.yaml:41-44 readOnlyRootFilesystem true; templates/api.yaml:44-48 only /tmp emptyDir",
+        "compose.yaml ports bound to 127.0.0.1 with GOZLEME_* overrides; .env.example throwaway defaults",
+        "deploy/helm/gozleme/README.md:3-5 chart never installed on a live cluster"
+      ],
+      "affectedSpecs": ["GOZ-0001", "GOZ-0007", "GOZ-0009", "GOZ-0010", "GOZ-0011", "GOZ-0015", "GOZ-0016", "GOZ-0039"],
+      "recommendation": "New secrets use Secret references by name; Data Protection keys (GOZ-0001) and filesystem artifacts (GOZ-0009) need durable explicit storage, not the container filesystem; optional emulators/providers join Compose without changing the base stack; GOZ-0039 performs a live Helm install/upgrade per CR-14.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-14",
+      "severity": "medium",
+      "title": "No local two-instance harness for federation demos",
+      "evidence": [
+        "compose.yaml:1 name: gozleme; compose.yaml:80-81 single pgdata volume",
+        "e2e/tests/compose.ts:7-9 docker compose invoked without a project flag",
+        ".env.example GOZLEME_WEB_PORT/GOZLEME_API_PORT/GOZLEME_DB_PORT overrides exist"
+      ],
+      "affectedSpecs": ["GOZ-0029", "GOZ-0031", "GOZ-0032", "GOZ-0033", "GOZ-0036"],
+      "recommendation": "GOZ-0029 establishes a reusable two-instance harness (distinct project names and ports, project-aware e2e helper); later federation specs reuse it.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-15",
+      "severity": "low",
+      "title": "Backup/restore must recreate out-of-band roles",
+      "evidence": [
+        "deploy/postgres/init/01-roles.sh creates cluster-level roles outside migrations",
+        "Database-level pg_dump does not include roles"
+      ],
+      "affectedSpecs": ["GOZ-0039"],
+      "recommendation": "Restore procedure recreates gozleme_migrator/gozleme_app before restore and verifies NOSUPERUSER NOBYPASSRLS afterwards.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-16",
+      "severity": "low",
+      "title": "InvariantGlobalization is enabled",
+      "evidence": [
+        "Directory.Build.props: InvariantGlobalization true"
+      ],
+      "affectedSpecs": ["GOZ-0005"],
+      "recommendation": "GOZ-0005 keeps ID/namespace normalization ordinal/invariant and tests any Unicode/IDN behavior under this setting; changing it must be explicit.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-17",
+      "severity": "low",
+      "title": "research.md R7 does not match the implemented CI",
+      "evidence": [
+        "docs/specs/000-repository-bootstrap/research.md:38 lists a 'containers' job and actions pinned by major version tag",
+        ".github/workflows/ci.yml has no containers job (images are built inside e2e-demo) and pins every action by commit SHA"
+      ],
+      "affectedSpecs": ["GOZ-0000"],
+      "recommendation": "Corrective doc edit in GOZ-0000 research.md R7 to describe the actual jobs and SHA pinning.",
+      "disposition": "corrective-implementation-recommended"
+    },
+    {
+      "id": "GOZ-0000-IF-18",
+      "severity": "low",
+      "title": "Compiled Python cache tracked in git",
+      "evidence": [
+        "git ls-files lists scripts/__pycache__/generate_register.cpython-313.pyc (added in 455d192, before this spec)",
+        ".gitignore:33-34 ignores __pycache__/ and *.pyc"
+      ],
+      "affectedSpecs": ["GOZ-0000"],
+      "recommendation": "git rm --cached -r scripts/__pycache__ on the GOZ-0000 branch.",
+      "disposition": "corrective-implementation-recommended"
+    },
+    {
+      "id": "GOZ-0000-IF-19",
+      "severity": "low",
+      "title": "No JavaScript dependency vulnerability check in CI",
+      "evidence": [
+        "docs/engineering/ci-quality-gates.md requires 'code secret scanning and dependency checks'",
+        ".github/workflows/ci.yml has gitleaks but no pnpm audit or dependency-review step; .NET relies on SDK-default NuGet audit plus TreatWarningsAsErrors (Directory.Build.props), not explicitly configured"
+      ],
+      "affectedSpecs": ["GOZ-0000"],
+      "recommendation": "Add a pnpm audit (or dependency-review) step and set NuGetAudit/NuGetAuditMode explicitly; non-blocking for FR-015, which does not list dependency checks.",
+      "disposition": "corrective-implementation-recommended"
+    }
+  ]
+}
