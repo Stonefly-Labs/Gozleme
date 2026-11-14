@@ -26,6 +26,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["migrate"]
           env:
+            {{- include "gozleme.otelEnv" (dict "root" . "protocol" "grpc") | nindent 12 }}
+            - name: Gozleme__BuildVersion
+              value: {{ .Values.buildVersion | quote }}
             - name: ConnectionStrings__GozlemeMigrator
               valueFrom:
                 secretKeyRef:

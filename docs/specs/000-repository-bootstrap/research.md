@@ -41,9 +41,11 @@ All Technical Context items were resolvable; no open NEEDS CLARIFICATION.
 
 - **Finding**: `gh api repos/Stonefly-Labs/gozleme/rulesets` and `/branches/main/protection` return HTTP 403 "Upgrade to GitHub Pro or make this repository public". Rules therefore cannot be applied or verified by the agent. **Decision**: document required ruleset in `docs/engineering/branching-and-pr-policy.md`-linked `docs/engineering/github-protection.md` with status `NOT VERIFIED — human action required`, and record a blocker for the human owner. Nothing claims enforcement.
 
-## R9 — Observability scope
+## R9 — Observability (revised 2026-11-14, maintainer decision GOZ-0000-IF-11)
 
-- **Decision**: JSON console logging only (`AddJsonConsole`). OpenTelemetry is deferred to the operational spec that needs traces/metrics (avoid empty frameworks, constitution II).
+- **Decision**: OpenTelemetry is foundational. Backend and migrator use OpenTelemetry .NET (`OpenTelemetry.Extensions.Hosting`, ASP.NET Core/HttpClient/runtime instrumentation, `Npgsql.OpenTelemetry`) with OTLP export enabled when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; a shared `GozlemeTelemetry` defines `ActivitySource`/`Meter` "Gozleme.Api" for domain spans and metrics. The web tier uses Next.js `instrumentation.ts` with `@vercel/otel` (server-side), propagating W3C `traceparent` to the API. Compose adds `otel-collector` (contrib, redaction processor) exporting traces to Jaeger v2 (local UI/query API) and metrics to a Prometheus scrape endpoint; logs go to the collector debug exporter. Health probe requests are excluded from traces to limit noise.
+- **Rationale**: Maintainer requires observability threaded through every spec; OTLP keeps backends pluggable and the default stack offline.
+- **Superseded**: the earlier "JSON console logging only; defer OpenTelemetry" decision.
 
 ## R10 — Failure demo
 

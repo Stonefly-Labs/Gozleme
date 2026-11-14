@@ -17,6 +17,7 @@ service is needed.
 ```bash
 make up                      # docker compose up -d --build --wait
 open http://localhost:3000   # dashboard
+open http://localhost:16686  # traces (Jaeger): browser → web → API → PostgreSQL
 curl -s http://localhost:8080/api/v1/status
 make down                    # or `make reset` to also delete the database volume
 ```
@@ -49,10 +50,17 @@ Toolchain for working outside containers: .NET SDK per [`global.json`](global.js
 | `tests/` | xUnit unit and Testcontainers integration tests |
 | `web/` | Next.js dashboard |
 | `e2e/` | Playwright autonomous demo |
-| `deploy/` | Postgres role bootstrap, Helm chart |
+| `deploy/` | Postgres role bootstrap, OpenTelemetry collector config, Helm chart |
 | `docs/` | Architecture, decisions, engineering process, spec prompts, Spec Kit specs |
 | `.gozleme/` | Authoritative machine-readable manifest and spec registry |
 | `.claude/`, `.specify/` | Agent skills/agents and the installed Spec Kit |
+
+## Observability
+
+OpenTelemetry is foundational: browser, web, API and migrator emit traces (and the .NET
+services metrics and logs) over OTLP to a local collector, with Jaeger and a Prometheus scrape
+endpoint in the default offline stack. See
+[`docs/engineering/local-development.md`](docs/engineering/local-development.md#observability-foundational).
 
 ## How work happens
 

@@ -33,6 +33,21 @@ State transitions: `database.status` flips `healthy ↔ unavailable` per probe; 
 - Migration `Foundation`: `CREATE SCHEMA gozleme AUTHORIZATION gozleme_migrator`; `GRANT USAGE ON SCHEMA gozleme TO gozleme_app`; default privileges (SELECT/INSERT/UPDATE/DELETE on tables, USAGE on sequences) for future tables; `GRANT SELECT ON public."__EFMigrationsHistory" TO gozleme_app`.
 - **Boundary**: after migration, schema `gozleme` contains zero tables; no identity/org/catalog tables exist anywhere.
 
+## Telemetry (OpenTelemetry, foundational — GOZ-0000-IF-11)
+
+| Service (`service.name`) | Signals | Notes |
+|---|---|---|
+| `gozleme-web-browser` | traces | document load, fetch; same-origin `traceparent`; exported via `POST /api/otel/v1/traces` (≤256 KiB, JSON/protobuf only) |
+| `gozleme-web` | traces | Next.js routes and outgoing fetch to API (context propagated only to `GOZLEME_API_URL`) |
+| `gozleme-api` | traces, metrics, logs | ASP.NET Core (health probes excluded), HttpClient, Npgsql, runtime; source/meter `Gozleme.Api` |
+| `gozleme-migrator` | traces, metrics, logs | `database.migrate` span per attempt |
+
+Project instrumentation (extended by later specs): span `status.probe database` (attributes
+`gozleme.dependency.name`, `gozleme.status.outcome`; error status when unavailable); counter
+`gozleme.status.checks` `{check}` tagged by dependency and outcome. Npgsql data sources are named
+(`gozleme-api`, `gozleme-migrator`) so pool labels never contain connection strings. The collector
+deletes credential-like attribute keys and redacts credential-like values in all pipelines.
+
 ## DemoRunRecord (`evidence/demo-run.json`)
 
 `specId`, `commit`, `branch`, `environment` (os, docker, compose versions), `startedAt`, `finishedAt`, `commands[]`, `result` (`passed|failed|blocked`), `assertions[]` (`name`, `result`), `evidence[]` (paths).

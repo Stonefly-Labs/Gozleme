@@ -76,6 +76,24 @@ A coding agent working on later specs finds functional skills and agent definiti
 
 ---
 
+### User Story 5 - Follow one request end to end through telemetry (Priority: P1)
+
+An operator or contributor opens the local trace viewer and sees a single distributed trace for a dashboard refresh that threads through the web tier, the backend and the database, alongside request metrics and correlated structured logs. Every later spec extends this same telemetry thread rather than adding observability afterwards.
+
+**Why this priority**: Decided by the maintainer on 2026-11-14 (GOZ-0000-IF-11): observability is foundational and must run through all Gözleme work from the first slice.
+
+**Independent Test**: With the stack running, load the dashboard, then query the local trace store for the web service and find one trace containing web, backend and database spans; query the local metrics endpoint and find backend request and status-check metrics.
+
+**Acceptance Scenarios**:
+
+1. **Given** the stack is running, **When** the dashboard refreshes, **Then** one trace links the web route, the backend status request and the database probe query, viewable in the local trace viewer.
+2. **Given** the stack is running, **When** the metrics endpoint is scraped, **Then** backend HTTP request duration and status-check counts (tagged by outcome) are present.
+3. **Given** the database is stopped, **When** status is checked, **Then** the probe span is marked as an error and the status-check metric records an unavailable outcome.
+4. **Given** any telemetry, **When** it is inspected, **Then** it contains no passwords, connection strings or credential material.
+5. **Given** the telemetry collector or trace store is down, **When** the dashboard is used, **Then** the application remains healthy; telemetry loss never affects health or requests.
+
+---
+
 ### Edge Cases
 
 - Database not yet accepting connections when the backend starts: the backend retries/waits and reports not-ready rather than crashing permanently; once the database is ready, migrations apply and readiness turns healthy.
@@ -121,6 +139,15 @@ A coding agent working on later specs finds functional skills and agent definiti
 - **FR-018**: An automated demo MUST start the stack, wait for readiness, drive the dashboard in a real browser, assert healthy state values against the status endpoint, induce the database failure state and assert the degraded display, restore the database and assert recovery, assert the identity/catalog boundary, and capture sanitized screenshots of the healthy and degraded dashboard.
 - **FR-019**: The demo MUST record run metadata (commit, branch, environment, start/end timestamps, commands, result, evidence paths) and MUST NOT record success if any assertion fails or the stack/browser is unavailable.
 
+**Observability (foundational, GOZ-0000-IF-11)**
+
+- **FR-020**: Every runtime component (backend service, one-shot migrator, web tier) MUST emit traces, metrics and logs through OpenTelemetry, identified by service name, version and deployment environment, using standard semantic conventions.
+- **FR-021**: Trace context MUST propagate from the web tier to the backend to the database so a dashboard refresh forms one distributed trace.
+- **FR-022**: The default local stack MUST include an OpenTelemetry collector and a local trace viewer/store and expose metrics for scraping, all offline; operators MUST be able to point export at any OTLP endpoint by configuration. Export failure MUST NOT affect health, readiness or request handling.
+- **FR-023**: Telemetry MUST NOT contain secrets (passwords, connection strings, tokens); the collector MUST additionally redact credential-like attributes as defence in depth.
+- **FR-024**: The backend MUST provide a project instrumentation pattern (named activity source and meter) used for domain operations, demonstrated by a status-probe span and a status-check counter; later specs extend it.
+- **FR-025**: Automated tests MUST assert the expected spans/metrics are produced and are secret-free, and the autonomous demo MUST assert a cross-service trace and metrics in the running stack.
+
 ### Key Entities
 
 - **Service Status**: A point-in-time report of the backend's health; attributes: overall status, service name, version/build, check timestamp, list of dependency statuses, contract version.
@@ -139,6 +166,7 @@ A coding agent working on later specs finds functional skills and agent definiti
 - **SC-005**: All documented development commands succeed on a clean checkout, and CI completes all required checks on a pull request.
 - **SC-006**: Automated tests confirm that 0 identity, organization or catalog endpoints or tables exist after bootstrap.
 - **SC-007**: Regenerating the human spec register from the registry produces zero differences.
+- **SC-008**: In the automated demo, a dashboard refresh yields a single trace spanning web, backend and database within 30 seconds, and zero telemetry attributes contain credential material.
 
 ## Assumptions
 
@@ -149,5 +177,5 @@ A coding agent working on later specs finds functional skills and agent definiti
 - GitHub repository rulesets may not be configurable with the agent's credentials; in that case they are documented as pending human configuration and verification.
 - Code owners are not known; the code-owner file contains placeholder instructions only.
 - Existing governance documents, Spec Kit installation, skills, agents, manifest and registry from prior PRs are kept and extended, not replaced; Spec Kit is not reinstalled.
-- Observability (structured logs, trace hooks) is limited to what the health/status slice needs; dashboards for metrics are out of scope.
+- Observability is foundational (maintainer decision 2026-11-14, GOZ-0000-IF-11): OpenTelemetry traces, metrics and logs are in scope from this spec onward. Browser-side (client) telemetry and long-term metric/log storage dashboards are out of scope for GOZ-0000; local logs go to the collector's console output and container logs.
 - No seed data is needed beyond what the migration itself creates, since no product entities exist yet; the demo's deterministic fixture is the stack configuration itself.

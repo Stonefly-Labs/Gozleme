@@ -1,14 +1,34 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace Gozleme.Api.IntegrationTests.Infrastructure;
 
-/// <summary>Hosts the real API against a test database as the ordinary app role, capturing logs.</summary>
+/// <summary>Hosts the real API against a test database as the ordinary app role, capturing logs and telemetry.</summary>
 public sealed class GozlemeApiFactory(string appConnectionString) : WebApplicationFactory<Program>
 {
     public ConcurrentQueue<string> Logs { get; } = new();
+
+    public List<Activity> Activities { get; } = [];
+
+    public List<Metric> Metrics { get; } = [];
+
+    /// <summary>Snapshot of exported spans (the in-memory exporter appends from request threads).</summary>
+    public Activity[] SpansSnapshot()
+    {
+        lock (Activities)
+        {
+            return [.. Activities];
+        }
+    }
+
+    public void FlushMetrics() => Services.GetRequiredService<MeterProvider>().ForceFlush();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -16,6 +36,27 @@ public sealed class GozlemeApiFactory(string appConnectionString) : WebApplicati
         builder.UseSetting("ConnectionStrings:Gozleme", appConnectionString);
         builder.UseSetting("Gozleme:BuildVersion", "0.0.0-it");
         builder.ConfigureLogging(logging => logging.ClearProviders().AddProvider(new CapturingLoggerProvider(Logs)));
+        builder.ConfigureServices(services =>
+        {
+            services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(new SimpleActivityExportProcessor(new LockedActivityExporter(Activities))));
+            services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddInMemoryExporter(Metrics));
+        });
+    }
+
+    private sealed class LockedActivityExporter(List<Activity> sink) : BaseExporter<Activity>
+    {
+        public override ExportResult Export(in Batch<Activity> batch)
+        {
+            lock (sink)
+            {
+                foreach (var activity in batch)
+                {
+                    sink.Add(activity);
+                }
+            }
+
+            return ExportResult.Success;
+        }
     }
 
     private sealed class CapturingLoggerProvider(ConcurrentQueue<string> sink) : ILoggerProvider

@@ -14,13 +14,15 @@ applied by a one-shot `migrate` container using a separate owner role, while the
 `NOSUPERUSER NOBYPASSRLS` application role. Docker Compose runs everything offline; a Helm chart
 skeleton renders; GitHub Actions CI runs governance validation, backend unit + Testcontainers
 integration tests, frontend lint/typecheck/unit tests, chart render, image builds, secret scan
-and the Playwright demo. No identity, organization or catalog features are built.
+and the Playwright demo. OpenTelemetry traces, metrics and logs run through web → API → PostgreSQL
+from this first slice, exported to a local collector, Jaeger and a Prometheus scrape endpoint.
+No identity, organization or catalog features are built.
 
 ## Technical Context
 
 **Language/Version**: C# on .NET 10 (SDK pinned via `global.json`, 10.0.403, `latestPatch`); TypeScript 5.9 on Node 24 LTS; Python 3 for existing governance scripts
 
-**Primary Dependencies**: ASP.NET Core 10 minimal APIs, EF Core 10 + Npgsql.EntityFrameworkCore.PostgreSQL 10.0.x; Next.js 16 (App Router) + React 19; pnpm 11 (pinned via `packageManager`)
+**Primary Dependencies**: ASP.NET Core 10 minimal APIs, EF Core 10 + Npgsql.EntityFrameworkCore.PostgreSQL 10.0.x; OpenTelemetry .NET 1.21 + Npgsql.OpenTelemetry; Next.js 16 (App Router) + React 19 + `@vercel/otel`; OpenTelemetry Collector (contrib) + Jaeger v2 locally; pnpm 11 (pinned via `packageManager`)
 
 **Storage**: PostgreSQL 17 (`pgvector/pgvector:pg17` image locally so the optional extension is *available*; it is never created or required). CI also proves startup on plain `postgres:17-alpine`.
 
@@ -46,7 +48,7 @@ and the Playwright demo. No identity, organization or catalog features are built
 | II. Portable stack | .NET 10, Next.js/TS/pnpm, PostgreSQL/EF Core, optional pgvector, Compose + Helm, no mandatory cloud | PASS | PASS — pgvector reported, never required (tested on plain postgres) |
 | III. Identity & provenance | Nothing premature | PASS — N/A this slice | PASS — no identity fields created |
 | IV. Tenant isolation | App role NOSUPERUSER/NOBYPASSRLS; no secrets exposed | PASS | PASS — role separation tested; secret-leak tests on status/log/evidence |
-| V. Bounded slices | No speculative frameworks; versioned contracts | PASS | PASS — `/api/v1/status` contract v1; no empty module scaffolding, OpenTelemetry deferred |
+| V. Bounded slices | No speculative frameworks; versioned contracts | PASS | PASS — `/api/v1/status` contract v1; no empty module scaffolding. OpenTelemetry is in scope by maintainer decision (IF-11) and is exercised by real spans/metrics, not an empty framework |
 | VI. Demo-first | Compose, autonomous Playwright demo, real screenshots, run metadata | PASS | PASS — `make demo` produces evidence under `docs/specs/000-repository-bootstrap/evidence/` |
 | VII. Protected main | Document rules; never claim enforcement | PASS | PASS — GitHub API returns 403 for rulesets/branch protection on this private repo plan; recorded as human blocker, not claimed |
 | VIII. Converge & impact | Workflow followed | PASS | PASS |
@@ -84,6 +86,7 @@ src/Gozleme.Api/
 ├── Program.cs                    # host, endpoints, "migrate" command mode
 ├── Status/                       # status contract records + StatusService + DB probe
 ├── Persistence/                  # GozlemeDbContext, Migrations/
+├── Telemetry/                    # OpenTelemetry setup, ActivitySource/Meter
 └── Dockerfile
 tests/Gozleme.Api.Tests/          # unit tests (status aggregation, redaction)
 tests/Gozleme.Api.IntegrationTests/  # Testcontainers: migration, roles, endpoints, boundary, DB-down
@@ -96,6 +99,7 @@ web/                              # Next.js app (pnpm)
 └── Dockerfile
 e2e/                              # Playwright demo (pnpm workspace member)
 deploy/postgres/init/             # role bootstrap script for Compose
+deploy/otel/collector.yaml        # OTel collector pipelines (redaction, Jaeger, Prometheus)
 deploy/helm/gozleme/              # Chart.yaml, values.yaml, templates/
 compose.yaml
 Makefile

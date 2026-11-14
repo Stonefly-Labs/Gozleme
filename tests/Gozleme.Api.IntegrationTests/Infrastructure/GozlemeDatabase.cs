@@ -67,21 +67,26 @@ public sealed class GozlemeDatabase : IAsyncDisposable
 
     public async Task<T> ScalarAsync<T>(string sql, string? connectionString = null)
     {
-        await using var connection = new NpgsqlConnection(connectionString ?? SuperuserConnectionString);
-        await connection.OpenAsync();
+        // Named data source: test-helper connections share the process-wide Npgsql meter with the API,
+        // so they must not label pools with their connection string either.
+        await using var dataSource = Named(connectionString ?? SuperuserConnectionString);
+        await using var connection = await dataSource.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(sql, connection);
         return (T)(await command.ExecuteScalarAsync())!;
     }
 
     public static async Task ExecuteAsync(string sql, string connectionString)
     {
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
+        await using var dataSource = Named(connectionString);
+        await using var connection = await dataSource.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync();
     }
 
     public ValueTask DisposeAsync() => _container.DisposeAsync();
+
+    private static NpgsqlDataSource Named(string connectionString) =>
+        new NpgsqlDataSourceBuilder(connectionString) { Name = "integration-test-fixture" }.Build();
 
     private string Build(string user, string password) => new NpgsqlConnectionStringBuilder
     {

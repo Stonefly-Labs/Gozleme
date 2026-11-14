@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Gozleme.Api.Status;
+using Gozleme.Api.Telemetry;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Npgsql;
 
@@ -10,17 +11,20 @@ namespace Gozleme.Api;
 internal static class GozlemeApp
 {
     public const string AppConnectionStringName = "Gozleme";
+    public const string ServiceName = "gozleme-api";
 
     public static WebApplication Build(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Logging.ClearProviders();
+        builder.Logging.Configure(options => options.ActivityTrackingOptions = ActivityTrackingOptions.TraceId | ActivityTrackingOptions.SpanId);
         builder.Logging.AddJsonConsole(options =>
         {
             options.UseUtcTimestamp = true;
-            options.IncludeScopes = false;
+            options.IncludeScopes = true; // carries TraceId/SpanId for log ↔ trace correlation
         });
+        builder.AddGozlemeTelemetry(ServiceName);
 
         builder.Services.ConfigureHttpJsonOptions(options =>
         {
@@ -62,6 +66,7 @@ internal static class GozlemeApp
             // Kerberos/GSS is not a supported local auth mode; skip the probe (and its native-library noise).
             GssEncryptionMode = GssEncryptionMode.Disable,
         };
-        return NpgsqlDataSource.Create(csb.ConnectionString);
+        // A named data source keeps the connection string out of telemetry (pool name labels).
+        return new NpgsqlDataSourceBuilder(csb.ConnectionString) { Name = ServiceName }.Build();
     }
 }

@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { API_URL } from "../playwright.config";
 import { compose, forbiddenStrings, repoRoot } from "./compose";
+import { JAEGER_URL, METRICS_URL, recentSpans, servicesByTrace } from "./telemetry";
 
 /**
  * GOZ-0000 autonomous demo: live dashboard reading real API + PostgreSQL status, real
@@ -24,7 +25,7 @@ async function expectAccessible(page: Page) {
 
 test.afterAll(() => {
   // Leave the stack as we found it even if a step failed midway.
-  compose("start", "postgres", "api");
+  compose("start", "postgres", "api", "otel-collector");
 });
 
 test("healthy: dashboard shows real API and database status matching the API", async ({ page, request }) => {
@@ -117,4 +118,59 @@ test("boundary: identity, organization and catalog features are not implemented"
   await page.goto("/");
   await expect(page.getByRole("link")).toHaveCount(0);
   await expect(page.getByText(/sign in|log in/i)).toHaveCount(0);
+});
+
+test("observability: one trace threads browser → web → API → PostgreSQL, with metrics and no secrets", async ({ page, request }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("overall-status")).toHaveText("Healthy");
+  await page.getByRole("button", { name: "Check now" }).click();
+
+  const want = ["gozleme-web-browser", "gozleme-web", "gozleme-api"];
+  let traceId: string | undefined;
+  let spans: Awaited<ReturnType<typeof recentSpans>> = [];
+  await expect
+    .poll(
+      async () => {
+        spans = await recentSpans("gozleme-web-browser");
+        for (const [id, services] of servicesByTrace(spans)) {
+          const hasDb = spans.some((s) => s.traceId === id && s.service === "gozleme-api" && s.attributes["db.system.name"] === "postgresql");
+          if (want.every((w) => services.has(w)) && hasDb) {
+            traceId = id;
+            return true;
+          }
+        }
+        return false;
+      },
+      { timeout: 30_000, intervals: [1000] },
+    )
+    .toBe(true);
+
+  const trace = spans.filter((s) => s.traceId === traceId);
+  expect(trace.some((s) => s.service === "gozleme-web-browser" && /fetch|GET/i.test(s.name))).toBe(true);
+  expect(trace.some((s) => s.service === "gozleme-api" && s.name === "status.probe database")).toBe(true);
+  const telemetryText = JSON.stringify(trace);
+  for (const s of forbiddenStrings.filter((f) => f !== "Exception")) expect(telemetryText, `trace must not contain ${s}`).not.toContain(s);
+
+  const metrics = await (await request.get(METRICS_URL)).text();
+  expect(metrics).toMatch(/gozleme_status_checks_total\{[^}]*gozleme_status_outcome="healthy"[^}]*service_name="gozleme-api"/);
+  expect(metrics).toContain("http_server_request_duration_seconds");
+  for (const s of [...forbiddenStrings.filter((f) => f !== "Exception"), "Host=", "Username="]) {
+    expect(metrics, `metrics must not contain ${s}`).not.toContain(s);
+  }
+
+  await page.goto(`${JAEGER_URL}/trace/${traceId}`);
+  await expect(page.getByText("gozleme-web-browser").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("status.probe database").first()).toBeVisible();
+  await expectNoSecrets(page);
+  await page.screenshot({ path: `${shots}/05-distributed-trace-jaeger.png`, fullPage: false });
+});
+
+test("observability resilience: the app stays healthy when the telemetry collector is down", async ({ page, request }) => {
+  compose("stop", "otel-collector");
+  await page.goto("/");
+  await expect(page.getByTestId("overall-status")).toHaveText("Healthy");
+  await page.getByRole("button", { name: "Check now" }).click();
+  await expect(page.getByTestId("overall-status")).toHaveText("Healthy");
+  expect((await request.get("http://localhost:8080/health/ready")).status()).toBe(200);
+  compose("start", "otel-collector");
 });

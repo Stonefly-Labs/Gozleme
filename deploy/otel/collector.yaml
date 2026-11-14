@@ -1,0 +1,59 @@
+# Gözleme local OpenTelemetry Collector (GOZ-0000-IF-11). Offline by default:
+# traces → Jaeger (UI http://localhost:16686), metrics → Prometheus scrape endpoint
+# (http://localhost:8889/metrics), logs → collector console (`docker compose logs otel-collector`).
+# Operators can replace exporters with any OTLP-compatible backend.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  # Defence in depth (FR-023): applications must not emit secrets; the collector also strips them.
+  attributes/drop-secret-keys:
+    actions:
+      - pattern: (?i).*(password|passwd|secret|token|api[_.-]?key|connection[_.-]?string|authorization).*
+        action: delete
+  redaction/secret-values:
+    allow_all_keys: true
+    blocked_values:
+      - (?i)password=[^;\s]*
+      - (?i)bearer\s+[a-z0-9._~+/=-]+
+      - (?i)(host|server|username|user id)=[^;\s]*
+  batch: {}
+
+exporters:
+  otlp_grpc/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion:
+      enabled: true
+  debug:
+    verbosity: basic
+
+service:
+  telemetry:
+    logs:
+      level: warn
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/drop-secret-keys, redaction/secret-values, batch]
+      exporters: [otlp_grpc/jaeger]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/drop-secret-keys, redaction/secret-values, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/drop-secret-keys, redaction/secret-values, batch]
+      exporters: [debug]

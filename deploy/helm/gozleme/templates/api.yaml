@@ -24,6 +24,7 @@ spec:
           ports:
             - { name: http, containerPort: 8080 }
           env:
+            {{- include "gozleme.otelEnv" (dict "root" . "protocol" "grpc") | nindent 12 }}
             - name: Gozleme__BuildVersion
               value: {{ .Values.buildVersion | quote }}
             - name: ConnectionStrings__Gozleme

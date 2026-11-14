@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using Gozleme.Api.Telemetry;
 using Npgsql;
 
 namespace Gozleme.Api.Status;
@@ -19,6 +21,9 @@ internal sealed partial class DatabaseProbe(NpgsqlDataSource dataSource, ILogger
     public const string UnreachableMessage = "Database unreachable";
     public const string NotInitializedMessage = "Database schema not initialized";
 
+    private static readonly Counter<long> Checks = GozlemeTelemetry.Meter.CreateCounter<long>(
+        "gozleme.status.checks", unit: "{check}", description: "Dependency status checks by dependency and outcome.");
+
     private const string ProbeSql = """
         SELECT
           (SELECT "MigrationId" FROM public."__EFMigrationsHistory" ORDER BY "MigrationId" DESC LIMIT 1),
@@ -27,6 +32,22 @@ internal sealed partial class DatabaseProbe(NpgsqlDataSource dataSource, ILogger
         """;
 
     public async Task<DependencyStatus> ProbeAsync(CancellationToken cancellationToken)
+    {
+        using var activity = GozlemeTelemetry.ActivitySource.StartActivity("status.probe database");
+        activity?.SetTag("gozleme.dependency.name", Name);
+        var result = await ProbeCoreAsync(cancellationToken);
+
+        Checks.Add(1, new KeyValuePair<string, object?>("gozleme.dependency.name", Name), new KeyValuePair<string, object?>("gozleme.status.outcome", result.Status));
+        activity?.SetTag("gozleme.status.outcome", result.Status);
+        if (result.Status != StatusValues.Healthy)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, result.Message);
+        }
+
+        return result;
+    }
+
+    private async Task<DependencyStatus> ProbeCoreAsync(CancellationToken cancellationToken)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(TimeoutSeconds));

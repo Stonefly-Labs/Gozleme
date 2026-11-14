@@ -131,3 +131,19 @@ MVP = Phases 1–3 (healthy dashboard). Then US2 failure states + boundary, then
 
 - [X] T039 [US1] Add automated accessibility assertion (axe-core WCAG 2.1 A/AA: contrast, landmarks, labels) for healthy, degraded and unreachable dashboard states in `e2e/tests/bootstrap-demo.spec.ts` — gap: FR-006 contrast/semantics not verified by any test
 - [X] T040 [US1] Record stack start-up duration (`docker compose up --wait`) in `evidence/demo-run.json` via `scripts/demo/run-demo.sh` and `scripts/demo/write_demo_record.py` — gap: SC-001 timing not measured
+
+---
+
+## Phase 10: Foundational observability (maintainer decision GOZ-0000-IF-11, 2026-11-14)
+
+**Goal**: US5 — OpenTelemetry threaded through web → API → database, offline by default.
+**Independent Test**: dashboard refresh produces one Jaeger trace with web, API and Npgsql spans; metrics endpoint shows API request and status-check metrics.
+
+- [X] T041 [US5] `src/Gozleme.Api/Telemetry/GozlemeTelemetry.cs`: resource (service name/version/environment), tracing (ASP.NET Core minus health probes, HttpClient, Npgsql, `Gozleme.Api` source), metrics (ASP.NET Core, HttpClient, runtime, Npgsql, `Gozleme.Api` meter), OTel logging; OTLP only when endpoint configured; used by API and migrator
+- [X] T042 [US5] Status probe span + `gozleme.status.checks` counter tagged by outcome in `src/Gozleme.Api/Status/`
+- [X] T043 [P] [US5] Integration test with in-memory exporter: server span → probe span → Npgsql span in one trace; error status on outage; counter outcomes; no secrets in attributes, in `tests/Gozleme.Api.IntegrationTests/TelemetryTests.cs`
+- [X] T044 [US5] Web `instrumentation.ts` with `@vercel/otel`, context propagation to API
+- [X] T045 [US5] `deploy/otel/collector.yaml` + Compose `otel-collector` and `jaeger` services, OTLP env for api/migrate/web
+- [X] T046 [US5] Helm: `telemetry.otlpEndpoint` value wired to all workloads
+- [X] T047 [US5] Demo: assert cross-service trace and metrics via Jaeger query API and Prometheus endpoint, secret-free; screenshot of the trace in Jaeger UI; collector-down resilience check
+- [X] T048 [US5] Docs: README, local-development, quickstart, data-model telemetry section, PR evidence

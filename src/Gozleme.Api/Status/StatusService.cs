@@ -1,4 +1,4 @@
-using System.Reflection;
+using Gozleme.Api.Telemetry;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Gozleme.Api.Status;
@@ -7,11 +7,9 @@ namespace Gozleme.Api.Status;
 internal sealed class StatusService(IDatabaseProbe databaseProbe, TimeProvider timeProvider, IConfiguration configuration)
 {
     public const string ContractVersion = "1";
-    public const string ServiceName = "gozleme-api";
+    public const string ServiceName = GozlemeApp.ServiceName;
 
-    private readonly string _version = configuration["Gozleme:BuildVersion"] is { Length: > 0 } configured
-        ? configured
-        : typeof(StatusService).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0";
+    private readonly string _version = GozlemeTelemetry.ServiceVersion(configuration);
 
     public async Task<ServiceStatus> GetAsync(CancellationToken cancellationToken)
     {
