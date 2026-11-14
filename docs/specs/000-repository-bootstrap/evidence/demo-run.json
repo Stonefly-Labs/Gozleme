@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0000",
-  "commit": "03b3228ff06f1d5274cf3039035553619014ba2a",
+  "commit": "9c6d32d6a80197eee5b704155616d3f7914be6a3",
   "branch": "chore/goz-0000-bootstrap",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-14T21:40:22Z",
-  "finishedAt": "2026-11-14T21:41:01Z",
-  "stackStartupSeconds": 13,
+  "startedAt": "2026-11-14T21:47:55Z",
+  "finishedAt": "2026-11-14T21:48:50Z",
+  "stackStartupSeconds": 18,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -46,6 +46,10 @@
       "result": "passed"
     },
     {
+      "name": "stored logs: outage warnings are stored in Loki, correlated to their trace, metrics stored, no secrets",
+      "result": "passed"
+    },
+    {
       "name": "observability resilience: the app stays healthy when the telemetry collector is down",
       "result": "passed"
     },
@@ -59,6 +63,7 @@
     "docs/specs/000-repository-bootstrap/evidence/screenshots/02-database-down-degraded.png",
     "docs/specs/000-repository-bootstrap/evidence/screenshots/03-recovered-healthy.png",
     "docs/specs/000-repository-bootstrap/evidence/screenshots/04-api-unreachable.png",
-    "docs/specs/000-repository-bootstrap/evidence/screenshots/05-distributed-trace-jaeger.png"
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/05-distributed-trace-jaeger.png",
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/06-stored-logs-grafana.png"
   ]
 }
