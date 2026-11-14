@@ -10,6 +10,8 @@ namespace Gozleme.Api.IntegrationTests;
 /// </summary>
 public sealed class TelemetryTests : IAsyncLifetime
 {
+    private static readonly string[] FixedProbeMessages = ["Database unreachable", "Database schema not initialized"];
+
     private GozlemeDatabase _db = null!;
     private GozlemeApiFactory _factory = null!;
     private HttpClient _client = null!;
@@ -80,7 +82,7 @@ public sealed class TelemetryTests : IAsyncLifetime
         Assert.All(failed, s =>
         {
             Assert.Equal("unavailable", s.GetTagItem("gozleme.status.outcome"));
-            Assert.Contains(s.StatusDescription, new[] { "Database unreachable", "Database schema not initialized" });
+            Assert.Contains(s.StatusDescription, FixedProbeMessages);
         });
         Assert.Contains(failed, s => s.StatusDescription == "Database unreachable");
 
