@@ -13,10 +13,10 @@ specs:
   release: mvp
   prompt: docs/prompts/spec-0000.md
   dependencies: []
-  status: in-progress
-  stage: pr-preparation
+  status: ready-for-human-merge
+  stage: human-review
   branch: chore/goz-0000-bootstrap
-  pullRequest: null
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/4
   promptRevision: 1
   gates:
     specification: passed
@@ -74,7 +74,7 @@ specs:
     reviews:
     - docs/specs/000-repository-bootstrap/reviews/impact-analysis.md
     - docs/specs/000-repository-bootstrap/reviews/impact-findings.json
-  nextAction: Open PR for human review; human applies/verifies protected-main ruleset (IF-12)
+  nextAction: Human reviews and merges PR #4; human applies/verifies protected-main ruleset (IF-12). Agent marks complete only after verifying the merge on main.
 - id: GOZ-0001
   number: 1
   title: Local identity and session security
