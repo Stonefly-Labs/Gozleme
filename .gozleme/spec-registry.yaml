@@ -13,15 +13,15 @@ specs:
   release: mvp
   prompt: docs/prompts/spec-0000.md
   dependencies: []
-  status: not-started
-  stage: null
-  branch: null
+  status: in-progress
+  stage: implement
+  branch: chore/goz-0000-bootstrap
   pullRequest: null
   promptRevision: 1
   gates:
-    specification: pending
-    plan: pending
-    tasks: pending
+    specification: passed
+    plan: passed
+    tasks: passed
     implementation: pending
     tests: pending
     demo: pending
@@ -30,14 +30,15 @@ specs:
     roadmapSync: pending
     humanReview: pending
     merge: pending
-  blockers: []
+  blockers:
+  - GitHub rulesets/branch protection API returns HTTP 403 on this private repo plan; protected-main must be applied and verified by a human owner (see docs/specs/000-repository-bootstrap/progress.yaml GOZ-0000-B1)
   impactFindings: []
   evidence:
     tests: []
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Start on chore/goz-0000-bootstrap
+  nextAction: Implement tasks per docs/specs/000-repository-bootstrap/tasks.md
 - id: GOZ-0001
   number: 1
   title: Local identity and session security

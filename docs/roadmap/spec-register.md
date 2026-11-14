@@ -6,7 +6,7 @@
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
-| [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | not-started | — | — | Start on chore/goz-0000-bootstrap |
+| [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | in-progress | implement | — | Implement tasks per docs/specs/000-repository-bootstrap/tasks.md |
 | [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | not-started | — | GOZ-0000 | Await prerequisites and create allowed working branch |
 | [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | not-started | — | GOZ-0001 | Await prerequisites and create allowed working branch |
 | [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | not-started | — | GOZ-0002 | Await prerequisites and create allowed working branch |

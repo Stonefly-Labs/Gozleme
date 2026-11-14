@@ -1,0 +1,29 @@
+schemaVersion: '1.0'
+specId: GOZ-0000
+stage: implement
+status: in-progress
+promptRevision: 1
+branch: chore/goz-0000-bootstrap
+featureDirectory: docs/specs/000-repository-bootstrap
+stages:
+  specify: {status: done, artifact: docs/specs/000-repository-bootstrap/spec.md, at: '2026-11-14'}
+  plan: {status: done, artifact: docs/specs/000-repository-bootstrap/plan.md, at: '2026-11-14'}
+  tasks: {status: done, artifact: docs/specs/000-repository-bootstrap/tasks.md, at: '2026-11-14'}
+  implement: {status: in-progress}
+  demo: {status: pending}
+  converge: {status: pending}
+  impactAnalysis: {status: pending}
+  roadmapSync: {status: pending}
+attempts: []
+blockers:
+- id: GOZ-0000-B1
+  summary: GitHub rulesets/branch protection API returns HTTP 403 (private repo requires GitHub Pro/Team or public visibility); protected-main cannot be applied or verified by agent.
+  owner: human repository owner
+  resumeAction: Upgrade plan or make repo public, apply ruleset in docs/engineering/github-protection.md, then verify and record evidence.
+  blocksMerge: false
+nextAction: Implement tasks T001–T038
+evidence:
+  tests: []
+  demos: []
+  screenshots: []
+  reviews: []
