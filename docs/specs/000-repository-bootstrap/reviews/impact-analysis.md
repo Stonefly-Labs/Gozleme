@@ -1,7 +1,7 @@
 # GOZ-0000 post-convergence spec impact analysis
 
 **Source spec:** GOZ-0000 — Repository bootstrap and executable engineering foundation
-**Implementation revision:** `e7904ad` on `chore/goz-0000-bootstrap` (demo recorded at `01fc90b`; `e7904ad` changes only regenerated evidence files)
+**Implementation revision:** initial analysis at `e7904ad`; bounded re-analysis at `930128e` on `chore/goz-0000-bootstrap` (corrective commit `3273724`; demo re-run on a clean tree recorded at `b4d82e1`, and `930128e` adds only evidence)
 **Analyst:** Spec Impact Analyst (`analyze-spec-impact`), 2026-11-14
 **Structured findings:** `docs/specs/000-repository-bootstrap/reviews/impact-findings.json` (validates against `.gozleme/schemas/impact-findings.schema.json`)
 
@@ -40,7 +40,7 @@
 | GOZ-0000-IF-04 | medium | Default `UPDATE/DELETE` grants vs immutable or append-only tables | 0007, 0009, 0023, 0032 | applied to prompts |
 | GOZ-0000-IF-05 | high | `vector` cannot be created by the migrator; `pg_trgm` can; `vector.enabled` semantics | 0013, 0015, 0017, 0039 | applied to prompts |
 | GOZ-0000-IF-06 | medium | Status contract v1 rules for adding dependencies | 0009, 0010, 0011, 0015, 0016 | applied to prompts |
-| GOZ-0000-IF-07 | low | Web validator is stricter than OpenAPI for `capabilities` | 0000 (+0009–0011, 0015) | corrective implementation recommended |
+| GOZ-0000-IF-07 | low | Web validator is stricter than OpenAPI for `capabilities` | 0000 (+0009–0011, 0015) | corrected in `3273724` |
 | GOZ-0000-IF-08 | medium | Demo runner and evidence layout are hard-coded to GOZ-0000; no seed path | 0001, 0039 | applied to prompts |
 | GOZ-0000-IF-09 | medium | Fixture `ScalarAsync` defaults to superuser and would bypass RLS; shared fixture | 0003, 0012, 0013, 0015, 0017 | applied to prompts |
 | GOZ-0000-IF-10 | medium | Migration mechanism, pre-upgrade compatibility, out-of-band role creation | 0001, 0003, 0004 | applied to prompts |
@@ -50,9 +50,9 @@
 | GOZ-0000-IF-14 | medium | No two-instance local harness for federation | 0029, 0031, 0032, 0033, 0036 | applied to prompts |
 | GOZ-0000-IF-15 | low | Backup/restore must recreate out-of-band roles | 0039 | applied to prompts |
 | GOZ-0000-IF-16 | low | `InvariantGlobalization=true` affects ID normalization work | 0005 | applied to prompts |
-| GOZ-0000-IF-17 | low | `research.md` R7 describes CI that does not match `ci.yml` | 0000 | corrective (docs) recommended |
-| GOZ-0000-IF-18 | low | `scripts/__pycache__/*.pyc` is tracked despite `.gitignore` | 0000 | corrective recommended |
-| GOZ-0000-IF-19 | low | No JS dependency vulnerability check; NuGet audit is only the SDK default | 0000 | corrective recommended (non-blocking) |
+| GOZ-0000-IF-17 | low | `research.md` R7 describes CI that does not match `ci.yml` | 0000 | corrected in `3273724` |
+| GOZ-0000-IF-18 | low | `scripts/__pycache__/*.pyc` is tracked despite `.gitignore` | 0000 | corrected in `3273724` |
+| GOZ-0000-IF-19 | low | No JS dependency vulnerability check; NuGet audit is only the SDK default | 0000 | corrected in `3273724` |
 
 The evidence, recommendation and file and line references for each finding are in `impact-findings.json`.
 
@@ -83,3 +83,19 @@ None of these is a security or architecture violation. If any code change is mad
 
 - Helm was not installed on a cluster, so no runtime claim is made.
 - This analysis performed no merge, push, branch switch or registry edit.
+
+## Re-analysis at `930128e` (2026-11-14)
+
+The corrective commit `3273724` resolves all four GOZ-0000 corrective items. I checked each one in the code:
+
+- **IF-07, corrected.** `web/src/lib/status.ts` now accepts `capabilities` as `null` or an object whose `vector` is absent or valid. `status.test.ts` adds a case that accepts `capabilities: {}` and a case that rejects a malformed `vector`. The dashboard already reads `capabilities?.vector`. `pnpm typecheck` and the Vitest suite (18 tests) pass at HEAD.
+- **IF-17, corrected.** `research.md` R7 now matches `ci.yml`: there is no `containers` job, images are built in `e2e-demo`, and actions are SHA-pinned.
+- **IF-18, corrected.** `git ls-files scripts/__pycache__` returns nothing.
+- **IF-19, corrected.** CI runs `pnpm audit --prod --audit-level low`. `Directory.Build.props` sets `NuGetAudit`, `NuGetAuditMode=all`, `NuGetAuditLevel=low`, and treats NU1901–NU1904 as errors.
+
+**Downstream impact.** The only new downstream effect comes from IF-19. Any later spec that adds a NuGet or production npm package now fails CI on any published advisory, even a low-severity one. Such a spec must resolve the advisory or suppress it explicitly with documentation. It must never disable the audit. This is recorded in the IF-19 evidence. It changes no architecture or scope, so I did not edit any prompt for it.
+
+**Prompt corrections.** The IF-06 sentence in GOZ-0009, 0010, 0011, 0015 and 0016 said the web validator rejects `capabilities` without `vector`. That is no longer true, and the sentence now describes the corrected tolerance. Those prompts are already in the revision 1 → 2 bump list.
+
+**Other code.** Between `3273724` and HEAD, nothing changed outside evidence, prompts and reviews. The human items IF-11 and IF-12 remain open.
+
