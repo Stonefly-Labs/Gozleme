@@ -15,7 +15,7 @@ export interface DependencyStatus {
   latencyMs: number | null;
   schemaVersion: string | null;
   message: string | null;
-  capabilities: { vector: VectorCapability } | null;
+  capabilities: { vector?: VectorCapability } | null;
 }
 
 export interface ServiceStatus {
@@ -42,12 +42,14 @@ const isNullableString = (v: unknown) => v === null || typeof v === "string";
 function isDependency(v: unknown): v is DependencyStatus {
   if (!isObject(v)) return false;
   const caps = v.capabilities;
+  // Contract v1: `capabilities` is null or an object whose `vector` entry is optional.
   const capsOk =
     caps === null ||
     (isObject(caps) &&
-      isObject(caps.vector) &&
-      typeof caps.vector.available === "boolean" &&
-      typeof caps.vector.enabled === "boolean");
+      (caps.vector === undefined ||
+        (isObject(caps.vector) &&
+          typeof caps.vector.available === "boolean" &&
+          typeof caps.vector.enabled === "boolean")));
   return (
     typeof v.name === "string" &&
     (v.status === "healthy" || v.status === "unavailable") &&

@@ -11,7 +11,13 @@ describe("parseServiceStatus", () => {
     expect(parseServiceStatus(healthy)).toEqual(healthy);
   });
 
+  it("accepts capabilities without the optional vector entry", () => {
+    const doc = { ...healthy, dependencies: [{ ...healthy.dependencies[0]!, capabilities: {} }] };
+    expect(parseServiceStatus(doc)).toEqual(doc);
+  });
+
   it.each([
+    ["malformed vector capability", { ...healthy, dependencies: [{ ...healthy.dependencies[0]!, capabilities: { vector: { available: "yes" } } }] }],
     ["wrong contract version", { ...healthy, contractVersion: "2" }],
     ["unknown status", { ...healthy, status: "fine" }],
     ["missing dependencies", { ...healthy, dependencies: undefined }],

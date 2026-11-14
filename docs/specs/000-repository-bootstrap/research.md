@@ -35,7 +35,7 @@ All Technical Context items were resolvable; no open NEEDS CLARIFICATION.
 
 ## R7 — CI
 
-- **Decision**: One GitHub Actions workflow `ci.yml` on `pull_request` and `push` to non-main branches with jobs: `governance` (validate_docs, register check, branch name), `backend` (dotnet build/test incl. Testcontainers on ubuntu runner Docker), `frontend` (pnpm lint/typecheck/test/build), `helm` (lint + template via pinned `alpine/helm` container), `containers` (docker build api/web), `secrets` (gitleaks CLI pinned), `e2e-demo` (compose up + Playwright, upload evidence artifact). Actions pinned by major version tag; SHA pinning recommended follow-up.
+- **Decision**: One GitHub Actions workflow `ci.yml` on `pull_request` and `push` to non-main branches with jobs: `governance` (validate_docs, register check, branch name), `backend` (dotnet build/test incl. Testcontainers on ubuntu runner Docker), `frontend` (pnpm lint/typecheck/test/build), `helm` (lint + template via pinned `alpine/helm` container), `secrets` (gitleaks CLI pinned), `e2e-demo` (builds the api/web images via `docker compose up --build`, runs Playwright, uploads evidence artifact), plus dependency audits (`pnpm audit --prod`, NuGet audit as build error). There is no separate `containers` job: image builds are exercised inside `e2e-demo`. Actions are pinned by full commit SHA with the release tag in a comment. *(Corrected per GOZ-0000-IF-17.)*
 
 ## R8 — Protected main
 
