@@ -1,0 +1,3 @@
+# CI and review gates
+
+Required: YAML/JSON Schema validation; exact prompt path existence and count; unique IDs; dependency acyclicity; generated register in sync; branch naming; tests and runtime health; demo evidence status; architecture/security/impact review references; PR screenshot links as relevant; code secret scanning and dependency checks; tests never weakened to pass. Human-configured GitHub ruleset must require PR checks and reviews. As part of GÖZ-0000, implement applicable backend, frontend and container tests. CI should report missing screenshots for UI specs but allow appropriately evidenced nonvisual API workflows; never use stock placeholder screenshots as PR evidence.

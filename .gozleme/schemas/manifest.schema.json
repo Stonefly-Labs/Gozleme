@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "project",
+    "documentation",
+    "constitution",
+    "specifications",
+    "agents",
+    "rules"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "project": {
+      "type": "object"
+    },
+    "documentation": {
+      "type": "object"
+    },
+    "constitution": {
+      "type": "object",
+      "required": [
+        "prompt"
+      ]
+    },
+    "specifications": {
+      "type": "object",
+      "required": [
+        "registry",
+        "humanRegister",
+        "promptsDirectory"
+      ]
+    },
+    "agents": {
+      "type": "object",
+      "required": [
+        "skillsDirectory",
+        "subagentsDirectory"
+      ]
+    },
+    "rules": {
+      "type": "object",
+      "required": [
+        "humanOnlyMerge",
+        "requirePostConvergenceImpactAnalysis",
+        "allowBranchPrefixes"
+      ]
+    }
+  }
+}

@@ -1,0 +1,3 @@
+# Technology stack and portability
+
+.NET 10 ASP.NET Core modular monolith, EF Core/Npgsql, PostgreSQL. Next.js/TypeScript + accessible UI; pnpm. OpenTelemetry, structured logs, CI and Testcontainers-based integration tests. PostgreSQL extension pgvector is optional and must not prevent base Compose startup. Embedding integration should use a pluggable .NET contract (Microsoft.Extensions.AI candidate; verify available API during implementing spec). Pluggable artifact providers: filesystem, S3-compatible and Azure Blob. Compose and Helm deployment with fully local credentials and optional cloud-native secret/identity providers. Dependency choices remain subject to current security compatibility at implementation time; do not pre-create empty frameworks.

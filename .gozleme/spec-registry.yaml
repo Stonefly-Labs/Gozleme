@@ -1,0 +1,1353 @@
+schemaVersion: '1.0'
+project:
+  slug: gozleme
+  displayName: Gözleme
+  targetRelease: '1.0'
+  interviewDecisionCount: 95
+  reviewFindingCount: 14
+specs:
+- id: GOZ-0000
+  number: 0
+  title: Repository bootstrap and executable engineering foundation
+  phase: foundation
+  release: mvp
+  prompt: docs/prompts/spec-0000.md
+  dependencies: []
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Start on chore/goz-0000-bootstrap
+- id: GOZ-0001
+  number: 1
+  title: Local identity and session security
+  phase: foundation
+  release: mvp
+  prompt: docs/prompts/spec-0001.md
+  dependencies:
+  - GOZ-0000
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0002
+  number: 2
+  title: Organizations and membership
+  phase: foundation
+  release: mvp
+  prompt: docs/prompts/spec-0002.md
+  dependencies:
+  - GOZ-0001
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0003
+  number: 3
+  title: Tenant RLS and visibility scaffolding
+  phase: foundation
+  release: mvp
+  prompt: docs/prompts/spec-0003.md
+  dependencies:
+  - GOZ-0002
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0004
+  number: 4
+  title: Scoped RBAC permission foundation
+  phase: foundation
+  release: mvp
+  prompt: docs/prompts/spec-0004.md
+  dependencies:
+  - GOZ-0003
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0005
+  number: 5
+  title: Publisher identities and canonical capability IDs
+  phase: publishing
+  release: mvp
+  prompt: docs/prompts/spec-0005.md
+  dependencies:
+  - GOZ-0004
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0006
+  number: 6
+  title: Typed manifests for capability families
+  phase: publishing
+  release: mvp
+  prompt: docs/prompts/spec-0006.md
+  dependencies:
+  - GOZ-0005
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0007
+  number: 7
+  title: Immutable revisions and signed attestations
+  phase: publishing
+  release: mvp
+  prompt: docs/prompts/spec-0007.md
+  dependencies:
+  - GOZ-0006
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0008
+  number: 8
+  title: Child capability identities and projections
+  phase: publishing
+  release: mvp
+  prompt: docs/prompts/spec-0008.md
+  dependencies:
+  - GOZ-0007
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0009
+  number: 9
+  title: Filesystem artifact publication
+  phase: publishing
+  release: mvp
+  prompt: docs/prompts/spec-0009.md
+  dependencies:
+  - GOZ-0007
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0010
+  number: 10
+  title: S3-compatible artifact adapter
+  phase: publishing
+  release: mvp
+  prompt: docs/prompts/spec-0010.md
+  dependencies:
+  - GOZ-0009
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0011
+  number: 11
+  title: Azure Blob artifact adapter
+  phase: publishing
+  release: mvp
+  prompt: docs/prompts/spec-0011.md
+  dependencies:
+  - GOZ-0009
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0012
+  number: 12
+  title: Canonical visibility and private discovery
+  phase: discovery
+  release: mvp
+  prompt: docs/prompts/spec-0012.md
+  dependencies:
+  - GOZ-0003
+  - GOZ-0008
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0013
+  number: 13
+  title: PostgreSQL lexical search
+  phase: discovery
+  release: mvp
+  prompt: docs/prompts/spec-0013.md
+  dependencies:
+  - GOZ-0012
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0014
+  number: 14
+  title: Organization-specific catalog overlays
+  phase: discovery
+  release: mvp
+  prompt: docs/prompts/spec-0014.md
+  dependencies:
+  - GOZ-0012
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0015
+  number: 15
+  title: Opt-in local pgvector semantic search
+  phase: discovery
+  release: mvp
+  prompt: docs/prompts/spec-0015.md
+  dependencies:
+  - GOZ-0013
+  - GOZ-0014
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0016
+  number: 16
+  title: Hosted and pluggable embedding providers
+  phase: discovery
+  release: mvp
+  prompt: docs/prompts/spec-0016.md
+  dependencies:
+  - GOZ-0015
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0017
+  number: 17
+  title: Hybrid search and embedding lifecycle
+  phase: discovery
+  release: mvp
+  prompt: docs/prompts/spec-0017.md
+  dependencies:
+  - GOZ-0015
+  - GOZ-0016
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0018
+  number: 18
+  title: Typed declarative policy evaluator
+  phase: governance
+  release: mvp
+  prompt: docs/prompts/spec-0018.md
+  dependencies:
+  - GOZ-0004
+  - GOZ-0012
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0019
+  number: 19
+  title: Trusted facts and approved-use gate
+  phase: governance
+  release: mvp
+  prompt: docs/prompts/spec-0019.md
+  dependencies:
+  - GOZ-0018
+  - GOZ-0007
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0020
+  number: 20
+  title: Policy activation lifecycle and inheritance
+  phase: governance
+  release: mvp
+  prompt: docs/prompts/spec-0020.md
+  dependencies:
+  - GOZ-0018
+  - GOZ-0019
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0021
+  number: 21
+  title: Revision and child approval workflow
+  phase: governance
+  release: mvp
+  prompt: docs/prompts/spec-0021.md
+  dependencies:
+  - GOZ-0019
+  - GOZ-0008
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0022
+  number: 22
+  title: Risk dimensions and reassessment
+  phase: governance
+  release: mvp
+  prompt: docs/prompts/spec-0022.md
+  dependencies:
+  - GOZ-0021
+  - GOZ-0007
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0023
+  number: 23
+  title: Security epochs and authorization receipts
+  phase: governance
+  release: mvp
+  prompt: docs/prompts/spec-0023.md
+  dependencies:
+  - GOZ-0019
+  - GOZ-0020
+  - GOZ-0021
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0024
+  number: 24
+  title: Typed relationship and dependency graph
+  phase: resolution
+  release: mvp
+  prompt: docs/prompts/spec-0024.md
+  dependencies:
+  - GOZ-0008
+  - GOZ-0014
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0025
+  number: 25
+  title: Dependency completeness evidence
+  phase: resolution
+  release: mvp
+  prompt: docs/prompts/spec-0025.md
+  dependencies:
+  - GOZ-0024
+  - GOZ-0022
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0026
+  number: 26
+  title: Compatibility and version constraints
+  phase: resolution
+  release: mvp
+  prompt: docs/prompts/spec-0026.md
+  dependencies:
+  - GOZ-0024
+  - GOZ-0025
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0027
+  number: 27
+  title: Deterministic transitive dependency solving
+  phase: resolution
+  release: mvp
+  prompt: docs/prompts/spec-0027.md
+  dependencies:
+  - GOZ-0026
+  - GOZ-0019
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0028
+  number: 28
+  title: Portable signed-resolution-plan lockfiles
+  phase: resolution
+  release: mvp
+  prompt: docs/prompts/spec-0028.md
+  dependencies:
+  - GOZ-0027
+  - GOZ-0023
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0029
+  number: 29
+  title: Federation source enrollment and pinning
+  phase: federation
+  release: mvp
+  prompt: docs/prompts/spec-0029.md
+  dependencies:
+  - GOZ-0007
+  - GOZ-0023
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0030
+  number: 30
+  title: Verified canonical import and quarantine
+  phase: federation
+  release: mvp
+  prompt: docs/prompts/spec-0030.md
+  dependencies:
+  - GOZ-0029
+  - GOZ-0008
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0031
+  number: 31
+  title: Checkpoint-bound snapshot bootstrap
+  phase: federation
+  release: mvp
+  prompt: docs/prompts/spec-0031.md
+  dependencies:
+  - GOZ-0030
+  - GOZ-0012
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0032
+  number: 32
+  title: Ordered incremental synchronization
+  phase: federation
+  release: mvp
+  prompt: docs/prompts/spec-0032.md
+  dependencies:
+  - GOZ-0031
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0033
+  number: 33
+  title: Revocation freshness and eligibility
+  phase: federation
+  release: mvp
+  prompt: docs/prompts/spec-0033.md
+  dependencies:
+  - GOZ-0032
+  - GOZ-0023
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0034
+  number: 34
+  title: Scoped private sharing grants
+  phase: federation
+  release: mvp
+  prompt: docs/prompts/spec-0034.md
+  dependencies:
+  - GOZ-0033
+  - GOZ-0012
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0035
+  number: 35
+  title: Sharing withdrawal and retention
+  phase: federation
+  release: mvp
+  prompt: docs/prompts/spec-0035.md
+  dependencies:
+  - GOZ-0034
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0036
+  number: 36
+  title: Authority-based conflict reconciliation
+  phase: federation
+  release: mvp
+  prompt: docs/prompts/spec-0036.md
+  dependencies:
+  - GOZ-0032
+  - GOZ-0033
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0037
+  number: 37
+  title: Sandbox isolation and resource boundaries
+  phase: playground
+  release: mvp
+  prompt: docs/prompts/spec-0037.md
+  dependencies:
+  - GOZ-0019
+  - GOZ-0009
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0038
+  number: 38
+  title: Capability testing playground
+  phase: playground
+  release: mvp
+  prompt: docs/prompts/spec-0038.md
+  dependencies:
+  - GOZ-0037
+  - GOZ-0021
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0039
+  number: 39
+  title: Recovery validation and release gates
+  phase: operations
+  release: mvp
+  prompt: docs/prompts/spec-0039.md
+  dependencies:
+  - GOZ-0038
+  - GOZ-0036
+  - GOZ-0017
+  - GOZ-0028
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Await prerequisites and create allowed working branch
