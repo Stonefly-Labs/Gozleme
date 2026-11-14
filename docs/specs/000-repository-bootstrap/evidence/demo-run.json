@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0000",
-  "commit": "ba6f28c526c47f053e052032653b5471b47a78fc",
+  "commit": "03b3228ff06f1d5274cf3039035553619014ba2a",
   "branch": "chore/goz-0000-bootstrap",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-14T21:35:41Z",
-  "finishedAt": "2026-11-14T21:36:25Z",
-  "stackStartupSeconds": 18,
+  "startedAt": "2026-11-14T21:40:22Z",
+  "finishedAt": "2026-11-14T21:41:01Z",
+  "stackStartupSeconds": 13,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
