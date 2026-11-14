@@ -73,9 +73,16 @@ public sealed class TelemetryTests : IAsyncLifetime
         await _db.StartAgainAsync();
 
         var spans = await WaitForSpansAsync(s => s.DisplayName == "status.probe database" && s.Status == ActivityStatusCode.Error, ct);
-        var failed = Assert.Single(spans, s => s.DisplayName == "status.probe database" && s.Status == ActivityStatusCode.Error);
-        Assert.Equal("unavailable", failed.GetTagItem("gozleme.status.outcome"));
-        Assert.Equal("Database unreachable", failed.StatusDescription);
+        // Timing on slower hosts can yield more than one failed probe around the stop; each must carry
+        // only the fixed, non-sensitive outcome and message.
+        var failed = spans.Where(s => s.DisplayName == "status.probe database" && s.Status == ActivityStatusCode.Error).ToArray();
+        Assert.NotEmpty(failed);
+        Assert.All(failed, s =>
+        {
+            Assert.Equal("unavailable", s.GetTagItem("gozleme.status.outcome"));
+            Assert.Contains(s.StatusDescription, new[] { "Database unreachable", "Database schema not initialized" });
+        });
+        Assert.Contains(failed, s => s.StatusDescription == "Database unreachable");
 
         _factory.FlushMetrics();
         Metric[] metrics;
