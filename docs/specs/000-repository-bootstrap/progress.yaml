@@ -12,7 +12,7 @@ stages:
   implement: {status: done, tasks: T001-T040, at: '2026-11-14'}
   demo: {status: passed, record: docs/specs/000-repository-bootstrap/evidence/demo-run.json, commit: 01fc90b69c4f7fa5a2dbd726a328067a348d0165, at: '2026-11-14'}
   converge: {status: passed, rounds: 2, note: 'Round 1 appended T039 (axe a11y, FR-006) and T040 (start-up timing, SC-001); both implemented. Round 2 found no remaining gaps.', at: '2026-11-14'}
-  impactAnalysis: {status: passed, report: docs/specs/000-repository-bootstrap/reviews/impact-analysis.md, findings: 24, revision: 33b4cef, at: '2026-11-14'}
+  impactAnalysis: {status: passed, report: docs/specs/000-repository-bootstrap/reviews/impact-analysis.md, findings: 26, revision: 8ce080c, at: '2026-11-14'}
   roadmapSync: {status: passed, promptRevisionBumps: 39, dependencyChanges: 0, at: '2026-11-14'}
 attempts:
 - {stage: implement, issue: 'Docker build used host obj/ (NETSDK1064)', fix: 'added .dockerignore', result: resolved}
@@ -20,17 +20,12 @@ attempts:
 - {stage: implement, issue: 'pg_roles booleans render as f/t via concat_ws', fix: 'corrected test expectation', result: resolved}
 - {stage: demo, issue: 'demo record working-tree check included regenerated evidence', fix: 'capture tree state at start with glob exclude', result: resolved}
 blockers:
-- id: GOZ-0000-IF-22
-  summary: Stored/searchable logs and telemetry retention not decided (logs currently console-only, Jaeger in-memory).
-  owner: human maintainer
-  resumeAction: Maintainer decides; if yes, add local log store (e.g. Loki) behind the collector and re-run demo/impact analysis.
-  blocksMerge: false
 - id: GOZ-0000-B1
-  summary: GitHub rulesets/branch protection API returns HTTP 403 (private repo requires GitHub Pro/Team or public visibility); protected-main cannot be applied or verified by agent.
+  summary: Protected-main ruleset not yet applied. Repo became public 2026-11-14 (rulesets API now returns []); ruleset to be applied and verified per docs/engineering/github-protection.md.
   owner: human repository owner
   resumeAction: Make rulesets available, apply ruleset in docs/engineering/github-protection.md, verify and record evidence there.
   blocksMerge: false
-nextAction: Await human decision on IF-22 (stored logs), then open PR for human review
+nextAction: Open PR for human review
 evidence:
   tests:
   - {suite: 'backend unit + Testcontainers integration incl. telemetry (dotnet test --solution Gozleme.slnx)', result: '29 passed, 0 failed', at: '2026-11-14'}
@@ -40,7 +35,7 @@ evidence:
   - {suite: 'helm lint + template', result: passed, at: '2026-11-14'}
   - {suite: 'gitleaks git history scan', result: 'no leaks found', at: '2026-11-14'}
   demos:
-  - {record: docs/specs/000-repository-bootstrap/evidence/demo-run.json, result: passed, scenarios: 7, at: '2026-11-14'}
+  - {record: docs/specs/000-repository-bootstrap/evidence/demo-run.json, result: passed, scenarios: 8, commit: 9c6d32d6a80197eee5b704155616d3f7914be6a3, at: '2026-11-14'}
   timings:
   - {measure: 'docker compose build --no-cache --pull (base images present locally)', seconds: 12}
   - {measure: 'docker compose up --wait on fresh volume, images built', seconds: 17}
@@ -50,4 +45,5 @@ evidence:
   - docs/specs/000-repository-bootstrap/evidence/screenshots/03-recovered-healthy.png
   - docs/specs/000-repository-bootstrap/evidence/screenshots/04-api-unreachable.png
   - docs/specs/000-repository-bootstrap/evidence/screenshots/05-distributed-trace-jaeger.png
+  - docs/specs/000-repository-bootstrap/evidence/screenshots/06-stored-logs-grafana.png
   reviews: []

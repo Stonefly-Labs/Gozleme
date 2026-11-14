@@ -31,7 +31,6 @@ specs:
     humanReview: pending
     merge: pending
   blockers:
-  - IF-22 stored/searchable logs and telemetry retention await human decision (see reviews/impact-analysis.md)
   - GitHub rulesets/branch protection API returns HTTP 403 on this private repo plan; protected-main must be applied and verified by a human owner (see docs/specs/000-repository-bootstrap/progress.yaml GOZ-0000-B1)
   impactFindings:
   - GOZ-0000-IF-01
@@ -58,6 +57,8 @@ specs:
   - GOZ-0000-IF-22
   - GOZ-0000-IF-23
   - GOZ-0000-IF-24
+  - GOZ-0000-IF-25
+  - GOZ-0000-IF-26
   evidence:
     tests:
     - docs/specs/000-repository-bootstrap/progress.yaml
@@ -69,10 +70,11 @@ specs:
     - docs/specs/000-repository-bootstrap/evidence/screenshots/03-recovered-healthy.png
     - docs/specs/000-repository-bootstrap/evidence/screenshots/04-api-unreachable.png
     - docs/specs/000-repository-bootstrap/evidence/screenshots/05-distributed-trace-jaeger.png
+    - docs/specs/000-repository-bootstrap/evidence/screenshots/06-stored-logs-grafana.png
     reviews:
     - docs/specs/000-repository-bootstrap/reviews/impact-analysis.md
     - docs/specs/000-repository-bootstrap/reviews/impact-findings.json
-  nextAction: Await human decision on IF-22 (stored logs), then open PR for human review; human applies/verifies protected-main (IF-12)
+  nextAction: Open PR for human review; human applies/verifies protected-main ruleset (IF-12)
 - id: GOZ-0001
   number: 1
   title: Local identity and session security

@@ -10,9 +10,15 @@ queried the GitHub API read-only:
 | `GET /repos/Stonefly-Labs/gozleme/rulesets` | HTTP 403 — "Upgrade to GitHub Pro or make this repository public to enable this feature." |
 | `GET /repos/Stonefly-Labs/gozleme/branches/main/protection` | HTTP 403 — same message |
 
-Rulesets and branch protection are therefore **not available** on this private repository's
-current plan, and no protection of `main` is claimed. The agent did not attempt to change
-repository settings.
+Later on 2026-11-14 the maintainer made the repository **public**. Re-checked read-only:
+
+| Request | Result |
+|---|---|
+| `GET /repos/Stonefly-Labs/gozleme/rulesets` | `[]` — rulesets available, **none configured** |
+| `GET /repos/Stonefly-Labs/gozleme/branches/main/protection` | HTTP 404 "Branch not protected" |
+| `GET /repos/Stonefly-Labs/gozleme` | `allow_auto_merge: false` |
+
+No protection of `main` is in effect or claimed. The agent has not changed repository settings.
 
 ## Required ruleset for `main` (to be applied by a human owner)
 
@@ -34,8 +40,7 @@ repository settings.
 
 ## Verification steps (human)
 
-1. Make rulesets available (upgrade to a plan that supports them for private repos, or make the
-   repository public).
+1. ~~Make rulesets available~~ — done (repository public).
 2. Apply the ruleset above.
 3. Verify: `gh api repos/Stonefly-Labs/gozleme/rulesets` lists it as active; attempt a direct
    push to `main` from a non-bypass account and confirm rejection.
