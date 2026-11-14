@@ -1,16 +1,17 @@
 {
   "specId": "GOZ-0000",
-  "commit": "031e56635f19d6eede448762c55e7ef5112cee1c",
+  "commit": "01fc90b69c4f7fa5a2dbd726a328067a348d0165",
   "branch": "chore/goz-0000-bootstrap",
-  "workingTreeClean": false,
+  "workingTreeCleanAtStart": true,
   "environment": {
     "os": "Darwin 25.5.0 arm64",
     "docker": "29.8.2",
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-14T21:04:47Z",
-  "finishedAt": "2026-11-14T21:05:28Z",
+  "startedAt": "2026-11-14T21:11:20Z",
+  "finishedAt": "2026-11-14T21:11:48Z",
+  "stackStartupSeconds": 3,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
