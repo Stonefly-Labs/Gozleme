@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0000
-stage: impact-analysis
+stage: pr-preparation
 status: in-progress
 promptRevision: 1
 branch: chore/goz-0000-bootstrap
@@ -12,8 +12,8 @@ stages:
   implement: {status: done, tasks: T001-T040, at: '2026-11-14'}
   demo: {status: passed, record: docs/specs/000-repository-bootstrap/evidence/demo-run.json, commit: 01fc90b69c4f7fa5a2dbd726a328067a348d0165, at: '2026-11-14'}
   converge: {status: passed, rounds: 2, note: 'Round 1 appended T039 (axe a11y, FR-006) and T040 (start-up timing, SC-001); both implemented. Round 2 found no remaining gaps.', at: '2026-11-14'}
-  impactAnalysis: {status: in-progress}
-  roadmapSync: {status: pending}
+  impactAnalysis: {status: passed, report: docs/specs/000-repository-bootstrap/reviews/impact-analysis.md, findings: 19, revision: 930128e, at: '2026-11-14'}
+  roadmapSync: {status: passed, promptRevisionBumps: 22, dependencyChanges: 0, at: '2026-11-14'}
 attempts:
 - {stage: implement, issue: 'Docker build used host obj/ (NETSDK1064)', fix: 'added .dockerignore', result: resolved}
 - {stage: implement, issue: 'jsdom DOMException identity broke timeout detection test', fix: 'match error by name', result: resolved}
@@ -25,7 +25,7 @@ blockers:
   owner: human repository owner
   resumeAction: Make rulesets available, apply ruleset in docs/engineering/github-protection.md, verify and record evidence there.
   blocksMerge: false
-nextAction: Complete Spec Impact Analyst review, Roadmap Steward sync, then open PR for human review
+nextAction: Await human decision on IF-11 (OpenTelemetry ownership), then open PR for human review
 evidence:
   tests:
   - {suite: 'backend unit + Testcontainers integration (dotnet test --solution Gozleme.slnx)', result: '26 passed, 0 failed', at: '2026-11-14'}
