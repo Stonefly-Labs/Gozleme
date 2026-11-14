@@ -45,6 +45,7 @@ def main() -> int:
     for a in ("spec", "evidence", "results", "log", "started", "finished", "result"):
         p.add_argument(f"--{a}", required=True)
     p.add_argument("--startup-seconds", type=int, default=None)
+    p.add_argument("--tree-clean", choices=["true", "false"], required=True)
     p.add_argument("--commands", nargs="*", default=[])
     a = p.parse_args()
     root = Path(__file__).resolve().parents[2]
@@ -63,7 +64,7 @@ def main() -> int:
         "specId": a.spec,
         "commit": sh("git", "rev-parse", "HEAD"),
         "branch": sh("git", "rev-parse", "--abbrev-ref", "HEAD"),
-        "workingTreeClean": sh("git", "status", "--porcelain") == "",
+        "workingTreeCleanAtStart": a.tree_clean == "true",
         "environment": {
             "os": f"{platform.system()} {platform.release()} {platform.machine()}",
             "docker": sh("docker", "version", "--format", "{{.Server.Version}}"),

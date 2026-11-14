@@ -11,6 +11,8 @@ TMP="$ROOT/.demo-tmp"
 cd "$ROOT"
 
 STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+# Tree state at start, ignoring the evidence this run is about to regenerate.
+TREE_CLEAN=$([ -z "$(git status --porcelain -- . ':(exclude)docs/specs/*/evidence')" ] && echo true || echo false)
 mkdir -p "$TMP" "$EVIDENCE/screenshots"
 rm -f "$EVIDENCE"/screenshots/*.png "$TMP"/*.json "$TMP"/*.log
 
@@ -37,7 +39,7 @@ COMMANDS+=("docker compose logs --no-color")
 FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 python3 "$ROOT/scripts/demo/write_demo_record.py" \
   --spec GOZ-0000 --evidence "$EVIDENCE" --results "$TMP/playwright-results.json" \
-  --log "$TMP/compose.log" --started "$STARTED_AT" --finished "$FINISHED_AT" --result "$result" --startup-seconds "$STARTUP_SECONDS" \
+  --log "$TMP/compose.log" --started "$STARTED_AT" --finished "$FINISHED_AT" --result "$result" --startup-seconds "$STARTUP_SECONDS" --tree-clean "$TREE_CLEAN" \
   --commands "${COMMANDS[@]}"
 record_status=$?
 
