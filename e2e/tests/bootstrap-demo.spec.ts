@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { API_URL } from "../playwright.config";
 import { compose, forbiddenStrings, repoRoot } from "./compose";
@@ -13,6 +14,12 @@ test.describe.configure({ mode: "serial" });
 async function expectNoSecrets(page: Page, ...bodies: string[]) {
   const text = [await page.locator("body").innerText(), ...bodies].join("\n");
   for (const s of forbiddenStrings) expect(text, `must not contain ${s}`).not.toContain(s);
+}
+
+/** FR-006: WCAG 2.1 A/AA checks (contrast, landmarks, names) on the current dashboard state. */
+async function expectAccessible(page: Page) {
+  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 }
 
 test.afterAll(() => {
@@ -40,6 +47,7 @@ test("healthy: dashboard shows real API and database status matching the API", a
   );
   await expect(page.getByTestId("last-checked")).toContainText("Last checked");
   await expectNoSecrets(page, await apiRes.text());
+  await expectAccessible(page);
   await page.screenshot({ path: `${shots}/01-healthy.png`, fullPage: true });
 });
 
@@ -61,6 +69,7 @@ test("degraded: stopping PostgreSQL shows Degraded within 15 s, readiness 503, l
   const status = await request.get(`${API_URL}/api/v1/status`);
   expect((await status.json()).status).toBe("degraded");
   await expectNoSecrets(page, await status.text(), await ready.text());
+  await expectAccessible(page);
   await page.screenshot({ path: `${shots}/02-database-down-degraded.png`, fullPage: true });
 });
 
@@ -83,6 +92,7 @@ test("unreachable: stopping the API shows API unreachable and no stale database 
   await expect(page.getByTestId("db-schema-version")).toHaveCount(0);
   await expect(page.getByTestId("api-version")).toHaveCount(0);
   await expectNoSecrets(page);
+  await expectAccessible(page);
   await page.screenshot({ path: `${shots}/04-api-unreachable.png`, fullPage: true });
 
   compose("start", "api");

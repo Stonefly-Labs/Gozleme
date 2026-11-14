@@ -44,6 +44,7 @@ def main() -> int:
     p = argparse.ArgumentParser()
     for a in ("spec", "evidence", "results", "log", "started", "finished", "result"):
         p.add_argument(f"--{a}", required=True)
+    p.add_argument("--startup-seconds", type=int, default=None)
     p.add_argument("--commands", nargs="*", default=[])
     a = p.parse_args()
     root = Path(__file__).resolve().parents[2]
@@ -71,6 +72,7 @@ def main() -> int:
         },
         "startedAt": a.started,
         "finishedAt": a.finished,
+        "stackStartupSeconds": a.startup_seconds,
         "commands": a.commands,
         "result": result,
         "assertions": checks,

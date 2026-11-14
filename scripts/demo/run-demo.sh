@@ -18,7 +18,9 @@ COMMANDS=()
 run() { COMMANDS+=("$*"); echo "+ $*"; "$@"; }
 
 status=0
+up_started=$(date +%s)
 run docker compose up -d --build --wait || status=$?
+STARTUP_SECONDS=$(( $(date +%s) - up_started ))
 if [ "$status" -ne 0 ]; then
   echo "Stack failed to start; demo BLOCKED" >&2
   result=blocked
@@ -35,7 +37,7 @@ COMMANDS+=("docker compose logs --no-color")
 FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 python3 "$ROOT/scripts/demo/write_demo_record.py" \
   --spec GOZ-0000 --evidence "$EVIDENCE" --results "$TMP/playwright-results.json" \
-  --log "$TMP/compose.log" --started "$STARTED_AT" --finished "$FINISHED_AT" --result "$result" \
+  --log "$TMP/compose.log" --started "$STARTED_AT" --finished "$FINISHED_AT" --result "$result" --startup-seconds "$STARTUP_SECONDS" \
   --commands "${COMMANDS[@]}"
 record_status=$?
 
