@@ -1,7 +1,7 @@
 schemaVersion: '1.0'
 specId: GOZ-0000
-stage: human-review
-status: ready-for-human-merge
+stage: merged
+status: complete
 promptRevision: 1
 branch: chore/goz-0000-bootstrap
 featureDirectory: docs/specs/000-repository-bootstrap
@@ -14,6 +14,7 @@ stages:
   converge: {status: passed, rounds: 2, note: 'Round 1 appended T039 (axe a11y, FR-006) and T040 (start-up timing, SC-001); both implemented. Round 2 found no remaining gaps.', at: '2026-11-14'}
   impactAnalysis: {status: passed, report: docs/specs/000-repository-bootstrap/reviews/impact-analysis.md, findings: 26, revision: 8ce080c, at: '2026-11-14'}
   ci: {status: passed, pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/4', jobs: 6, note: 'All jobs incl. Linux autonomous demo passed after fixing a CI-only timing assertion', at: '2026-11-14'}
+  merge: {status: verified, pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/4', mergeCommit: 8b25d12382a0741eff17ae334a8948122eeb1860, mergedBy: christopherhouse, mergedAt: '2026-11-14T21:59:34Z', verifiedBy: 'gh pr view + git merge-base --is-ancestor', at: '2026-11-14'}
   roadmapSync: {status: passed, promptRevisionBumps: 39, dependencyChanges: 0, at: '2026-11-14'}
 attempts:
 - {stage: ci, issue: 'TelemetryTests assumed exactly one failed probe span; CI produced two', fix: 'assert all failed spans carry fixed messages', result: resolved}
@@ -28,7 +29,7 @@ blockers:
   owner: human repository owner
   resumeAction: Make rulesets available, apply ruleset in docs/engineering/github-protection.md, verify and record evidence there.
   blocksMerge: false
-nextAction: Human review and merge of PR #4; agent verifies merge before marking complete
+nextAction: None for GOZ-0000; protected-main ruleset remains a human action (GOZ-0000-B1)
 evidence:
   tests:
   - {suite: 'backend unit + Testcontainers integration incl. telemetry (dotnet test --solution Gozleme.slnx)', result: '29 passed, 0 failed', at: '2026-11-14'}
