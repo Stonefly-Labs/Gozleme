@@ -41,7 +41,7 @@ logs: ## Follow stack logs
 ps: ## Show stack status
 	docker compose ps -a
 
-reset: ## Stop the stack and delete the database volume
+reset: ## Stop the stack and delete ALL volumes (database, Loki logs, Prometheus metrics)
 	docker compose down -v --remove-orphans
 
 validate: ## Governance: registry/manifest schemas, prompts, register sync, branch-name rules

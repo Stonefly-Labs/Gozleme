@@ -1,7 +1,7 @@
 # GOZ-0000 post-convergence spec impact analysis
 
 **Source spec:** GOZ-0000 — Repository bootstrap and executable engineering foundation
-**Implementation revision:** current `33b4cef` (foundational OpenTelemetry `ba6f28c`); earlier passes at `e7904ad` and `930128e` on `chore/goz-0000-bootstrap` (corrective commit `3273724`; demo re-run on a clean tree recorded at `b4d82e1`, and `930128e` adds only evidence)
+**Implementation revision:** current `8ce080c` (stored telemetry `9c6d32d`, fixes `511b904`); before that `33b4cef` (foundational OpenTelemetry `ba6f28c`); earlier passes at `e7904ad` and `930128e` on `chore/goz-0000-bootstrap` (corrective commit `3273724`; demo re-run on a clean tree recorded at `b4d82e1`, and `930128e` adds only evidence)
 **Analyst:** Spec Impact Analyst (`analyze-spec-impact`), 2026-11-14
 **Structured findings:** `docs/specs/000-repository-bootstrap/reviews/impact-findings.json` (validates against `.gozleme/schemas/impact-findings.schema.json`)
 
@@ -55,9 +55,11 @@
 | GOZ-0000-IF-19 | low | No JS dependency vulnerability check; NuGet audit is only the SDK default | 0000 | corrected in `3273724` |
 | GOZ-0000-IF-20 | high | The browser telemetry ingestion route is unauthenticated, so spans can be spoofed (forged `service.name`) and the route abused | 0001, 0039 | applied to prompts |
 | GOZ-0000-IF-21 | high | Telemetry is sensitive, cross-tenant and visible to operators. `db.query.text`, `http.url`/`http.target` and `user_agent.original` are captured, and redaction covers only credential-like data | 0001–0003, 0012–0017, 0034 | applied to prompts |
-| GOZ-0000-IF-22 | medium | Whether to ship stored or searchable logs and telemetry, and how long to keep them, is undecided (logs go to the console only; Jaeger stores in memory) | 0023, 0035, 0039 | **requires human decision** |
-| GOZ-0000-IF-23 | low | Collector config is not hot-reloaded (already documented). Helm ships no collector, so operators must supply their own redaction | 0039 | documented; Helm README note recommended |
-| GOZ-0000-IF-24 | low | Browser ingestion route drops any path prefix of `OTEL_EXPORTER_OTLP_ENDPOINT` | 0000, 0039 | corrective implementation recommended |
+| GOZ-0000-IF-22 | medium | Whether to ship stored or searchable logs and telemetry, and how long to keep them | 0023, 0035, 0039 | decided by maintainer 2026-11-14 (local stack at least); implemented in `9c6d32d`; applied to prompts |
+| GOZ-0000-IF-23 | low | Collector config is not hot-reloaded (already documented). Helm ships no collector, so operators must supply their own redaction | 0039 | corrected in `511b904` |
+| GOZ-0000-IF-24 | low | Browser ingestion route drops any path prefix of `OTEL_EXPORTER_OTLP_ENDPOINT` | 0000, 0039 | corrected in `511b904` |
+| GOZ-0000-IF-25 | medium | Anonymous Grafana, Loki with auth disabled, and Prometheus and Jaeger with no authentication are local-only and must never become Helm or production defaults | 0039 | applied to prompts |
+| GOZ-0000-IF-26 | low | Jaeger traces are in-memory, so log-to-trace links dangle after a restart; `make reset` help text understates what it deletes | 0039 (+0000 docs) | applied to prompts; minor docs fix recommended |
 
 The evidence, recommendation and file and line references for each finding are in `impact-findings.json`.
 
@@ -131,4 +133,27 @@ Each prompt also has one tailored "Spec focus" line. GOZ-0001 decides how the in
 - IF-12: protected `main`.
 
 **Corrective GOZ-0000 item.** IF-24: in `route.ts:26`, `new URL("/v1/traces", endpoint)` discards any path prefix of the endpoint. Fix it by appending `/v1/traces` to the base endpoint, and add a unit test with a path-prefixed endpoint. Optional, from IF-23: add a note to the Helm README that operators must apply equivalent redaction in their own collector.
+
+## Re-pass at `8ce080c`: stored telemetry (2026-11-14)
+
+**Maintainer decision on IF-22.** Quoted verbatim: "yes for local stack at the veryleast we want that stuff". `9c6d32d` implements it for the local stack:
+
+- **Logs:** Loki, fed OTLP logs by the collector, stores `trace_id` as structured metadata, with a 7-day retention on the `lokidata` volume.
+- **Metrics:** Prometheus scrapes the collector and keeps 7 days on the `promdata` volume.
+- **Viewer:** Grafana is provisioned with Loki, Jaeger and Prometheus, with links from logs to traces, on `127.0.0.1:3001`.
+
+Helm still ships no telemetry backends. The demo passed 8 of 8, including the new stored-logs scenario.
+
+**Corrections verified.** Both landed in `511b904`:
+- IF-24: `route.ts:27` now keeps the endpoint's path prefix, and a unit test covers it.
+- IF-23: the Helm README now requires operator collectors to redact credential-like data.
+
+**Prompt edits.** I added a "Stored telemetry" section with provenance to three prompts:
+- **GOZ-0023:** receipts and epochs must never rely on telemetry stores, which are bounded by retention and wiped by `make reset`.
+- **GOZ-0035:** CR-07 retention covers the telemetry stores. Private data never enters them, and the retention story states the telemetry retention bound.
+- **GOZ-0039:** the release gate covers retention, whether backups include the telemetry volumes, the need for operator-provided backends in Helm, no unauthenticated telemetry in Helm defaults (IF-25), and the in-memory trace limitation (IF-26).
+
+No prompt said that logs go only to the console, so nothing needed correcting there.
+
+**Still open:** IF-12, protected `main`, which is a human action.
 

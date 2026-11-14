@@ -38,7 +38,9 @@ browser → Next.js → API → PostgreSQL share one trace. The local collector
 (`deploy/otel/collector.yaml`) strips credential-like attributes and values, exports traces to
 Jaeger, metrics to a Prometheus scrape endpoint (stored by Prometheus) and logs to Loki; Grafana
 views all three with log ↔ trace links. Local retention is 7 days (`make reset` deletes the
-volumes). The collector and Jaeger
+volumes). Jaeger keeps traces in memory locally, so traces (and log → trace links) do not survive a
+Jaeger restart (GOZ-0000-IF-26). Grafana, Loki, Prometheus and Jaeger are unauthenticated and bound
+to 127.0.0.1 for local use only; never expose them or reuse this setup in production (IF-25). The collector and Jaeger
 are never health dependencies; stopping them does not affect the app. After editing the collector
 config run `docker compose restart otel-collector`. Every new spec must instrument its code paths
 (spans/metrics via the `Gozleme.Api` ActivitySource/Meter) and assert them in tests and the demo.

@@ -1,6 +1,6 @@
 {
   "sourceSpec": "GOZ-0000",
-  "implementationRevision": "33b4cef (chore/goz-0000-bootstrap; foundational OpenTelemetry in ba6f28c, demo evidence 7/7 passed in 33b4cef). Earlier passes at e7904ad and 930128e.",
+  "implementationRevision": "8ce080c (chore/goz-0000-bootstrap; stored telemetry 9c6d32d; IF-23/IF-24 fixes 511b904; demo 8/8 passed with evidence in 8ce080c). Earlier passes at e7904ad, 930128e, 33b4cef.",
   "analyzedAt": "2026-11-14",
   "findings": [
     {
@@ -430,7 +430,8 @@
       "evidence": [
         "deploy/otel/collector.yaml logs pipeline exports only to the debug (console) exporter",
         "compose.yaml jaeger service uses default in-memory storage, so traces are lost on restart; Prometheus is only a scrape endpoint (:8889), with no storage",
-        "docs/engineering/local-development.md:15 logs via make logs and docker compose logs otel-collector"
+        "docs/engineering/local-development.md:15 logs via make logs and docker compose logs otel-collector",
+        "Re-pass at 8ce080c: compose.yaml loki (lokidata volume, deploy/observability/loki.yaml retention_period 168h, allow_structured_metadata), prometheus (promdata, --storage.tsdb.retention.time=7d, scrapes otel-collector:8889), grafana (provisioned Loki/Jaeger/Prometheus with trace_id derived fields); collector logs pipeline exports otlp_http/loki; demo scenario for stored, trace-correlated, secret-free logs passed (06-stored-logs-grafana.png)"
       ],
       "affectedSpecs": [
         "GOZ-0023",
@@ -438,7 +439,7 @@
         "GOZ-0039"
       ],
       "recommendation": "Human decides whether Gözleme ships durable, searchable log, trace or metric storage (local and Helm) and its retention and erasure policy, which interacts with CR-07 deletion and with audit receipts. Until then, prompts carry no storage or retention requirement.",
-      "disposition": "requires-human-decision"
+      "disposition": "decided by maintainer 2026-11-14 (\"yes for local stack at the veryleast we want that stuff\"); implemented in 9c6d32d for the local stack; Helm still requires operator-provided backends; applied to GOZ-0023, GOZ-0035, GOZ-0039"
     },
     {
       "id": "GOZ-0000-IF-23",
@@ -447,13 +448,14 @@
       "evidence": [
         "compose.yaml otel-collector mounts deploy/otel/collector.yaml read-only; changes take effect only after a restart",
         "docs/engineering/local-development.md:37-38 already documents running docker compose restart otel-collector",
-        "deploy/helm/gozleme: telemetry.* only points at an operator-provided OTLP endpoint; the redaction processors exist only in the local collector config"
+        "deploy/helm/gozleme: telemetry.* only points at an operator-provided OTLP endpoint; the redaction processors exist only in the local collector config",
+        "Re-pass: deploy/helm/gozleme/README.md:35-37 redaction requirement"
       ],
       "affectedSpecs": [
         "GOZ-0039"
       ],
       "recommendation": "No prompt change needed for the reload caveat, which is documented. For Helm, document in the chart README that operators must apply equivalent redaction in their own collector, since the app-side no-secret rules are the primary control. GOZ-0039 covers this through its Helm telemetry gate.",
-      "disposition": "documented; Helm README note recommended (non-blocking)"
+      "disposition": "corrected in 511b904 (Helm README now requires operator collectors to redact credential-like keys and values; reload caveat already documented)"
     },
     {
       "id": "GOZ-0000-IF-24",
@@ -461,14 +463,45 @@
       "title": "Browser ingestion route drops any path prefix of the OTLP endpoint",
       "evidence": [
         "web/src/app/api/otel/v1/traces/route.ts:26 new URL(\"/v1/traces\", endpoint) resolves an absolute path, so an endpoint such as https://otel.example/otlp is forwarded to https://otel.example/v1/traces",
-        "The OTLP/HTTP exporter convention appends v1/traces to the configured base endpoint path; the server-side @vercel/otel exporter uses the same variable"
+        "The OTLP/HTTP exporter convention appends v1/traces to the configured base endpoint path; the server-side @vercel/otel exporter uses the same variable",
+        "Re-pass: route.ts:27 forwards to `${endpoint.replace(/\\/+$/, \"\")}/v1/traces`; route.test.ts:23 'preserves a path prefix on the collector endpoint'"
       ],
       "affectedSpecs": [
         "GOZ-0000",
         "GOZ-0039"
       ],
       "recommendation": "Corrective change in GOZ-0000: append the signal path to the endpoint (trim the trailing slash, then add /v1/traces) and add a unit test with a path-prefixed endpoint.",
-      "disposition": "corrective-implementation-recommended"
+      "disposition": "corrected in 511b904"
+    },
+    {
+      "id": "GOZ-0000-IF-25",
+      "severity": "medium",
+      "title": "Unauthenticated local telemetry viewers must never become Helm or production defaults",
+      "evidence": [
+        "compose.yaml grafana: GF_AUTH_ANONYMOUS_ENABLED=true, GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer, GF_USERS_VIEWERS_CAN_EDIT=true; port bound to 127.0.0.1:3001",
+        "deploy/observability/loki.yaml auth_enabled: false; Prometheus and Jaeger have no authentication; all are bound to 127.0.0.1",
+        "Stored telemetry is cross-tenant operator data (GOZ-0000-IF-21; R3-19)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "Keep these settings local-only. Any future Helm or production packaging of telemetry backends requires authentication and must not enable anonymous access. GOZ-0039 verifies this as a release gate.",
+      "disposition": "applied-to-future-prompts (GOZ-0039); acceptable as-is for the local stack"
+    },
+    {
+      "id": "GOZ-0000-IF-26",
+      "severity": "low",
+      "title": "Trace storage is not durable while logs and metrics are",
+      "evidence": [
+        "compose.yaml jaeger service has no storage configuration or volume (default in-memory)",
+        "Grafana Loki derived fields link trace_id into Jaeger; those links dangle after a Jaeger restart",
+        "Makefile:44 help text says reset deletes 'the database volume', but `docker compose down -v` also deletes lokidata and promdata"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "Document the limitation (or add Jaeger persistent storage if the maintainer wants durable traces locally), and update the `make reset` help text to say it deletes all volumes.",
+      "disposition": "applied-to-future-prompts (GOZ-0039); minor GOZ-0000 docs fix recommended"
     }
   ],
   "reanalyzedAt": "2026-11-14"
