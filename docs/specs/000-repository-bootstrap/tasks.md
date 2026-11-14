@@ -147,3 +147,11 @@ MVP = Phases 1–3 (healthy dashboard). Then US2 failure states + boundary, then
 - [X] T046 [US5] Helm: `telemetry.otlpEndpoint` value wired to all workloads
 - [X] T047 [US5] Demo: assert cross-service trace and metrics via Jaeger query API and Prometheus endpoint, secret-free; screenshot of the trace in Jaeger UI; collector-down resilience check
 - [X] T048 [US5] Docs: README, local-development, quickstart, data-model telemetry section, PR evidence
+
+---
+
+## Phase 11: Stored telemetry (maintainer decision GOZ-0000-IF-22, 2026-11-14)
+
+- [X] T049 [US5] Loki (`deploy/observability/loki.yaml`), Prometheus (`deploy/observability/prometheus.yaml`), Grafana provisioning with log↔trace links; collector logs pipeline → Loki; Compose services and volumes
+- [X] T050 [US5] Demo: outage warnings stored in Loki with `trace_id` resolving to the Jaeger trace, metrics stored in Prometheus, no secrets in stored logs; Grafana Explore screenshot
+- [X] T051 [US5] Docs: spec FR-022a, research R9, data model, quickstart V13, local development, README

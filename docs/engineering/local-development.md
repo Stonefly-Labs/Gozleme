@@ -12,7 +12,10 @@ Azure, AWS, OIDC or embedding provider is used.
 | Seed data | None yet — GOZ-0000 has no product entities. Later specs add deterministic synthetic seeds. |
 | Traces (Jaeger) | <http://localhost:16686> — services `gozleme-web-browser`, `gozleme-web`, `gozleme-api`, `gozleme-migrator` |
 | Metrics (Prometheus format) | <http://localhost:8889/metrics> |
-| Logs | `make logs` (JSON with TraceId/SpanId) and `docker compose logs otel-collector` (OTLP logs) |
+| Viewer for logs, traces, metrics (Grafana) | <http://localhost:3001> (anonymous read-only; Explore → Loki/Jaeger/Prometheus) |
+| Stored logs (Loki) | Grafana Explore, or `curl -G localhost:3100/loki/api/v1/query_range --data-urlencode 'query={service_name="gozleme-api"}'` |
+| Stored metrics (Prometheus) | <http://localhost:9090> |
+| Container logs | `make logs` (JSON with TraceId/SpanId) |
 | Send telemetry from a process outside Compose | `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` (gRPC) or `:4318` (HTTP) |
 | Tests | `make test` (backend unit + Testcontainers integration, frontend unit) |
 | Lint | `make lint` |
@@ -33,7 +36,9 @@ it is never created or required. Set `GOZLEME_POSTGRES_IMAGE=postgres:17-alpine`
 OpenTelemetry runs through every tier from GOZ-0000 on (maintainer decision, GOZ-0000-IF-11):
 browser → Next.js → API → PostgreSQL share one trace. The local collector
 (`deploy/otel/collector.yaml`) strips credential-like attributes and values, exports traces to
-Jaeger, metrics to a Prometheus scrape endpoint and logs to its console. The collector and Jaeger
+Jaeger, metrics to a Prometheus scrape endpoint (stored by Prometheus) and logs to Loki; Grafana
+views all three with log ↔ trace links. Local retention is 7 days (`make reset` deletes the
+volumes). The collector and Jaeger
 are never health dependencies; stopping them does not affect the app. After editing the collector
 config run `docker compose restart otel-collector`. Every new spec must instrument its code paths
 (spans/metrics via the `Gozleme.Api` ActivitySource/Meter) and assert them in tests and the demo.

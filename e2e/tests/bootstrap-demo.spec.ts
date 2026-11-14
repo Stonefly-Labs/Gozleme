@@ -1,8 +1,17 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { API_URL } from "../playwright.config";
-import { compose, forbiddenStrings, repoRoot } from "./compose";
-import { JAEGER_URL, METRICS_URL, recentSpans, servicesByTrace } from "./telemetry";
+import { compose, forbiddenStrings, repoRoot, secretStrings } from "./compose";
+import {
+  GRAFANA_URL,
+  JAEGER_URL,
+  METRICS_URL,
+  promQuery,
+  recentSpans,
+  servicesByTrace,
+  storedLogs,
+  traceById,
+} from "./telemetry";
 
 /**
  * GOZ-0000 autonomous demo: live dashboard reading real API + PostgreSQL status, real
@@ -13,8 +22,12 @@ const shots = `${repoRoot}docs/specs/000-repository-bootstrap/evidence/screensho
 test.describe.configure({ mode: "serial" });
 
 async function expectNoSecrets(page: Page, ...bodies: string[]) {
+  await expectNotContained(page, forbiddenStrings, ...bodies);
+}
+
+async function expectNotContained(page: Page, strings: string[], ...bodies: string[]) {
   const text = [await page.locator("body").innerText(), ...bodies].join("\n");
-  for (const s of forbiddenStrings) expect(text, `must not contain ${s}`).not.toContain(s);
+  for (const s of strings) expect(text, `must not contain ${s}`).not.toContain(s);
 }
 
 /** FR-006: WCAG 2.1 A/AA checks (contrast, landmarks, names) on the current dashboard state. */
@@ -149,20 +162,69 @@ test("observability: one trace threads browser → web → API → PostgreSQL, w
   expect(trace.some((s) => s.service === "gozleme-web-browser" && /fetch|GET/i.test(s.name))).toBe(true);
   expect(trace.some((s) => s.service === "gozleme-api" && s.name === "status.probe database")).toBe(true);
   const telemetryText = JSON.stringify(trace);
-  for (const s of forbiddenStrings.filter((f) => f !== "Exception")) expect(telemetryText, `trace must not contain ${s}`).not.toContain(s);
+  for (const s of secretStrings) expect(telemetryText, `trace must not contain ${s}`).not.toContain(s);
 
   const metrics = await (await request.get(METRICS_URL)).text();
   expect(metrics).toMatch(/gozleme_status_checks_total\{[^}]*gozleme_status_outcome="healthy"[^}]*service_name="gozleme-api"/);
   expect(metrics).toContain("http_server_request_duration_seconds");
-  for (const s of [...forbiddenStrings.filter((f) => f !== "Exception"), "Host=", "Username="]) {
+  for (const s of [...secretStrings, "Host=", "Username="]) {
     expect(metrics, `metrics must not contain ${s}`).not.toContain(s);
   }
 
   await page.goto(`${JAEGER_URL}/trace/${traceId}`);
   await expect(page.getByText("gozleme-web-browser").first()).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("status.probe database").first()).toBeVisible();
-  await expectNoSecrets(page);
+  await expectNotContained(page, secretStrings);
   await page.screenshot({ path: `${shots}/05-distributed-trace-jaeger.png`, fullPage: false });
+});
+
+test("stored logs: outage warnings are stored in Loki, correlated to their trace, metrics stored, no secrets", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("overall-status")).toHaveText("Healthy");
+  compose("stop", "postgres");
+  await expect(page.getByTestId("overall-status")).toHaveText("Degraded", { timeout: 15_000 });
+  compose("start", "postgres");
+  await expect(page.getByTestId("overall-status")).toHaveText("Healthy", { timeout: 30_000 });
+
+  let correlated: { traceId: string; line: string } | undefined;
+  await expect
+    .poll(
+      async () => {
+        const logs = await storedLogs('{service_name="gozleme-api"} |= "Database probe failed"', 5);
+        for (const log of logs.filter((l) => l.labels.trace_id)) {
+          const spans = await traceById(log.labels.trace_id!);
+          if (spans.some((s) => s.name === "status.probe database")) {
+            correlated = { traceId: log.labels.trace_id!, line: log.line };
+            return true;
+          }
+        }
+        return false;
+      },
+      { timeout: 45_000, intervals: [2000] },
+    )
+    .toBe(true);
+  expect(correlated!.line).toBe("Database probe failed (NpgsqlException)");
+
+  const allLogs = await storedLogs('{service_name=~"gozleme-.*"}', 15);
+  expect(allLogs.length).toBeGreaterThan(0);
+  const logText = JSON.stringify(allLogs);
+  for (const s of [...secretStrings, "Host=", "Username="]) {
+    expect(logText, `stored logs must not contain ${s}`).not.toContain(s);
+  }
+
+  await expect.poll(() => promQuery('gozleme_status_checks_total{gozleme_status_outcome="unavailable"}'), { timeout: 30_000 }).toBeGreaterThan(0);
+
+  const panes = {
+    a: {
+      datasource: "loki",
+      queries: [{ refId: "A", expr: '{service_name="gozleme-api"} |= "Database probe failed"', datasource: { type: "loki", uid: "loki" } }],
+      range: { from: "now-15m", to: "now" },
+    },
+  };
+  await page.goto(`${GRAFANA_URL}/explore?schemaVersion=1&orgId=1&panes=${encodeURIComponent(JSON.stringify(panes))}`);
+  await expect(page.getByText("Database probe failed (NpgsqlException)").first()).toBeVisible({ timeout: 30_000 });
+  await expectNotContained(page, [...secretStrings, "Host=", "Username="]);
+  await page.screenshot({ path: `${shots}/06-stored-logs-grafana.png`, fullPage: false });
 });
 
 test("observability resilience: the app stays healthy when the telemetry collector is down", async ({ page, request }) => {

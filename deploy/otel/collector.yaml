@@ -1,6 +1,7 @@
 # Gözleme local OpenTelemetry Collector (GOZ-0000-IF-11). Offline by default:
 # traces → Jaeger (UI http://localhost:16686), metrics → Prometheus scrape endpoint
-# (http://localhost:8889/metrics), logs → collector console (`docker compose logs otel-collector`).
+# (http://localhost:8889/metrics, stored by Prometheus), logs → Loki (stored, searchable) and the
+# collector console. Grafana (http://localhost:3001) views all three.
 # Operators can replace exporters with any OTLP-compatible backend.
 receivers:
   otlp:
@@ -37,6 +38,8 @@ exporters:
     endpoint: 0.0.0.0:8889
     resource_to_telemetry_conversion:
       enabled: true
+  otlp_http/loki:
+    endpoint: http://loki:3100/otlp
   debug:
     verbosity: basic
 
@@ -56,4 +59,4 @@ service:
     logs:
       receivers: [otlp]
       processors: [memory_limiter, attributes/drop-secret-keys, redaction/secret-values, batch]
-      exporters: [debug]
+      exporters: [otlp_http/loki, debug]

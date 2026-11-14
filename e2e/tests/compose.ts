@@ -13,8 +13,12 @@ export const forbiddenStrings = [
   process.env.GOZLEME_APP_PASSWORD ?? "local-dev-app",
   process.env.GOZLEME_MIGRATOR_PASSWORD ?? "local-dev-migrator",
   process.env.GOZLEME_DB_SUPERUSER_PASSWORD ?? "local-dev-superuser",
+  process.env.GOZLEME_GRAFANA_ADMIN_PASSWORD ?? "local-dev-grafana",
   "Password=",
   "Username=",
   "Host=postgres",
   "Exception",
 ];
+
+/** Credential material only; observability tools legitimately show exception type names. */
+export const secretStrings = forbiddenStrings.filter((s) => s !== "Exception");

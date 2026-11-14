@@ -48,6 +48,11 @@ Project instrumentation (extended by later specs): span `status.probe database` 
 (`gozleme-api`, `gozleme-migrator`) so pool labels never contain connection strings. The collector
 deletes credential-like attribute keys and redacts credential-like values in all pipelines.
 
+Local storage (GOZ-0000-IF-22): logs → Loki (labels `service_name` etc.; `trace_id`/`span_id` as
+structured metadata; 7-day retention), metrics → Prometheus (7 days), traces → Jaeger (in-memory).
+Grafana is the single local viewer. Telemetry may contain operational metadata and is treated as
+sensitive (see GOZ-0000-IF-21).
+
 ## DemoRunRecord (`evidence/demo-run.json`)
 
 `specId`, `commit`, `branch`, `environment` (os, docker, compose versions), `startedAt`, `finishedAt`, `commands[]`, `result` (`passed|failed|blocked`), `assertions[]` (`name`, `result`), `evidence[]` (paths).

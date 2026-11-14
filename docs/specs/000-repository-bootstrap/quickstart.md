@@ -27,7 +27,8 @@ Ports override: `GOZLEME_WEB_PORT`, `GOZLEME_API_PORT`, `GOZLEME_DB_PORT` (see `
 | V6 | Boundary | `curl -i /api/v1/catalog`, `/api/v1/organizations`, `/api/v1/auth/login` | 404; DB has no tables in schema `gozleme` |
 | V10 | Distributed trace | load dashboard, open <http://localhost:16686> | One trace spans `gozleme-web-browser` → `gozleme-web` → `gozleme-api` (incl. `status.probe database` and PostgreSQL span) |
 | V11 | Metrics | `curl localhost:8889/metrics \| grep gozleme_status_checks` | Counter by outcome for `gozleme-api`; no `Host=`/`Username=` labels |
+| V13 | Stored logs | stop/start postgres, open <http://localhost:3001> → Explore → Loki `{service_name="gozleme-api"}` | Warning "Database probe failed (…)" stored with `trace_id` linking to its Jaeger trace; Prometheus has `gozleme_status_checks_total` |
 | V12 | Telemetry outage | `docker compose stop otel-collector` | Dashboard and readiness stay healthy |
 | V7 | Tests | `make test` | Backend unit+integration and frontend unit tests pass |
 | V8 | Governance | `make validate` | `validate_docs.py` PASS; register in sync |
-| V9 | Autonomous demo | `make demo` | Runs V1–V6 and V10–V12 in Playwright, writes `docs/specs/000-repository-bootstrap/evidence/` (demo-run.json, screenshots) |
+| V9 | Autonomous demo | `make demo` | Runs V1–V6 and V10–V13 in Playwright, writes `docs/specs/000-repository-bootstrap/evidence/` (demo-run.json, screenshots) |

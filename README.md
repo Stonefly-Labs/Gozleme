@@ -18,6 +18,7 @@ service is needed.
 make up                      # docker compose up -d --build --wait
 open http://localhost:3000   # dashboard
 open http://localhost:16686  # traces (Jaeger): browser → web → API → PostgreSQL
+open http://localhost:3001   # Grafana: stored logs (Loki), traces, metrics (Prometheus)
 curl -s http://localhost:8080/api/v1/status
 make down                    # or `make reset` to also delete the database volume
 ```
@@ -59,7 +60,8 @@ Toolchain for working outside containers: .NET SDK per [`global.json`](global.js
 
 OpenTelemetry is foundational: browser, web, API and migrator emit traces (and the .NET
 services metrics and logs) over OTLP to a local collector, with Jaeger and a Prometheus scrape
-endpoint in the default offline stack. See
+endpoint in the default offline stack; logs are stored in Loki, metrics in Prometheus, and
+Grafana views everything with log ↔ trace links. See
 [`docs/engineering/local-development.md`](docs/engineering/local-development.md#observability-foundational).
 
 ## How work happens

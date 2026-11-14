@@ -11,6 +11,7 @@ FORBIDDEN = [
     os.environ.get("GOZLEME_APP_PASSWORD", "local-dev-app"),
     os.environ.get("GOZLEME_MIGRATOR_PASSWORD", "local-dev-migrator"),
     os.environ.get("GOZLEME_DB_SUPERUSER_PASSWORD", "local-dev-superuser"),
+    os.environ.get("GOZLEME_GRAFANA_ADMIN_PASSWORD", "local-dev-grafana"),
     "Password=",
 ]
 
