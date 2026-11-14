@@ -20,6 +20,13 @@ describe("browser OTLP ingestion route", () => {
     expect((init!.headers as Record<string, string>)["content-type"]).toBe("application/json");
   });
 
+  it("preserves a path prefix on the collector endpoint", async () => {
+    vi.stubEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "https://telemetry.example/otlp/");
+    const upstream = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
+    await POST(req("{}"));
+    expect(String(upstream.mock.calls[0]![0])).toBe("https://telemetry.example/otlp/v1/traces");
+  });
+
   it("rejects unsupported content types", async () => {
     expect((await POST(req("x", "text/plain"))).status).toBe(415);
   });

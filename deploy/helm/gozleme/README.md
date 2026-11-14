@@ -27,3 +27,12 @@ helm install gozleme deploy/helm/gozleme --set image.api.repository=<registry>/g
 
 The migration Job runs as a pre-install/pre-upgrade hook with the migrator credentials; the API
 Deployment uses only the application role.
+
+## Telemetry
+
+Set `telemetry.otlpGrpcEndpoint` (API, migrator) and `telemetry.otlpHttpEndpoint` (web; a path
+prefix such as `https://host/otlp` is preserved) to your OpenTelemetry collector. The chart does
+not ship a collector. **Your collector must redact credential-like attribute keys and values**
+equivalent to `deploy/otel/collector.yaml`; application-side hygiene is the primary control and
+collector redaction is the backstop (GOZ-0000-IF-21, IF-23). Telemetry is never a health
+dependency of Gözleme workloads.

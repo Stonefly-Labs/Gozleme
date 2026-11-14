@@ -23,7 +23,8 @@ export async function POST(request: Request): Promise<Response> {
   if (!endpoint) return new Response(null, { status: 204 }); // export disabled: accept and drop
 
   try {
-    const upstream = await fetch(new URL("/v1/traces", endpoint), {
+    // Append (not resolve) so endpoints with a path prefix, e.g. https://host/otlp, are preserved (IF-24).
+    const upstream = await fetch(`${endpoint.replace(/\/+$/, "")}/v1/traces`, {
       method: "POST",
       headers: { "content-type": contentType },
       body,
