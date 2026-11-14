@@ -1,0 +1,81 @@
+name: gozleme
+
+x-db-passwords: &db-passwords
+  GOZLEME_MIGRATOR_PASSWORD: ${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
+  GOZLEME_APP_PASSWORD: ${GOZLEME_APP_PASSWORD:-local-dev-app}
+
+services:
+  postgres:
+    # pgvector image makes the optional extension *available*; Gözleme never requires it.
+    image: ${GOZLEME_POSTGRES_IMAGE:-pgvector/pgvector:pg17}
+    environment:
+      <<: *db-passwords
+      POSTGRES_DB: gozleme
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${GOZLEME_DB_SUPERUSER_PASSWORD:-local-dev-superuser}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:${GOZLEME_DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gozleme"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    image: gozleme-api:local
+    build:
+      context: .
+      dockerfile: src/Gozleme.Api/Dockerfile
+      args:
+        GOZLEME_BUILD: ${GOZLEME_BUILD:-0.1.0-local}
+    command: ["migrate"]
+    environment:
+      ConnectionStrings__GozlemeMigrator: Host=postgres;Database=gozleme;Username=gozleme_migrator;Password=${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: gozleme-api:local
+    environment:
+      ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
+      Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
+    ports:
+      - "127.0.0.1:${GOZLEME_API_PORT:-8080}:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "dotnet", "Gozleme.Api.dll", "healthcheck", "live"]
+      interval: 5s
+      timeout: 4s
+      start_period: 10s
+      retries: 6
+    restart: unless-stopped
+
+  web:
+    image: gozleme-web:local
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    environment:
+      GOZLEME_API_URL: http://api:8080
+    ports:
+      - "127.0.0.1:${GOZLEME_WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/backend-status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      start_period: 10s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  pgdata:
