@@ -1,0 +1,52 @@
+schemaVersion: '1.0'
+specId: GOZ-0000
+stage: human-review
+status: ready-for-human-merge
+promptRevision: 1
+branch: chore/goz-0000-bootstrap
+featureDirectory: docs/specs/000-repository-bootstrap
+stages:
+  specify: {status: done, artifact: docs/specs/000-repository-bootstrap/spec.md, at: '2026-11-14'}
+  plan: {status: done, artifact: docs/specs/000-repository-bootstrap/plan.md, at: '2026-11-14'}
+  tasks: {status: done, artifact: docs/specs/000-repository-bootstrap/tasks.md, at: '2026-11-14'}
+  implement: {status: done, tasks: T001-T040, at: '2026-11-14'}
+  demo: {status: passed, record: docs/specs/000-repository-bootstrap/evidence/demo-run.json, commit: 01fc90b69c4f7fa5a2dbd726a328067a348d0165, at: '2026-11-14'}
+  converge: {status: passed, rounds: 2, note: 'Round 1 appended T039 (axe a11y, FR-006) and T040 (start-up timing, SC-001); both implemented. Round 2 found no remaining gaps.', at: '2026-11-14'}
+  impactAnalysis: {status: passed, report: docs/specs/000-repository-bootstrap/reviews/impact-analysis.md, findings: 26, revision: 8ce080c, at: '2026-11-14'}
+  ci: {status: passed, pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/4', jobs: 6, note: 'All jobs incl. Linux autonomous demo passed after fixing a CI-only timing assertion', at: '2026-11-14'}
+  roadmapSync: {status: passed, promptRevisionBumps: 39, dependencyChanges: 0, at: '2026-11-14'}
+attempts:
+- {stage: ci, issue: 'TelemetryTests assumed exactly one failed probe span; CI produced two', fix: 'assert all failed spans carry fixed messages', result: resolved}
+- {stage: ci, issue: 'agent pushed a commit that failed to build (CA1861) due to a mis-chained command', fix: 'corrected in next commit; build/test now checked by exit code', result: resolved}
+- {stage: implement, issue: 'Docker build used host obj/ (NETSDK1064)', fix: 'added .dockerignore', result: resolved}
+- {stage: implement, issue: 'jsdom DOMException identity broke timeout detection test', fix: 'match error by name', result: resolved}
+- {stage: implement, issue: 'pg_roles booleans render as f/t via concat_ws', fix: 'corrected test expectation', result: resolved}
+- {stage: demo, issue: 'demo record working-tree check included regenerated evidence', fix: 'capture tree state at start with glob exclude', result: resolved}
+blockers:
+- id: GOZ-0000-B1
+  summary: Protected-main ruleset not yet applied. Repo became public 2026-11-14 (rulesets API now returns []); ruleset to be applied and verified per docs/engineering/github-protection.md.
+  owner: human repository owner
+  resumeAction: Make rulesets available, apply ruleset in docs/engineering/github-protection.md, verify and record evidence there.
+  blocksMerge: false
+nextAction: Human review and merge of PR #4; agent verifies merge before marking complete
+evidence:
+  tests:
+  - {suite: 'backend unit + Testcontainers integration incl. telemetry (dotnet test --solution Gozleme.slnx)', result: '29 passed, 0 failed', at: '2026-11-14'}
+  - {suite: 'frontend unit (vitest) incl. OTLP ingestion route', result: '24 passed, 0 failed', at: '2026-11-14'}
+  - {suite: 'lint (dotnet format --verify-no-changes, eslint, tsc)', result: passed, at: '2026-11-14'}
+  - {suite: 'governance (validate_docs.py, register --check, branch-name self-test)', result: passed, at: '2026-11-14'}
+  - {suite: 'helm lint + template', result: passed, at: '2026-11-14'}
+  - {suite: 'gitleaks git history scan', result: 'no leaks found', at: '2026-11-14'}
+  demos:
+  - {record: docs/specs/000-repository-bootstrap/evidence/demo-run.json, result: passed, scenarios: 8, commit: 9c6d32d6a80197eee5b704155616d3f7914be6a3, at: '2026-11-14'}
+  timings:
+  - {measure: 'docker compose build --no-cache --pull (base images present locally)', seconds: 12}
+  - {measure: 'docker compose up --wait on fresh volume, images built', seconds: 17}
+  screenshots:
+  - docs/specs/000-repository-bootstrap/evidence/screenshots/01-healthy.png
+  - docs/specs/000-repository-bootstrap/evidence/screenshots/02-database-down-degraded.png
+  - docs/specs/000-repository-bootstrap/evidence/screenshots/03-recovered-healthy.png
+  - docs/specs/000-repository-bootstrap/evidence/screenshots/04-api-unreachable.png
+  - docs/specs/000-repository-bootstrap/evidence/screenshots/05-distributed-trace-jaeger.png
+  - docs/specs/000-repository-bootstrap/evidence/screenshots/06-stored-logs-grafana.png
+  reviews: []

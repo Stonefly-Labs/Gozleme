@@ -1,0 +1,7 @@
+apiVersion: v2
+name: gozleme
+description: Gözleme federated AI capability registry (GOZ-0000 foundation — status API and dashboard)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+license: MIT

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Gozleme.Api/Gozleme.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Gozleme.Api.Tests/Gozleme.Api.Tests.csproj" />
+    <Project Path="tests/Gozleme.Api.IntegrationTests/Gozleme.Api.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

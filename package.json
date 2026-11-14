@@ -1,0 +1,16 @@
+{
+  "name": "gozleme",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@11.1.2",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm --filter @gozleme/web run test",
+    "build": "pnpm --filter @gozleme/web run build",
+    "demo": "pnpm --filter @gozleme/e2e run demo"
+  }
+}

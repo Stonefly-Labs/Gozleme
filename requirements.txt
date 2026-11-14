@@ -1,0 +1,3 @@
+# Governance tooling (scripts/validate_docs.py, scripts/generate_register.py)
+PyYAML==6.0.3
+jsonschema==4.26.0

@@ -1,0 +1,508 @@
+{
+  "sourceSpec": "GOZ-0000",
+  "implementationRevision": "8ce080c (chore/goz-0000-bootstrap; stored telemetry 9c6d32d; IF-23/IF-24 fixes 511b904; demo 8/8 passed with evidence in 8ce080c). Earlier passes at e7904ad, 930128e, 33b4cef.",
+  "analyzedAt": "2026-11-14",
+  "findings": [
+    {
+      "id": "GOZ-0000-IF-01",
+      "severity": "high",
+      "title": "GOZ-0000 boundary tests will intentionally fail as product surfaces arrive",
+      "evidence": [
+        "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:22-38 asserts 404 for /api/v1/catalog, /api/v1/capabilities, /api/v1/organizations, /api/v1/users, /api/v1/search?q=mcp, POST /api/v1/auth/login, POST /api/v1/publish, /login",
+        "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:40-57 asserts zero tables in schema gozleme and only public.__EFMigrationsHistory",
+        "e2e/tests/bootstrap-demo.spec.ts:102-120 asserts 404s, /login,/catalog,/organizations pages 404, no links and no 'sign in' text on /",
+        "Every future prompt requires 'Keep existing demos and smoke tests working'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0002",
+        "GOZ-0005",
+        "GOZ-0007",
+        "GOZ-0012",
+        "GOZ-0013"
+      ],
+      "recommendation": "Each spec introducing one of these surfaces narrows only the assertions it supersedes, keeps the rest, and adds its own boundary test; never delete or weaken the suite wholesale.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-02",
+      "severity": "high",
+      "title": "Anonymous status/health surfaces and container healthchecks versus GOZ-0001 protected dashboard",
+      "evidence": [
+        "src/Gozleme.Api/GozlemeApp.cs:40-47 maps /health/live, /health/ready, /api/v1/status with no authentication",
+        "web/src/app/page.tsx renders StatusDashboard at /; web/src/app/api/backend-status/route.ts proxies server-side via GOZLEME_API_URL",
+        "compose.yaml:53 api healthcheck uses /health/live; compose.yaml:73 web healthcheck fetches /api/backend-status",
+        "deploy/helm/gozleme/templates/api.yaml:34-39 liveness/readiness probes on /health/live and /health/ready",
+        "e2e/tests/bootstrap-demo.spec.ts healthy/degraded/recovery/unreachable scenarios browse / anonymously"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001"
+      ],
+      "recommendation": "GOZ-0001 keeps /health/* anonymous, decides and documents whether the status dashboard and /api/v1/status become authenticated, and keeps container healthchecks and the four GOZ-0000 demo scenarios passing (sign in with a seeded synthetic account if protected). Session design must fit the same-origin Next.js route-handler pattern.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-03",
+      "severity": "high",
+      "title": "Role, ownership and default-privilege facts; no RLS or tenant context yet; app role can set arbitrary GUCs",
+      "evidence": [
+        "deploy/postgres/init/01-roles.sh:16-21 gozleme_migrator NOSUPERUSER NOBYPASSRLS owns database; gozleme_app NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOINHERIT",
+        "src/Gozleme.Api/Persistence/Migrations/20261114000000_Foundation.cs:18-24 creates schema gozleme and ALTER DEFAULT PRIVILEGES granting SELECT, INSERT, UPDATE, DELETE on all future tables to gozleme_app",
+        "Live stack: pg_default_acl shows gozleme_app=arwd/gozleme_migrator and rU on sequences; schema gozleme owned by gozleme_migrator",
+        "Live stack (rolled-back transaction): SET ROLE gozleme_app; SET LOCAL app.tenant_id = 'x' succeeds",
+        "No RLS policy, tenant column or tenant-context code exists at e7904ad"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0012",
+        "GOZ-0014"
+      ],
+      "recommendation": "Tenant-owned tables enable RLS and policies in the same migration that creates them; GOZ-0003 decides FORCE RLS explicitly (migrator owns all tables), adds a catalog test for relrowsecurity, retrofits GOZ-0001/0002 tables, and treats the tenant GUC as defence in depth only.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-04",
+      "severity": "medium",
+      "title": "Default privileges grant UPDATE/DELETE on every future table, including those that must be immutable or append-only",
+      "evidence": [
+        "src/Gozleme.Api/Persistence/Migrations/20261114000000_Foundation.cs:21",
+        "docs/architecture/security-invariants.md invariant 6 (immutable signed publications)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0007",
+        "GOZ-0009",
+        "GOZ-0023",
+        "GOZ-0032"
+      ],
+      "recommendation": "Creating migrations for immutable/append-only tables REVOKE UPDATE, DELETE from gozleme_app (or enforce equivalently) and prove database-level rejection with an integration test as gozleme_app.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-05",
+      "severity": "high",
+      "title": "pgvector cannot be created by the migrator role; pg_trgm can",
+      "evidence": [
+        "Live stack: /usr/share/postgresql/17/extension/vector.control (default_version 0.8.6) has no 'trusted = true'",
+        "Live stack (rolled-back transaction): SET ROLE gozleme_migrator; CREATE EXTENSION vector -> ERROR permission denied to create extension \"vector\", HINT Must be superuser",
+        "Live stack (rolled-back transaction): SET ROLE gozleme_migrator; CREATE EXTENSION pg_trgm SCHEMA gozleme succeeds (pg_trgm.control trusted = true)",
+        "src/Gozleme.Api/Status/DatabaseProbe.cs:22-27 vector.available = pg_available_extensions, vector.enabled = pg_extension",
+        "tests/Gozleme.Api.IntegrationTests/OptionalVectorTests.cs proves health on postgres:17-alpine"
+      ],
+      "affectedSpecs": [
+        "GOZ-0013",
+        "GOZ-0015",
+        "GOZ-0017",
+        "GOZ-0039"
+      ],
+      "recommendation": "GOZ-0015 provides an operator/superuser provisioning step for vector (opt-in Compose init script, Helm prerequisite), keeps vector objects conditional, and exposes semantic-search state separately from vector.enabled via contract revision. Granting superuser to either application role requires human approval and is not recommended.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-06",
+      "severity": "medium",
+      "title": "Status contract v1 extension rules for new dependencies",
+      "evidence": [
+        "docs/specs/000-repository-bootstrap/contracts/status-api.openapi.yaml: ServiceStatus and DependencyStatus additionalProperties false; dependency status enum healthy|unavailable",
+        "src/Gozleme.Api/Status/StatusService.cs:24-25 degraded only when a required dependency is unhealthy",
+        "web/src/lib/status.ts:42-74 strict structural validation; unknown shapes become invalid-response",
+        "Re-analysis at 930128e: prompt text for 0009/0010/0011/0015/0016 updated to reflect the corrected validator tolerance"
+      ],
+      "affectedSpecs": [
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0015",
+        "GOZ-0016"
+      ],
+      "recommendation": "Add new dependencies as dependencies[] entries, optional providers with required:false; any new field or status value is a contract revision updating OpenAPI, web validator and tests together.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-07",
+      "severity": "low",
+      "title": "Web status validator is stricter than the OpenAPI contract for capabilities",
+      "evidence": [
+        "docs/specs/000-repository-bootstrap/contracts/status-api.openapi.yaml: capabilities is object|null with optional property vector (no required list)",
+        "web/src/lib/status.ts:44-50 rejects any non-null capabilities lacking a valid vector object, so a contract-valid {} renders as invalid-response/unreachable",
+        "Re-analysis at 930128e: web/src/lib/status.ts isDependency now accepts capabilities null or an object whose vector is absent or a valid {available,enabled}; status.test.ts adds 'accepts capabilities without the optional vector entry' and a malformed-vector rejection case; StatusDashboard.tsx:56 already uses optional chaining; typecheck and 18 Vitest tests pass at HEAD"
+      ],
+      "affectedSpecs": [
+        "GOZ-0000",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0015"
+      ],
+      "recommendation": "Corrective change in GOZ-0000: either mark vector required inside capabilities in the OpenAPI, or relax isDependency to accept capabilities objects where vector is absent or valid; add a Vitest case for the chosen rule.",
+      "disposition": "corrected in 3273724"
+    },
+    {
+      "id": "GOZ-0000-IF-08",
+      "severity": "medium",
+      "title": "Demo runner and evidence layout are hard-coded to GOZ-0000; no seed mechanism",
+      "evidence": [
+        "scripts/demo/run-demo.sh:8 SPEC_DIR=docs/specs/000-repository-bootstrap; :41 --spec GOZ-0000",
+        "e2e/tests/bootstrap-demo.spec.ts:10 hard-coded screenshot directory",
+        ".github/workflows/ci.yml:98-99 e2e-demo runs scripts/demo/run-demo.sh",
+        "Makefile:56-57 demo target documents GOZ-0000 evidence path",
+        "docs/engineering/demo-contract.md requires deterministic seeded data; no seed command exists"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0039"
+      ],
+      "recommendation": "GOZ-0001 generalizes the runner to a spec parameter writing docs/specs/<spec-dir>/evidence, runs prior suites cumulatively, and introduces one deterministic synthetic seed path separate from schema migrations.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-09",
+      "severity": "medium",
+      "title": "Reusable Testcontainers fixture defaults to superuser, which would silently bypass RLS",
+      "evidence": [
+        "tests/Gozleme.Api.IntegrationTests/Infrastructure/GozlemeDatabase.cs:30-62 applies 01-roles.sh then the real migrator; exposes Superuser/Migrator/App connection strings",
+        "tests/Gozleme.Api.IntegrationTests/Infrastructure/GozlemeDatabase.cs:70 ScalarAsync defaults to SuperuserConnectionString",
+        "tests/Gozleme.Api.IntegrationTests/Infrastructure/Fixtures.cs:3 assembly-wide shared PgvectorDatabaseFixture"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0015",
+        "GOZ-0017"
+      ],
+      "recommendation": "Reuse the fixture; isolation and leak tests must use AppConnectionString or the API; mutating tests use isolated data or their own database.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-10",
+      "severity": "medium",
+      "title": "Migration mechanism, single host project and out-of-band role creation",
+      "evidence": [
+        "src/Gozleme.Api/Persistence/GozlemeDbContext.cs (no entities), MigrationRunner.cs (migrate command, GozlemeMigrator connection string)",
+        "compose.yaml:27-40 one-shot migrate service; api depends_on service_completed_successfully",
+        "deploy/helm/gozleme/templates/migrate-job.yaml:10 pre-install,pre-upgrade hook (old pods still serve during upgrade)",
+        "deploy/postgres/init/01-roles.sh runs only on a fresh volume; migrator NOCREATEROLE",
+        "deploy/helm/gozleme/README.md roles are an operator prerequisite"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0003",
+        "GOZ-0004"
+      ],
+      "recommendation": "New tables via new EF migrations in schema gozleme, never migrate on API start-up, keep migrations backward compatible for pre-upgrade; any new DB role goes into 01-roles.sh and the Helm README with make reset locally; establish module layout only as needed.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-11",
+      "severity": "medium",
+      "title": "OpenTelemetry has no owning spec",
+      "evidence": [
+        "docs/architecture/technology-stack.md lists OpenTelemetry as part of the stack",
+        "docs/specs/000-repository-bootstrap/research.md R9 defers OpenTelemetry to 'the operational spec that needs traces/metrics'",
+        "No prompt in docs/prompts/spec-0001.md..spec-0039.md mentions OpenTelemetry, tracing or metrics",
+        "src/Gozleme.Api/GozlemeApp.cs:18-23 JSON console logging only",
+        "Maintainer, verbatim: \"otel should be foundational, we want that thread throughout all we do\"; on browser telemetry: \"We prolly want stuff from the client/browser\"",
+        "src/Gozleme.Api/Telemetry/GozlemeTelemetry.cs: AddGozlemeTelemetry, ActivitySource/Meter 'Gozleme.Api', OTLP export only when OTEL_EXPORTER_OTLP_ENDPOINT set, /health not traced",
+        "web/src/instrumentation.ts (@vercel/otel, propagation only to GOZLEME_API_URL); web/src/telemetry/browser.ts; compose.yaml otel-collector + jaeger; Helm telemetry.* values via gozleme.otelEnv helper",
+        "tests/Gozleme.Api.IntegrationTests/TelemetryTests.cs; e2e observability tests; demo 7/7 passed with 05-distributed-trace-jaeger.png"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
+        "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039"
+      ],
+      "recommendation": "Every future spec instruments its code paths through the existing pipeline, keeps secrets and confidential metadata out of telemetry, asserts key spans/metrics in tests and demo, and preserves the browser→web→API→DB trace.",
+      "disposition": "decided by maintainer 2026-11-14: foundational (including browser telemetry); implemented in ba6f28c; applied to all future prompts GOZ-0001..GOZ-0039"
+    },
+    {
+      "id": "GOZ-0000-IF-12",
+      "severity": "high",
+      "title": "Protected main not applied or verified (security invariant 12)",
+      "evidence": [
+        "docs/specs/000-repository-bootstrap/research.md R8: rulesets and branch protection APIs return HTTP 403 on this private repository plan",
+        "docs/specs/000-repository-bootstrap/progress.yaml blocker GOZ-0000-B1",
+        "docs/engineering/github-protection.md status NOT VERIFIED"
+      ],
+      "affectedSpecs": [
+        "GOZ-0000",
+        "GOZ-0001",
+        "GOZ-0039"
+      ],
+      "recommendation": "Human owner enables rulesets (plan upgrade or public visibility), applies the documented ruleset and records verification. No future-prompt change; every spec's completion still depends on verified human merge.",
+      "disposition": "requires-human-action"
+    },
+    {
+      "id": "GOZ-0000-IF-13",
+      "severity": "medium",
+      "title": "Deployment conventions: Secret references, read-only root filesystem, Compose service conventions",
+      "evidence": [
+        "deploy/helm/gozleme/values.yaml:13-16 database.existingSecret with app-connection-string and migrator-connection-string keys",
+        "deploy/helm/gozleme/values.yaml:41-44 readOnlyRootFilesystem true; templates/api.yaml:44-48 only /tmp emptyDir",
+        "compose.yaml ports bound to 127.0.0.1 with GOZLEME_* overrides; .env.example throwaway defaults",
+        "deploy/helm/gozleme/README.md:3-5 chart never installed on a live cluster"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0007",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0039"
+      ],
+      "recommendation": "New secrets use Secret references by name; Data Protection keys (GOZ-0001) and filesystem artifacts (GOZ-0009) need durable explicit storage, not the container filesystem; optional emulators/providers join Compose without changing the base stack; GOZ-0039 performs a live Helm install/upgrade per CR-14.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-14",
+      "severity": "medium",
+      "title": "No local two-instance harness for federation demos",
+      "evidence": [
+        "compose.yaml:1 name: gozleme; compose.yaml:80-81 single pgdata volume",
+        "e2e/tests/compose.ts:7-9 docker compose invoked without a project flag",
+        ".env.example GOZLEME_WEB_PORT/GOZLEME_API_PORT/GOZLEME_DB_PORT overrides exist"
+      ],
+      "affectedSpecs": [
+        "GOZ-0029",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0036"
+      ],
+      "recommendation": "GOZ-0029 establishes a reusable two-instance harness (distinct project names and ports, project-aware e2e helper); later federation specs reuse it.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-15",
+      "severity": "low",
+      "title": "Backup/restore must recreate out-of-band roles",
+      "evidence": [
+        "deploy/postgres/init/01-roles.sh creates cluster-level roles outside migrations",
+        "Database-level pg_dump does not include roles"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "Restore procedure recreates gozleme_migrator/gozleme_app before restore and verifies NOSUPERUSER NOBYPASSRLS afterwards.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-16",
+      "severity": "low",
+      "title": "InvariantGlobalization is enabled",
+      "evidence": [
+        "Directory.Build.props: InvariantGlobalization true"
+      ],
+      "affectedSpecs": [
+        "GOZ-0005"
+      ],
+      "recommendation": "GOZ-0005 keeps ID/namespace normalization ordinal/invariant and tests any Unicode/IDN behavior under this setting; changing it must be explicit.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-17",
+      "severity": "low",
+      "title": "research.md R7 does not match the implemented CI",
+      "evidence": [
+        "docs/specs/000-repository-bootstrap/research.md:38 lists a 'containers' job and actions pinned by major version tag",
+        ".github/workflows/ci.yml has no containers job (images are built inside e2e-demo) and pins every action by commit SHA",
+        "Re-analysis at 930128e: research.md R7 now lists the actual jobs, states there is no containers job (images built in e2e-demo) and SHA pinning"
+      ],
+      "affectedSpecs": [
+        "GOZ-0000"
+      ],
+      "recommendation": "Corrective doc edit in GOZ-0000 research.md R7 to describe the actual jobs and SHA pinning.",
+      "disposition": "corrected in 3273724"
+    },
+    {
+      "id": "GOZ-0000-IF-18",
+      "severity": "low",
+      "title": "Compiled Python cache tracked in git",
+      "evidence": [
+        "git ls-files lists scripts/__pycache__/generate_register.cpython-313.pyc (added in 455d192, before this spec)",
+        ".gitignore:33-34 ignores __pycache__/ and *.pyc",
+        "Re-analysis at 930128e: git ls-files scripts/__pycache__ returns nothing at HEAD"
+      ],
+      "affectedSpecs": [
+        "GOZ-0000"
+      ],
+      "recommendation": "git rm --cached -r scripts/__pycache__ on the GOZ-0000 branch.",
+      "disposition": "corrected in 3273724"
+    },
+    {
+      "id": "GOZ-0000-IF-19",
+      "severity": "low",
+      "title": "No JavaScript dependency vulnerability check in CI",
+      "evidence": [
+        "docs/engineering/ci-quality-gates.md requires 'code secret scanning and dependency checks'",
+        ".github/workflows/ci.yml has gitleaks but no pnpm audit or dependency-review step; .NET relies on SDK-default NuGet audit plus TreatWarningsAsErrors (Directory.Build.props), not explicitly configured",
+        "Re-analysis at 930128e: ci.yml frontend job runs 'pnpm audit --prod --audit-level low'; Directory.Build.props sets NuGetAudit true, NuGetAuditMode all, NuGetAuditLevel low and NU1901-NU1904 as errors. Downstream note: any spec adding a NuGet or production npm package now fails CI on any published advisory, including low severity; future specs must resolve or explicitly and documentedly suppress, never silently disable the audit"
+      ],
+      "affectedSpecs": [
+        "GOZ-0000"
+      ],
+      "recommendation": "Add a pnpm audit (or dependency-review) step and set NuGetAudit/NuGetAuditMode explicitly; non-blocking for FR-015, which does not list dependency checks.",
+      "disposition": "corrected in 3273724"
+    },
+    {
+      "id": "GOZ-0000-IF-20",
+      "severity": "high",
+      "title": "Unauthenticated browser telemetry ingestion route",
+      "evidence": [
+        "web/src/app/api/otel/v1/traces/route.ts:1-36 accepts any JSON/protobuf POST up to 256 KiB and forwards it to the collector; no authentication, origin check or rate limit (comment: unauthenticated until GOZ-0001)",
+        "Browser-supplied resource attributes (e.g. service.name) are forwarded unmodified, so a caller can inject spans claiming to be gozleme-api or gozleme-web into the trace store",
+        "In Helm the web tier is the public front end, so the route is reachable by any client"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0039"
+      ],
+      "recommendation": "GOZ-0001 decides and implements authentication or session binding, origin checking and rate limiting for the route. Consider pinning or overwriting service.name for the browser pipeline at the collector, so browser data cannot impersonate server services. GOZ-0039 verifies this as a release gate.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-21",
+      "severity": "high",
+      "title": "Telemetry is sensitive, cross-tenant, operator-visible data",
+      "evidence": [
+        "Live Jaeger (/api/v3/traces, service gozleme-api) shows span attributes db.query.text (full SQL text), http.url, http.target, url.path, user_agent.original",
+        "deploy/otel/collector.yaml redaction matches credential-like keys and values only (password, token, api key, connection string, host/username patterns); it cannot recognise tenant-private metadata",
+        "docs/architecture/security-invariants.md invariant 8 names traces explicitly; invariant 3 (no existence leaks); decision R3-19 (operator vs tenant support access)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0034"
+      ],
+      "recommendation": "Keep confidential values out of span names, attributes, metric labels, SQL text and URLs (parameters only; no private search terms in query strings). GOZ-0003 decides whether an opaque tenant ID may appear as an attribute. Collector redaction stays defence in depth.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-22",
+      "severity": "medium",
+      "title": "Stored and searchable logs and telemetry retention are undecided",
+      "evidence": [
+        "deploy/otel/collector.yaml logs pipeline exports only to the debug (console) exporter",
+        "compose.yaml jaeger service uses default in-memory storage, so traces are lost on restart; Prometheus is only a scrape endpoint (:8889), with no storage",
+        "docs/engineering/local-development.md:15 logs via make logs and docker compose logs otel-collector",
+        "Re-pass at 8ce080c: compose.yaml loki (lokidata volume, deploy/observability/loki.yaml retention_period 168h, allow_structured_metadata), prometheus (promdata, --storage.tsdb.retention.time=7d, scrapes otel-collector:8889), grafana (provisioned Loki/Jaeger/Prometheus with trace_id derived fields); collector logs pipeline exports otlp_http/loki; demo scenario for stored, trace-correlated, secret-free logs passed (06-stored-logs-grafana.png)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0023",
+        "GOZ-0035",
+        "GOZ-0039"
+      ],
+      "recommendation": "Human decides whether Gözleme ships durable, searchable log, trace or metric storage (local and Helm) and its retention and erasure policy, which interacts with CR-07 deletion and with audit receipts. Until then, prompts carry no storage or retention requirement.",
+      "disposition": "decided by maintainer 2026-11-14 (\"yes for local stack at the veryleast we want that stuff\"); implemented in 9c6d32d for the local stack; Helm still requires operator-provided backends; applied to GOZ-0023, GOZ-0035, GOZ-0039"
+    },
+    {
+      "id": "GOZ-0000-IF-23",
+      "severity": "low",
+      "title": "Collector configuration is not hot-reloaded and Helm ships no collector",
+      "evidence": [
+        "compose.yaml otel-collector mounts deploy/otel/collector.yaml read-only; changes take effect only after a restart",
+        "docs/engineering/local-development.md:37-38 already documents running docker compose restart otel-collector",
+        "deploy/helm/gozleme: telemetry.* only points at an operator-provided OTLP endpoint; the redaction processors exist only in the local collector config",
+        "Re-pass: deploy/helm/gozleme/README.md:35-37 redaction requirement"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "No prompt change needed for the reload caveat, which is documented. For Helm, document in the chart README that operators must apply equivalent redaction in their own collector, since the app-side no-secret rules are the primary control. GOZ-0039 covers this through its Helm telemetry gate.",
+      "disposition": "corrected in 511b904 (Helm README now requires operator collectors to redact credential-like keys and values; reload caveat already documented)"
+    },
+    {
+      "id": "GOZ-0000-IF-24",
+      "severity": "low",
+      "title": "Browser ingestion route drops any path prefix of the OTLP endpoint",
+      "evidence": [
+        "web/src/app/api/otel/v1/traces/route.ts:26 new URL(\"/v1/traces\", endpoint) resolves an absolute path, so an endpoint such as https://otel.example/otlp is forwarded to https://otel.example/v1/traces",
+        "The OTLP/HTTP exporter convention appends v1/traces to the configured base endpoint path; the server-side @vercel/otel exporter uses the same variable",
+        "Re-pass: route.ts:27 forwards to `${endpoint.replace(/\\/+$/, \"\")}/v1/traces`; route.test.ts:23 'preserves a path prefix on the collector endpoint'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0000",
+        "GOZ-0039"
+      ],
+      "recommendation": "Corrective change in GOZ-0000: append the signal path to the endpoint (trim the trailing slash, then add /v1/traces) and add a unit test with a path-prefixed endpoint.",
+      "disposition": "corrected in 511b904"
+    },
+    {
+      "id": "GOZ-0000-IF-25",
+      "severity": "medium",
+      "title": "Unauthenticated local telemetry viewers must never become Helm or production defaults",
+      "evidence": [
+        "compose.yaml grafana: GF_AUTH_ANONYMOUS_ENABLED=true, GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer, GF_USERS_VIEWERS_CAN_EDIT=true; port bound to 127.0.0.1:3001",
+        "deploy/observability/loki.yaml auth_enabled: false; Prometheus and Jaeger have no authentication; all are bound to 127.0.0.1",
+        "Stored telemetry is cross-tenant operator data (GOZ-0000-IF-21; R3-19)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "Keep these settings local-only. Any future Helm or production packaging of telemetry backends requires authentication and must not enable anonymous access. GOZ-0039 verifies this as a release gate.",
+      "disposition": "applied-to-future-prompts (GOZ-0039); acceptable as-is for the local stack"
+    },
+    {
+      "id": "GOZ-0000-IF-26",
+      "severity": "low",
+      "title": "Trace storage is not durable while logs and metrics are",
+      "evidence": [
+        "compose.yaml jaeger service has no storage configuration or volume (default in-memory)",
+        "Grafana Loki derived fields link trace_id into Jaeger; those links dangle after a Jaeger restart",
+        "Makefile:44 help text says reset deletes 'the database volume', but `docker compose down -v` also deletes lokidata and promdata"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "Document the limitation (or add Jaeger persistent storage if the maintainer wants durable traces locally), and update the `make reset` help text to say it deletes all volumes.",
+      "disposition": "applied-to-future-prompts (GOZ-0039); minor GOZ-0000 docs fix recommended"
+    }
+  ],
+  "reanalyzedAt": "2026-11-14"
+}

@@ -1,0 +1,159 @@
+name: gozleme
+
+x-otel-grpc: &otel-grpc
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+x-db-passwords: &db-passwords
+  GOZLEME_MIGRATOR_PASSWORD: ${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
+  GOZLEME_APP_PASSWORD: ${GOZLEME_APP_PASSWORD:-local-dev-app}
+
+services:
+  postgres:
+    # pgvector image makes the optional extension *available*; Gözleme never requires it.
+    image: ${GOZLEME_POSTGRES_IMAGE:-pgvector/pgvector:pg17}
+    environment:
+      <<: *db-passwords
+      POSTGRES_DB: gozleme
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${GOZLEME_DB_SUPERUSER_PASSWORD:-local-dev-superuser}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:${GOZLEME_DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gozleme"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    image: gozleme-api:local
+    build:
+      context: .
+      dockerfile: src/Gozleme.Api/Dockerfile
+      args:
+        GOZLEME_BUILD: ${GOZLEME_BUILD:-0.1.0-local}
+    command: ["migrate"]
+    environment:
+      <<: *otel-grpc
+      Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
+      ConnectionStrings__GozlemeMigrator: Host=postgres;Database=gozleme;Username=gozleme_migrator;Password=${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: gozleme-api:local
+    environment:
+      <<: *otel-grpc
+      ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
+      Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
+    ports:
+      - "127.0.0.1:${GOZLEME_API_PORT:-8080}:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "dotnet", "Gozleme.Api.dll", "healthcheck", "live"]
+      interval: 5s
+      timeout: 4s
+      start_period: 10s
+      retries: 6
+    restart: unless-stopped
+
+  web:
+    image: gozleme-web:local
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    environment:
+      GOZLEME_API_URL: http://api:8080
+      GOZLEME_BUILD: ${GOZLEME_BUILD:-0.1.0-local}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    ports:
+      - "127.0.0.1:${GOZLEME_WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/backend-status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      start_period: 10s
+      retries: 6
+    restart: unless-stopped
+
+  # Foundational observability (GOZ-0000-IF-11). Telemetry is never a health dependency of the app:
+  # api/web/migrate do not depend on these services and keep working if they are down.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.165.0
+    command: ["--config=/etc/otelcol/collector.yaml"]
+    volumes:
+      - ./deploy/otel/collector.yaml:/etc/otelcol/collector.yaml:ro
+    ports:
+      - "127.0.0.1:${GOZLEME_OTLP_GRPC_PORT:-4317}:4317"
+      - "127.0.0.1:${GOZLEME_OTLP_HTTP_PORT:-4318}:4318"
+      - "127.0.0.1:${GOZLEME_METRICS_PORT:-8889}:8889"
+    depends_on:
+      - jaeger
+      - loki
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/jaeger:2.23.0
+    ports:
+      - "127.0.0.1:${GOZLEME_JAEGER_PORT:-16686}:16686"
+    restart: unless-stopped
+
+  # Stored, searchable telemetry for the local stack (maintainer decision GOZ-0000-IF-22).
+  loki:
+    image: grafana/loki:3.7.10
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./deploy/observability/loki.yaml:/etc/loki/loki.yaml:ro
+      - lokidata:/loki
+    ports:
+      - "127.0.0.1:${GOZLEME_LOKI_PORT:-3100}:3100"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    command: ["--config.file=/etc/prometheus/prometheus.yaml", "--storage.tsdb.retention.time=7d"]
+    volumes:
+      - ./deploy/observability/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - promdata:/prometheus
+    ports:
+      - "127.0.0.1:${GOZLEME_PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.3.1
+    environment:
+      # Local-only viewer bound to 127.0.0.1: anonymous read-only access, throwaway admin password.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_VIEWERS_CAN_EDIT: "true" # lets the anonymous local viewer use Explore
+      GF_SECURITY_ADMIN_PASSWORD: ${GOZLEME_GRAFANA_ADMIN_PASSWORD:-local-dev-grafana}
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - ./deploy/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "127.0.0.1:${GOZLEME_GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - loki
+      - jaeger
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  lokidata:
+  promdata:
+  pgdata:

@@ -1,0 +1,76 @@
+openapi: 3.1.0
+info:
+  title: Gözleme API — foundation status
+  version: '1'
+  description: GOZ-0000 status contract. No identity, organization or catalog endpoints exist in this version.
+paths:
+  /health/live:
+    get:
+      summary: Liveness — process is running
+      responses:
+        '200':
+          description: Alive
+          content:
+            text/plain:
+              schema: { type: string, enum: [Healthy] }
+  /health/ready:
+    get:
+      summary: Readiness — required dependencies usable
+      responses:
+        '200':
+          description: Ready
+          content:
+            text/plain:
+              schema: { type: string, enum: [Healthy] }
+        '503':
+          description: Not ready
+          content:
+            text/plain:
+              schema: { type: string, enum: [Unhealthy] }
+  /api/v1/status:
+    get:
+      summary: Versioned service status document
+      responses:
+        '200':
+          description: Status report (always 200; inspect `status`)
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceStatus' }
+components:
+  schemas:
+    ServiceStatus:
+      type: object
+      additionalProperties: false
+      required: [contractVersion, service, version, status, checkedAt, dependencies]
+      properties:
+        contractVersion: { type: string, const: '1' }
+        service: { type: string, const: gozleme-api }
+        version: { type: string }
+        status: { type: string, enum: [healthy, degraded, unavailable] }
+        checkedAt: { type: string, format: date-time }
+        dependencies:
+          type: array
+          items: { $ref: '#/components/schemas/DependencyStatus' }
+    DependencyStatus:
+      type: object
+      additionalProperties: false
+      required: [name, status, required, latencyMs, schemaVersion, message, capabilities]
+      properties:
+        name: { type: string }
+        status: { type: string, enum: [healthy, unavailable] }
+        required: { type: boolean }
+        latencyMs: { type: [number, 'null'] }
+        schemaVersion: { type: [string, 'null'] }
+        message: { type: [string, 'null'], description: Fixed non-sensitive text only }
+        capabilities:
+          type: [object, 'null']
+          properties:
+            vector:
+              type: object
+              required: [available, enabled]
+              properties:
+                available: { type: boolean }
+                enabled: { type: boolean }

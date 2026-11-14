@@ -1,2 +1,42 @@
+# OS / editors
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
 
+# .NET
+bin/
+obj/
+*.user
+TestResults/
+*.trx
+coverage/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.pnpm-store/
+
+# Playwright
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+e2e/.cache/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local environment (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# Demo scratch output (curated evidence under docs/specs/*/evidence is committed)
+.demo-tmp/

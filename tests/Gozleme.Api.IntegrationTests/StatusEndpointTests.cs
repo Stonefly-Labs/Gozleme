@@ -1,0 +1,62 @@
+using System.Net;
+using System.Text.Json;
+using Gozleme.Api.IntegrationTests.Infrastructure;
+
+namespace Gozleme.Api.IntegrationTests;
+
+public sealed class StatusEndpointTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
+{
+    private GozlemeApiFactory _factory = null!;
+    private HttpClient _client = null!;
+
+    public ValueTask InitializeAsync()
+    {
+        _factory = new GozlemeApiFactory(fixture.Database.AppConnectionString);
+        _client = _factory.CreateClient();
+        return ValueTask.CompletedTask;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _client.Dispose();
+        await _factory.DisposeAsync();
+    }
+
+    [Theory]
+    [InlineData("/health/live")]
+    [InlineData("/health/ready")]
+    public async Task Health_probes_are_healthy(string path)
+    {
+        using var response = await _client.GetAsync(new Uri(path, UriKind.Relative), TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Status_reports_healthy_database_schema_version_and_vector_capability()
+    {
+        using var response = await _client.GetAsync(new Uri("/api/v1/status", UriKind.Relative), TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("no-store", response.Headers.CacheControl?.ToString());
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        var root = doc.RootElement;
+        Assert.Equal(
+            ["checkedAt", "contractVersion", "dependencies", "service", "status", "version"],
+            root.EnumerateObject().Select(p => p.Name).Order());
+        Assert.Equal("1", root.GetProperty("contractVersion").GetString());
+        Assert.Equal("gozleme-api", root.GetProperty("service").GetString());
+        Assert.Equal("0.0.0-it", root.GetProperty("version").GetString());
+        Assert.Equal("healthy", root.GetProperty("status").GetString());
+
+        var db = Assert.Single(root.GetProperty("dependencies").EnumerateArray());
+        Assert.Equal("database", db.GetProperty("name").GetString());
+        Assert.Equal("healthy", db.GetProperty("status").GetString());
+        Assert.True(db.GetProperty("required").GetBoolean());
+        Assert.Equal("20261114000000_Foundation", db.GetProperty("schemaVersion").GetString());
+        Assert.Equal(JsonValueKind.Null, db.GetProperty("message").ValueKind);
+        var vector = db.GetProperty("capabilities").GetProperty("vector");
+        Assert.True(vector.GetProperty("available").GetBoolean());
+        Assert.False(vector.GetProperty("enabled").GetBoolean());
+    }
+}

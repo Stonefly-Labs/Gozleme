@@ -1,0 +1,69 @@
+{
+  "specId": "GOZ-0000",
+  "commit": "9c6d32d6a80197eee5b704155616d3f7914be6a3",
+  "branch": "chore/goz-0000-bootstrap",
+  "workingTreeCleanAtStart": true,
+  "environment": {
+    "os": "Darwin 25.5.0 arm64",
+    "docker": "29.8.2",
+    "compose": "5.5.0",
+    "node": "v24.10.0"
+  },
+  "startedAt": "2026-11-14T21:47:55Z",
+  "finishedAt": "2026-11-14T21:48:50Z",
+  "stackStartupSeconds": 18,
+  "commands": [
+    "docker compose up -d --build --wait",
+    "pnpm install --frozen-lockfile",
+    "pnpm --filter @gozleme/e2e exec playwright install chromium",
+    "pnpm --filter @gozleme/e2e run demo",
+    "docker compose logs --no-color"
+  ],
+  "result": "passed",
+  "assertions": [
+    {
+      "name": "healthy: dashboard shows real API and database status matching the API",
+      "result": "passed"
+    },
+    {
+      "name": "degraded: stopping PostgreSQL shows Degraded within 15 s, readiness 503, liveness 200",
+      "result": "passed"
+    },
+    {
+      "name": "recovery: restarting PostgreSQL returns to Healthy within 30 s without restarting api/web",
+      "result": "passed"
+    },
+    {
+      "name": "unreachable: stopping the API shows API unreachable and no stale database data",
+      "result": "passed"
+    },
+    {
+      "name": "boundary: identity, organization and catalog features are not implemented",
+      "result": "passed"
+    },
+    {
+      "name": "observability: one trace threads browser \u2192 web \u2192 API \u2192 PostgreSQL, with metrics and no secrets",
+      "result": "passed"
+    },
+    {
+      "name": "stored logs: outage warnings are stored in Loki, correlated to their trace, metrics stored, no secrets",
+      "result": "passed"
+    },
+    {
+      "name": "observability resilience: the app stays healthy when the telemetry collector is down",
+      "result": "passed"
+    },
+    {
+      "name": "secret scan of compose logs and status evidence",
+      "result": "passed"
+    }
+  ],
+  "evidence": [
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/01-healthy.png",
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/02-database-down-degraded.png",
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/03-recovered-healthy.png",
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/04-api-unreachable.png",
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/05-distributed-trace-jaeger.png",
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/06-stored-logs-grafana.png"
+  ]
+}

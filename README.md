@@ -1,19 +1,85 @@
-# Gözleme — repository-ready architecture and Spec Kit package
+# Gözleme
 
-This package is intended to be **copied into a new repository** on an allowed working branch (usually `chore/goz-0000-bootstrap`). It is a **documentation/workflow package, not an implemented application**. GitHub rulesets and required-check settings must be applied by a privileged human and subsequently verified.
+Gözleme is an open-source (MIT), self-hostable, federated, multi-organization **AI capability
+registry** for MCP servers/tools/resources/prompts, A2A agents and skills, packaged skills,
+models, APIs and AsyncAPI/event capabilities. It is a registry, **not** a production API
+gateway or AI request broker.
 
-Start at `.gozleme/manifest.yaml`. Read `docs/architecture/architecture-baseline.md`, `docs/decisions/consistency-review.md`, `docs/roadmap/spec-register.md`, and `docs/prompts/const.md`. The first executable starting prompt is `docs/prompts/spec-0000.md`.
+> **Status:** foundation only (GOZ-0000). The running stack is a status dashboard over a .NET 10
+> API and PostgreSQL. Identity, organizations, the catalog and every other product feature
+> arrive through the specs in [`docs/roadmap/spec-register.md`](docs/roadmap/spec-register.md).
 
-No Gözleme-specific Spec Kit `spec-template.md` is included. Use native Spec Kit templates; configure its generated workspace under `docs/specs` only if the installed tooling supports this. The prompt files are **living**, revision-controlled inputs until their spec is implemented and merged.
+## Quick start
 
-## Initial use
+Prerequisite: Docker with Compose v2. No cloud account, hosted identity provider or AI/embedding
+service is needed.
 
-1. On a `chore/*` branch, copy package into the repo; install/initialize your existing Spec Kit environment without reinstalling it.
-2. Run `python3 scripts/validate_docs.py` (requires PyYAML and jsonschema) and `python3 scripts/generate_register.py --check`.
-3. Process `docs/prompts/const.md` with the installed Spec Kit constitution command.
-4. Invoke `drive-speckit` for `GOZ-0000`, which reads `.gozleme/manifest.yaml`, the registry entry and `docs/prompts/spec-0000.md`.
-5. Review the evidence-backed PR and **merge it yourself**; agents must never merge.
+```bash
+make up                      # docker compose up -d --build --wait
+open http://localhost:3000   # dashboard
+open http://localhost:16686  # traces (Jaeger): browser → web → API → PostgreSQL
+open http://localhost:3001   # Grafana: stored logs (Loki), traces, metrics (Prometheus)
+curl -s http://localhost:8080/api/v1/status
+make down                    # or `make reset` to also delete the database volume
+```
+
+Override host ports with `GOZLEME_WEB_PORT`, `GOZLEME_API_PORT`, `GOZLEME_DB_PORT` (copy
+`.env.example` to `.env`). Local credentials in `.env.example` are throwaway values for a
+disposable database.
+
+## Development commands
+
+| Command | Purpose |
+|---|---|
+| `make bootstrap` | Install pnpm packages and Python governance deps (`.venv`) |
+| `make build` | Build backend (Release) and dashboard |
+| `make test` | Backend unit + Testcontainers integration tests, frontend unit tests |
+| `make lint` | `dotnet format --verify-no-changes`, ESLint, TypeScript |
+| `make up` / `down` / `logs` / `ps` / `reset` | Run the Compose stack |
+| `make validate` | Registry/manifest schemas, prompts, generated register sync, branch rules |
+| `make helm-lint` | Lint and render the Helm chart |
+| `make demo` | Autonomous Playwright demo with screenshots and run record |
+
+Toolchain for working outside containers: .NET SDK per [`global.json`](global.json), Node 24
+([`.nvmrc`](.nvmrc)) with pnpm via Corepack, Python 3.
+
+## Repository layout
+
+| Path | Contents |
+|---|---|
+| `src/Gozleme.Api` | .NET 10 ASP.NET Core modular-monolith host (status API, migrations) |
+| `tests/` | xUnit unit and Testcontainers integration tests |
+| `web/` | Next.js dashboard |
+| `e2e/` | Playwright autonomous demo |
+| `deploy/` | Postgres role bootstrap, OpenTelemetry collector config, Helm chart |
+| `docs/` | Architecture, decisions, engineering process, spec prompts, Spec Kit specs |
+| `.gozleme/` | Authoritative machine-readable manifest and spec registry |
+| `.claude/`, `.specify/` | Agent skills/agents and the installed Spec Kit |
+
+## Observability
+
+OpenTelemetry is foundational: browser, web, API and migrator emit traces (and the .NET
+services metrics and logs) over OTLP to a local collector, with Jaeger and a Prometheus scrape
+endpoint in the default offline stack; logs are stored in Loki, metrics in Prometheus, and
+Grafana views everything with log ↔ trace links. See
+[`docs/engineering/local-development.md`](docs/engineering/local-development.md#observability-foundational).
+
+## How work happens
+
+Specs are driven through the installed Spec Kit by the `drive-speckit` workflow
+([`docs/engineering/agent-workflow.md`](docs/engineering/agent-workflow.md)). All changes land via
+pull requests from `chore/*`, `feature/*` or `bugfix/*` branches; only a human maintainer merges
+([`docs/engineering/branching-and-pr-policy.md`](docs/engineering/branching-and-pr-policy.md)).
+The project constitution is [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 ## Source fidelity
 
-The prior conversation confirms **95 decisions**, but exact verbatim source text for every early Round 2 decision was not accessible for this package. `docs/decisions/decision-register.md` explicitly marks unavailable per-decision source text; it does not invent historical quotations. Round 3 decisions and the cross-cutting architecture are summarized from confirmed conversation context. Reconcile historical source records before treating every individual decision row as fully source-verified.
+The design history confirms **95 decisions**, but verbatim source text for every early Round 2
+decision was not available. [`docs/decisions/decision-register.md`](docs/decisions/decision-register.md)
+marks unavailable per-decision source text explicitly rather than inventing it.
+
+## License
+
+[MIT](LICENSE)
