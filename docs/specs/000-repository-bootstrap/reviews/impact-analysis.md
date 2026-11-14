@@ -1,7 +1,7 @@
 # GOZ-0000 post-convergence spec impact analysis
 
 **Source spec:** GOZ-0000 — Repository bootstrap and executable engineering foundation
-**Implementation revision:** initial analysis at `e7904ad`; bounded re-analysis at `930128e` on `chore/goz-0000-bootstrap` (corrective commit `3273724`; demo re-run on a clean tree recorded at `b4d82e1`, and `930128e` adds only evidence)
+**Implementation revision:** current `33b4cef` (foundational OpenTelemetry `ba6f28c`); earlier passes at `e7904ad` and `930128e` on `chore/goz-0000-bootstrap` (corrective commit `3273724`; demo re-run on a clean tree recorded at `b4d82e1`, and `930128e` adds only evidence)
 **Analyst:** Spec Impact Analyst (`analyze-spec-impact`), 2026-11-14
 **Structured findings:** `docs/specs/000-repository-bootstrap/reviews/impact-findings.json` (validates against `.gozleme/schemas/impact-findings.schema.json`)
 
@@ -44,7 +44,7 @@
 | GOZ-0000-IF-08 | medium | Demo runner and evidence layout are hard-coded to GOZ-0000; no seed path | 0001, 0039 | applied to prompts |
 | GOZ-0000-IF-09 | medium | Fixture `ScalarAsync` defaults to superuser and would bypass RLS; shared fixture | 0003, 0012, 0013, 0015, 0017 | applied to prompts |
 | GOZ-0000-IF-10 | medium | Migration mechanism, pre-upgrade compatibility, out-of-band role creation | 0001, 0003, 0004 | applied to prompts |
-| GOZ-0000-IF-11 | medium | OpenTelemetry has no owning spec | 0023, 0039 | **requires human approval** |
+| GOZ-0000-IF-11 | medium | OpenTelemetry has no owning spec | all (0001–0039) | decided by maintainer 2026-11-14: foundational; implemented in `ba6f28c`; applied to all prompts |
 | GOZ-0000-IF-12 | high | Protected `main` not applied or verified (HTTP 403), invariant 12 | 0000, all | **requires human action** |
 | GOZ-0000-IF-13 | medium | Secret-reference, read-only rootfs and Compose conventions; Data Protection keys; artifact volume; live Helm validation | 0001, 0007, 0009, 0010, 0011, 0015, 0016, 0039 | applied to prompts |
 | GOZ-0000-IF-14 | medium | No two-instance local harness for federation | 0029, 0031, 0032, 0033, 0036 | applied to prompts |
@@ -53,6 +53,11 @@
 | GOZ-0000-IF-17 | low | `research.md` R7 describes CI that does not match `ci.yml` | 0000 | corrected in `3273724` |
 | GOZ-0000-IF-18 | low | `scripts/__pycache__/*.pyc` is tracked despite `.gitignore` | 0000 | corrected in `3273724` |
 | GOZ-0000-IF-19 | low | No JS dependency vulnerability check; NuGet audit is only the SDK default | 0000 | corrected in `3273724` |
+| GOZ-0000-IF-20 | high | The browser telemetry ingestion route is unauthenticated, so spans can be spoofed (forged `service.name`) and the route abused | 0001, 0039 | applied to prompts |
+| GOZ-0000-IF-21 | high | Telemetry is sensitive, cross-tenant and visible to operators. `db.query.text`, `http.url`/`http.target` and `user_agent.original` are captured, and redaction covers only credential-like data | 0001–0003, 0012–0017, 0034 | applied to prompts |
+| GOZ-0000-IF-22 | medium | Whether to ship stored or searchable logs and telemetry, and how long to keep them, is undecided (logs go to the console only; Jaeger stores in memory) | 0023, 0035, 0039 | **requires human decision** |
+| GOZ-0000-IF-23 | low | Collector config is not hot-reloaded (already documented). Helm ships no collector, so operators must supply their own redaction | 0039 | documented; Helm README note recommended |
+| GOZ-0000-IF-24 | low | Browser ingestion route drops any path prefix of `OTEL_EXPORTER_OTLP_ENDPOINT` | 0000, 0039 | corrective implementation recommended |
 
 The evidence, recommendation and file and line references for each finding are in `impact-findings.json`.
 
@@ -66,7 +71,7 @@ Not edited, because no implementation fact changes their starting prompt: GOZ-00
 
 ## Items requiring human decision or action
 
-1. **GOZ-0000-IF-11:** Assign OpenTelemetry to an MVP spec (for example GOZ-0039), or record it as post-MVP. This is an MVP-scope change, so it was not edited.
+1. **GOZ-0000-IF-11:** The maintainer decided on 2026-11-14 that OpenTelemetry is foundational and includes the browser. It is implemented and applied, so this item is closed.
 2. **GOZ-0000-IF-12:** Enable, apply and verify the protected-`main` ruleset (blocker GOZ-0000-B1). Do not claim enforcement until it is verified.
 3. **Guardrail noted in GOZ-0015 (IF-05):** Granting superuser to `gozleme_migrator` or `gozleme_app` so that `vector` can be created would weaken the role separation behind invariant 2. It requires human approval and is not recommended.
 
@@ -97,5 +102,33 @@ The corrective commit `3273724` resolves all four GOZ-0000 corrective items. I c
 
 **Prompt corrections.** The IF-06 sentence in GOZ-0009, 0010, 0011, 0015 and 0016 said the web validator rejects `capabilities` without `vector`. That is no longer true, and the sentence now describes the corrected tolerance. Those prompts are already in the revision 1 → 2 bump list.
 
-**Other code.** Between `3273724` and HEAD, nothing changed outside evidence, prompts and reviews. The human items IF-11 and IF-12 remain open.
+**Other code.** Between `3273724` and HEAD, nothing changed outside evidence, prompts and reviews. At the time of that pass, the human items IF-11 and IF-12 were still open. IF-11 has since been decided, as described in the next section.
+
+## Re-analysis at `33b4cef`: foundational observability (2026-11-14)
+
+**Maintainer decision on IF-11.** Quoted verbatim: "otel should be foundational, we want that thread throughout all we do". On browser telemetry: "We prolly want stuff from the client/browser". GOZ-0000 implemented this in `ba6f28c`, and the demo passed 7 of 7 in `33b4cef`. I checked the following in the code:
+
+- `src/Gozleme.Api/Telemetry/GozlemeTelemetry.cs` defines the `Gozleme.Api` ActivitySource and Meter. OTLP export is enabled only when an endpoint is set, and `/health` requests are filtered out of tracing.
+- The API and the migrator use named Npgsql data sources.
+- The web tier uses `web/src/instrumentation.ts` and propagates trace context only to the API URL.
+- Browser tracing lives in `web/src/telemetry/*`, with an ingestion route at `web/src/app/api/otel/v1/traces/route.ts`.
+- Compose runs the collector and Jaeger, and neither is a health dependency. Helm wires `telemetry.*` into the api, web and migrate Job.
+- `TelemetryTests.cs` and the e2e observability tests cover this.
+
+**Prompt edits.** Every future prompt from GOZ-0001 to GOZ-0039 now ends with the same section, `### Observability (foundational, GOZ-0000-IF-11, 2026-11-14)`. It requires each spec to:
+
+- use the existing pipeline and its naming,
+- preserve the browser → web → API → PostgreSQL trace,
+- keep secrets and confidential metadata out of telemetry,
+- assert its spans and metrics in tests and in the demo.
+
+Each prompt also has one tailored "Spec focus" line. GOZ-0001 decides how the ingestion route is protected (IF-20). GOZ-0003 decides whether an opaque tenant ID may appear in telemetry (IF-21). GOZ-0039 adds a telemetry release gate. No scope, boundary, dependency or invariant changed.
+
+**Live evidence for IF-21.** In local Jaeger, `gozleme-api` spans carry `db.query.text` (the full SQL), `http.url`, `http.target`, `url.path` and `user_agent.original`.
+
+**Human decisions outstanding.**
+- IF-22: whether to ship stored or searchable logs and telemetry, and how long to keep them. Prompts were deliberately not edited for this.
+- IF-12: protected `main`.
+
+**Corrective GOZ-0000 item.** IF-24: in `route.ts:26`, `new URL("/v1/traces", endpoint)` discards any path prefix of the endpoint. Fix it by appending `/v1/traces` to the base endpoint, and add a unit test with a path-prefixed endpoint. Optional, from IF-23: add a note to the Helm README that operators must apply equivalent redaction in their own collector.
 

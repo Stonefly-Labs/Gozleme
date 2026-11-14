@@ -1,6 +1,6 @@
 {
   "sourceSpec": "GOZ-0000",
-  "implementationRevision": "930128e (chore/goz-0000-bootstrap; corrective commit 3273724; demo re-run recorded at b4d82e1 on a clean tree, 930128e adds only evidence). Initial analysis at e7904ad.",
+  "implementationRevision": "33b4cef (chore/goz-0000-bootstrap; foundational OpenTelemetry in ba6f28c, demo evidence 7/7 passed in 33b4cef). Earlier passes at e7904ad and 930128e.",
   "analyzedAt": "2026-11-14",
   "findings": [
     {
@@ -202,14 +202,55 @@
         "docs/architecture/technology-stack.md lists OpenTelemetry as part of the stack",
         "docs/specs/000-repository-bootstrap/research.md R9 defers OpenTelemetry to 'the operational spec that needs traces/metrics'",
         "No prompt in docs/prompts/spec-0001.md..spec-0039.md mentions OpenTelemetry, tracing or metrics",
-        "src/Gozleme.Api/GozlemeApp.cs:18-23 JSON console logging only"
+        "src/Gozleme.Api/GozlemeApp.cs:18-23 JSON console logging only",
+        "Maintainer, verbatim: \"otel should be foundational, we want that thread throughout all we do\"; on browser telemetry: \"We prolly want stuff from the client/browser\"",
+        "src/Gozleme.Api/Telemetry/GozlemeTelemetry.cs: AddGozlemeTelemetry, ActivitySource/Meter 'Gozleme.Api', OTLP export only when OTEL_EXPORTER_OTLP_ENDPOINT set, /health not traced",
+        "web/src/instrumentation.ts (@vercel/otel, propagation only to GOZLEME_API_URL); web/src/telemetry/browser.ts; compose.yaml otel-collector + jaeger; Helm telemetry.* values via gozleme.otelEnv helper",
+        "tests/Gozleme.Api.IntegrationTests/TelemetryTests.cs; e2e observability tests; demo 7/7 passed with 05-distributed-trace-jaeger.png"
       ],
       "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
         "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
         "GOZ-0039"
       ],
-      "recommendation": "Human decides ownership: add OpenTelemetry (with secret-free trace attributes per invariant 8) to an existing MVP spec such as GOZ-0039, or record it as post-MVP. No prompt edited.",
-      "disposition": "requires-human-approval"
+      "recommendation": "Every future spec instruments its code paths through the existing pipeline, keeps secrets and confidential metadata out of telemetry, asserts key spans/metrics in tests and demo, and preserves the browser→web→API→DB trace.",
+      "disposition": "decided by maintainer 2026-11-14: foundational (including browser telemetry); implemented in ba6f28c; applied to all future prompts GOZ-0001..GOZ-0039"
     },
     {
       "id": "GOZ-0000-IF-12",
@@ -341,6 +382,93 @@
       ],
       "recommendation": "Add a pnpm audit (or dependency-review) step and set NuGetAudit/NuGetAuditMode explicitly; non-blocking for FR-015, which does not list dependency checks.",
       "disposition": "corrected in 3273724"
+    },
+    {
+      "id": "GOZ-0000-IF-20",
+      "severity": "high",
+      "title": "Unauthenticated browser telemetry ingestion route",
+      "evidence": [
+        "web/src/app/api/otel/v1/traces/route.ts:1-36 accepts any JSON/protobuf POST up to 256 KiB and forwards it to the collector; no authentication, origin check or rate limit (comment: unauthenticated until GOZ-0001)",
+        "Browser-supplied resource attributes (e.g. service.name) are forwarded unmodified, so a caller can inject spans claiming to be gozleme-api or gozleme-web into the trace store",
+        "In Helm the web tier is the public front end, so the route is reachable by any client"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0039"
+      ],
+      "recommendation": "GOZ-0001 decides and implements authentication or session binding, origin checking and rate limiting for the route. Consider pinning or overwriting service.name for the browser pipeline at the collector, so browser data cannot impersonate server services. GOZ-0039 verifies this as a release gate.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-21",
+      "severity": "high",
+      "title": "Telemetry is sensitive, cross-tenant, operator-visible data",
+      "evidence": [
+        "Live Jaeger (/api/v3/traces, service gozleme-api) shows span attributes db.query.text (full SQL text), http.url, http.target, url.path, user_agent.original",
+        "deploy/otel/collector.yaml redaction matches credential-like keys and values only (password, token, api key, connection string, host/username patterns); it cannot recognise tenant-private metadata",
+        "docs/architecture/security-invariants.md invariant 8 names traces explicitly; invariant 3 (no existence leaks); decision R3-19 (operator vs tenant support access)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0034"
+      ],
+      "recommendation": "Keep confidential values out of span names, attributes, metric labels, SQL text and URLs (parameters only; no private search terms in query strings). GOZ-0003 decides whether an opaque tenant ID may appear as an attribute. Collector redaction stays defence in depth.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0000-IF-22",
+      "severity": "medium",
+      "title": "Stored and searchable logs and telemetry retention are undecided",
+      "evidence": [
+        "deploy/otel/collector.yaml logs pipeline exports only to the debug (console) exporter",
+        "compose.yaml jaeger service uses default in-memory storage, so traces are lost on restart; Prometheus is only a scrape endpoint (:8889), with no storage",
+        "docs/engineering/local-development.md:15 logs via make logs and docker compose logs otel-collector"
+      ],
+      "affectedSpecs": [
+        "GOZ-0023",
+        "GOZ-0035",
+        "GOZ-0039"
+      ],
+      "recommendation": "Human decides whether Gözleme ships durable, searchable log, trace or metric storage (local and Helm) and its retention and erasure policy, which interacts with CR-07 deletion and with audit receipts. Until then, prompts carry no storage or retention requirement.",
+      "disposition": "requires-human-decision"
+    },
+    {
+      "id": "GOZ-0000-IF-23",
+      "severity": "low",
+      "title": "Collector configuration is not hot-reloaded and Helm ships no collector",
+      "evidence": [
+        "compose.yaml otel-collector mounts deploy/otel/collector.yaml read-only; changes take effect only after a restart",
+        "docs/engineering/local-development.md:37-38 already documents running docker compose restart otel-collector",
+        "deploy/helm/gozleme: telemetry.* only points at an operator-provided OTLP endpoint; the redaction processors exist only in the local collector config"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "No prompt change needed for the reload caveat, which is documented. For Helm, document in the chart README that operators must apply equivalent redaction in their own collector, since the app-side no-secret rules are the primary control. GOZ-0039 covers this through its Helm telemetry gate.",
+      "disposition": "documented; Helm README note recommended (non-blocking)"
+    },
+    {
+      "id": "GOZ-0000-IF-24",
+      "severity": "low",
+      "title": "Browser ingestion route drops any path prefix of the OTLP endpoint",
+      "evidence": [
+        "web/src/app/api/otel/v1/traces/route.ts:26 new URL(\"/v1/traces\", endpoint) resolves an absolute path, so an endpoint such as https://otel.example/otlp is forwarded to https://otel.example/v1/traces",
+        "The OTLP/HTTP exporter convention appends v1/traces to the configured base endpoint path; the server-side @vercel/otel exporter uses the same variable"
+      ],
+      "affectedSpecs": [
+        "GOZ-0000",
+        "GOZ-0039"
+      ],
+      "recommendation": "Corrective change in GOZ-0000: append the signal path to the endpoint (trim the trailing slash, then add /v1/traces) and add a unit test with a path-prefixed endpoint.",
+      "disposition": "corrective-implementation-recommended"
     }
   ],
   "reanalyzedAt": "2026-11-14"
