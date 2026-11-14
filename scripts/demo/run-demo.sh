@@ -12,7 +12,7 @@ cd "$ROOT"
 
 STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # Tree state at start, ignoring the evidence this run is about to regenerate.
-TREE_CLEAN=$([ -z "$(git status --porcelain -- . ':(exclude)docs/specs/*/evidence')" ] && echo true || echo false)
+TREE_CLEAN=$([ -z "$(git status --porcelain -- . ':(exclude,glob)docs/specs/*/evidence/**')" ] && echo true || echo false)
 mkdir -p "$TMP" "$EVIDENCE/screenshots"
 rm -f "$EVIDENCE"/screenshots/*.png "$TMP"/*.json "$TMP"/*.log
 
