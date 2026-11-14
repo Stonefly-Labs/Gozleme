@@ -1,0 +1,6 @@
+Gözleme {{ .Chart.AppVersion }} (foundation) installed as {{ .Release.Name }}.
+
+  kubectl port-forward svc/{{ include "gozleme.fullname" . }}-web 3000:3000
+  open http://localhost:3000
+
+Requires Secret "{{ .Values.database.existingSecret }}" and pre-created database roles (see chart README).

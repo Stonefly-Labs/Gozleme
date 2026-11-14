@@ -1,0 +1,10 @@
+# Extends the default gitleaks rules. Allow only the documented throwaway local/test credentials.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Throwaway local-development and integration-test database passwords"
+regexes = [
+  '''local-dev-(superuser|migrator|app)''',
+  '''it-(super|migrator|app)-[A-Za-z0-9]{4}''',
+]

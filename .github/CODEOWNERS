@@ -1,0 +1,10 @@
+# CODEOWNERS — placeholder. No owners are assigned yet; owners were not invented.
+#
+# A human maintainer should replace the commented examples below with real GitHub users or
+# teams, then enable "Require review from Code Owners" in the repository ruleset
+# (see docs/engineering/github-protection.md).
+#
+# *                       @<org>/<maintainers-team>
+# /docs/architecture/     @<org>/<architecture-owners>
+# /.gozleme/              @<org>/<maintainers-team>
+# /.github/               @<org>/<maintainers-team>
