@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "specId",
+    "stage",
+    "status",
+    "attempts",
+    "blockers",
+    "nextAction",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "specId": {
+      "pattern": "^GOZ-[0-9]{4}$",
+      "type": "string"
+    },
+    "stage": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": "string"
+    },
+    "attempts": {
+      "type": "array"
+    },
+    "blockers": {
+      "type": "array"
+    },
+    "nextAction": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "object"
+    }
+  }
+}

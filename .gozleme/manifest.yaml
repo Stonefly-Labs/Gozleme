@@ -1,0 +1,48 @@
+schemaVersion: '1.0'
+project:
+  name: Gözleme
+  slug: gozleme
+documentation:
+  root: docs
+  architecture: docs/architecture/architecture-baseline.md
+  security: docs/architecture/security-invariants.md
+  decisions: docs/decisions/decision-register.md
+  traceability: docs/decisions/decision-traceability.md
+  consistencyReview: docs/decisions/consistency-review.md
+constitution:
+  prompt: docs/prompts/const.md
+  required: true
+specifications:
+  registry: .gozleme/spec-registry.yaml
+  humanRegister: docs/roadmap/spec-register.md
+  promptsDirectory: docs/prompts
+  promptPattern: spec-{number:04d}.md
+  workingDirectory: docs/specs
+  nativeSpecKitWorkspaceCaveat: Use native location if installed Spec Kit cannot place generated files
+    under docs.
+engineering:
+  branching: docs/engineering/branching-and-pr-policy.md
+  demo: docs/engineering/demo-contract.md
+  agentWorkflow: docs/engineering/agent-workflow.md
+agents:
+  primary: claude-code
+  skillsDirectory: .claude/skills
+  subagentsDirectory: .claude/agents
+  generalInstructions: AGENTS.md
+  claudeInstructions: CLAUDE.md
+rules:
+  humanOnlyMerge: true
+  neverEnableAgentAutoMerge: true
+  requireWorkingDemo: true
+  requirePostConvergenceImpactAnalysis: true
+  allowAgentUpdatesToFuturePrompts: true
+  futurePromptEditsRequirePR: true
+  allowBranchPrefixes:
+  - chore/
+  - feature/
+  - bugfix/
+  mainProtected: true
+  agentMayPushMain: false
+schemas:
+  manifest: .gozleme/schemas/manifest.schema.json
+  registry: .gozleme/schemas/spec-registry.schema.json

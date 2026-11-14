@@ -1,0 +1,55 @@
+# Gözleme — Specification Register
+
+**Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
+
+**Specs:** 40 · **Complete on main:** 0 · **Blocked:** 0 · **Ready for human merge:** 0
+
+| Spec | Phase | Status | Stage | Dependencies | Next action |
+|---|---|---|---|---|---|
+| [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | not-started | — | — | Start on chore/goz-0000-bootstrap |
+| [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | not-started | — | GOZ-0000 | Await prerequisites and create allowed working branch |
+| [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | not-started | — | GOZ-0001 | Await prerequisites and create allowed working branch |
+| [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | not-started | — | GOZ-0002 | Await prerequisites and create allowed working branch |
+| [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | not-started | — | GOZ-0003 | Await prerequisites and create allowed working branch |
+| [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | not-started | — | GOZ-0004 | Await prerequisites and create allowed working branch |
+| [GOZ-0006](../prompts/spec-0006.md) — Typed manifests for capability families | publishing | not-started | — | GOZ-0005 | Await prerequisites and create allowed working branch |
+| [GOZ-0007](../prompts/spec-0007.md) — Immutable revisions and signed attestations | publishing | not-started | — | GOZ-0006 | Await prerequisites and create allowed working branch |
+| [GOZ-0008](../prompts/spec-0008.md) — Child capability identities and projections | publishing | not-started | — | GOZ-0007 | Await prerequisites and create allowed working branch |
+| [GOZ-0009](../prompts/spec-0009.md) — Filesystem artifact publication | publishing | not-started | — | GOZ-0007 | Await prerequisites and create allowed working branch |
+| [GOZ-0010](../prompts/spec-0010.md) — S3-compatible artifact adapter | publishing | not-started | — | GOZ-0009 | Await prerequisites and create allowed working branch |
+| [GOZ-0011](../prompts/spec-0011.md) — Azure Blob artifact adapter | publishing | not-started | — | GOZ-0009 | Await prerequisites and create allowed working branch |
+| [GOZ-0012](../prompts/spec-0012.md) — Canonical visibility and private discovery | discovery | not-started | — | GOZ-0003, GOZ-0008 | Await prerequisites and create allowed working branch |
+| [GOZ-0013](../prompts/spec-0013.md) — PostgreSQL lexical search | discovery | not-started | — | GOZ-0012 | Await prerequisites and create allowed working branch |
+| [GOZ-0014](../prompts/spec-0014.md) — Organization-specific catalog overlays | discovery | not-started | — | GOZ-0012 | Await prerequisites and create allowed working branch |
+| [GOZ-0015](../prompts/spec-0015.md) — Opt-in local pgvector semantic search | discovery | not-started | — | GOZ-0013, GOZ-0014 | Await prerequisites and create allowed working branch |
+| [GOZ-0016](../prompts/spec-0016.md) — Hosted and pluggable embedding providers | discovery | not-started | — | GOZ-0015 | Await prerequisites and create allowed working branch |
+| [GOZ-0017](../prompts/spec-0017.md) — Hybrid search and embedding lifecycle | discovery | not-started | — | GOZ-0015, GOZ-0016 | Await prerequisites and create allowed working branch |
+| [GOZ-0018](../prompts/spec-0018.md) — Typed declarative policy evaluator | governance | not-started | — | GOZ-0004, GOZ-0012 | Await prerequisites and create allowed working branch |
+| [GOZ-0019](../prompts/spec-0019.md) — Trusted facts and approved-use gate | governance | not-started | — | GOZ-0018, GOZ-0007 | Await prerequisites and create allowed working branch |
+| [GOZ-0020](../prompts/spec-0020.md) — Policy activation lifecycle and inheritance | governance | not-started | — | GOZ-0018, GOZ-0019 | Await prerequisites and create allowed working branch |
+| [GOZ-0021](../prompts/spec-0021.md) — Revision and child approval workflow | governance | not-started | — | GOZ-0019, GOZ-0008 | Await prerequisites and create allowed working branch |
+| [GOZ-0022](../prompts/spec-0022.md) — Risk dimensions and reassessment | governance | not-started | — | GOZ-0021, GOZ-0007 | Await prerequisites and create allowed working branch |
+| [GOZ-0023](../prompts/spec-0023.md) — Security epochs and authorization receipts | governance | not-started | — | GOZ-0019, GOZ-0020, GOZ-0021 | Await prerequisites and create allowed working branch |
+| [GOZ-0024](../prompts/spec-0024.md) — Typed relationship and dependency graph | resolution | not-started | — | GOZ-0008, GOZ-0014 | Await prerequisites and create allowed working branch |
+| [GOZ-0025](../prompts/spec-0025.md) — Dependency completeness evidence | resolution | not-started | — | GOZ-0024, GOZ-0022 | Await prerequisites and create allowed working branch |
+| [GOZ-0026](../prompts/spec-0026.md) — Compatibility and version constraints | resolution | not-started | — | GOZ-0024, GOZ-0025 | Await prerequisites and create allowed working branch |
+| [GOZ-0027](../prompts/spec-0027.md) — Deterministic transitive dependency solving | resolution | not-started | — | GOZ-0026, GOZ-0019 | Await prerequisites and create allowed working branch |
+| [GOZ-0028](../prompts/spec-0028.md) — Portable signed-resolution-plan lockfiles | resolution | not-started | — | GOZ-0027, GOZ-0023 | Await prerequisites and create allowed working branch |
+| [GOZ-0029](../prompts/spec-0029.md) — Federation source enrollment and pinning | federation | not-started | — | GOZ-0007, GOZ-0023 | Await prerequisites and create allowed working branch |
+| [GOZ-0030](../prompts/spec-0030.md) — Verified canonical import and quarantine | federation | not-started | — | GOZ-0029, GOZ-0008 | Await prerequisites and create allowed working branch |
+| [GOZ-0031](../prompts/spec-0031.md) — Checkpoint-bound snapshot bootstrap | federation | not-started | — | GOZ-0030, GOZ-0012 | Await prerequisites and create allowed working branch |
+| [GOZ-0032](../prompts/spec-0032.md) — Ordered incremental synchronization | federation | not-started | — | GOZ-0031 | Await prerequisites and create allowed working branch |
+| [GOZ-0033](../prompts/spec-0033.md) — Revocation freshness and eligibility | federation | not-started | — | GOZ-0032, GOZ-0023 | Await prerequisites and create allowed working branch |
+| [GOZ-0034](../prompts/spec-0034.md) — Scoped private sharing grants | federation | not-started | — | GOZ-0033, GOZ-0012 | Await prerequisites and create allowed working branch |
+| [GOZ-0035](../prompts/spec-0035.md) — Sharing withdrawal and retention | federation | not-started | — | GOZ-0034 | Await prerequisites and create allowed working branch |
+| [GOZ-0036](../prompts/spec-0036.md) — Authority-based conflict reconciliation | federation | not-started | — | GOZ-0032, GOZ-0033 | Await prerequisites and create allowed working branch |
+| [GOZ-0037](../prompts/spec-0037.md) — Sandbox isolation and resource boundaries | playground | not-started | — | GOZ-0019, GOZ-0009 | Await prerequisites and create allowed working branch |
+| [GOZ-0038](../prompts/spec-0038.md) — Capability testing playground | playground | not-started | — | GOZ-0037, GOZ-0021 | Await prerequisites and create allowed working branch |
+| [GOZ-0039](../prompts/spec-0039.md) — Recovery validation and release gates | operations | not-started | — | GOZ-0038, GOZ-0036, GOZ-0017, GOZ-0028 | Await prerequisites and create allowed working branch |
+
+## Progress and governance
+
+- All branch and gate state is provisional until reviewed; `complete` only after verified **human** PR merge on protected `main`.
+- Source documentation: `docs/decisions/decision-register.md`; per-position historical Round 2 verification remains pending.
+- Post-convergence Spec Impact Analyst can update future unimplemented prompts in branch within approved architecture; Roadmap Steward syncs this report.
+- Every spec includes demo and PR screenshot evidence where visually meaningful.

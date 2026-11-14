@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "project",
+    "specs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "project": {
+      "type": "object"
+    },
+    "specs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "title",
+          "phase",
+          "release",
+          "prompt",
+          "dependencies",
+          "status",
+          "gates",
+          "evidence",
+          "nextAction"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^GOZ-[0-9]{4}$"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phase": {
+            "type": "string"
+          },
+          "release": {
+            "enum": [
+              "mvp",
+              "post-mvp"
+            ]
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "dependencies": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^GOZ-[0-9]{4}$"
+            }
+          },
+          "status": {
+            "enum": [
+              "not-started",
+              "in-progress",
+              "blocked",
+              "ready-for-human-merge",
+              "complete",
+              "deferred"
+            ]
+          },
+          "stage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pullRequest": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "promptRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "gates": {
+            "type": "object"
+          },
+          "evidence": {
+            "type": "object"
+          },
+          "nextAction": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

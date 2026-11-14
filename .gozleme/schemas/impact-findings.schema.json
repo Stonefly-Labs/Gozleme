@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "sourceSpec",
+    "implementationRevision",
+    "findings"
+  ],
+  "properties": {
+    "sourceSpec": {
+      "pattern": "^GOZ-[0-9]{4}$"
+    },
+    "implementationRevision": {
+      "type": "string"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "severity",
+          "evidence",
+          "affectedSpecs",
+          "recommendation",
+          "disposition"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "evidence": {
+            "type": "array"
+          },
+          "affectedSpecs": {
+            "type": "array"
+          },
+          "recommendation": {
+            "type": "string"
+          },
+          "disposition": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
