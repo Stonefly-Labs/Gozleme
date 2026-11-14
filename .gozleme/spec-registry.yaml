@@ -31,7 +31,7 @@ specs:
     humanReview: pending
     merge: pending
   blockers:
-  - IF-11 OpenTelemetry ownership awaits human decision (scope change; see reviews/impact-analysis.md)
+  - IF-22 stored/searchable logs and telemetry retention await human decision (see reviews/impact-analysis.md)
   - GitHub rulesets/branch protection API returns HTTP 403 on this private repo plan; protected-main must be applied and verified by a human owner (see docs/specs/000-repository-bootstrap/progress.yaml GOZ-0000-B1)
   impactFindings:
   - GOZ-0000-IF-01
@@ -53,6 +53,11 @@ specs:
   - GOZ-0000-IF-17
   - GOZ-0000-IF-18
   - GOZ-0000-IF-19
+  - GOZ-0000-IF-20
+  - GOZ-0000-IF-21
+  - GOZ-0000-IF-22
+  - GOZ-0000-IF-23
+  - GOZ-0000-IF-24
   evidence:
     tests:
     - docs/specs/000-repository-bootstrap/progress.yaml
@@ -63,10 +68,11 @@ specs:
     - docs/specs/000-repository-bootstrap/evidence/screenshots/02-database-down-degraded.png
     - docs/specs/000-repository-bootstrap/evidence/screenshots/03-recovered-healthy.png
     - docs/specs/000-repository-bootstrap/evidence/screenshots/04-api-unreachable.png
+    - docs/specs/000-repository-bootstrap/evidence/screenshots/05-distributed-trace-jaeger.png
     reviews:
     - docs/specs/000-repository-bootstrap/reviews/impact-analysis.md
     - docs/specs/000-repository-bootstrap/reviews/impact-findings.json
-  nextAction: Await human decision on IF-11, then open PR for human review; human applies/verifies protected-main (IF-12)
+  nextAction: Await human decision on IF-22 (stored logs), then open PR for human review; human applies/verifies protected-main (IF-12)
 - id: GOZ-0001
   number: 1
   title: Local identity and session security
@@ -244,7 +250,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -310,7 +316,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -644,7 +650,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -678,7 +684,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -712,7 +718,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -746,7 +752,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -780,7 +786,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -849,7 +855,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -883,7 +889,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -917,7 +923,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -951,7 +957,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -985,7 +991,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -1053,7 +1059,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -1188,7 +1194,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -1221,7 +1227,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -1289,7 +1295,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
@@ -1323,7 +1329,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 1
+  promptRevision: 2
   gates:
     specification: pending
     plan: pending
