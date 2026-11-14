@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0000",
-  "commit": "b4d82e1e06fc8ee37926ac9d49009e7a74d69dac",
+  "commit": "ba6f28c526c47f053e052032653b5471b47a78fc",
   "branch": "chore/goz-0000-bootstrap",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-14T21:21:46Z",
-  "finishedAt": "2026-11-14T21:22:14Z",
-  "stackStartupSeconds": 4,
+  "startedAt": "2026-11-14T21:35:41Z",
+  "finishedAt": "2026-11-14T21:36:25Z",
+  "stackStartupSeconds": 18,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -42,6 +42,14 @@
       "result": "passed"
     },
     {
+      "name": "observability: one trace threads browser \u2192 web \u2192 API \u2192 PostgreSQL, with metrics and no secrets",
+      "result": "passed"
+    },
+    {
+      "name": "observability resilience: the app stays healthy when the telemetry collector is down",
+      "result": "passed"
+    },
+    {
       "name": "secret scan of compose logs and status evidence",
       "result": "passed"
     }
@@ -50,6 +58,7 @@
     "docs/specs/000-repository-bootstrap/evidence/screenshots/01-healthy.png",
     "docs/specs/000-repository-bootstrap/evidence/screenshots/02-database-down-degraded.png",
     "docs/specs/000-repository-bootstrap/evidence/screenshots/03-recovered-healthy.png",
-    "docs/specs/000-repository-bootstrap/evidence/screenshots/04-api-unreachable.png"
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/04-api-unreachable.png",
+    "docs/specs/000-repository-bootstrap/evidence/screenshots/05-distributed-trace-jaeger.png"
   ]
 }
