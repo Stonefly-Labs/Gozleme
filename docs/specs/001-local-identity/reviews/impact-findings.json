@@ -1,0 +1,560 @@
+{
+  "sourceSpec": "GOZ-0001",
+  "implementationRevision": "d2e5c6c (feature/goz-0001-local-identity; demo 19/19 recorded assertions passed on clean tree at e474b69, evidence in 7df8a43; e474b69..d2e5c6c changes only docs and adds SessionExpiryTests.cs)",
+  "analyzedAt": "2026-11-15",
+  "findings": [
+    {
+      "id": "GOZ-0001-IF-01",
+      "severity": "medium",
+      "title": "API cross-site header check is opt-in per endpoint; research R5 says it covers all unsafe /api/v1/* methods",
+      "evidence": [
+        "src/Gozleme.Api/Identity/AuthEndpoints.cs:36-41 adds WebClientHeaderFilter to each auth POST individually",
+        "src/Gozleme.Api/GozlemeApp.cs:50-63 registers no global filter or middleware for unsafe methods",
+        "docs/specs/001-local-identity/research.md R5 layer 2: 'API identity endpoints and all unsafe /api/v1/* methods require the custom header'",
+        "tests/Gozleme.Api.IntegrationTests/CsrfTests.cs:21-27 covers only the four /api/v1/auth/* paths",
+        "web/src/lib/api.ts:15 forwardToApi always sets x-gozleme-client: web, so isSameOrigin() in each route handler (web/src/lib/origin.ts:14-19) is the effective boundary",
+        "No unsafe endpoint outside /api/v1/auth exists at d2e5c6c, so nothing is exploitable today",
+        "Corrected at d7b9108: src/Gozleme.Api/GozlemeApp.cs /api/v1 group; tests/Gozleme.Api.IntegrationTests/EndpointAuthorizationTests.cs"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
+        "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039"
+      ],
+      "recommendation": "Every new unsafe browser route calls isSameOrigin() before forwardToApi, and every new unsafe API endpoint carries WebClientHeaderFilter. GOZ-0002 should replace the per-endpoint filter with a global check on unsafe /api/v1/* methods, backed by an endpoint-enumeration test. Optional bounded GOZ-0001 correction: implement R5 as written (global middleware) or correct the R5 text.",
+      "disposition": "corrected in GOZ-0001 at d7b9108: WebClientHeaderFilter runs on the whole /api/v1 group for unsafe methods; downstream prompts updated (web-tier isSameOrigin stays per route)"
+    },
+    {
+      "id": "GOZ-0001-IF-02",
+      "severity": "high",
+      "title": "Authorization is not deny-by-default; endpoints and pages opt in to protection one at a time",
+      "evidence": [
+        "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:90 calls services.AddAuthorization() with no FallbackPolicy",
+        "src/Gozleme.Api/GozlemeApp.cs:61 /api/v1/status calls .RequireAuthorization() explicitly; AuthEndpoints.cs:41-42 does the same per endpoint",
+        "web/src/app/page.tsx:12-15 gates / with getSession(); no proxy.ts or shared layout gate (research.md R4 deviation T052)",
+        "progress.yaml decision protected-surface: product surfaces require sign-in",
+        "Corrected at d7b9108: src/Gozleme.Api/GozlemeApp.cs /api/v1 group; tests/Gozleme.Api.IntegrationTests/EndpointAuthorizationTests.cs"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
+        "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039"
+      ],
+      "recommendation": "Each new endpoint must call .RequireAuthorization() and each new page must gate with getSession(), with anonymous-rejection tests. GOZ-0002 (or GOZ-0004 at the latest) adds an authenticated fallback policy with explicit AllowAnonymous on the anonymous auth endpoints, plus a metadata enumeration test. Health checks are middleware and are unaffected.",
+      "disposition": "corrected in GOZ-0001 at d7b9108: /api/v1 group requires authorization with explicit AllowAnonymous opt-outs; EndpointAuthorizationTests guards it; downstream prompts updated (pages still gate per page)"
+    },
+    {
+      "id": "GOZ-0001-IF-03",
+      "severity": "high",
+      "title": "Accounts and every identity table are global, not tenant-owned; GOZ-0003 prompt wrongly expects GOZ-0001 tenant tables to retrofit",
+      "evidence": [
+        "docs/specs/001-local-identity/spec.md FR-034; data-model.md: nothing is tenant-owned",
+        "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:41-47: schema holds exactly auth_sessions,data_protection_keys,user_claims,user_logins,user_tokens,users",
+        "src/Gozleme.Api/Identity/DbTicketStore.cs:17-21,101-103 and SessionPrincipalValidator.cs:21-23 resolve sessions through IDbContextFactory before any tenant context exists",
+        "src/Gozleme.Api/Identity/OperatorCommands.cs:43-44 runs operator commands as gozleme_app without HTTP",
+        "docs/prompts/spec-0003.md GOZ-0000-IF-03 bullet: 'Retrofit RLS onto the tenant-owned tables introduced by GOZ-0001 and GOZ-0002'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0004"
+      ],
+      "recommendation": "GOZ-0003 puts the six identity tables on an explicit non-tenant allow-list in the RLS catalog test. Tenant context is SET LOCAL only, is never required for identity lookups, and never leaks across pooled connections (needs a test). GOZ-0002 references users(id) by foreign key and adds no tenant column to users.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-04",
+      "severity": "high",
+      "title": "Session-ticket claims are frozen at sign-in; only the security stamp is re-validated, and rotating it signs the account out everywhere",
+      "evidence": [
+        "src/Gozleme.Api/Identity/DbTicketStore.cs:34-58 serializes the ticket once into auth_sessions; RenewAsync :62-75 re-protects the same principal",
+        "src/Gozleme.Api/Identity/SessionPrincipalValidator.cs:21-27 compares only the stamp claim against the database",
+        "src/Gozleme.Api/Identity/SessionRevoker.cs:10-14 deletes every session row and calls UpdateSecurityStampAsync",
+        "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:38-54 AddIdentityCore registers no roles"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0018",
+        "GOZ-0023"
+      ],
+      "recommendation": "Membership, active organization, roles and policy subject are resolved from the database per request and never trusted from claims. Membership and role changes do not rotate the stamp. Epochs (GOZ-0023) and session revocation remain distinct, and account-level revocation also invalidates principal-bound receipts.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-05",
+      "severity": "high",
+      "title": "Emails are unverified and self-registration is open by default, so email cannot establish identity for invitations, namespaces, SoD or account linking",
+      "evidence": [
+        "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:51 RequireConfirmedEmail = false; AuthEndpoints.cs:86 creates accounts with an unconfirmed email",
+        "src/Gozleme.Api/Identity/AuthOptions.cs:11 RegistrationEnabled defaults to true; compose.yaml:55; deploy/helm/gozleme/values.yaml:27",
+        "docs/specs/001-local-identity/contracts/auth-api.openapi.yaml:40 emailVerified const false",
+        "research.md R7 accepts a residual 409 duplicate-registration signal",
+        "docs/prompts/spec-0002.md scope: 'invitation or controlled local add'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0021"
+      ],
+      "recommendation": "GOZ-0002 accepts invitations by a single-use secret or by controlled local add, never by email match, and never reveals account existence. GOZ-0005 derives no namespace from email domains. GOZ-0021 claims only account-level separation of duties and grants nothing to new self-registered accounts. GOZ-0004 adds no HTTP reset or unlock.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-06",
+      "severity": "high",
+      "title": "Email delivery, verification and self-service password reset have no owning spec; the maintainer chose a new MVP spec after GOZ-0002",
+      "evidence": [
+        "docs/specs/001-local-identity/progress.yaml decisions identifier and email-roadmap-gap (2026-11-15, maintainer)",
+        "docs/specs/001-local-identity/spec.md Clarifications and Assumptions: email delivery, verification and reset belong to a new MVP spec scheduled after GOZ-0002",
+        "Registry .gozleme/spec-registry.yaml: no spec in GOZ-0002..GOZ-0039 covers email",
+        "Draft prompt written at docs/prompts/spec-0040.md, marked PROPOSED and unregistered",
+        "scripts/validate_docs.py:52-53 hard-codes exactly 40 specs and numbers range(40); registration needs a validator change"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0021",
+        "GOZ-0035",
+        "GOZ-0039",
+        "GOZ-0040"
+      ],
+      "recommendation": "Human approval is required to add GOZ-0040 (prerequisites GOZ-0001 and GOZ-0002) to the MVP. On approval, the Roadmap Steward registers it, updates the validator count, and settles the ordering. The maintainer should consider whether GOZ-0002 invitations or a future OIDC spec should depend on it.",
+      "disposition": "requires-human-approval"
+    },
+    {
+      "id": "GOZ-0001-IF-07",
+      "severity": "high",
+      "title": "External OIDC is an MVP commitment with no owning spec",
+      "evidence": [
+        "docs/roadmap/mvp-vs-post-mvp.md:3 MVP includes 'multi-org local/OIDC identities'",
+        "docs/architecture/architecture-baseline.md:7 'Local accounts and external OIDC'",
+        "Only docs/prompts/spec-0001.md mentions OIDC, and only as a boundary; GOZ-0002..GOZ-0039 do not mention it",
+        "Extension points left by GOZ-0001: empty gozleme.user_logins table (research R1); auth options externalProviders always [] (auth-api.openapi.yaml:55-58); NoExternalIdentityTests.cs:22-27 asserts a single Identity.Application scheme"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0004",
+        "GOZ-0039"
+      ],
+      "recommendation": "The maintainer decides whether to add an OIDC MVP spec (with ordering and a dependency on verified email for account linking) or to move OIDC to post-MVP in the MVP document. Either is a committed-scope change. No prompt was edited for this.",
+      "disposition": "requires-human-approval"
+    },
+    {
+      "id": "GOZ-0001-IF-08",
+      "severity": "medium",
+      "title": "The web-tier forwarding helper is JSON/text only, with a 5-second timeout and 5xx mapped to 503",
+      "evidence": [
+        "web/src/lib/api.ts:33 buffers the request with request.text(); :53 buffers the response with upstream.text()",
+        "web/src/lib/api.ts:7 API_FORWARD_TIMEOUT_MS = 5000; :52 maps status >= 500 to 503",
+        "src/Gozleme.Api/Identity/AuthEndpoints.cs:20 MaxBodyBytes 4 KiB applies only to auth endpoints"
+      ],
+      "affectedSpecs": [
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0028",
+        "GOZ-0038"
+      ],
+      "recommendation": "GOZ-0009 adds one streaming binary forwarding path with size limits, the same-origin check and cookie forwarding, tested by a byte-exact round trip. Later artifact and download specs reuse it.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-09",
+      "severity": "medium",
+      "title": "Cumulative demo chaining, seeded account state and hard-coded current spec",
+      "evidence": [
+        "e2e/playwright.config.ts projects chain setup -> goz-0000 -> goz-0001",
+        "e2e/tests/evidence.ts specDirs has only goz-0000 and goz-0001",
+        "scripts/demo/run-demo.sh:10 defaults SPEC to GOZ-0001; .github/workflows/ci.yml:101 runs run-demo.sh GOZ-0001; Makefile:56",
+        "e2e/tests/auth.setup.ts stores alice's storageState; idle expiry 30 minutes (AuthOptions.cs:17)",
+        "e2e/tests/identity-demo.spec.ts:167-179 revokes every bob session; :182-205 locks lockout@ for 15 minutes; :207-228 restarts the api with registration toggled",
+        "src/Gozleme.Api/Identity/OperatorCommands.cs:24 seed creates accounts only",
+        "docs/specs/001-local-identity/research.md R12 says the default is the 'latest registered spec with a demo', but the code hard-codes GOZ-0001",
+        "At d7b9108 run-demo.sh and CI default to the highest-numbered spec with a Playwright project, so later specs only add the project"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
+        "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039"
+      ],
+      "recommendation": "Each spec adds a goz-NNNN project depending on the previous one and a specDirs entry, updates the CI and default spec, signs in afresh, never relies on lockout@ or bob's sessions, and extends the idempotent seed command for new fixtures.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-10",
+      "severity": "medium",
+      "title": "Boundary assertions that later specs must narrow selectively",
+      "evidence": [
+        "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:22-29 expects 404 for catalog, capabilities, organizations, users, search, auth/login, publish and /login",
+        "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:41-47 checks the exact identity table list",
+        "e2e/tests/bootstrap-demo.spec.ts:128-145 expects /catalog and /organizations pages to 404 and zero links on /",
+        "e2e/tests/identity-demo.spec.ts:231-249 checks no external IdP and 404 for /api/v1/users, auth/reset-password and auth/unlock",
+        "tests/Gozleme.Api.IntegrationTests/NoExternalIdentityTests.cs:22-27 asserts a single authentication scheme"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0005",
+        "GOZ-0007",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0029"
+      ],
+      "recommendation": "Narrow only the superseded assertions. Every spec that adds tables extends the exact-table test. Keep /api/v1/users and the HTTP reset and unlock paths returning 404. GOZ-0029 narrows the single-scheme test deliberately.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-11",
+      "severity": "medium",
+      "title": "Identity security audit events exist only as retention-bounded log records",
+      "evidence": [
+        "src/Gozleme.Api/Identity/SecurityAudit.cs:7-11 is an ILogger category Gozleme.Security.Audit",
+        "docs/specs/001-local-identity/data-model.md: 'Security audit events (logs, not a table)'",
+        "docs/prompts/spec-0023.md GOZ-0000-IF-22: Loki retention is 7 days and make reset deletes it; stored logs are not an audit trail",
+        "docs/roadmap/mvp-vs-post-mvp.md:3 MVP includes 'audit and operational validation'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0004",
+        "GOZ-0023",
+        "GOZ-0035",
+        "GOZ-0039"
+      ],
+      "recommendation": "Downstream specs must not call identity audit logs durable. GOZ-0023 decides, and records for the maintainer, whether identity and membership events join the durable PostgreSQL audit record. GOZ-0039 names the durable store behind any audit claim.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-12",
+      "severity": "high",
+      "title": "Backup and restore can resurrect revoked sessions, and backups contain the unencrypted key ring",
+      "evidence": [
+        "src/Gozleme.Api/Identity/SessionRevoker.cs:12 and DbTicketStore.cs:127-137 revoke only by deleting rows",
+        "docs/specs/001-local-identity/research.md R3 and deploy/helm/gozleme/README.md: the Data Protection key XML is unencrypted at rest, so read access allows forging cookies",
+        "data_protection_keys and auth_sessions live in the same gozleme schema as all application data"
+      ],
+      "affectedSpecs": [
+        "GOZ-0035",
+        "GOZ-0039"
+      ],
+      "recommendation": "The GOZ-0039 restore invalidates all sessions (truncate auth_sessions and rotate stamps or the key ring), tests that a cookie from before the backup is rejected after restore, and treats backups as credential material. GOZ-0035 includes sessions and the key ring in its retention inventory.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-13",
+      "severity": "medium",
+      "title": "No non-browser authentication exists; the API is cluster-internal and x-gozleme-client is not authentication",
+      "evidence": [
+        "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:70-87 registers a single cookie scheme",
+        "tests/Gozleme.Api.IntegrationTests/NoExternalIdentityTests.cs:22-27 asserts the only scheme is Identity.Application",
+        "deploy/helm/gozleme/templates contains only api.yaml, web.yaml and migrate-job.yaml; no ingress",
+        "src/Gozleme.Api/Identity/WebClientHeaderFilter.cs:14-15 compares a static header value that any non-browser client can send"
+      ],
+      "affectedSpecs": [
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0036"
+      ],
+      "recommendation": "GOZ-0029 designs peer authentication and exposure, never accepts user session cookies from peers, decides forwarded-header trust and rate limits, and preserves invariant 10. Later federation specs reuse it.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-14",
+      "severity": "medium",
+      "title": "Two instances on 127.0.0.1 collide on the gozleme_session cookie",
+      "evidence": [
+        "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:20 CookieName = \"gozleme_session\" (constant)",
+        "compose.yaml:82 binds the web tier to 127.0.0.1; cookies are host-only and not isolated by port (RFC 6265)",
+        "GOZ-0000-IF-14: there is no two-instance harness yet"
+      ],
+      "affectedSpecs": [
+        "GOZ-0029",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0036"
+      ],
+      "recommendation": "The two-instance harness uses separate browser contexts or host names, or makes the cookie name configurable, and seeds each instance separately.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-15",
+      "severity": "medium",
+      "title": "Rate-limiting infrastructure covers only credential endpoints, is per instance, and keys on a spoofable address",
+      "evidence": [
+        "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:111-137 defines a single GlobalLimiter partitioned only for sign-in and register, plus named policies",
+        "research.md R6: Next.js keeps a client-supplied X-Forwarded-For; web/src/lib/api.ts:19-20 forwards it",
+        "web/src/app/api/otel/v1/traces/route.ts:10-28 keeps an in-memory per-client bucket"
+      ],
+      "affectedSpecs": [
+        "GOZ-0009",
+        "GOZ-0013",
+        "GOZ-0015",
+        "GOZ-0038"
+      ],
+      "recommendation": "Expensive endpoints add named per-client policies and extend the GlobalLimiter partitioning rather than replacing it. No security decision is keyed on client address.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-16",
+      "severity": "medium",
+      "title": "Accepted GOZ-0001 residuals that the release gate must state",
+      "evidence": [
+        "research.md R7: observable 409 on duplicate registration",
+        "research.md R6: per-instance limits; X-Forwarded-For spoofable without an overwriting ingress",
+        "IdentityServiceCollectionExtensions.cs:127-129: a 300/min global ceiling across all clients; lockout can be triggered by anyone who knows an email (accepted denial-of-service trade-offs)",
+        "research.md R3: key ring unencrypted at rest; compose.yaml:56 Secure cookies off only locally",
+        "src/Gozleme.Api/Program.cs:9-11 ships the seed mode in the production image (it needs GOZLEME_DEMO_PASSWORD; Helm README says the chart has no seed job)",
+        "GOZ-0000 carry-over: Helm has never been installed on a live cluster"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "The GOZ-0039 release gate documents each residual and verifies that no demo accounts exist on release targets.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-17",
+      "severity": "low",
+      "title": "Fail-closed database-outage handling is global and is inherited by new endpoints",
+      "evidence": [
+        "src/Gozleme.Api/GozlemeApp.cs:52 UseDatabaseUnavailableResponses runs before authentication",
+        "src/Gozleme.Api/DatabaseUnavailable.cs:16-30 answers 503 {\"error\":\"unavailable\"}, guarded by !Response.HasStarted",
+        "tests/Gozleme.Api.IntegrationTests/DatabaseOutageTests.cs:34-70"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
+        "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039"
+      ],
+      "recommendation": "Endpoint code does not swallow Npgsql connection failures. Streaming responses that have already started cannot be converted to 503, so they must handle mid-stream failure explicitly.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-18",
+      "severity": "low",
+      "title": "Facts about the identity data model for foreign-key consumers",
+      "evidence": [
+        "src/Gozleme.Api/Identity/GozlemeUser.cs:9 IdentityUser<Guid>; AuthEndpoints.cs:86 Guid.CreateVersion7",
+        "src/Gozleme.Api/Persistence/GozlemeDbContext.cs:16-17 IdentityUserContext<GozlemeUser, Guid>; :58 auth_sessions cascades on user delete; :63-91 snake_case for all entities",
+        "spec.md Assumptions: account deletion is deferred"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0004",
+        "GOZ-0021",
+        "GOZ-0035"
+      ],
+      "recommendation": "Reference users(id) with an explicit delete behaviour, record actors by opaque id, and keep history across account changes. GOZ-0035 separates erasable account data from proofs.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-19",
+      "severity": "low",
+      "title": "GOZ-0001 research text differs from the code (R5 global header check, R12 runner default)",
+      "evidence": [
+        "docs/specs/001-local-identity/research.md R5 layer 2 vs src/Gozleme.Api/Identity/AuthEndpoints.cs:36-41",
+        "docs/specs/001-local-identity/research.md R12 'default: latest registered spec with a demo' vs scripts/demo/run-demo.sh:10 SPEC=\"${1:-GOZ-0001}\"",
+        "Corrected at d7b9108: research.md R5/R12; scripts/demo/run-demo.sh default"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001"
+      ],
+      "recommendation": "Bounded GOZ-0001 docs correction: align R5 and R12 with the code, or change the code to match R5 (see IF-01). Not a security violation.",
+      "disposition": "corrected in GOZ-0001 at d7b9108: R5 now true of the code; R12 rewritten and the runner defaults to the latest spec with a demo"
+    },
+    {
+      "id": "GOZ-0001-IF-20",
+      "severity": "low",
+      "title": "The Data Protection key ring must not protect signing keys or provider credentials",
+      "evidence": [
+        "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:36 PersistKeysToDbContext with no ProtectKeysWith*",
+        "research.md R3 limitation; invariant 8; architecture baseline: provider-referenced secrets"
+      ],
+      "affectedSpecs": [
+        "GOZ-0007",
+        "GOZ-0016",
+        "GOZ-0029"
+      ],
+      "recommendation": "Publisher and registry signing keys and provider credentials use their own protection or secret references, never the cookie key ring or the same database alone.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-21",
+      "severity": "low",
+      "title": "Sandbox and playground must not receive user session material",
+      "evidence": [
+        "web/src/lib/api.ts:17-20 forwards cookie and x-forwarded-for on every forwarded call",
+        "IdentityServiceCollectionExtensions.cs:20 session cookie gozleme_session"
+      ],
+      "affectedSpecs": [
+        "GOZ-0037",
+        "GOZ-0038"
+      ],
+      "recommendation": "Sandbox workloads never receive the session cookie, x-gozleme-client or forwarded credentials. Runs are attributed by opaque account id.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0001-IF-22",
+      "severity": "low",
+      "title": "Anonymous discovery of public records is undecided now that product surfaces require sign-in",
+      "evidence": [
+        "docs/specs/001-local-identity/progress.yaml decision protected-surface",
+        "web/src/app/page.tsx:14 redirects anonymous users to /login",
+        "docs/prompts/spec-0012.md outcome: 'Public capability visible to both orgs'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0012",
+        "GOZ-0013"
+      ],
+      "recommendation": "GOZ-0012 decides and tests anonymous discovery explicitly, defaulting to fail-closed (signed in), and GOZ-0013 applies the same decision to search.",
+      "disposition": "applied-to-future-prompts"
+    }
+  ],
+  "reanalyzedAt": "2026-11-15"
+}
