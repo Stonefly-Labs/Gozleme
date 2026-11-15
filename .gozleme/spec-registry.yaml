@@ -83,8 +83,8 @@ specs:
   prompt: docs/prompts/spec-0001.md
   dependencies:
   - GOZ-0000
-  status: ready-for-human-merge
-  stage: pr-open
+  status: complete
+  stage: merged
   branch: feature/goz-0001-local-identity
   pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/6
   promptRevision: 2
@@ -98,8 +98,8 @@ specs:
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
-    humanReview: pending
-    merge: pending
+    humanReview: passed
+    merge: passed
   blockers: []
   impactFindings:
   - GOZ-0001-IF-01
@@ -141,7 +141,7 @@ specs:
     reviews:
     - docs/specs/001-local-identity/reviews/impact-analysis.md
     - docs/specs/001-local-identity/reviews/impact-findings.json
-  nextAction: 'Human review and merge of PR #6 (merge PR #5 first); all 12 CI checks passed on 0e18898. Agents never merge. Open: approve proposed spec-0041 (IF-07).'
+  nextAction: 'Complete — merged to main in cf006f28a959ab8982ff251005f76fd41275e3d2 (PR #6, verified 2026-11-15).'
 - id: GOZ-0002
   number: 2
   title: Organizations and membership
@@ -174,7 +174,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Await prerequisites and create allowed working branch
+  nextAction: Prerequisite GOZ-0001 merged; start on feature/goz-0002-organizations
 - id: GOZ-0003
   number: 3
   title: Tenant RLS and visibility scaffolding

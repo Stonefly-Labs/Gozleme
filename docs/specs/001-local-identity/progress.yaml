@@ -1,7 +1,7 @@
 schemaVersion: '1.0'
 specId: GOZ-0001
-stage: pr-open
-status: ready-for-human-merge
+stage: merged
+status: complete
 promptRevision: 2
 branch: feature/goz-0001-local-identity
 featureDirectory: docs/specs/001-local-identity
@@ -24,6 +24,7 @@ stages:
   demo: {status: done, at: '2026-11-15', commit: 92f4d3b3, result: passed, record: docs/specs/001-local-identity/evidence/demo-run.json, note: 're-run after deny-by-default correction d7b9108'}
   converge: {status: done, at: '2026-11-15', passes: 2, appended: [T051, T052], outcome: converged}
   impactAnalysis: {status: done, at: '2026-11-15', analysedAt: d2e5c6c, reanalysedAt: d7b9108, findings: 22, report: docs/specs/001-local-identity/reviews/impact-analysis.md, corrected: [GOZ-0001-IF-01, GOZ-0001-IF-02, GOZ-0001-IF-19], humanDecisions: [GOZ-0001-IF-06, GOZ-0001-IF-07]}
+  merge: {status: verified, pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/6', mergeCommit: cf006f28a959ab8982ff251005f76fd41275e3d2, head: 61c62714116844ca4160748c07a31cf1a0f6b87f, mergedBy: christopherhouse, mergedAt: '2026-11-15T20:42:54Z', verifiedBy: 'gh pr view + git merge-base --is-ancestor', ci: 'last fully green head b941537 (12/12); 61c6271 is docs/skill-only and its CI run was still in progress when the maintainer merged', at: '2026-11-15'}
   roadmapSync: {status: done, at: '2026-11-15', note: 'GOZ-0002..0039 promptRevision 2->3; GOZ-0040 registered; spec-0041 proposed, unregistered; make validate PASS (41 specs)'}
 attempts:
   - {failure: 'demo: 503 log named wrapper exception type', fix: 'log the matched connection-level cause; e2e ignores Loki lines from earlier runs', attempts: 2, resolved: true}
@@ -31,7 +32,7 @@ attempts:
   - {failure: 'demo: axe saw no <title> after client-side sign-out navigation', fix: 'wait for the Gözleme page title before every axe audit', attempts: 1, resolved: true}
   - {failure: 'demo: audit-line pattern rejected (null) for unknown-email failures', fix: 'pattern requires opaque id or (null)', attempts: 1, resolved: true}
 blockers: []
-nextAction: 'Human maintainer reviews and merges PR #6 (after PR #5). All 12 CI checks passed on 0e18898. Do not mark complete until the merge is independently verified.'
+nextAction: None for GOZ-0001; next spec is GOZ-0002 (Organizations and membership)
 pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/6
 gates:
   at: '2026-11-15'
