@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0002
-stage: tasks
+stage: converge
 status: in-progress
 promptRevision: 3
 branch: feature/goz-0002-organizations
@@ -14,16 +14,31 @@ stages:
   specify: {status: done, artifact: docs/specs/002-organizations/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/002-organizations/plan.md, at: '2026-11-15'}
   tasks: {status: done, artifact: docs/specs/002-organizations/tasks.md, count: 46, at: '2026-11-15'}
-  implement: {status: pending}
-  demo: {status: pending}
-  converge: {status: pending}
+  implement: {status: done, at: '2026-11-15'}
+  demo: {status: done, at: '2026-11-15', commit: 8a9941e3, result: passed, record: docs/specs/002-organizations/evidence/demo-run.json, note: 'fresh Compose project; GOZ-0000 and GOZ-0001 suites replayed green'}
+  converge: {status: done, at: '2026-11-15', passes: 1, appended: [T047], outcome: 'T047 implemented (FR-012 invitation creator); no remaining gaps'}
   impactAnalysis: {status: pending}
   roadmapSync: {status: pending}
-attempts: []
+attempts:
+  - {failure: 'demo: org API spans past Jaeger 50-trace page (status polling traffic)', fix: 'recentSpans filters by operation name', attempts: 1, resolved: true}
+  - {failure: 'demo (fresh stack): org counter not yet exported when scraped (60 s SDK interval)', fix: 'poll the metrics scrape up to 90 s', attempts: 1, resolved: true}
+  - {failure: 'gitleaks generic-api-key false positive on an API URL literal in web test', fix: 'assert URL host and path separately (unpushed commit rewritten)', attempts: 1, resolved: true}
 blockers: []
-nextAction: Implement tasks T001-T046 (/speckit-implement)
+nextAction: Post-convergence spec impact analysis (spec-impact-analyst), then Roadmap Steward sync and PR
+gates:
+  at: '2026-11-15'
+  makeLint: passed
+  makeTest: 'passed (202 .NET unit+integration, 131 web Vitest)'
+  helmLint: passed
+  gitleaksGit: 'passed (no leaks)'
 evidence:
-  tests: []
-  demos: []
-  screenshots: []
+  tests:
+    - {suite: dotnet, result: passed, count: 202}
+    - {suite: web-vitest, result: passed, count: 131}
+  demos:
+    - {record: docs/specs/002-organizations/evidence/demo-run.json, commit: 8a9941e3, result: passed, tests: '29/29', workingTreeClean: true, sc001: 'each org create under 1 s (automated)'}
+  screenshots:
+    - docs/specs/002-organizations/evidence/screenshots/
+    - docs/specs/002-organizations/evidence/screenshots/regression-goz-0000/
+    - docs/specs/002-organizations/evidence/screenshots/regression-goz-0001/
   reviews: []

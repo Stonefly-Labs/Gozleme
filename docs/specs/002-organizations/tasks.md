@@ -243,8 +243,8 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 
 - [X] T043 [P] Update `docs/engineering/local-development.md` (organizations walkthrough, seeded fixtures, configuration keys) and `README.md` feature list if it enumerates features
 - [X] T044 [P] (Resolved as not needed: Compose and Helm wire only the registration and cookie switches for `Gozleme:Auth`, not its numeric bounds, so organization settings follow suit and are overridable through `Gozleme__Organizations__*`.) Add `Gozleme__Organizations__*` defaults to `.env.example`/`compose.yaml` only if overrides are wired there for other options, and to the Helm `deploy/helm/gozleme/values.yaml` config map in the same way as `Gozleme:Auth`
-- [ ] T045 Run `make lint`, `make test`, `make validate`, `helm lint` (via `make helm-lint`) and gitleaks, and fix findings without weakening checks
-- [ ] T046 Run `make demo` (cumulative) via `validate-demo`. Record `docs/specs/002-organizations/evidence/demo-run.json` and screenshots, and update `progress.yaml` evidence
+- [X] T045 Run `make lint`, `make test`, `make validate`, `helm lint` (via `make helm-lint`) and gitleaks, and fix findings without weakening checks
+- [X] T046 Run `make demo` (cumulative) via `validate-demo`. Record `docs/specs/002-organizations/evidence/demo-run.json` and screenshots, and update `progress.yaml` evidence
 
 ---
 
