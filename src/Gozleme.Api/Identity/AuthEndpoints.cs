@@ -22,25 +22,26 @@ internal static class AuthEndpoints
     // Verifying against a throwaway hash equalises timing when no real hash is checked.
     private static readonly Lazy<string> DummyHash = new(() => new PasswordHasher<GozlemeUser>().HashPassword(new GozlemeUser(), Guid.NewGuid().ToString("N")));
 
-    public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
+    /// <summary>Maps under the <c>/api/v1</c> group, which requires a session and the web-client header by default.</summary>
+    public static RouteGroupBuilder MapAuthEndpoints(this RouteGroupBuilder api)
     {
-        var auth = app.MapGroup("/api/v1/auth").AddEndpointFilter(async (context, next) =>
+        var auth = api.MapGroup("/auth").AddEndpointFilter(async (context, next) =>
         {
             context.HttpContext.Response.Headers.CacheControl = "no-store";
             return await next(context);
         });
 
         auth.MapGet("/options", (IOptions<AuthOptions> options) =>
-            TypedResults.Ok(new AuthOptionsResponse(options.Value.RegistrationEnabled, [])));
+            TypedResults.Ok(new AuthOptionsResponse(options.Value.RegistrationEnabled, []))).AllowAnonymous();
 
-        auth.MapPost("/register", RegisterAsync).AddEndpointFilter<WebClientHeaderFilter>()
+        auth.MapPost("/register", RegisterAsync).AllowAnonymous()
             .RequireRateLimiting(IdentityServiceCollectionExtensions.RegisterRateLimit).WithMetadata(new RequestSizeLimitAttribute(MaxBodyBytes));
-        auth.MapPost("/sign-in", SignInAsync).AddEndpointFilter<WebClientHeaderFilter>()
+        auth.MapPost("/sign-in", SignInAsync).AllowAnonymous()
             .RequireRateLimiting(IdentityServiceCollectionExtensions.SignInRateLimit).WithMetadata(new RequestSizeLimitAttribute(MaxBodyBytes));
-        auth.MapPost("/sign-out", SignOutAsync).AddEndpointFilter<WebClientHeaderFilter>();
-        auth.MapPost("/sign-out-all", SignOutAllAsync).AddEndpointFilter<WebClientHeaderFilter>().RequireAuthorization();
-        auth.MapGet("/session", SessionAsync).RequireAuthorization();
-        return app;
+        auth.MapPost("/sign-out", SignOutAsync).AllowAnonymous(); // idempotent when already signed out
+        auth.MapPost("/sign-out-all", SignOutAllAsync);
+        auth.MapGet("/session", SessionAsync);
+        return auth;
     }
 
     private static async Task<Results<Created<SessionResponse>, JsonHttpResult<AuthError>>> RegisterAsync(

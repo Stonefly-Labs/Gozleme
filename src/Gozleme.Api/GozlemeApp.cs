@@ -54,13 +54,18 @@ internal static class GozlemeApp
         app.UseRateLimiter();
         app.UseAuthorization();
 
-        app.MapGet("/api/v1/status", async (StatusService status, HttpContext http, CancellationToken ct) =>
+        // Deny by default (Constitution IV, research R5): every /api/v1 endpoint requires a session and
+        // every unsafe call carries the web-tier header, unless an endpoint explicitly opts out with
+        // AllowAnonymous. EndpointAuthorizationTests fails on any endpoint without an explicit decision.
+        var api = app.MapGroup("/api/v1").RequireAuthorization().AddEndpointFilter<WebClientHeaderFilter>();
+
+        api.MapGet("/status", async (StatusService status, HttpContext http, CancellationToken ct) =>
         {
             http.Response.Headers.CacheControl = "no-store";
             return TypedResults.Ok(await status.GetAsync(ct));
-        }).RequireAuthorization(); // FR-021: status data is for signed-in users; probes above stay anonymous
+        }); // FR-021: status data is for signed-in users; probes above stay anonymous
 
-        app.MapAuthEndpoints();
+        api.MapAuthEndpoints();
 
         return app;
     }

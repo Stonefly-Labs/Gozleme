@@ -97,7 +97,9 @@ installed toolchain on 2026-11-15 (`dotnet --version` 10.0.404; Next.js 16.4.6 i
      `same-origin`, or (when absent) `Origin` equals the request's own origin (`GOZLEME_PUBLIC_ORIGIN`
      if set, otherwise derived from `Host`/`x-forwarded-proto`). Otherwise they return 403.
   2. API identity endpoints and all unsafe `/api/v1/*` methods require the custom header
-     `x-gozleme-client: web` (403 otherwise). A browser cannot add a custom header cross-site
+     `x-gozleme-client: web` (403 otherwise). *Implemented as a filter on the whole `/api/v1` route
+     group, which also requires a session unless an endpoint opts out with `AllowAnonymous`
+     (correction after impact findings GOZ-0001-IF-01/IF-02; guarded by `EndpointAuthorizationTests`).* A browser cannot add a custom header cross-site
      without a CORS preflight, and the API grants none.
   Combined with `SameSite=Lax` and POST-only state changes, no antiforgery token round-trip is needed.
 - **Rationale**: This follows the OWASP CSRF cheat sheet's "Fetch Metadata / Origin verification"
@@ -216,11 +218,15 @@ installed toolchain on 2026-11-15 (`dotnet --version` 10.0.404; Next.js 16.4.6 i
 
 ## R12 — Demo runner generalisation (IF-08)
 
-- `scripts/demo/run-demo.sh [SPEC]` (default: latest registered spec with a demo; `make demo SPEC=GOZ-0001`).
-  - Spec → directory comes from `.gozleme/spec-registry.yaml` / `docs/specs/NNN-*`.
-  - Cumulative: it runs every Playwright project up to and including the requested spec
-    (`goz-0000`, `goz-0001`, …) in order.
-  - Each spec's screenshots are written to its own `evidence/screenshots`, using a directory
-    resolved from `GOZLEME_DEMO_SPEC_DIR_<NNNN>` passed by the runner, so there are no hard-coded paths.
-  - The run record goes to the requested spec's `evidence/demo-run.json`, with per-suite results.
-- CI job `e2e-demo` calls `make demo SPEC=GOZ-0001`.
+- `scripts/demo/run-demo.sh [SPEC]` (default: the highest-numbered spec with a Playwright project; `make demo SPEC=GOZ-0001`).
+  - Spec → directory comes from `docs/specs/NNN-*`.
+  - Cumulative: Playwright project `goz-NNNN` depends on the previous spec's project (and `setup`),
+    so `--project goz-NNNN` replays every earlier demo first, in order.
+  - The requested spec's suite writes to its own `evidence/screenshots`. Earlier suites write to that
+    spec's `evidence/screenshots/regression-goz-MMMM/`, via `GOZLEME_DEMO_SHOTS_GOZ_MMMM` set by the
+    runner (`e2e/tests/evidence.ts`), so merged evidence is never overwritten.
+  - The run record goes to the requested spec's `evidence/demo-run.json`: every test's result, the
+    secret scan and `timing` annotations.
+- CI job `e2e-demo` calls the runner with no argument, so it follows the latest spec automatically.
+  *Implementation note (impact finding GOZ-0001-IF-19): reconciled with the code after convergence;
+  the first draft named a per-spec directory variable and per-suite results that were not built.*

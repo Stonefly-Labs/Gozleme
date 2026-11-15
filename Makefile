@@ -53,5 +53,5 @@ helm-lint: ## Lint and render the Helm chart (uses Docker if helm is not install
 	scripts/helm.sh lint deploy/helm/gozleme
 	scripts/helm.sh template gozleme deploy/helm/gozleme > /dev/null
 
-demo: ## Cumulative autonomous Playwright demo for SPEC (default GOZ-0001); writes that spec's evidence/
+demo: ## Cumulative autonomous Playwright demo for SPEC (default: latest spec with a demo); writes that spec's evidence/
 	scripts/demo/run-demo.sh $(SPEC)

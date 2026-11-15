@@ -3,12 +3,22 @@
 # every earlier spec's demo and then this spec's with Playwright, scan evidence for secrets and
 # write a run record. Earlier specs' screenshots go to this spec's `regression-goz-NNNN/` folders,
 # so merged evidence is never overwritten (IF-08).
-# Usage: scripts/demo/run-demo.sh [GOZ-NNNN]   (or `make demo SPEC=GOZ-NNNN`; default GOZ-0001)
+# Usage: scripts/demo/run-demo.sh [GOZ-NNNN]   (or `make demo SPEC=GOZ-NNNN`; default: the highest
+# numbered spec that has a Playwright project in e2e/playwright.config.ts)
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-SPEC="${1:-GOZ-0001}"
 cd "$ROOT"
+SPEC="${1:-}"
+if [ -z "$SPEC" ]; then
+  for dir in $(ls -d docs/specs/[0-9][0-9][0-9]-* | sort -r); do
+    candidate="$(printf 'GOZ-%04d' "$((10#$(basename "$dir" | cut -c1-3)))")"
+    if grep -q "name: \"$(echo "$candidate" | tr '[:upper:]' '[:lower:]')\"" e2e/playwright.config.ts; then
+      SPEC="$candidate"
+      break
+    fi
+  done
+fi
 if ! [[ "$SPEC" =~ ^GOZ-([0-9]{4})$ ]]; then
   echo "Usage: $0 [GOZ-NNNN]" >&2
   exit 2
