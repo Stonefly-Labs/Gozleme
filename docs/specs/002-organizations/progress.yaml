@@ -1,0 +1,29 @@
+schemaVersion: '1.0'
+specId: GOZ-0002
+stage: specify
+status: in-progress
+promptRevision: 3
+branch: feature/goz-0002-organizations
+featureDirectory: docs/specs/002-organizations
+decisions:
+- {at: '2026-11-15', by: maintainer, topic: join-method, decision: 'Single-use invitation code shared out of band, stored hashed, revocable; no add-by-email; no account-existence disclosure'}
+- {at: '2026-11-15', by: maintainer, topic: member-powers, decision: 'Interim role-neutral: any member invites and removes any other member; anyone may leave; last member cannot leave or be removed; GOZ-0004 restricts with roles'}
+- {at: '2026-11-15', by: maintainer, topic: org-creation, decision: 'Any signed-in account may create organizations; no operator switch'}
+- {at: '2026-11-15', by: maintainer, topic: org-identity, decision: 'Permanent opaque ID plus editable non-unique display name; unique handles/namespaces left to GOZ-0005'}
+stages:
+  specify: {status: done, artifact: docs/specs/002-organizations/spec.md, at: '2026-11-15'}
+  plan: {status: pending}
+  tasks: {status: pending}
+  implement: {status: pending}
+  demo: {status: pending}
+  converge: {status: pending}
+  impactAnalysis: {status: pending}
+  roadmapSync: {status: pending}
+attempts: []
+blockers: []
+nextAction: Run /speckit-plan for docs/specs/002-organizations
+evidence:
+  tests: []
+  demos: []
+  screenshots: []
+  reviews: []

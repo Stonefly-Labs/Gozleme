@@ -150,13 +150,13 @@ specs:
   prompt: docs/prompts/spec-0002.md
   dependencies:
   - GOZ-0001
-  status: not-started
-  stage: null
-  branch: null
+  status: in-progress
+  stage: specify
+  branch: feature/goz-0002-organizations
   pullRequest: null
   promptRevision: 3
   gates:
-    specification: pending
+    specification: passed
     plan: pending
     tasks: pending
     implementation: pending
@@ -174,7 +174,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Prerequisite GOZ-0001 merged; start on feature/goz-0002-organizations
+  nextAction: Spec drafted with maintainer decisions; next /speckit-plan
 - id: GOZ-0003
   number: 3
   title: Tenant RLS and visibility scaffolding
