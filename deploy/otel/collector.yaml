@@ -19,7 +19,7 @@ processors:
   # Defence in depth (FR-023): applications must not emit secrets; the collector also strips them.
   attributes/drop-secret-keys:
     actions:
-      - pattern: (?i).*(password|passwd|secret|token|api[_.-]?key|connection[_.-]?string|authorization).*
+      - pattern: (?i).*(password|passwd|secret|token|api[_.-]?key|connection[_.-]?string|authorization|cookie|session[_.-]?(id|key)).*
         action: delete
   redaction/secret-values:
     allow_all_keys: true
@@ -27,6 +27,7 @@ processors:
       - (?i)password=[^;\s]*
       - (?i)bearer\s+[a-z0-9._~+/=-]+
       - (?i)(host|server|username|user id)=[^;\s]*
+      - (?i)gozleme_session=[^;\s]*
   batch: {}
 
 exporters:

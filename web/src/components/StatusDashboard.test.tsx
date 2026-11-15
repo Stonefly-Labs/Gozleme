@@ -17,6 +17,8 @@ const degraded: BackendStatusResult = {
   },
 };
 const unreachable: BackendStatusResult = { reachable: false, checkedAt: "2026-11-14T12:00:11Z", reason: "unreachable" };
+const expired: BackendStatusResult = { reachable: true, checkedAt: "2026-11-14T12:00:16Z", session: "expired" };
+const unverifiable: BackendStatusResult = { reachable: true, checkedAt: "2026-11-14T12:00:21Z", session: "unverifiable" };
 
 function mockResponses(...results: BackendStatusResult[]) {
   const queue = [...results];
@@ -86,5 +88,40 @@ describe("StatusDashboard", () => {
     render(<StatusDashboard pollIntervalMs={5000} />);
     await tick(1);
     expect(screen.getByTestId("overall-status")).toHaveTextContent("API unreachable");
+  });
+
+  it("shows an expired session without any status data and offers sign-in", async () => {
+    mockResponses(ok, expired);
+    render(<StatusDashboard pollIntervalMs={5000} />);
+    await tick(1);
+    await tick(5000);
+    expect(screen.getByTestId("overall-status")).toHaveTextContent("Signed out");
+    expect(screen.getByTestId("session-notice")).toHaveTextContent("Your session has expired.");
+    expect(screen.getByRole("link", { name: "Sign in again" })).toHaveAttribute("href", "/login?returnTo=%2F");
+    expect(screen.queryByTestId("api-version")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("db-status")).not.toBeInTheDocument();
+  });
+
+  it("shows an honest degraded view when the session can't be verified (FR-021a)", async () => {
+    mockResponses(ok, unverifiable, ok);
+    render(<StatusDashboard pollIntervalMs={5000} />);
+    await tick(1);
+    await tick(5000);
+    expect(screen.getByTestId("overall-status")).toHaveTextContent("Degraded");
+    expect(screen.getByTestId("api-status")).toHaveTextContent("Reachable");
+    expect(screen.getByTestId("db-status")).toHaveTextContent("Unavailable");
+    expect(screen.getByTestId("db-detail")).toHaveTextContent("Database unreachable");
+    expect(screen.getByTestId("session-notice")).toHaveTextContent("can't be verified");
+    expect(screen.queryByTestId("api-version")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("db-schema-version")).not.toBeInTheDocument();
+    await tick(5000);
+    expect(screen.getByTestId("overall-status")).toHaveTextContent("Healthy");
+    expect(screen.queryByTestId("session-notice")).not.toBeInTheDocument();
+  });
+
+  it("renders the account controls it is given", async () => {
+    mockResponses(ok);
+    render(<StatusDashboard pollIntervalMs={5000} account={<p data-testid="acct">alice</p>} />);
+    expect(screen.getByTestId("acct")).toHaveTextContent("alice");
   });
 });

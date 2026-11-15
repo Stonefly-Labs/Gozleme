@@ -32,6 +32,12 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.database.existingSecret }}
                   key: app-connection-string
+            - name: Gozleme__Auth__RegistrationEnabled
+              value: {{ .Values.auth.registrationEnabled | quote }}
+            - name: Gozleme__Auth__SecureCookies
+              value: {{ .Values.auth.secureCookies | quote }}
+            - name: Gozleme__Network__TrustedProxies
+              value: {{ .Values.network.trustedProxies | quote }}
           livenessProbe:
             httpGet: { path: /health/live, port: http }
             periodSeconds: 10

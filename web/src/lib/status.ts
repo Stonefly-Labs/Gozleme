@@ -29,9 +29,16 @@ export interface ServiceStatus {
 
 export type UnreachableReason = "timeout" | "unreachable" | "invalid-response";
 
+/**
+ * Why no status data is shown although the API answered (GOZ-0001): `expired` — no valid session;
+ * `unverifiable` — the database is down, so the session cannot be verified (fail closed, FR-021a).
+ */
+export type SessionProblem = "expired" | "unverifiable";
+
 /** What the dashboard receives from its same-origin route. */
 export type BackendStatusResult =
   | { reachable: true; checkedAt: string; status: ServiceStatus }
+  | { reachable: true; checkedAt: string; session: SessionProblem }
   | { reachable: false; checkedAt: string; reason: UnreachableReason };
 
 export const API_TIMEOUT_MS = 3000;
@@ -61,6 +68,15 @@ function isDependency(v: unknown): v is DependencyStatus {
   );
 }
 
+async function isUnavailable(res: Response) {
+  try {
+    const body: unknown = await res.json();
+    return isObject(body) && body.error === "unavailable";
+  } catch {
+    return false;
+  }
+}
+
 /** Structural validation; anything unexpected is treated as an invalid response, never rendered. */
 export function parseServiceStatus(v: unknown): ServiceStatus | null {
   if (!isObject(v)) return null;
@@ -75,20 +91,26 @@ export function parseServiceStatus(v: unknown): ServiceStatus | null {
   return ok ? (v as unknown as ServiceStatus) : null;
 }
 
-/** Server-side call from the web tier to the API, bounded by a timeout. */
+/**
+ * Server-side call from the web tier to the API, bounded by a timeout. `headers` carries the
+ * forwarded session cookie (the status endpoint requires a session since GOZ-0001).
+ */
 export async function fetchBackendStatus(
   apiBaseUrl: string,
   fetchImpl: typeof fetch = fetch,
   timeoutMs = API_TIMEOUT_MS,
   now: () => Date = () => new Date(),
+  headers: HeadersInit = { accept: "application/json" },
 ): Promise<BackendStatusResult> {
   const checkedAt = () => now().toISOString();
   try {
     const res = await fetchImpl(new URL("/api/v1/status", apiBaseUrl), {
       cache: "no-store",
       signal: AbortSignal.timeout(timeoutMs),
-      headers: { accept: "application/json" },
+      headers,
     });
+    if (res.status === 401) return { reachable: true, checkedAt: checkedAt(), session: "expired" };
+    if (res.status === 503 && (await isUnavailable(res))) return { reachable: true, checkedAt: checkedAt(), session: "unverifiable" };
     if (!res.ok) return { reachable: false, checkedAt: checkedAt(), reason: "invalid-response" };
     const status = parseServiceStatus(await res.json());
     return status

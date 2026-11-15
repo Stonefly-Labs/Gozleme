@@ -22,6 +22,15 @@ telemetry:
   otlpHttpEndpoint: ""
   environment: production
 
+# Local identity (GOZ-0001). Serve the web tier over HTTPS: session cookies are Secure by default.
+auth:
+  registrationEnabled: true
+  secureCookies: true
+# CIDRs whose X-Forwarded-For the API trusts (the web pods' network). Empty = loopback only, so all
+# clients share one rate-limit budget per web pod (fails safe). See README "Client addresses".
+network:
+  trustedProxies: ""
+
 migrate:
   enabled: true
   backoffLimit: 6
