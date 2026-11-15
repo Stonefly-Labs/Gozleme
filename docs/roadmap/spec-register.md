@@ -2,12 +2,12 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 40 · **Complete on main:** 0 · **Blocked:** 0 · **Ready for human merge:** 1
+**Specs:** 40 · **Complete on main:** 1 · **Blocked:** 0 · **Ready for human merge:** 0
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
-| [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | ready-for-human-merge | human-review | — | Human reviews and merges PR |
-| [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | not-started | — | GOZ-0000 | Await prerequisites and create allowed working branch |
+| [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | complete | merged | — | Complete — merged to main in 8b25d12382a0741eff17ae334a8948122eeb1860 (PR |
+| [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | not-started | — | GOZ-0000 | Prerequisite GOZ-0000 merged; start on feature/goz-0001-local-identity |
 | [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | not-started | — | GOZ-0001 | Await prerequisites and create allowed working branch |
 | [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | not-started | — | GOZ-0002 | Await prerequisites and create allowed working branch |
 | [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | not-started | — | GOZ-0003 | Await prerequisites and create allowed working branch |
