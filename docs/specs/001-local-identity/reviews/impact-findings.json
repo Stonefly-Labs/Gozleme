@@ -211,7 +211,7 @@
         "GOZ-0039"
       ],
       "recommendation": "The maintainer decides whether to add an OIDC MVP spec (with ordering and a dependency on verified email for account linking) or to move OIDC to post-MVP in the MVP document. Either is a committed-scope change. No prompt was edited for this.",
-      "disposition": "maintainer chose an MVP OIDC spec 2026-11-15: drafted as docs/prompts/spec-0041.md, PROPOSED and unregistered pending approval of the draft and its placement"
+      "disposition": "approved by maintainer 2026-11-15: registered as GOZ-0041 (MVP, prerequisites GOZ-0001 and GOZ-0040), promptRevision 1"
     },
     {
       "id": "GOZ-0001-IF-08",

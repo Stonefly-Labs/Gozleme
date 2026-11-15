@@ -15,6 +15,7 @@ decisions:
 - {at: '2026-11-15', by: maintainer, topic: interim-recovery, decision: 'Operator CLI reset-password/unlock commands, not HTTP-exposed, audited with opaque ID'}
 - {at: '2026-11-15', by: maintainer, topic: goz-0040-approval, decision: 'Approve drafted email delivery/verification/self-service reset spec as MVP GOZ-0040, prerequisites GOZ-0001 and GOZ-0002 (after GOZ-0002); register it (impact finding GOZ-0001-IF-06)'}
 - {at: '2026-11-15', by: maintainer, topic: external-oidc-roadmap, decision: 'Add an MVP spec for external OIDC sign-in (draft a living prompt, PROPOSED for maintainer approval in this PR; placement decided at review) (impact finding GOZ-0001-IF-07)'}
+- {at: '2026-11-15', by: maintainer, topic: goz-0041-approval, decision: 'Approve drafted external OIDC spec as MVP GOZ-0041 with prerequisites GOZ-0001 and GOZ-0040; register it (impact finding GOZ-0001-IF-07)'}
 stages:
   specify: {status: done, artifact: docs/specs/001-local-identity/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/001-local-identity/plan.md, at: '2026-11-15'}

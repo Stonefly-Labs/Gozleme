@@ -1456,3 +1456,37 @@ specs:
     screenshots: []
     reviews: []
   nextAction: Approved by maintainer 2026-11-15 (GOZ-0001-IF-06); await prerequisites and create allowed working branch
+- id: GOZ-0041
+  number: 41
+  title: External OpenID Connect sign-in and account linking
+  phase: foundation
+  release: mvp
+  prompt: docs/prompts/spec-0041.md
+  dependencies:
+  - GOZ-0001
+  - GOZ-0040
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Approved by maintainer 2026-11-15 with prerequisites GOZ-0001 and GOZ-0040 (GOZ-0001-IF-07); await prerequisites and create allowed working branch

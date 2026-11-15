@@ -53,7 +53,7 @@
 | GOZ-0001-IF-04 | high | Ticket claims are frozen at sign-in, and stamp rotation means signing out everywhere | 0002, 0003, 0004, 0018, 0023 | applied to prompts |
 | GOZ-0001-IF-05 | high | Unverified email plus open registration means invitations, namespaces and SoD cannot rely on email | 0002, 0004, 0005, 0021 | applied to prompts |
 | GOZ-0001-IF-06 | high | Email delivery, verification and reset have no spec; the maintainer chose a new MVP spec after GOZ-0002 | 0002, 0004, 0005, 0021, 0035, 0039, 0040 | **approved 2026-11-15**: registered as GOZ-0040 after GOZ-0002 |
-| GOZ-0001-IF-07 | high | External OIDC is MVP (`mvp-vs-post-mvp.md:3`) with no owning spec | 0002, 0004, 0039 | **maintainer chose an MVP spec 2026-11-15**: drafted as `spec-0041.md`, PROPOSED pending approval of the draft and placement |
+| GOZ-0001-IF-07 | high | External OIDC is MVP (`mvp-vs-post-mvp.md:3`) with no owning spec | 0002, 0004, 0039 | **approved 2026-11-15**: registered as GOZ-0041 after GOZ-0040 |
 | GOZ-0001-IF-08 | medium | The BFF helper is text-only, with a 5-second timeout | 0009, 0010, 0011, 0028, 0038 | applied to prompts |
 | GOZ-0001-IF-09 | medium | Demo chaining, leftover seeded-account state and the hard-coded current spec | all | applied to prompts |
 | GOZ-0001-IF-10 | medium | Boundary assertions that later specs narrow selectively | 0002, 0005, 0007, 0012, 0013, 0029 | applied to prompts |
@@ -143,7 +143,7 @@ Re-analysis at `d7b9108`: no other finding changes. The demo was re-run because 
 ## Maintainer decisions (2026-11-15)
 
 - **IF-06:** approved. GOZ-0040 is registered (MVP, prerequisites GOZ-0001 and GOZ-0002, `promptRevision` 1); `scripts/validate_docs.py` now accepts contiguous specs beyond the original 40.
-- **IF-07:** add an MVP spec for external OIDC. Drafted as `docs/prompts/spec-0041.md`, marked PROPOSED and not registered: the maintainer approves the draft and its prerequisites (proposed GOZ-0001 and GOZ-0040) before the steward registers it.
+- **IF-07:** add an MVP spec for external OIDC. Drafted as `docs/prompts/spec-0041.md`; the maintainer approved the draft with prerequisites GOZ-0001 and GOZ-0040, and it is registered as GOZ-0041 (`promptRevision` 1).
 
 ## Implementation defects
 

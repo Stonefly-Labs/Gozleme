@@ -2,7 +2,7 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 41 · **Complete on main:** 1 · **Blocked:** 0 · **Ready for human merge:** 1
+**Specs:** 42 · **Complete on main:** 1 · **Blocked:** 0 · **Ready for human merge:** 1
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
@@ -47,6 +47,7 @@
 | [GOZ-0038](../prompts/spec-0038.md) — Capability testing playground | playground | not-started | — | GOZ-0037, GOZ-0021 | Await prerequisites and create allowed working branch |
 | [GOZ-0039](../prompts/spec-0039.md) — Recovery validation and release gates | operations | not-started | — | GOZ-0038, GOZ-0036, GOZ-0017, GOZ-0028 | Await prerequisites and create allowed working branch |
 | [GOZ-0040](../prompts/spec-0040.md) — Email delivery, verification and self-service password reset | foundation | not-started | — | GOZ-0001, GOZ-0002 | Approved by maintainer 2026-11-15 (GOZ-0001-IF-06); await prerequisites and create allowed working branch |
+| [GOZ-0041](../prompts/spec-0041.md) — External OpenID Connect sign-in and account linking | foundation | not-started | — | GOZ-0001, GOZ-0040 | Approved by maintainer 2026-11-15 with prerequisites GOZ-0001 and GOZ-0040 (GOZ-0001-IF-07); await prerequisites and create allowed working branch |
 
 ## Progress and governance
 
