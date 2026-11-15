@@ -1,5 +1,6 @@
 using System.Text;
 using Gozleme.Api.Identity;
+using Gozleme.Api.Organizations;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -11,7 +12,8 @@ namespace Gozleme.Api.Persistence;
 
 /// <summary>
 /// Owns Gözleme schema migrations. GOZ-0001 adds local identity (user-only Identity store),
-/// server-side sessions and the Data Protection key ring; all tables live in schema <c>gozleme</c>.
+/// server-side sessions and the Data Protection key ring; GOZ-0002 adds organizations, memberships
+/// and invitations. All tables live in schema <c>gozleme</c>.
 /// </summary>
 internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> options)
     : IdentityUserContext<GozlemeUser, Guid>(options), IDataProtectionKeyContext
@@ -31,6 +33,12 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
 
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
+    public DbSet<Organization> Organizations => Set<Organization>();
+
+    public DbSet<Membership> Memberships => Set<Membership>();
+
+    public DbSet<Invitation> Invitations => Set<Invitation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -59,6 +67,43 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
         });
 
         builder.Entity<DataProtectionKey>().ToTable("data_protection_keys");
+
+        // Tenant-owned (GOZ-0002). Every table carries its tenant key so GOZ-0003 can enable RLS without
+        // a data migration (FR-019). No role, owner or admin column exists by design (FR-018).
+        builder.Entity<Organization>(org =>
+        {
+            org.ToTable("organizations");
+            org.Property(o => o.DisplayName).HasMaxLength(Organization.MaxDisplayNameLength);
+            org.Property(o => o.CreatedAt).HasDefaultValueSql("now()");
+            org.HasOne<GozlemeUser>().WithMany().HasForeignKey(o => o.CreatedBy).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<Membership>(membership =>
+        {
+            membership.ToTable("memberships", t => t.HasCheckConstraint("ck_memberships_joined_via", "joined_via IN ('creator', 'invitation')"));
+            membership.HasKey(m => new { m.OrganizationId, m.UserId });
+            membership.Property(m => m.JoinedVia).HasMaxLength(16);
+            membership.Property(m => m.JoinedAt).HasDefaultValueSql("now()");
+            membership.HasIndex(m => new { m.UserId, m.SelectedAt }).IsDescending(false, true);
+            membership.HasOne<Organization>().WithMany().HasForeignKey(m => m.OrganizationId).OnDelete(DeleteBehavior.Cascade);
+            membership.HasOne<GozlemeUser>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
+            membership.HasOne<Invitation>().WithMany().HasForeignKey(m => m.InvitationId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<Invitation>(invitation =>
+        {
+            invitation.ToTable("invitations", t =>
+            {
+                t.HasCheckConstraint("ck_invitations_used_or_revoked", "NOT (used_at IS NOT NULL AND revoked_at IS NOT NULL)");
+                t.HasCheckConstraint("ck_invitations_code_hash_length", "octet_length(code_hash) = 32");
+            });
+            invitation.HasIndex(i => i.CodeHash).IsUnique();
+            invitation.HasIndex(i => new { i.OrganizationId, i.CreatedAt });
+            invitation.HasOne<Organization>().WithMany().HasForeignKey(i => i.OrganizationId).OnDelete(DeleteBehavior.Cascade);
+            invitation.HasOne<GozlemeUser>().WithMany().HasForeignKey(i => i.CreatedBy).OnDelete(DeleteBehavior.SetNull);
+            invitation.HasOne<GozlemeUser>().WithMany().HasForeignKey(i => i.UsedBy).OnDelete(DeleteBehavior.SetNull);
+            invitation.HasOne<GozlemeUser>().WithMany().HasForeignKey(i => i.RevokedBy).OnDelete(DeleteBehavior.SetNull);
+        });
 
         ApplySnakeCaseNames(builder);
     }

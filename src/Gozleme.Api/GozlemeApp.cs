@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Gozleme.Api.Identity;
+using Gozleme.Api.Organizations;
 using Gozleme.Api.Status;
 using Gozleme.Api.Telemetry;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -8,7 +9,7 @@ using Npgsql;
 
 namespace Gozleme.Api;
 
-/// <summary>Composes the Gözleme API host: status (GOZ-0000) and local identity (GOZ-0001).</summary>
+/// <summary>Composes the Gözleme API host: status (GOZ-0000), local identity (GOZ-0001) and organizations (GOZ-0002).</summary>
 internal static class GozlemeApp
 {
     public const string AppConnectionStringName = "Gozleme";
@@ -39,6 +40,7 @@ internal static class GozlemeApp
         builder.Services.AddSingleton<StatusService>();
         builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
         builder.AddGozlemeIdentity();
+        builder.AddGozlemeOrganizations();
 
         var app = builder.Build();
 
@@ -66,6 +68,7 @@ internal static class GozlemeApp
         }); // FR-021: status data is for signed-in users; probes above stay anonymous
 
         api.MapAuthEndpoints();
+        api.MapOrganizationEndpoints();
 
         return app;
     }
