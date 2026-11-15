@@ -1,0 +1,31 @@
+schemaVersion: '1.0'
+specId: GOZ-0001
+stage: plan
+status: in-progress
+promptRevision: 2
+branch: feature/goz-0001-local-identity
+featureDirectory: docs/specs/001-local-identity
+decisions:
+- {at: '2026-11-15', by: maintainer, topic: protected-surface, decision: 'Protect existing / dashboard, /api/v1/status and /api/backend-status; /health/* anonymous; new anonymous web liveness for container healthcheck'}
+- {at: '2026-11-15', by: maintainer, topic: registration, decision: 'Open self-registration by default; operator can disable'}
+- {at: '2026-11-15', by: maintainer, topic: lifecycle, decision: 'Include lockout after failed sign-ins and sign-out-everywhere; exclude change password and account deletion'}
+- {at: '2026-11-15', by: maintainer, topic: identifier, decision: 'Email (unverified); email delivery/verification/password reset needed later'}
+- {at: '2026-11-15', by: maintainer, topic: email-roadmap-gap, decision: 'Propose new MVP spec for email delivery, verification and password reset, scheduled after GOZ-0002, for approval in the GOZ-0001 PR'}
+- {at: '2026-11-15', by: maintainer, topic: interim-recovery, decision: 'Operator CLI reset-password/unlock commands, not HTTP-exposed, audited with opaque ID'}
+stages:
+  specify: {status: done, artifact: docs/specs/001-local-identity/spec.md, at: '2026-11-15'}
+  plan: {status: done, artifact: docs/specs/001-local-identity/plan.md, at: '2026-11-15'}
+  tasks: {status: pending}
+  implement: {status: pending}
+  demo: {status: pending}
+  converge: {status: pending}
+  impactAnalysis: {status: pending}
+  roadmapSync: {status: pending}
+attempts: []
+blockers: []
+nextAction: Run /speckit.tasks
+evidence:
+  tests: []
+  demos: []
+  screenshots: []
+  reviews: []

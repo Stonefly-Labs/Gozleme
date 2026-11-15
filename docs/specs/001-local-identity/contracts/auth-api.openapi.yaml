@@ -1,0 +1,120 @@
+openapi: 3.1.0
+info:
+  title: Gözleme Auth API
+  version: "1"
+  description: >
+    Local identity (GOZ-0001). Internal API consumed only by the Gözleme web tier (same-origin BFF);
+    not browser-exposed and no CORS. All responses `Cache-Control: no-store`. Unsafe methods require
+    header `x-gozleme-client: web` (403 otherwise). Sign-in/register are rate limited (429 + Retry-After).
+servers:
+  - url: http://api:8080
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: gozleme_session
+  parameters:
+    ClientHeader:
+      name: x-gozleme-client
+      in: header
+      required: true
+      schema: { type: string, const: web }
+  schemas:
+    Credentials:
+      type: object
+      required: [email, password]
+      additionalProperties: false
+      properties:
+        email: { type: string, maxLength: 254 }
+        password: { type: string, maxLength: 128 }
+    Registration:
+      allOf:
+        - $ref: '#/components/schemas/Credentials'
+    Session:
+      type: object
+      required: [userId, email, emailVerified, expiresAt]
+      properties:
+        userId: { type: string, format: uuid, description: Opaque permanent id }
+        email: { type: string }
+        emailVerified: { type: boolean, const: false }
+        expiresAt: { type: string, format: date-time, description: Absolute session expiry }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [invalid_credentials, registration_failed, registration_closed, validation_failed, forbidden, rate_limited]
+        fields:
+          type: object
+          description: Present only for validation_failed; field name → list of human-readable messages
+          additionalProperties: { type: array, items: { type: string } }
+    Options:
+      type: object
+      required: [registrationEnabled, externalProviders]
+      properties:
+        registrationEnabled: { type: boolean }
+        externalProviders: { type: array, maxItems: 0, items: { type: string }, description: Always empty in GOZ-0001 }
+  responses:
+    Unauthenticated: { description: No valid session (empty body) }
+    Forbidden:
+      description: Missing x-gozleme-client header
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    RateLimited:
+      description: Too many requests
+      headers: { Retry-After: { schema: { type: integer } } }
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+paths:
+  /api/v1/auth/options:
+    get:
+      summary: Public sign-in page options
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Options' } } } }
+  /api/v1/auth/register:
+    post:
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Registration' } } } }
+      responses:
+        '201': { description: Account created and signed in; sets session cookie, content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } } }
+        '400': { description: validation_failed with field messages, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: registration_closed or forbidden, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: registration_failed (generic; does not confirm existence), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/auth/sign-in:
+    post:
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Credentials' } } } }
+      responses:
+        '200': { description: Signed in; new session cookie, content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } } }
+        '401': { description: invalid_credentials (wrong password, unknown email and locked account are identical), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/auth/sign-out:
+    post:
+      security: [{ session: [] }, {}]
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      responses:
+        '204': { description: Session ended server-side (idempotent); cookie cleared }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/auth/sign-out-all:
+    post:
+      security: [{ session: [] }]
+      parameters: [{ $ref: '#/components/parameters/ClientHeader' }]
+      responses:
+        '204': { description: All sessions for the account ended; cookie cleared }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/auth/session:
+    get:
+      security: [{ session: [] }]
+      responses:
+        '200': { description: Current session, content: { application/json: { schema: { $ref: '#/components/schemas/Session' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /api/v1/status:
+    get:
+      summary: Status contract v1 (shape unchanged from GOZ-0000) — now requires a session
+      security: [{ session: [] }]
+      responses:
+        '200': { description: See docs/specs/000-repository-bootstrap/contracts/status-api.openapi.yaml }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
