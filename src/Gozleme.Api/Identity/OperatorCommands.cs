@@ -1,11 +1,14 @@
 using System.Diagnostics;
+using Gozleme.Api.Organizations;
+using Gozleme.Api.Persistence;
 using Gozleme.Api.Telemetry;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Gozleme.Api.Identity;
 
 /// <summary>
-/// Operator-only one-shot modes (FR-026, FR-027, FR-035), run like <c>migrate</c> and never reachable
+/// Operator-only one-shot modes (FR-026, FR-027, FR-035; GOZ-0002 demo organization), run like <c>migrate</c> and never reachable
 /// over HTTP: <c>seed</c>, <c>reset-password</c> and <c>unlock</c>. They use the ordinary app role
 /// (DML only). Output and audit events carry the opaque account id only, never the email or password.
 /// </summary>
@@ -21,7 +24,11 @@ internal static class OperatorCommands
     public const string ServiceName = "gozleme-operator";
 
     /// <summary>Deterministic synthetic demo accounts (reserved <c>.test</c> TLD).</summary>
-    public static readonly string[] DemoAccounts = ["alice@demo.gozleme.test", "bob@demo.gozleme.test", "lockout@demo.gozleme.test"];
+    public static readonly string[] DemoAccounts = ["alice@demo.gozleme.test", "bob@demo.gozleme.test", "lockout@demo.gozleme.test", "carol@demo.gozleme.test"];
+
+    /// <summary>The seeded demo organization (GOZ-0002): fixed id, members alice (creator) and carol.</summary>
+    public static readonly Guid DemoOrganizationId = Guid.Parse("0193a000-0000-7000-8000-000000000002");
+    public const string DemoOrganizationName = "Seeded Demo Org";
 
     public static bool Handles(string? command) => command is "seed" or "reset-password" or "unlock";
 
@@ -107,7 +114,39 @@ internal static class OperatorCommands
             await stdout.WriteLineAsync($"Seeded demo account {user.Id}");
         }
 
+        await SeedOrganizationAsync(services, stdout);
         return Ok;
+    }
+
+    /// <summary>Idempotent: every run restores the demo organization's name, exactly alice and carol as members, and no invitations.</summary>
+    private static async Task SeedOrganizationAsync(IServiceProvider services, TextWriter stdout)
+    {
+        var db = services.GetRequiredService<GozlemeDbContext>();
+        var users = services.GetRequiredService<UserManager<GozlemeUser>>();
+        var alice = (await users.FindByEmailAsync(DemoAccounts[0]))!.Id;
+        var carol = (await users.FindByEmailAsync(DemoAccounts[3]))!.Id;
+        var now = services.GetRequiredService<TimeProvider>().GetUtcNow();
+
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        var organization = await db.Organizations.FirstOrDefaultAsync(o => o.Id == DemoOrganizationId);
+        if (organization is null)
+        {
+            db.Organizations.Add(new Organization { Id = DemoOrganizationId, DisplayName = DemoOrganizationName, CreatedAt = now, CreatedBy = alice, UpdatedAt = now });
+        }
+        else
+        {
+            organization.DisplayName = DemoOrganizationName;
+            organization.UpdatedAt = now;
+        }
+
+        await db.SaveChangesAsync();
+        await db.Memberships.Where(m => m.OrganizationId == DemoOrganizationId).ExecuteDeleteAsync();
+        await db.Invitations.Where(i => i.OrganizationId == DemoOrganizationId).ExecuteDeleteAsync();
+        db.Memberships.Add(new Membership { OrganizationId = DemoOrganizationId, UserId = alice, JoinedAt = now, JoinedVia = Membership.ViaCreator });
+        db.Memberships.Add(new Membership { OrganizationId = DemoOrganizationId, UserId = carol, JoinedAt = now.AddSeconds(1), JoinedVia = Membership.ViaInvitation });
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        await stdout.WriteLineAsync($"Seeded demo organization {DemoOrganizationId}");
     }
 
     private static async Task<int> ResetPasswordAsync(IServiceProvider services, string? email, string? password, TextWriter stdout, TextWriter stderr)

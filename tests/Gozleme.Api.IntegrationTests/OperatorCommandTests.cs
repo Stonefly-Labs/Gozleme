@@ -101,10 +101,42 @@ public sealed class OperatorCommandTests(PgvectorDatabaseFixture fixture) : IAsy
 
         Assert.Equal(OperatorCommands.Ok, (await RunAsync("seed", [settings])).Code);
         Assert.Equal(ids, await Db.ScalarAsync<string>("SELECT string_agg(id::text, ',' ORDER BY email) FROM gozleme.users WHERE email LIKE '%@demo.gozleme.test'"));
-        Assert.Equal(3, ids.Split(',').Length);
+        Assert.Equal(4, ids.Split(',').Length);
         using var client = AuthClient.Create(_factory);
         Assert.Equal(HttpStatusCode.OK, (await AuthClient.SignInAsync(client, "lockout@demo.gozleme.test", "it-demo-seed-passphrase")).StatusCode);
         Assert.Equal(OperatorCommands.Usage, (await RunAsync("seed", [])).Code);
+    }
+
+    [Fact]
+    public async Task Seed_restores_the_demo_organization_to_exactly_alice_and_carol_with_no_invitations()
+    {
+        var settings = $"--{OperatorCommands.DemoPasswordKey}=it-demo-seed-passphrase";
+        var (first, stdout, _) = await RunAsync("seed", [settings]);
+        Assert.Equal(OperatorCommands.Ok, first);
+        Assert.Contains($"Seeded demo organization {OperatorCommands.DemoOrganizationId}", stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain(OperatorCommands.DemoOrganizationName, stdout, StringComparison.Ordinal);
+
+        // Drift the fixture the way a demo run does: rename, add bob, remove carol, leave an invitation.
+        using var alice = AuthClient.Create(_factory);
+        Assert.Equal(HttpStatusCode.OK, (await AuthClient.SignInAsync(alice, "alice@demo.gozleme.test", "it-demo-seed-passphrase")).StatusCode);
+        using var bob = AuthClient.Create(_factory);
+        Assert.Equal(HttpStatusCode.OK, (await AuthClient.SignInAsync(bob, "bob@demo.gozleme.test", "it-demo-seed-passphrase")).StatusCode);
+        var org = OperatorCommands.DemoOrganizationId.ToString();
+        (await OrgClient.RenameAsync(alice, org, "Drifted")).Dispose();
+        await OrgClient.JoinAsync(alice, bob, org);
+        var carol = (await OrgClient.MembersAsync(alice, org)).Single(m => m.GetProperty("email").GetString() == "carol@demo.gozleme.test").GetProperty("userId").GetString()!;
+        (await OrgClient.RemoveAsync(alice, org, carol)).Dispose();
+        await OrgClient.InviteAsync(alice, org);
+
+        Assert.Equal(OperatorCommands.Ok, (await RunAsync("seed", [settings])).Code);
+        // Seeding resets the demo passwords, which ends their sessions; sign in afresh.
+        Assert.Equal(HttpStatusCode.OK, (await AuthClient.SignInAsync(alice, "alice@demo.gozleme.test", "it-demo-seed-passphrase")).StatusCode);
+        using var get = await AuthClient.GetAsync(alice, $"{OrgClient.Base}/{org}");
+        Assert.Equal(OperatorCommands.DemoOrganizationName, (await AuthClient.JsonAsync(get)).GetProperty("displayName").GetString());
+        var members = await OrgClient.MembersAsync(alice, org);
+        Assert.Equal(["alice@demo.gozleme.test", "carol@demo.gozleme.test"], members.Select(m => m.GetProperty("email").GetString()));
+        Assert.Equal(["creator", "invitation"], members.Select(m => m.GetProperty("joinedVia").GetString()));
+        Assert.Equal(0, await Db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.invitations WHERE organization_id = '{org}'"));
     }
 
     [Fact]
