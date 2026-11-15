@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0001",
-  "commit": "e474b6937ae3157c45750fbb1cbafb190ecd8ec1",
+  "commit": "92f4d3b3701f9abb13cfb73a25c12bf91930d7bb",
   "branch": "feature/goz-0001-local-identity",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-15T18:04:49Z",
-  "finishedAt": "2026-11-15T18:05:52Z",
-  "stackStartupSeconds": 4,
+  "startedAt": "2026-11-15T18:29:14Z",
+  "finishedAt": "2026-11-15T18:30:26Z",
+  "stackStartupSeconds": 12,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -100,8 +100,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 223 ms",
-    "sign-in\u2192dashboard 163 ms"
+    "register\u2192dashboard 224 ms",
+    "sign-in\u2192dashboard 167 ms"
   ],
   "evidence": [
     "docs/specs/001-local-identity/evidence/screenshots/01-anonymous-redirected-to-sign-in.png",

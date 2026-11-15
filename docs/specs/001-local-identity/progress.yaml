@@ -13,14 +13,16 @@ decisions:
 - {at: '2026-11-15', by: maintainer, topic: email-roadmap-gap, decision: 'Propose new MVP spec for email delivery, verification and password reset, scheduled after GOZ-0002, for approval in the GOZ-0001 PR'}
 - {at: '2026-11-15', by: maintainer, topic: db-outage-auth, decision: 'Fail closed when PostgreSQL is unreachable: API 503 unavailable, session never treated as valid; dashboard shows honest degraded view without status details; GOZ-0000 degraded/recovery scenarios narrowed to that view'}
 - {at: '2026-11-15', by: maintainer, topic: interim-recovery, decision: 'Operator CLI reset-password/unlock commands, not HTTP-exposed, audited with opaque ID'}
+- {at: '2026-11-15', by: maintainer, topic: goz-0040-approval, decision: 'Approve drafted email delivery/verification/self-service reset spec as MVP GOZ-0040, prerequisites GOZ-0001 and GOZ-0002 (after GOZ-0002); register it (impact finding GOZ-0001-IF-06)'}
+- {at: '2026-11-15', by: maintainer, topic: external-oidc-roadmap, decision: 'Add an MVP spec for external OIDC sign-in (draft a living prompt, PROPOSED for maintainer approval in this PR; placement decided at review) (impact finding GOZ-0001-IF-07)'}
 stages:
   specify: {status: done, artifact: docs/specs/001-local-identity/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/001-local-identity/plan.md, at: '2026-11-15'}
   tasks: {status: done, artifact: docs/specs/001-local-identity/tasks.md, count: 50, at: '2026-11-15'}
   implement: {status: done, at: '2026-11-15'}
-  demo: {status: done, at: '2026-11-15', commit: e474b693, result: passed, record: docs/specs/001-local-identity/evidence/demo-run.json}
+  demo: {status: done, at: '2026-11-15', commit: 92f4d3b3, result: passed, record: docs/specs/001-local-identity/evidence/demo-run.json, note: 're-run after deny-by-default correction d7b9108'}
   converge: {status: done, at: '2026-11-15', passes: 2, appended: [T051, T052], outcome: converged}
-  impactAnalysis: {status: pending}
+  impactAnalysis: {status: done, at: '2026-11-15', analysedAt: d2e5c6c, reanalysedAt: d7b9108, findings: 22, report: docs/specs/001-local-identity/reviews/impact-analysis.md, corrected: [GOZ-0001-IF-01, GOZ-0001-IF-02, GOZ-0001-IF-19], humanDecisions: [GOZ-0001-IF-06, GOZ-0001-IF-07]}
   roadmapSync: {status: pending}
 attempts:
   - {failure: 'demo: 503 log named wrapper exception type', fix: 'log the matched connection-level cause; e2e ignores Loki lines from earlier runs', attempts: 2, resolved: true}
@@ -28,7 +30,7 @@ attempts:
   - {failure: 'demo: axe saw no <title> after client-side sign-out navigation', fix: 'wait for the Gözleme page title before every axe audit', attempts: 1, resolved: true}
   - {failure: 'demo: audit-line pattern rejected (null) for unknown-email failures', fix: 'pattern requires opaque id or (null)', attempts: 1, resolved: true}
 blockers: []
-nextAction: Run the mandatory Spec Impact Analyst, then review-roadmap registry sync
+nextAction: Draft proposed OIDC spec (IF-07); Roadmap Steward registers GOZ-0040, bumps 38 prompt revisions 2->3, validates; then PR
 gates:
   at: '2026-11-15'
   makeLint: passed
@@ -40,7 +42,7 @@ gates:
 evidence:
   tests: []
   demos:
-    - {record: docs/specs/001-local-identity/evidence/demo-run.json, commit: e474b693, result: passed, tests: '18/18', workingTreeClean: true, sc001: 'register 223 ms, sign-in 163 ms (automated)'}
+    - {record: docs/specs/001-local-identity/evidence/demo-run.json, commit: 92f4d3b3, result: passed, tests: '18/18', workingTreeClean: true, sc001: 'register 224 ms, sign-in 167 ms (automated)', supersedes: e474b693}
   screenshots:
     - docs/specs/001-local-identity/evidence/screenshots/
     - docs/specs/001-local-identity/evidence/screenshots/regression-goz-0000/
