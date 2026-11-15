@@ -166,7 +166,7 @@ description: "Task list for GOZ-0001 local identity and session security"
   - runs `docker compose --profile demo run --rm seed`.
   Update `Makefile` (`demo SPEC=`) and the CI `e2e-demo` job.
 - [X] T045 [US5] `e2e/playwright.config.ts` projects `setup` (`e2e/tests/auth.setup.ts` → storageState as alice), `goz-0000`, `goz-0001`; `e2e/tests/evidence.ts` resolves screenshot dirs; update `e2e/tests/bootstrap-demo.spec.ts` to use storageState and a schema-version assertion matching the latest migration, keeping all four scenarios plus boundary/observability (narrowing the `/login` and "sign in" text assertions per IF-01)
-- [ ] T046 [US5] `e2e/tests/identity-demo.spec.ts`, which does the following, with screenshots:
+- [X] T046 [US5] `e2e/tests/identity-demo.spec.ts`, which does the following, with screenshots:
   1. anonymous redirect, plus status API 401;
   2. register new synthetic user → dashboard;
   3. sign out + cookie replay anonymous;
@@ -178,15 +178,15 @@ description: "Task list for GOZ-0001 local identity and session security"
   9. sign-in trace in Jaeger with no email/cookie in span attributes;
   10. axe on all pages;
   11. secret/PII scan of page text and compose logs.
-- [ ] T047 [US5] Run `make demo SPEC=GOZ-0001`; commit evidence under `docs/specs/001-local-identity/evidence/` (sanitised synthetic data only)
+- [X] T047 [US5] Run `make demo SPEC=GOZ-0001`; commit evidence under `docs/specs/001-local-identity/evidence/` (sanitised synthetic data only)
 
 ---
 
 ## Phase 8: Polish & Cross-Cutting
 
 - [X] T048 [P] Docs: `docs/engineering/local-development.md` (accounts, seed, operator commands, auth config), `docs/engineering/demo-contract.md` (runner usage), `README.md` quick start sign-in note, `deploy/helm/gozleme/README.md`
-- [ ] T049 Full gates: `make lint`, `make test`, `make validate`, `make helm-lint`, gitleaks; record results in `progress.yaml`
-- [ ] T050 Measure SC-001 timing (register < 60 s, sign-in < 15 s) in the demo record
+- [X] T049 Full gates: `make lint`, `make test`, `make validate`, `make helm-lint`, gitleaks; record results in `progress.yaml`
+- [X] T050 Measure SC-001 timing (register < 60 s, sign-in < 15 s) in the demo record
 
 ---
 
