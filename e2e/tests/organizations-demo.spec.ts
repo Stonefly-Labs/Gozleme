@@ -316,9 +316,11 @@ test("observability: organization flows are traced browser → web → API → P
     )
     .toBe(true);
 
-  const apiSpans = await recentSpans("gozleme-api", 10);
-  for (const name of ["gozleme.org.create", "gozleme.org.rename", "gozleme.org.select", "gozleme.org.invite_create", "gozleme.org.invite_revoke", "gozleme.org.invite_redeem", "gozleme.org.member_remove"]) {
-    expect(apiSpans.some((s) => s.name === name), name).toBe(true);
+  const apiSpans: typeof spans = [];
+  for (const name of ["gozleme.org.create", "gozleme.org.rename", "gozleme.org.select", "gozleme.org.invite_create", "gozleme.org.invite_revoke", "gozleme.org.invite_redeem", "gozleme.org.member_remove", "gozleme.org.member_leave"]) {
+    const found = await recentSpans("gozleme-api", 15, name);
+    expect(found.some((s) => s.name === name), name).toBe(true);
+    apiSpans.push(...found);
   }
 
   const code = state.code!;

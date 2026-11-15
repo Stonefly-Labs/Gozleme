@@ -59,8 +59,12 @@ type Attr = { key: string; value: AnyValue };
 const flat = (attrs: Attr[] = []) =>
   Object.fromEntries(attrs.map((a) => [a.key, a.value.stringValue ?? a.value.intValue ?? a.value.boolValue ?? a.value.doubleValue]));
 
-/** All spans (any service) of traces that include `service`, within the last few minutes. */
-export async function recentSpans(service: string, minutes = 10): Promise<TraceSpan[]> {
+/**
+ * All spans (any service) of traces that include `service`, within the last few minutes. Pass
+ * `operation` to select traces containing that span name: busy services (status polling) otherwise
+ * push older traces past the 50-trace page.
+ */
+export async function recentSpans(service: string, minutes = 10, operation?: string): Promise<TraceSpan[]> {
   const max = new Date();
   const min = new Date(max.getTime() - minutes * 60_000);
   const url = new URL("/api/v3/traces", JAEGER_URL);
@@ -68,6 +72,7 @@ export async function recentSpans(service: string, minutes = 10): Promise<TraceS
   url.searchParams.set("query.start_time_min", min.toISOString());
   url.searchParams.set("query.start_time_max", max.toISOString());
   url.searchParams.set("query.num_traces", "50");
+  if (operation) url.searchParams.set("query.operation_name", operation);
   const res = await fetch(url);
   if (!res.ok) return [];
   const body = (await res.json()) as {

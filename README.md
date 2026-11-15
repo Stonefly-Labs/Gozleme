@@ -5,9 +5,11 @@ registry** for MCP servers/tools/resources/prompts, A2A agents and skills, packa
 models, APIs and AsyncAPI/event capabilities. It is a registry, **not** a production API
 gateway or AI request broker.
 
-> **Status:** foundation only (GOZ-0000). The running stack is a status dashboard over a .NET 10
-> API and PostgreSQL. Identity, organizations, the catalog and every other product feature
-> arrive through the specs in [`docs/roadmap/spec-register.md`](docs/roadmap/spec-register.md).
+> **Status:** foundation. The running stack is a status dashboard over a .NET 10 API and
+> PostgreSQL (GOZ-0000), with local accounts (GOZ-0001) and organizations with role-neutral
+> membership and single-use invitations (GOZ-0002). Database row-level security, roles, the
+> catalog and every other product feature arrive through the specs in
+> [`docs/roadmap/spec-register.md`](docs/roadmap/spec-register.md).
 
 ## Quick start
 
