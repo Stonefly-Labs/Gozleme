@@ -8,7 +8,7 @@ public sealed class MigrationAndRoleTests(PgvectorDatabaseFixture fixture)
     private GozlemeDatabase Db => fixture.Database;
 
     [Fact]
-    public async Task Foundation_migration_is_recorded_exactly_once_and_rerun_is_idempotent()
+    public async Task Migrations_are_recorded_exactly_once_and_rerun_is_idempotent()
     {
         Assert.Equal(0, await Db.MigrateAsync());
         Assert.Equal(0, await Db.MigrateAsync());
@@ -16,8 +16,8 @@ public sealed class MigrationAndRoleTests(PgvectorDatabaseFixture fixture)
         var count = await Db.ScalarAsync<long>("""SELECT count(*) FROM public."__EFMigrationsHistory" """);
         var latest = await Db.ScalarAsync<string>("""SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """);
 
-        Assert.Equal(1, count);
-        Assert.Equal("20261114000000_Foundation", latest);
+        Assert.Equal(2, count); // Foundation (GOZ-0000) + LocalIdentity (GOZ-0001)
+        Assert.Equal("20261115000000_LocalIdentity", latest);
     }
 
     [Fact]
@@ -49,6 +49,23 @@ public sealed class MigrationAndRoleTests(PgvectorDatabaseFixture fixture)
     {
         var latest = await Db.ScalarAsync<string>(
             """SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """, Db.AppConnectionString);
-        Assert.Equal("20261114000000_Foundation", latest);
+        Assert.Equal("20261115000000_LocalIdentity", latest);
+    }
+
+    [Fact]
+    public async Task Identity_tables_are_owned_by_migrator_with_dml_only_for_app_role()
+    {
+        var owners = await Db.ScalarAsync<string>("""
+            SELECT string_agg(DISTINCT tableowner, ',') FROM pg_tables WHERE schemaname = 'gozleme'
+            """);
+        Assert.Equal("gozleme_migrator", owners);
+
+        var privileges = await Db.ScalarAsync<string>("""
+            SELECT string_agg(DISTINCT privilege_type, ',' ORDER BY privilege_type)
+            FROM information_schema.role_table_grants
+            WHERE grantee = 'gozleme_app' AND table_schema = 'gozleme'
+            """);
+        Assert.Equal("DELETE,INSERT,SELECT,UPDATE", privileges);
+        Assert.False(await Db.ScalarAsync<bool>("SELECT has_schema_privilege('gozleme_app', 'gozleme', 'CREATE')"));
     }
 }

@@ -18,6 +18,7 @@ Maintainer decisions taken before drafting (recorded verbatim in intent; see `pr
 - Q: Registration policy for a fresh deployment? → A: Open self-registration by default; an operator setting can disable it.
 - Q: Account-lifecycle features in this slice? → A: Temporary lockout after repeated failed sign-ins, and "sign out everywhere". Change password and self-service account deletion are not in this slice.
 - Q: Sign-in identifier? → A: Email address, unverified in this slice. Email delivery, verification and password reset are needed later. They are not on the roadmap today, so a new MVP spec will be proposed for maintainer approval and scheduled after GOZ-0002.
+- Q: (raised during implementation) When the database is down and a session therefore cannot be verified, what does the protected status surface do? → A: Fail closed. The backend answers "service unavailable" and never treats the session as valid. The dashboard shows an honest degraded view ("database unavailable, your session can't be verified") with no version, schema or other status details, which is the same information the anonymous readiness probe already exposes. The GOZ-0000 degraded and recovery scenarios are narrowed to this view.
 - Q: How do users recover before password reset exists? → A: An operator-only command-line password reset and unlock, not reachable over HTTP, recorded in the security audit log with an opaque account identifier.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -119,7 +120,8 @@ A reviewer runs one documented demo command for this spec and sees an autonomous
 - Already signed in: visiting sign-in or registration while signed in goes to the dashboard rather than creating a second account or session.
 - Session expiry: an idle or absolute-expired session behaves as anonymous. A dashboard that was already open shows a "session expired, sign in again" state instead of status data or a generic error.
 - Concurrent sign-out-everywhere during an in-flight request: the next request after revocation is anonymous. No request that starts after revocation is served as the user.
-- Backend unreachable or database down while signed out: sign-in reports a generic "service unavailable, try again" message, distinct from "wrong credentials", and leaks no internals. While signed in, the existing degraded and unreachable dashboard states from GOZ-0000 still display.
+- Backend unreachable or database down while signed out: sign-in reports a generic "service unavailable, try again" message, distinct from "wrong credentials", and leaks no internals.
+- Database down while signed in: the session cannot be verified, so it is not honoured (fail closed). The dashboard shows "Degraded: database unavailable" and states that the session can't be verified, without version, schema or other status data. It recovers to the full signed-in dashboard when the database returns, without signing in again. Backend unreachable while signed in still shows the GOZ-0000 "unreachable" state.
 - Lockout of an email that does not exist: the response matches that of an existing locked account. No account row is created.
 - Registration disabled after accounts exist: existing accounts still sign in.
 - Operator reset for an unknown email: the command fails with a non-zero exit and does not create an account.
@@ -161,6 +163,7 @@ A reviewer runs one documented demo command for this spec and sees an autonomous
 **Protected surfaces**
 
 - **FR-021**: The status dashboard at `/`, the backend status endpoint and the web tier's status proxy MUST require an authenticated session. Anonymous browser navigation MUST redirect to sign-in. Anonymous API calls MUST receive an "unauthenticated" response without status data.
+- **FR-021a**: When the database is unreachable, the system MUST NOT treat any session as valid. Protected requests and identity actions MUST receive a "service unavailable" response with no status data and no internals. The dashboard MUST present this as a degraded, database-unavailable state.
 - **FR-022**: Backend liveness and readiness probes MUST remain anonymous. The web tier MUST expose an anonymous liveness check, which container health checks MUST use.
 - **FR-023**: The signed-in dashboard MUST show which account is signed in and offer "sign out" and "sign out everywhere".
 - **FR-024**: The system MUST NOT expose any HTTP endpoint that lists users or that resets passwords or unlocks accounts.

@@ -11,6 +11,7 @@ decisions:
 - {at: '2026-11-15', by: maintainer, topic: lifecycle, decision: 'Include lockout after failed sign-ins and sign-out-everywhere; exclude change password and account deletion'}
 - {at: '2026-11-15', by: maintainer, topic: identifier, decision: 'Email (unverified); email delivery/verification/password reset needed later'}
 - {at: '2026-11-15', by: maintainer, topic: email-roadmap-gap, decision: 'Propose new MVP spec for email delivery, verification and password reset, scheduled after GOZ-0002, for approval in the GOZ-0001 PR'}
+- {at: '2026-11-15', by: maintainer, topic: db-outage-auth, decision: 'Fail closed when PostgreSQL is unreachable: API 503 unavailable, session never treated as valid; dashboard shows honest degraded view without status details; GOZ-0000 degraded/recovery scenarios narrowed to that view'}
 - {at: '2026-11-15', by: maintainer, topic: interim-recovery, decision: 'Operator CLI reset-password/unlock commands, not HTTP-exposed, audited with opaque ID'}
 stages:
   specify: {status: done, artifact: docs/specs/001-local-identity/spec.md, at: '2026-11-15'}

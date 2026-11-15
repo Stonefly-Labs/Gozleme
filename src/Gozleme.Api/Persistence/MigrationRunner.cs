@@ -34,7 +34,7 @@ internal static partial class MigrationRunner
         // Named so Npgsql telemetry labels the pool by name rather than by connection string.
         var dataSource = new NpgsqlDataSourceBuilder(connectionString) { Name = ServiceName }.Build();
         builder.Services.AddSingleton(dataSource);
-        builder.Services.AddDbContext<GozlemeDbContext>(options => options.UseNpgsql(dataSource));
+        builder.Services.AddDbContext<GozlemeDbContext>(options => GozlemeDbContext.Configure(options, dataSource));
 
         using var host = builder.Build();
         await host.StartAsync(); // starts telemetry providers; disposing the host flushes exporters

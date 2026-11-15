@@ -10,9 +10,23 @@ using OpenTelemetry.Trace;
 
 namespace Gozleme.Api.IntegrationTests.Infrastructure;
 
-/// <summary>Hosts the real API against a test database as the ordinary app role, capturing logs and telemetry.</summary>
-public sealed class GozlemeApiFactory(string appConnectionString) : WebApplicationFactory<Program>
+/// <summary>
+/// Hosts the real API against a test database as the ordinary app role, capturing logs and telemetry.
+/// <paramref name="settings"/> override configuration; auth rate limits are raised by default so only
+/// rate-limit tests hit them.
+/// </summary>
+public sealed class GozlemeApiFactory(
+    string appConnectionString,
+    IReadOnlyDictionary<string, string?>? settings = null,
+    Action<IServiceCollection>? configureServices = null) : WebApplicationFactory<Program>
 {
+    private static readonly Dictionary<string, string?> Defaults = new(StringComparer.Ordinal)
+    {
+        ["Gozleme:Auth:RateLimit:SignInPerMinute"] = "1000",
+        ["Gozleme:Auth:RateLimit:RegisterPerMinute"] = "1000",
+        ["Gozleme:Auth:RateLimit:GlobalPerMinute"] = "100000",
+    };
+
     public ConcurrentQueue<string> Logs { get; } = new();
 
     public List<Activity> Activities { get; } = [];
@@ -35,11 +49,17 @@ public sealed class GozlemeApiFactory(string appConnectionString) : WebApplicati
         builder.UseEnvironment("Production");
         builder.UseSetting("ConnectionStrings:Gozleme", appConnectionString);
         builder.UseSetting("Gozleme:BuildVersion", "0.0.0-it");
+        foreach (var (key, value) in Defaults.Concat(settings ?? new Dictionary<string, string?>()))
+        {
+            builder.UseSetting(key, value);
+        }
+
         builder.ConfigureLogging(logging => logging.ClearProviders().AddProvider(new CapturingLoggerProvider(Logs)));
         builder.ConfigureServices(services =>
         {
             services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(new SimpleActivityExportProcessor(new LockedActivityExporter(Activities))));
             services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddInMemoryExporter(Metrics));
+            configureServices?.Invoke(services);
         });
     }
 

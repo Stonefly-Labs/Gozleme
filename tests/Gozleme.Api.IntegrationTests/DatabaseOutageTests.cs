@@ -5,8 +5,10 @@ using Gozleme.Api.IntegrationTests.Infrastructure;
 namespace Gozleme.Api.IntegrationTests;
 
 /// <summary>
-/// Stops and restarts a dedicated database container: degraded status, readiness 503,
-/// liveness 200, automatic recovery, and no secret leakage in responses or logs.
+/// Stops and restarts a dedicated database container: readiness 503, liveness 200, automatic
+/// recovery, and no secret leakage in responses or logs. GOZ-0001 (FR-021a, fail closed): while the
+/// database is down a session cannot be verified, so protected and identity endpoints answer
+/// <c>503 {"error":"unavailable"}</c> without status data; the same session works again on recovery.
 /// </summary>
 public sealed class DatabaseOutageTests : IAsyncLifetime
 {
@@ -18,7 +20,7 @@ public sealed class DatabaseOutageTests : IAsyncLifetime
     {
         _db = await GozlemeDatabase.StartAsync();
         _factory = new GozlemeApiFactory(_db.AppConnectionString);
-        _client = _factory.CreateClient();
+        (_client, _) = await AuthClient.SignedInAsync(_factory);
     }
 
     public async ValueTask DisposeAsync()
@@ -39,21 +41,31 @@ public sealed class DatabaseOutageTests : IAsyncLifetime
 
         await _db.StopAsync();
 
-        var degraded = await GetStatusAsync(bodies, ct);
-        Assert.Equal("degraded", degraded.GetProperty("status").GetString());
-        var db = Assert.Single(degraded.GetProperty("dependencies").EnumerateArray());
-        Assert.Equal("unavailable", db.GetProperty("status").GetString());
-        Assert.Equal("Database unreachable", db.GetProperty("message").GetString());
-        Assert.Equal(JsonValueKind.Null, db.GetProperty("schemaVersion").ValueKind);
-        Assert.Equal(JsonValueKind.Null, db.GetProperty("latencyMs").ValueKind);
+        using (var unavailable = await _client.GetAsync(new Uri("/api/v1/status", UriKind.Relative), ct))
+        {
+            var body = await unavailable.Content.ReadAsStringAsync(ct);
+            bodies.Add(body);
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, unavailable.StatusCode);
+            Assert.Equal("""{"error":"unavailable"}""", body);
+            Assert.True(unavailable.Headers.CacheControl?.NoStore);
+        }
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, await StatusCodeAsync("/api/v1/auth/session", bodies, ct));
+        using (var signIn = await AuthClient.SignInAsync(_client, AuthClient.NewEmail(), AuthClient.Password))
+        {
+            bodies.Add(await signIn.Content.ReadAsStringAsync(ct));
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, signIn.StatusCode);
+        }
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, await StatusCodeAsync("/health/ready", bodies, ct));
         Assert.Equal(HttpStatusCode.OK, await StatusCodeAsync("/health/live", bodies, ct));
 
         await _db.StartAgainAsync();
 
-        var recovered = await WaitForAsync(async () => await GetStatusAsync(bodies, ct), s => s.GetProperty("status").GetString() == "healthy", ct);
-        Assert.Equal("20261114000000_Foundation", recovered.GetProperty("dependencies")[0].GetProperty("schemaVersion").GetString());
+        // The same session is honoured again once it can be verified.
+        var recovered = await WaitForAsync(async () => await TryGetStatusAsync(bodies, ct), s => s?.GetProperty("status").GetString() == "healthy", ct);
+        Assert.NotNull(recovered);
+        Assert.Equal("20261115000000_LocalIdentity", recovered.Value.GetProperty("dependencies")[0].GetProperty("schemaVersion").GetString());
         Assert.Equal(HttpStatusCode.OK, await StatusCodeAsync("/health/ready", bodies, ct));
 
         string[] forbidden =
@@ -83,6 +95,14 @@ public sealed class DatabaseOutageTests : IAsyncLifetime
         var body = await _client.GetStringAsync(new Uri("/api/v1/status", UriKind.Relative), ct);
         bodies.Add(body);
         return JsonDocument.Parse(body).RootElement.Clone();
+    }
+
+    private async Task<JsonElement?> TryGetStatusAsync(List<string> bodies, CancellationToken ct)
+    {
+        using var response = await _client.GetAsync(new Uri("/api/v1/status", UriKind.Relative), ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        bodies.Add(body);
+        return response.IsSuccessStatusCode ? JsonDocument.Parse(body).RootElement.Clone() : null;
     }
 
     private async Task<HttpStatusCode> StatusCodeAsync(string path, List<string> bodies, CancellationToken ct)

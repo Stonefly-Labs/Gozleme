@@ -9,11 +9,10 @@ public sealed class StatusEndpointTests(PgvectorDatabaseFixture fixture) : IAsyn
     private GozlemeApiFactory _factory = null!;
     private HttpClient _client = null!;
 
-    public ValueTask InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _factory = new GozlemeApiFactory(fixture.Database.AppConnectionString);
-        _client = _factory.CreateClient();
-        return ValueTask.CompletedTask;
+        (_client, _) = await AuthClient.SignedInAsync(_factory); // GOZ-0001: status requires a session
     }
 
     public async ValueTask DisposeAsync()
@@ -33,11 +32,21 @@ public sealed class StatusEndpointTests(PgvectorDatabaseFixture fixture) : IAsyn
     }
 
     [Fact]
+    public async Task Status_rejects_anonymous_requests_without_status_data()
+    {
+        using var anonymous = AuthClient.Create(_factory);
+        using var response = await AuthClient.GetAsync(anonymous, "/api/v1/status");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(string.Empty, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.False(response.Headers.Location is not null, "API never redirects to a login page");
+    }
+
+    [Fact]
     public async Task Status_reports_healthy_database_schema_version_and_vector_capability()
     {
         using var response = await _client.GetAsync(new Uri("/api/v1/status", UriKind.Relative), TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("no-store", response.Headers.CacheControl?.ToString());
+        Assert.True(response.Headers.CacheControl?.NoStore);
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         var root = doc.RootElement;
@@ -53,7 +62,7 @@ public sealed class StatusEndpointTests(PgvectorDatabaseFixture fixture) : IAsyn
         Assert.Equal("database", db.GetProperty("name").GetString());
         Assert.Equal("healthy", db.GetProperty("status").GetString());
         Assert.True(db.GetProperty("required").GetBoolean());
-        Assert.Equal("20261114000000_Foundation", db.GetProperty("schemaVersion").GetString());
+        Assert.Equal("20261115000000_LocalIdentity", db.GetProperty("schemaVersion").GetString());
         Assert.Equal(JsonValueKind.Null, db.GetProperty("message").ValueKind);
         var vector = db.GetProperty("capabilities").GetProperty("vector");
         Assert.True(vector.GetProperty("available").GetBoolean());
