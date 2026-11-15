@@ -85,3 +85,27 @@ a { color: var(--focus); }
 .notice { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
 .notice p { margin: 0; }
 .notice a { color: inherit; font-weight: 600; }
+/* GOZ-0002 organizations */
+.site-header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; max-width: 960px; margin: 0 auto; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.site-nav { display: flex; gap: 16px; font-weight: 600; }
+.switcher { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.switcher label { font-size: 0.875rem; color: var(--muted); }
+.switcher select { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); max-width: 260px; }
+.switcher select:focus-visible, .button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.stack { display: grid; gap: 16px; }
+.card h2 { margin-top: 0; font-size: 1.125rem; }
+.card h3 { font-size: 1rem; margin: 20px 0 8px; }
+.org-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.org-list li { display: flex; gap: 8px; align-items: center; justify-content: space-between; overflow-wrap: anywhere; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { text-align: left; padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: middle; }
+.table th { font-size: 0.875rem; color: var(--muted); }
+.cell-wrap { overflow-wrap: anywhere; }
+.cell-actions { text-align: right; white-space: nowrap; }
+.cell-actions .button + .button { margin-left: 8px; }
+.muted { color: var(--muted); }
+.button-danger { border-color: var(--down-fg); color: var(--down-fg); font-weight: 600; }
+.form-actions { display: flex; gap: 12px; align-items: center; }
+.code-reveal { display: grid; gap: 6px; margin-top: 16px; padding: 12px; border-radius: 8px; background: var(--unknown-bg); }
+.code-reveal label { font-weight: 600; }
+.code-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.05em; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 1rem; width: 100%; }

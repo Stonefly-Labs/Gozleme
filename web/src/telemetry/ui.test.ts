@@ -31,4 +31,15 @@ describe("traced", () => {
       ["gozleme.ui.sign_out_all", "error"],
     ]);
   });
+
+  it("names organization flows by bounded flow only, never by the values involved", async () => {
+    await traced("org_create", async () => ({ status: 201, json: { displayName: "Secret Org" } }), (r) => r.status === 201);
+    await traced("invite_redeem", async () => ({ status: 400 }), (r) => r.status === 200);
+    expect(outcome()).toEqual([
+      ["gozleme.ui.org_create", "success"],
+      ["gozleme.ui.invite_redeem", "failure"],
+    ]);
+    const attributes = JSON.stringify(exporter.getFinishedSpans().map((s) => s.attributes));
+    expect(attributes).not.toContain("Secret Org");
+  });
 });

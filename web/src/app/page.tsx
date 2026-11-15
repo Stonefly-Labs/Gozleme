@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AccountBar } from "@/components/AccountBar";
+import { SignedInHeader } from "@/components/SignedInHeader";
 import { StatusDashboard } from "@/components/StatusDashboard";
 import { getSession } from "@/lib/session";
 
@@ -12,5 +13,10 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const result = await getSession();
   if (result.state === "anonymous") redirect("/login?returnTo=%2F");
-  return <StatusDashboard account={result.state === "authenticated" ? <AccountBar email={result.session.email} /> : undefined} />;
+  return (
+    <>
+      {result.state === "authenticated" && <SignedInHeader />}
+      <StatusDashboard account={result.state === "authenticated" ? <AccountBar email={result.session.email} /> : undefined} />
+    </>
+  );
 }

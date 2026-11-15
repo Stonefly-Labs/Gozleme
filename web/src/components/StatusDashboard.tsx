@@ -193,8 +193,8 @@ export function StatusDashboard({
         </button>
       </footer>
       <p className="note">
-        Local accounts (GOZ-0001) protect this dashboard. Organizations and the capability catalog arrive in later
-        specs.
+        Local accounts (GOZ-0001) protect this dashboard, and organizations (GOZ-0002) are available from the header.
+        The capability catalog arrives in later specs.
       </p>
     </main>
   );
