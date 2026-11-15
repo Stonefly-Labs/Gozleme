@@ -2,13 +2,13 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 42 · **Complete on main:** 1 · **Blocked:** 0 · **Ready for human merge:** 1
+**Specs:** 42 · **Complete on main:** 2 · **Blocked:** 0 · **Ready for human merge:** 0
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
 | [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | complete | merged | — | Complete — merged to main in 8b25d12382a0741eff17ae334a8948122eeb1860 (PR #4, verified 2026-11-14). Open item: protected-main ruleset (GOZ-0000-B1/IF-12). |
-| [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | ready-for-human-merge | pr-open | GOZ-0000 | Human review and merge of PR #6 (merge PR #5 first); all 12 CI checks passed on 0e18898. Agents never merge. Open: approve proposed spec-0041 (IF-07). |
-| [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | not-started | — | GOZ-0001 | Await prerequisites and create allowed working branch |
+| [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | complete | merged | GOZ-0000 | Complete — merged to main in cf006f28a959ab8982ff251005f76fd41275e3d2 (PR #6, verified 2026-11-15). |
+| [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | not-started | — | GOZ-0001 | Prerequisite GOZ-0001 merged; start on feature/goz-0002-organizations |
 | [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | not-started | — | GOZ-0002 | Await prerequisites and create allowed working branch |
 | [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | not-started | — | GOZ-0003 | Await prerequisites and create allowed working branch |
 | [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | not-started | — | GOZ-0004 | Await prerequisites and create allowed working branch |
