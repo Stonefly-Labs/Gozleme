@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0001
-stage: plan
+stage: implement
 status: in-progress
 promptRevision: 2
 branch: feature/goz-0001-local-identity
@@ -15,7 +15,7 @@ decisions:
 stages:
   specify: {status: done, artifact: docs/specs/001-local-identity/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/001-local-identity/plan.md, at: '2026-11-15'}
-  tasks: {status: pending}
+  tasks: {status: done, artifact: docs/specs/001-local-identity/tasks.md, count: 50, at: '2026-11-15'}
   implement: {status: pending}
   demo: {status: pending}
   converge: {status: pending}
@@ -23,7 +23,7 @@ stages:
   roadmapSync: {status: pending}
 attempts: []
 blockers: []
-nextAction: Run /speckit.tasks
+nextAction: Implement T001-T050
 evidence:
   tests: []
   demos: []
