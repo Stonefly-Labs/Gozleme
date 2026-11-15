@@ -83,10 +83,10 @@ specs:
   prompt: docs/prompts/spec-0001.md
   dependencies:
   - GOZ-0000
-  status: in-progress
-  stage: pr-preparation
+  status: ready-for-human-merge
+  stage: pr-open
   branch: feature/goz-0001-local-identity
-  pullRequest: null
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/6
   promptRevision: 2
   gates:
     specification: passed
@@ -141,7 +141,7 @@ specs:
     reviews:
     - docs/specs/001-local-identity/reviews/impact-analysis.md
     - docs/specs/001-local-identity/reviews/impact-findings.json
-  nextAction: Open PR from feature/goz-0001-local-identity; human review and merge (agents never merge)
+  nextAction: 'Human review and merge of PR #6 (merge PR #5 first); all 12 CI checks passed on 0e18898. Agents never merge. Open: approve proposed spec-0041 (IF-07).'
 - id: GOZ-0002
   number: 2
   title: Organizations and membership
