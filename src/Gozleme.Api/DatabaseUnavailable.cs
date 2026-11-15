@@ -19,9 +19,9 @@ internal static partial class DatabaseUnavailable
         {
             await next(http);
         }
-        catch (Exception ex) when (IsUnreachable(ex) && !http.Response.HasStarted)
+        catch (Exception ex) when (UnreachableCause(ex) is { } cause && !http.Response.HasStarted)
         {
-            LogUnavailable(http.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DatabaseUnavailable)), ex.GetType().Name);
+            LogUnavailable(http.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DatabaseUnavailable)), cause.GetType().Name);
             http.Response.Clear();
             http.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
             http.Response.Headers.CacheControl = "no-store";
@@ -32,22 +32,26 @@ internal static partial class DatabaseUnavailable
     [LoggerMessage(Level = LogLevel.Warning, Message = "Database unreachable; request answered 503 ({ExceptionType})")]
     private static partial void LogUnavailable(ILogger logger, string exceptionType);
 
-    /// <summary>Connection-level failures only; SQL errors from a reachable server are real bugs and stay 500.</summary>
-    internal static bool IsUnreachable(Exception? ex)
+    /// <summary>
+    /// The connection-level failure in <paramref name="ex"/>'s inner-exception chain, if any. Wrappers
+    /// (EF Core, Identity) vary by call path, so the cause is what gets logged. SQL errors from a
+    /// reachable server are real bugs and stay 500.
+    /// </summary>
+    internal static Exception? UnreachableCause(Exception? ex)
     {
         for (; ex is not null; ex = ex.InnerException)
         {
             if (ex is SocketException or TimeoutException || (ex is NpgsqlException && ex is not PostgresException))
             {
-                return true;
+                return ex;
             }
 
             if (ex is PostgresException pg && pg.SqlState.StartsWith("57P", StringComparison.Ordinal))
             {
-                return true; // admin shutdown / crash shutdown / cannot connect now
+                return ex; // admin shutdown / crash shutdown / cannot connect now
             }
         }
 
-        return false;
+        return null;
     }
 }

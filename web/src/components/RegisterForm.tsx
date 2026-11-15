@@ -40,7 +40,7 @@ export function RegisterForm() {
       } catch {
         return { status: 503, body: null };
       }
-    });
+    }, (r) => r.status === 201);
     if (res.status === 201) {
       router.replace("/");
       router.refresh();

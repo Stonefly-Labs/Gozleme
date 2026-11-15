@@ -1,15 +1,17 @@
 # Local development
 
-Implemented by GOZ-0000. Only Docker with Compose v2 is required to run the stack; no hosted
+Implemented by GOZ-0000; local accounts added by GOZ-0001. Only Docker with Compose v2 is required to run the stack; no hosted
 Azure, AWS, OIDC or embedding provider is used.
 
 | Task | Command |
 |---|---|
 | Start stack and wait for health | `make up` (`docker compose up -d --build --wait`) |
-| Dashboard | <http://localhost:3000> |
+| Dashboard (sign-in required) | <http://localhost:3000> → `/login`; create an account at `/register` |
 | API status / liveness / readiness | `curl localhost:8080/api/v1/status`, `/health/live`, `/health/ready` |
 | Migrations | Applied automatically by the one-shot `migrate` service as `gozleme_migrator`; rerun with `docker compose run --rm migrate` |
-| Seed data | None yet — GOZ-0000 has no product entities. Later specs add deterministic synthetic seeds. |
+| Seed data | `docker compose --profile demo run --rm seed` creates the synthetic accounts `alice@`, `bob@` and `lockout@demo.gozleme.test` with `GOZLEME_DEMO_PASSWORD` (idempotent; resets their passwords and lockout) |
+| Operator account recovery | `docker compose run --rm -T --no-deps api reset-password --email <email> --password-stdin < pw.txt` (never as an argument; ends that account's sessions) and `docker compose run --rm --no-deps api unlock --email <email>` — there is no HTTP admin surface |
+| Close registration | `GOZLEME_REGISTRATION_ENABLED=false docker compose up -d --no-deps api` |
 | Traces (Jaeger) | <http://localhost:16686> — services `gozleme-web-browser`, `gozleme-web`, `gozleme-api`, `gozleme-migrator` |
 | Metrics (Prometheus format) | <http://localhost:8889/metrics> |
 | Viewer for logs, traces, metrics (Grafana) | <http://localhost:3001> (anonymous read-only; Explore → Loki/Jaeger/Prometheus) |
@@ -20,13 +22,24 @@ Azure, AWS, OIDC or embedding provider is used.
 | Tests | `make test` (backend unit + Testcontainers integration, frontend unit) |
 | Lint | `make lint` |
 | Governance validation | `make validate` |
-| Autonomous demo | `make demo` → `docs/specs/000-repository-bootstrap/evidence/` |
+| Autonomous demo | `make demo SPEC=GOZ-0001` → replays every earlier demo, then this spec's; writes `docs/specs/001-local-identity/evidence/` (earlier specs' screenshots under `screenshots/regression-goz-NNNN/`) |
 | Logs / status | `make logs`, `make ps` |
 | Stop / reset | `make down`; `make reset` deletes the database volume |
 
 Database roles: `deploy/postgres/init/01-roles.sh` creates `gozleme_migrator` (database owner,
 DDL) and `gozleme_app` (serving role, `NOSUPERUSER NOBYPASSRLS`) on first volume initialization.
 If you change role passwords in `.env` after the volume exists, run `make reset`.
+
+## Accounts and sessions (GOZ-0001)
+
+Sign-in uses local email/password accounts only; no external identity provider is configured or
+contacted. Sessions live in PostgreSQL (`gozleme.auth_sessions`, keyed by a SHA-256 of the
+`gozleme_session` cookie value), so sign-out and "sign out everywhere" take effect immediately.
+Five failed sign-ins lock an account for 15 minutes. While the database is unreachable the
+dashboard shows an "unable to verify your session" view and the API answers
+`503 {"error":"unavailable"}` (fail closed). `GOZLEME_SECURE_COOKIES` must stay `true` outside
+plain-HTTP local development, and `GOZLEME_TRUSTED_PROXIES` lists the only networks whose
+`X-Forwarded-For` is honoured for rate limiting.
 
 The local PostgreSQL image is `pgvector/pgvector:pg17` so the optional extension is available;
 it is never created or required. Set `GOZLEME_POSTGRES_IMAGE=postgres:17-alpine` to run without it.

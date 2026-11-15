@@ -8,6 +8,8 @@ export const GRAFANA_URL = process.env.GOZLEME_GRAFANA_URL ?? "http://localhost:
 export interface StoredLog {
   labels: Record<string, string>;
   line: string;
+  /** Epoch milliseconds the line was stored at. */
+  at: number;
 }
 
 /** Stored log lines from Loki for a LogQL query over the last few minutes. */
@@ -19,7 +21,7 @@ export async function storedLogs(query: string, minutes = 10): Promise<StoredLog
   const res = await fetch(url);
   if (!res.ok) return [];
   const body = (await res.json()) as { data: { result: { stream: Record<string, string>; values: [string, string][] }[] } };
-  return body.data.result.flatMap((r) => r.values.map(([, line]) => ({ labels: r.stream, line })));
+  return body.data.result.flatMap((r) => r.values.map(([ns, line]) => ({ labels: r.stream, line, at: Number(BigInt(ns) / 1_000_000n) })));
 }
 
 /** Instant PromQL query result count from the stored-metrics Prometheus. */

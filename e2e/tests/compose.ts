@@ -8,6 +8,11 @@ export function compose(...args: string[]) {
   execFileSync("docker", ["compose", ...args], { cwd: repoRoot, stdio: "pipe" });
 }
 
+/** `docker compose <args>` with extra environment (e.g. recreating the API with registration closed). */
+export function composeWithEnv(env: Record<string, string>, ...args: string[]) {
+  execFileSync("docker", ["compose", ...args], { cwd: repoRoot, stdio: "pipe", env: { ...process.env, ...env } });
+}
+
 /** Values that must never appear in UI, API responses or evidence. */
 export const forbiddenStrings = [
   process.env.GOZLEME_APP_PASSWORD ?? "local-dev-app",
@@ -17,6 +22,7 @@ export const forbiddenStrings = [
   "Password=",
   "Username=",
   "Host=postgres",
+  process.env.GOZLEME_DEMO_PASSWORD ?? "local-dev-demo-pass",
   "Exception",
 ];
 

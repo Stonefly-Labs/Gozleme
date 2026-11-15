@@ -31,7 +31,7 @@ export function SignInForm({ returnTo, registrationEnabled }: { returnTo: string
       } catch {
         return 503;
       }
-    });
+    }, (s) => s === 200);
     if (status === 200) {
       router.replace(returnTo);
       router.refresh();

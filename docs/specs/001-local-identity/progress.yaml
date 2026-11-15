@@ -17,14 +17,26 @@ stages:
   specify: {status: done, artifact: docs/specs/001-local-identity/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/001-local-identity/plan.md, at: '2026-11-15'}
   tasks: {status: done, artifact: docs/specs/001-local-identity/tasks.md, count: 50, at: '2026-11-15'}
-  implement: {status: pending}
-  demo: {status: pending}
+  implement: {status: done, at: '2026-11-15'}
+  demo: {status: in-progress, note: 'passed 18/18 on a dirty tree; final run on committed tree pending'}
   converge: {status: pending}
   impactAnalysis: {status: pending}
   roadmapSync: {status: pending}
-attempts: []
+attempts:
+  - {failure: 'demo: 503 log named wrapper exception type', fix: 'log the matched connection-level cause; e2e ignores Loki lines from earlier runs', attempts: 2, resolved: true}
+  - {failure: 'demo: duplicate-registration POST had no fetch metadata (403)', fix: 'POST from inside the page; header-less POST kept as cross-site 403 check', attempts: 1, resolved: true}
+  - {failure: 'demo: axe saw no <title> after client-side sign-out navigation', fix: 'wait for the Gözleme page title before every axe audit', attempts: 1, resolved: true}
+  - {failure: 'demo: audit-line pattern rejected (null) for unknown-email failures', fix: 'pattern requires opaque id or (null)', attempts: 1, resolved: true}
 blockers: []
-nextAction: Implement T001-T050
+nextAction: Commit implementation, rerun make demo SPEC=GOZ-0001 on the clean tree, commit evidence, then converge
+gates:
+  at: '2026-11-15'
+  makeLint: passed
+  makeTest: 'passed (112 .NET tests; web Vitest included)'
+  makeValidate: passed
+  helmLint: passed
+  gitleaksGit: 'passed (no leaks)'
+  gitleaksDir: 'only git-ignored web/.next build output (Next.js preview keys); nothing tracked'
 evidence:
   tests: []
   demos: []

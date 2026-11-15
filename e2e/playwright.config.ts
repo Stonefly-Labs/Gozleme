@@ -1,7 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
+import { AUTH_STATE } from "./tests/evidence";
 
 export const WEB_URL = process.env.GOZLEME_WEB_URL ?? "http://localhost:3000";
 export const API_URL = process.env.GOZLEME_API_URL ?? "http://localhost:8080";
+
+const chrome = { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } };
 
 export default defineConfig({
   testDir: "./tests",
@@ -22,5 +25,10 @@ export default defineConfig({
     colorScheme: "light",
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } }],
+  // One project per spec demo, chained so `--project goz-NNNN` replays every earlier demo first (IF-08).
+  projects: [
+    { name: "setup", testMatch: /auth\.setup\.ts/, use: chrome },
+    { name: "goz-0000", testMatch: /bootstrap-demo\.spec\.ts/, dependencies: ["setup"], use: { ...chrome, storageState: AUTH_STATE } },
+    { name: "goz-0001", testMatch: /identity-demo\.spec\.ts/, dependencies: ["goz-0000"], use: chrome },
+  ],
 });
