@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0002
-stage: plan
+stage: tasks
 status: in-progress
 promptRevision: 3
 branch: feature/goz-0002-organizations
@@ -13,7 +13,7 @@ decisions:
 stages:
   specify: {status: done, artifact: docs/specs/002-organizations/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/002-organizations/plan.md, at: '2026-11-15'}
-  tasks: {status: pending}
+  tasks: {status: done, artifact: docs/specs/002-organizations/tasks.md, count: 46, at: '2026-11-15'}
   implement: {status: pending}
   demo: {status: pending}
   converge: {status: pending}
@@ -21,7 +21,7 @@ stages:
   roadmapSync: {status: pending}
 attempts: []
 blockers: []
-nextAction: Run /speckit-tasks for docs/specs/002-organizations
+nextAction: Implement tasks T001-T046 (/speckit-implement)
 evidence:
   tests: []
   demos: []
