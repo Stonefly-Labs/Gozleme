@@ -115,7 +115,7 @@ tests/Gozleme.Api.IntegrationTests/
 ├── IdentityTelemetryTests.cs  BootstrapBoundaryTests.cs (narrowed)  StatusEndpointTests.cs (auth)
 tests/Gozleme.Api.Tests/PasswordValidatorTests.cs, ReturnUrlTests.cs
 web/src/
-├── proxy.ts                      # cookie-presence redirect for protected pages
+├── (proxy.ts not added)           # implementation deviation; see research.md R4
 ├── lib/api.ts                    # forwardToApi(): cookie/xff/header, set-cookie relay
 ├── lib/origin.ts                 # same-origin check (+ tests)
 ├── lib/returnTo.ts               # safe relative path (+ tests)

@@ -19,7 +19,7 @@ stages:
   tasks: {status: done, artifact: docs/specs/001-local-identity/tasks.md, count: 50, at: '2026-11-15'}
   implement: {status: done, at: '2026-11-15'}
   demo: {status: done, at: '2026-11-15', commit: e474b693, result: passed, record: docs/specs/001-local-identity/evidence/demo-run.json}
-  converge: {status: pending}
+  converge: {status: done, at: '2026-11-15', passes: 2, appended: [T051, T052], outcome: converged}
   impactAnalysis: {status: pending}
   roadmapSync: {status: pending}
 attempts:
@@ -28,11 +28,11 @@ attempts:
   - {failure: 'demo: axe saw no <title> after client-side sign-out navigation', fix: 'wait for the Gözleme page title before every axe audit', attempts: 1, resolved: true}
   - {failure: 'demo: audit-line pattern rejected (null) for unknown-email failures', fix: 'pattern requires opaque id or (null)', attempts: 1, resolved: true}
 blockers: []
-nextAction: Run speckit-converge, then the mandatory Spec Impact Analyst
+nextAction: Run the mandatory Spec Impact Analyst, then review-roadmap registry sync
 gates:
   at: '2026-11-15'
   makeLint: passed
-  makeTest: 'passed (112 .NET tests; web Vitest included)'
+  makeTest: 'passed (114 .NET tests after convergence; web Vitest included)'
   makeValidate: passed
   helmLint: passed
   gitleaksGit: 'passed (no leaks)'

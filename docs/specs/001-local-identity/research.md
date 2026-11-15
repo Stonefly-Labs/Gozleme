@@ -79,6 +79,9 @@ installed toolchain on 2026-11-15 (`dotnet --version` 10.0.404; Next.js 16.4.6 i
     cookie and calls `redirect('/login?returnTo=/')` when it gets 401. A Next 16 `proxy.ts`
     short-circuits requests with no session cookie at all. That is an optimisation only; the server
     check is authoritative.
+    *Implementation deviation (convergence T052): `proxy.ts` was not added. The server-side gate
+    already redirects every anonymous request with `returnTo`, and a cookie-presence check would be a
+    second, weaker source of truth for an optimisation the local stack does not need.*
   - The new anonymous liveness route `GET /api/live` returns `{"status":"live"}` and is used by the
     Compose and Helm web probes (FR-022).
 - **Rationale**: This keeps the GOZ-0000 rule (no CORS, API not browser-exposed) intact, keeps

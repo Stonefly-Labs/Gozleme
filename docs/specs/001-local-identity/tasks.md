@@ -204,3 +204,8 @@ description: "Task list for GOZ-0001 local identity and session security"
 ## Implementation Strategy
 
 MVP first: Foundational + US1 gives a protected dashboard with register/sign-in. Then US2 (sign-out), US3 (hardening), US4 (operator), US5 (cumulative demo + evidence). Each checkpoint runs `dotnet test` + `pnpm test`.
+
+## Phase 9: Convergence
+
+- [X] T051 Add an integration test with a controllable `TimeProvider` proving a session idle for more than 30 minutes is rejected (and its row removed), that activity inside the window slides it, and that sliding never extends past the 12-hour absolute expiry, per FR-011 (partial)
+- [X] T052 Reconcile the `web/src/proxy.ts` cookie-presence redirect named in the plan (T024): record the accepted deviation (server-side `getSession()` gate is the single source of truth) in `plan.md`, or implement it, per plan: dashboard protection (contradicts)
