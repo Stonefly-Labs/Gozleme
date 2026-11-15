@@ -38,7 +38,7 @@ disposable database.
 | `make up` / `down` / `logs` / `ps` / `reset` | Run the Compose stack |
 | `make validate` | Registry/manifest schemas, prompts, generated register sync, branch rules |
 | `make helm-lint` | Lint and render the Helm chart |
-| `make demo` | Autonomous Playwright demo with screenshots and run record |
+| `make demo SPEC=GOZ-NNNN` | Cumulative autonomous Playwright demo with screenshots and run record |
 
 Toolchain for working outside containers: .NET SDK per [`global.json`](global.json), Node 24
 ([`.nvmrc`](.nvmrc)) with pnpm via Corepack, Python 3.

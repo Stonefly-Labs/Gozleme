@@ -1,13 +1,46 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MAX_BODY_BYTES, POST } from "./route";
+import { MAX_BODY_BYTES, POST, RATE_PER_MINUTE, allow, resetRateLimits } from "./route";
 
 const req = (body: BodyInit, type = "application/json", headers: Record<string, string> = {}) =>
-  new Request("http://web/api/otel/v1/traces", { method: "POST", body, headers: { "content-type": type, ...headers } });
+  new Request("http://web/api/otel/v1/traces", {
+    method: "POST",
+    body,
+    headers: { "content-type": type, "sec-fetch-site": "same-origin", ...headers },
+  });
 
 describe("browser OTLP ingestion route", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
+    resetRateLimits();
+  });
+
+  it("refuses cross-site submissions (IF-20)", async () => {
+    expect((await POST(req("{}", "application/json", { "sec-fetch-site": "cross-site" }))).status).toBe(403);
+    const noMetadata = new Request("http://web/api/otel/v1/traces", { method: "POST", body: "{}", headers: { "content-type": "application/json" } });
+    expect((await POST(noMetadata)).status).toBe(403);
+    const foreignOrigin = new Request("http://web/api/otel/v1/traces", {
+      method: "POST",
+      body: "{}",
+      headers: { "content-type": "application/json", host: "web", origin: "https://evil.example" },
+    });
+    expect((await POST(foreignOrigin)).status).toBe(403);
+  });
+
+  it("rate limits each client and refills over time (IF-20)", async () => {
+    const r = () => req("{}", "application/json", { "x-forwarded-for": "203.0.113.9" });
+    for (let i = 0; i < RATE_PER_MINUTE; i++) expect(allow(r(), 1_000)).toBe(true);
+    expect(allow(r(), 1_000)).toBe(false);
+    expect(allow(req("{}", "application/json", { "x-forwarded-for": "203.0.113.10" }), 1_000)).toBe(true);
+    expect(allow(r(), 1_000 + 2_000)).toBe(true); // ~2 tokens refilled after 2 s
+  });
+
+  it("answers 429 once a client's budget is spent", async () => {
+    const r = () => req("{}", "application/json", { "x-forwarded-for": "203.0.113.11" });
+    for (let i = 0; i < RATE_PER_MINUTE; i++) expect((await POST(r())).status).toBe(204);
+    const limited = await POST(r());
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("retry-after")).toBe("60");
   });
 
   it("forwards bounded JSON trace payloads to the collector", async () => {

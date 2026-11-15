@@ -30,10 +30,10 @@ spec:
             - name: GOZLEME_API_URL
               value: "http://{{ include "gozleme.fullname" . }}-api:8080"
           livenessProbe:
-            httpGet: { path: /, port: http }
+            httpGet: { path: /api/live, port: http }
             periodSeconds: 10
           readinessProbe:
-            httpGet: { path: /, port: http }
+            httpGet: { path: /api/live, port: http }
             periodSeconds: 5
           resources:
             {{- toYaml .Values.web.resources | nindent 12 }}

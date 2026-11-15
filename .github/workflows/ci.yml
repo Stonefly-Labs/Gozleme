@@ -98,7 +98,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @gozleme/e2e exec playwright install --with-deps chromium
       - name: Build images and run demo
-        run: scripts/demo/run-demo.sh
+        run: scripts/demo/run-demo.sh # latest spec with a Playwright demo project
       - name: Stack logs on failure
         if: failure()
         run: docker compose logs --no-color

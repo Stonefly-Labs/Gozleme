@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Gozleme.Api.IntegrationTests.Infrastructure;
+using Gozleme.Api.Status;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 
 namespace Gozleme.Api.IntegrationTests;
@@ -20,7 +22,7 @@ public sealed class TelemetryTests : IAsyncLifetime
     {
         _db = await GozlemeDatabase.StartAsync();
         _factory = new GozlemeApiFactory(_db.AppConnectionString);
-        _client = _factory.CreateClient();
+        (_client, _) = await AuthClient.SignedInAsync(_factory);
     }
 
     public async ValueTask DisposeAsync()
@@ -48,9 +50,10 @@ public sealed class TelemetryTests : IAsyncLifetime
         var probe = Assert.Single(trace, s => s.Source.Name == "Gozleme.Api" && s.DisplayName == "status.probe database");
         Assert.Equal(server.SpanId, probe.ParentSpanId);
         Assert.Equal("healthy", probe.GetTagItem("gozleme.status.outcome"));
-        // Npgsql emits a connection-open span and a command span, both under the probe.
-        var npgsql = trace.Where(s => s.Source.Name == "Npgsql").ToArray();
-        Assert.All(npgsql, s => Assert.Equal(probe.SpanId, s.ParentSpanId));
+        // Npgsql emits a connection-open span and a command span under the probe. Session validation
+        // (GOZ-0001) adds its own queries directly under the server span; nothing else is parented elsewhere.
+        Assert.All(trace.Where(s => s.Source.Name == "Npgsql"), s => Assert.Contains(s.ParentSpanId, new[] { probe.SpanId, server.SpanId }));
+        var npgsql = trace.Where(s => s.Source.Name == "Npgsql" && s.ParentSpanId == probe.SpanId).ToArray();
         var command = Assert.Single(npgsql, s => !s.DisplayName.StartsWith("CONNECT", StringComparison.Ordinal));
         Assert.Equal("postgresql", command.GetTagItem("db.system") ?? command.GetTagItem("db.system.name"));
     }
@@ -71,7 +74,9 @@ public sealed class TelemetryTests : IAsyncLifetime
         var ct = TestContext.Current.CancellationToken;
         (await _client.GetAsync(new Uri("/api/v1/status", UriKind.Relative), ct)).Dispose();
         await _db.StopAsync();
-        (await _client.GetAsync(new Uri("/api/v1/status", UriKind.Relative), ct)).Dispose();
+        // GOZ-0001 fails closed on /api/v1/status while the database is down (FR-021a) and probe
+        // requests are not traced, so exercise the same probe directly as a root span.
+        await _factory.Services.GetRequiredService<IDatabaseProbe>().ProbeAsync(ct);
         await _db.StartAgainAsync();
 
         var spans = await WaitForSpansAsync(s => s.DisplayName == "status.probe database" && s.Status == ActivityStatusCode.Error, ct);

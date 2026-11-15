@@ -13,6 +13,11 @@ FORBIDDEN = [
     os.environ.get("GOZLEME_DB_SUPERUSER_PASSWORD", "local-dev-superuser"),
     os.environ.get("GOZLEME_GRAFANA_ADMIN_PASSWORD", "local-dev-grafana"),
     "Password=",
+    os.environ.get("GOZLEME_DEMO_PASSWORD", "local-dev-demo-pass"),
+    "alice@demo.gozleme.test",
+    "bob@demo.gozleme.test",
+    "lockout@demo.gozleme.test",
+    "gozleme_session=",
 ]
 
 
@@ -21,6 +26,24 @@ def sh(*cmd: str) -> str:
         return subprocess.run(cmd, capture_output=True, text=True, check=False).stdout.strip()
     except OSError:
         return "unavailable"
+
+
+def timings(results: Path) -> list[str]:
+    """`timing` annotations from the Playwright results (automated flow durations, e.g. SC-001)."""
+    if not results.exists():
+        return []
+    out = []
+
+    def walk(suite):
+        for spec in suite.get("specs", []):
+            for t in spec.get("tests", []):
+                out.extend(a["description"] for a in t.get("annotations", []) if a.get("type") == "timing")
+        for child in suite.get("suites", []):
+            walk(child)
+
+    for suite in json.loads(results.read_text()).get("suites", []):
+        walk(suite)
+    return out
 
 
 def assertions(results: Path) -> list[dict]:
@@ -60,7 +83,7 @@ def main() -> int:
         result = "failed"
     checks.append({"name": "secret scan of compose logs and status evidence", "result": "failed" if leaks else "passed"})
 
-    shots = sorted(str(p.relative_to(root)) for p in (evidence / "screenshots").glob("*.png"))
+    shots = sorted(str(p.relative_to(root)) for p in (evidence / "screenshots").rglob("*.png"))
     record = {
         "specId": a.spec,
         "commit": sh("git", "rev-parse", "HEAD"),
@@ -78,6 +101,7 @@ def main() -> int:
         "commands": a.commands,
         "result": result,
         "assertions": checks,
+        "timings": timings(Path(a.results)),
         "evidence": shots,
     }
     if leaks:

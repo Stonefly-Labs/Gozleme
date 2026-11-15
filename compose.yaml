@@ -51,6 +51,10 @@ services:
       <<: *otel-grpc
       ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
       Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
+      # Local identity (GOZ-0001). Plain-HTTP local stack: cookies cannot be Secure here.
+      Gozleme__Auth__RegistrationEnabled: ${GOZLEME_REGISTRATION_ENABLED:-true}
+      Gozleme__Auth__SecureCookies: ${GOZLEME_SECURE_COOKIES:-false}
+      Gozleme__Network__TrustedProxies: ${GOZLEME_TRUSTED_PROXIES:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
     ports:
       - "127.0.0.1:${GOZLEME_API_PORT:-8080}:8080"
     depends_on:
@@ -80,12 +84,28 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/backend-status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      # Anonymous web liveness (GOZ-0001): the status proxy now requires a session.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 5s
       timeout: 4s
       start_period: 10s
       retries: 6
     restart: unless-stopped
+
+  # Deterministic synthetic demo accounts (GOZ-0001, FR-035), separate from schema migrations.
+  # Only with the demo profile: `docker compose --profile demo run --rm seed`.
+  seed:
+    image: gozleme-api:local
+    profiles: [demo]
+    command: ["seed"]
+    environment:
+      <<: *otel-grpc
+      ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
+      GOZLEME_DEMO_PASSWORD: ${GOZLEME_DEMO_PASSWORD:-local-dev-demo-pass}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
 
   # Foundational observability (GOZ-0000-IF-11). Telemetry is never a health dependency of the app:
   # api/web/migrate do not depend on these services and keep working if they are down.

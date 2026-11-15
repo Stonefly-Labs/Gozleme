@@ -12,7 +12,8 @@ public sealed class OptionalVectorTests
         var ct = TestContext.Current.CancellationToken;
         await using var db = await GozlemeDatabase.StartAsync(GozlemeDatabase.PlainImage);
         await using var factory = new GozlemeApiFactory(db.AppConnectionString);
-        using var client = factory.CreateClient();
+        var (client, _) = await AuthClient.SignedInAsync(factory);
+        using var _ = client;
 
         var root = JsonDocument.Parse(await client.GetStringAsync(new Uri("/api/v1/status", UriKind.Relative), ct)).RootElement;
 

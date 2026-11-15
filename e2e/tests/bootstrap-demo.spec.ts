@@ -1,7 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { API_URL } from "../playwright.config";
-import { compose, forbiddenStrings, repoRoot, secretStrings } from "./compose";
+import { compose, forbiddenStrings, secretStrings } from "./compose";
+import { shotsDir } from "./evidence";
 import {
   GRAFANA_URL,
   JAEGER_URL,
@@ -15,9 +16,16 @@ import {
 
 /**
  * GOZ-0000 autonomous demo: live dashboard reading real API + PostgreSQL status, real
- * dependency failures (containers stopped), recovery, and the identity/catalog boundary.
+ * dependency failures (containers stopped), recovery, and the catalog boundary.
+ *
+ * Narrowed by GOZ-0001 (IF-01, FR-036/FR-037): runs signed in as the seeded synthetic account (the
+ * project's storageState; the cookie is host-scoped, so direct API calls carry it too). While the
+ * database is down the session cannot be verified, so status data is withheld (fail closed,
+ * FR-021a) and the dashboard shows the honest degraded view.
  */
-const shots = `${repoRoot}docs/specs/000-repository-bootstrap/evidence/screenshots`;
+const UNREACHABLE_503 = /^Database unreachable; request answered 503 \((NpgsqlException|PostgresException)\)$/;
+const shots = shotsDir("goz-0000");
+const LATEST_MIGRATION = /_LocalIdentity$/;
 
 test.describe.configure({ mode: "serial" });
 
@@ -55,7 +63,7 @@ test("healthy: dashboard shows real API and database status matching the API", a
   await expect(page.getByTestId("api-service")).toHaveText(api.service);
   await expect(page.getByTestId("db-status")).toHaveText("Healthy");
   await expect(page.getByTestId("db-schema-version")).toHaveText(db.schemaVersion);
-  expect(db.schemaVersion).toMatch(/_Foundation$/);
+  expect(db.schemaVersion).toMatch(LATEST_MIGRATION);
   await expect(page.getByTestId("db-vector")).toHaveText(
     db.capabilities.vector.available ? "Available, not enabled" : "Not installed",
   );
@@ -81,7 +89,10 @@ test("degraded: stopping PostgreSQL shows Degraded within 15 s, readiness 503, l
   expect(ready.status()).toBe(503);
   expect(live.status()).toBe(200);
   const status = await request.get(`${API_URL}/api/v1/status`);
-  expect((await status.json()).status).toBe("degraded");
+  expect(status.status()).toBe(503); // GOZ-0001: session unverifiable → no status data
+  expect(await status.json()).toEqual({ error: "unavailable" });
+  await expect(page.getByTestId("session-notice")).toContainText("can't be verified");
+  await expect(page.getByTestId("api-version")).toHaveCount(0);
   await expectNoSecrets(page, await status.text(), await ready.text());
   await expectAccessible(page);
   await page.screenshot({ path: `${shots}/02-database-down-degraded.png`, fullPage: true });
@@ -91,7 +102,8 @@ test("recovery: restarting PostgreSQL returns to Healthy within 30 s without res
   await page.goto("/");
   compose("start", "postgres");
   await expect(page.getByTestId("overall-status")).toHaveText("Healthy", { timeout: 30_000 });
-  await expect(page.getByTestId("db-schema-version")).toHaveText(/_Foundation$/);
+  await expect(page.getByTestId("db-schema-version")).toHaveText(LATEST_MIGRATION);
+  await expect(page.getByTestId("session-notice")).toHaveCount(0); // same session honoured again
   await page.screenshot({ path: `${shots}/03-recovered-healthy.png`, fullPage: true });
 });
 
@@ -113,7 +125,7 @@ test("unreachable: stopping the API shows API unreachable and no stale database 
   await expect(page.getByTestId("overall-status")).toHaveText("Healthy", { timeout: 60_000 });
 });
 
-test("boundary: identity, organization and catalog features are not implemented", async ({ page, request }) => {
+test("boundary: organization and catalog features are not implemented", async ({ page, request }) => {
   for (const [method, path] of [
     ["GET", "/api/v1/catalog"],
     ["GET", "/api/v1/organizations"],
@@ -124,13 +136,13 @@ test("boundary: identity, organization and catalog features are not implemented"
     const res = await request.fetch(`${API_URL}${path}`, { method });
     expect(res.status(), `${method} ${path}`).toBe(404);
   }
-  for (const path of ["/login", "/catalog", "/organizations"]) {
+  // `/login` is superseded by GOZ-0001 local sign-in; organizations and catalog still do not exist.
+  for (const path of ["/catalog", "/organizations"]) {
     const res = await page.goto(path);
     expect(res?.status(), path).toBe(404);
   }
   await page.goto("/");
-  await expect(page.getByRole("link")).toHaveCount(0);
-  await expect(page.getByText(/sign in|log in/i)).toHaveCount(0);
+  await expect(page.getByRole("link")).toHaveCount(0); // no catalog or organization navigation yet
 });
 
 test("observability: one trace threads browser → web → API → PostgreSQL, with metrics and no secrets", async ({ page, request }) => {
@@ -178,22 +190,32 @@ test("observability: one trace threads browser → web → API → PostgreSQL, w
   await page.screenshot({ path: `${shots}/05-distributed-trace-jaeger.png`, fullPage: false });
 });
 
-test("stored logs: outage warnings are stored in Loki, correlated to their trace, metrics stored, no secrets", async ({ page }) => {
+test("stored logs: outage warnings are stored in Loki, correlated to their trace, metrics stored, no secrets", async ({ page, request }) => {
+  const started = Date.now(); // ignore lines from earlier runs still inside Loki's query window
   await page.goto("/");
   await expect(page.getByTestId("overall-status")).toHaveText("Healthy");
   compose("stop", "postgres");
   await expect(page.getByTestId("overall-status")).toHaveText("Degraded", { timeout: 15_000 });
+  // GOZ-0001 fails closed on status while the database is down; the anonymous readiness probe still probes.
+  expect((await request.get(`${API_URL}/health/ready`)).status()).toBe(503);
   compose("start", "postgres");
   await expect(page.getByTestId("overall-status")).toHaveText("Healthy", { timeout: 30_000 });
 
+  // The probe's warning is stored (readiness requests are not traced, so it carries no stored trace).
+  await expect
+    .poll(async () => (await storedLogs('{service_name="gozleme-api"} |= "Database probe failed"', 5)).map((l) => l.line), { timeout: 45_000, intervals: [2000] })
+    .toContain("Database probe failed (NpgsqlException)");
+
+  // The dashboard's status requests during the outage were answered 503 with a fixed warning,
+  // correlated to the stored browser → web → API trace of that request.
   let correlated: { traceId: string; line: string } | undefined;
   await expect
     .poll(
       async () => {
-        const logs = await storedLogs('{service_name="gozleme-api"} |= "Database probe failed"', 5);
-        for (const log of logs.filter((l) => l.labels.trace_id)) {
+        const logs = await storedLogs('{service_name="gozleme-api"} |= "Database unreachable; request answered 503"', 5);
+        for (const log of logs.filter((l) => l.labels.trace_id && l.at >= started)) {
           const spans = await traceById(log.labels.trace_id!);
-          if (spans.some((s) => s.name === "status.probe database")) {
+          if (spans.some((s) => s.service === "gozleme-api" && /\/api\/v1\/status/.test(s.name + JSON.stringify(s.attributes)))) {
             correlated = { traceId: log.labels.trace_id!, line: log.line };
             return true;
           }
@@ -203,7 +225,8 @@ test("stored logs: outage warnings are stored in Loki, correlated to their trace
       { timeout: 45_000, intervals: [2000] },
     )
     .toBe(true);
-  expect(correlated!.line).toBe("Database probe failed (NpgsqlException)");
+  // The logged type is the connection-level cause: a refused connection or PostgreSQL's admin shutdown.
+  expect(correlated!.line).toMatch(UNREACHABLE_503);
 
   const allLogs = await storedLogs('{service_name=~"gozleme-.*"}', 15);
   expect(allLogs.length).toBeGreaterThan(0);
@@ -217,12 +240,13 @@ test("stored logs: outage warnings are stored in Loki, correlated to their trace
   const panes = {
     a: {
       datasource: "loki",
-      queries: [{ refId: "A", expr: '{service_name="gozleme-api"} |= "Database probe failed"', datasource: { type: "loki", uid: "loki" } }],
+      queries: [{ refId: "A", expr: '{service_name="gozleme-api"} |~ "Database probe failed|Database unreachable"', datasource: { type: "loki", uid: "loki" } }],
       range: { from: "now-15m", to: "now" },
     },
   };
   await page.goto(`${GRAFANA_URL}/explore?schemaVersion=1&orgId=1&panes=${encodeURIComponent(JSON.stringify(panes))}`);
-  await expect(page.getByText("Database probe failed (NpgsqlException)").first()).toBeVisible({ timeout: 30_000 });
+  // Grafana renders the line inside a larger row, so match it unanchored there.
+  await expect(page.getByText(new RegExp(UNREACHABLE_503.source.slice(1, -1))).first()).toBeVisible({ timeout: 30_000 });
   await expectNotContained(page, [...secretStrings, "Host=", "Username="]);
   await page.screenshot({ path: `${shots}/06-stored-logs-grafana.png`, fullPage: false });
 });
