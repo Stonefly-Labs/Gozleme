@@ -4,7 +4,7 @@
 
 Checks executed by `python3 scripts/validate_docs.py` and `python3 scripts/generate_register.py --check`:
 
-- 40 unique GOZ-0000 through GOZ-0039 IDs and starting prompt paths exist
+- 41 unique GOZ-0000 through GOZ-0040 IDs (40 at package creation; GOZ-0040 added by maintainer approval 2026-11-15) with contiguous numbers and matching starting prompt paths
 - No missing/duplicate dependencies or dependency cycles
 - Machine metadata passes JSON Schema validation
 - Manifest document and agent pointers resolve to existing files

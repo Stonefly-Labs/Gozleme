@@ -2,12 +2,12 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 40 · **Complete on main:** 1 · **Blocked:** 0 · **Ready for human merge:** 0
+**Specs:** 41 · **Complete on main:** 1 · **Blocked:** 0 · **Ready for human merge:** 0
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
-| [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | complete | merged | — | Complete — merged to main in 8b25d12382a0741eff17ae334a8948122eeb1860 (PR |
-| [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | not-started | — | GOZ-0000 | Prerequisite GOZ-0000 merged; start on feature/goz-0001-local-identity |
+| [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | complete | merged | — | Complete — merged to main in 8b25d12382a0741eff17ae334a8948122eeb1860 (PR #4, verified 2026-11-14). Open item: protected-main ruleset (GOZ-0000-B1/IF-12). |
+| [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | in-progress | pr-preparation | GOZ-0000 | Open PR from feature/goz-0001-local-identity; human review and merge (agents never merge) |
 | [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | not-started | — | GOZ-0001 | Await prerequisites and create allowed working branch |
 | [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | not-started | — | GOZ-0002 | Await prerequisites and create allowed working branch |
 | [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | not-started | — | GOZ-0003 | Await prerequisites and create allowed working branch |
@@ -46,6 +46,7 @@
 | [GOZ-0037](../prompts/spec-0037.md) — Sandbox isolation and resource boundaries | playground | not-started | — | GOZ-0019, GOZ-0009 | Await prerequisites and create allowed working branch |
 | [GOZ-0038](../prompts/spec-0038.md) — Capability testing playground | playground | not-started | — | GOZ-0037, GOZ-0021 | Await prerequisites and create allowed working branch |
 | [GOZ-0039](../prompts/spec-0039.md) — Recovery validation and release gates | operations | not-started | — | GOZ-0038, GOZ-0036, GOZ-0017, GOZ-0028 | Await prerequisites and create allowed working branch |
+| [GOZ-0040](../prompts/spec-0040.md) — Email delivery, verification and self-service password reset | foundation | not-started | — | GOZ-0001, GOZ-0002 | Approved by maintainer 2026-11-15 (GOZ-0001-IF-06); await prerequisites and create allowed working branch |
 
 ## Progress and governance
 

@@ -74,7 +74,7 @@ specs:
     reviews:
     - docs/specs/000-repository-bootstrap/reviews/impact-analysis.md
     - docs/specs/000-repository-bootstrap/reviews/impact-findings.json
-  nextAction: Complete — merged to main in 8b25d12382a0741eff17ae334a8948122eeb1860 (PR #4, verified 2026-11-14). Open item: protected-main ruleset (GOZ-0000-B1/IF-12).
+  nextAction: 'Complete — merged to main in 8b25d12382a0741eff17ae334a8948122eeb1860 (PR #4, verified 2026-11-14). Open item: protected-main ruleset (GOZ-0000-B1/IF-12).'
 - id: GOZ-0001
   number: 1
   title: Local identity and session security
@@ -83,31 +83,65 @@ specs:
   prompt: docs/prompts/spec-0001.md
   dependencies:
   - GOZ-0000
-  status: not-started
-  stage: null
-  branch: null
+  status: in-progress
+  stage: pr-preparation
+  branch: feature/goz-0001-local-identity
   pullRequest: null
   promptRevision: 2
   gates:
-    specification: pending
-    plan: pending
-    tasks: pending
-    implementation: pending
-    tests: pending
-    demo: pending
-    convergence: pending
-    impactAnalysis: pending
-    roadmapSync: pending
+    specification: passed
+    plan: passed
+    tasks: passed
+    implementation: passed
+    tests: passed
+    demo: passed
+    convergence: passed
+    impactAnalysis: passed
+    roadmapSync: passed
     humanReview: pending
     merge: pending
   blockers: []
-  impactFindings: []
+  impactFindings:
+  - GOZ-0001-IF-01
+  - GOZ-0001-IF-02
+  - GOZ-0001-IF-03
+  - GOZ-0001-IF-04
+  - GOZ-0001-IF-05
+  - GOZ-0001-IF-06
+  - GOZ-0001-IF-07
+  - GOZ-0001-IF-08
+  - GOZ-0001-IF-09
+  - GOZ-0001-IF-10
+  - GOZ-0001-IF-11
+  - GOZ-0001-IF-12
+  - GOZ-0001-IF-13
+  - GOZ-0001-IF-14
+  - GOZ-0001-IF-15
+  - GOZ-0001-IF-16
+  - GOZ-0001-IF-17
+  - GOZ-0001-IF-18
+  - GOZ-0001-IF-19
+  - GOZ-0001-IF-20
+  - GOZ-0001-IF-21
+  - GOZ-0001-IF-22
   evidence:
-    tests: []
-    demos: []
-    screenshots: []
-    reviews: []
-  nextAction: Prerequisite GOZ-0000 merged; start on feature/goz-0001-local-identity
+    tests:
+    - docs/specs/001-local-identity/progress.yaml
+    demos:
+    - docs/specs/001-local-identity/evidence/demo-run.json
+    screenshots:
+    - docs/specs/001-local-identity/evidence/screenshots/01-anonymous-redirected-to-sign-in.png
+    - docs/specs/001-local-identity/evidence/screenshots/02-register-validation.png
+    - docs/specs/001-local-identity/evidence/screenshots/03-registered-dashboard.png
+    - docs/specs/001-local-identity/evidence/screenshots/04-signed-out.png
+    - docs/specs/001-local-identity/evidence/screenshots/05-signed-out-everywhere-second-browser.png
+    - docs/specs/001-local-identity/evidence/screenshots/06-lockout-generic-error.png
+    - docs/specs/001-local-identity/evidence/screenshots/07-registration-closed.png
+    - docs/specs/001-local-identity/evidence/screenshots/08-sign-in-trace-jaeger.png
+    reviews:
+    - docs/specs/001-local-identity/reviews/impact-analysis.md
+    - docs/specs/001-local-identity/reviews/impact-findings.json
+  nextAction: Open PR from feature/goz-0001-local-identity; human review and merge (agents never merge)
 - id: GOZ-0002
   number: 2
   title: Organizations and membership
@@ -120,7 +154,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -153,7 +187,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -186,7 +220,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -219,7 +253,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -252,7 +286,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -285,7 +319,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -318,7 +352,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -351,7 +385,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -384,7 +418,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -417,7 +451,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -451,7 +485,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -484,7 +518,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -517,7 +551,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -551,7 +585,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -584,7 +618,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -618,7 +652,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -652,7 +686,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -686,7 +720,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -720,7 +754,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -754,7 +788,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -788,7 +822,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -823,7 +857,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -857,7 +891,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -891,7 +925,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -925,7 +959,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -959,7 +993,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -993,7 +1027,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1027,7 +1061,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1061,7 +1095,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1095,7 +1129,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1128,7 +1162,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1162,7 +1196,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1196,7 +1230,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1229,7 +1263,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1263,7 +1297,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1297,7 +1331,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1331,7 +1365,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1367,7 +1401,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1388,3 +1422,37 @@ specs:
     screenshots: []
     reviews: []
   nextAction: Await prerequisites and create allowed working branch
+- id: GOZ-0040
+  number: 40
+  title: Email delivery, verification and self-service password reset
+  phase: foundation
+  release: mvp
+  prompt: docs/prompts/spec-0040.md
+  dependencies:
+  - GOZ-0001
+  - GOZ-0002
+  status: not-started
+  stage: null
+  branch: null
+  pullRequest: null
+  promptRevision: 1
+  gates:
+    specification: pending
+    plan: pending
+    tasks: pending
+    implementation: pending
+    tests: pending
+    demo: pending
+    convergence: pending
+    impactAnalysis: pending
+    roadmapSync: pending
+    humanReview: pending
+    merge: pending
+  blockers: []
+  impactFindings: []
+  evidence:
+    tests: []
+    demos: []
+    screenshots: []
+    reviews: []
+  nextAction: Approved by maintainer 2026-11-15 (GOZ-0001-IF-06); await prerequisites and create allowed working branch

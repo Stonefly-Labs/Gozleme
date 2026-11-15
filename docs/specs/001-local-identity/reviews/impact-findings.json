@@ -193,7 +193,7 @@
         "GOZ-0040"
       ],
       "recommendation": "Human approval is required to add GOZ-0040 (prerequisites GOZ-0001 and GOZ-0002) to the MVP. On approval, the Roadmap Steward registers it, updates the validator count, and settles the ordering. The maintainer should consider whether GOZ-0002 invitations or a future OIDC spec should depend on it.",
-      "disposition": "requires-human-approval"
+      "disposition": "approved by maintainer 2026-11-15: registered as GOZ-0040 (MVP, after GOZ-0002), promptRevision 1"
     },
     {
       "id": "GOZ-0001-IF-07",
@@ -211,7 +211,7 @@
         "GOZ-0039"
       ],
       "recommendation": "The maintainer decides whether to add an OIDC MVP spec (with ordering and a dependency on verified email for account linking) or to move OIDC to post-MVP in the MVP document. Either is a committed-scope change. No prompt was edited for this.",
-      "disposition": "requires-human-approval"
+      "disposition": "maintainer chose an MVP OIDC spec 2026-11-15: drafted as docs/prompts/spec-0041.md, PROPOSED and unregistered pending approval of the draft and its placement"
     },
     {
       "id": "GOZ-0001-IF-08",

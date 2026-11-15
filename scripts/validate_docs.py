@@ -49,8 +49,11 @@ def visit(k):
   if d in byid:visit(d)
  active.remove(k);visited.add(k)
 for sid in byid:visit(sid)
-if len(specs)!=40:fail(f'expected 40 specs, got {len(specs)}')
-if set(s['number'] for s in specs)!=set(range(40)):fail('missing numbered prompt spec')
+# 40 approved at package creation; later specs are added only by maintainer-approved roadmap changes.
+if len(specs)<40:fail(f'expected at least 40 specs, got {len(specs)}')
+if sorted(s['number'] for s in specs)!=list(range(len(specs))):fail('spec numbers must be contiguous from 0 with no duplicates')
+for s in specs:
+ if s['id']!=f"GOZ-{s['number']:04d}" or s['prompt']!=f"docs/prompts/spec-{s['number']:04d}.md":fail(f"{s['id']} id/number/prompt mismatch")
 if registry['project'].get('interviewDecisionCount')!=95 or registry['project'].get('reviewFindingCount')!=14:fail('approved decision count mismatch')
 for n in range(1,15):
  txt=(ROOT/'docs/decisions/consistency-review.md').read_text()
