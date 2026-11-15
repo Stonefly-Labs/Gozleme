@@ -119,7 +119,7 @@ describe("InvitationPanel", () => {
 
   it("shows a new code once in a labelled read-only field and lists open invitations without codes", async () => {
     respond(201, { id: "i2", createdAt: "2026-11-15T11:00:00Z", expiresAt: "2026-11-22T11:00:00Z", createdBy: "u-alice", code: "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01-2345-6789" });
-    render(<InvitationPanel organizationId={ORG} invitations={open} />);
+    render(<InvitationPanel organizationId={ORG} invitations={open} members={[alice, bob]} />);
     expect(screen.queryByTestId("invitation-code")).not.toBeInTheDocument();
     expect(screen.getByTestId("invitation-row")).toHaveTextContent("2026-11-22 10:00 UTC");
     fireEvent.click(screen.getByRole("button", { name: "Create invitation" }));
@@ -130,14 +130,22 @@ describe("InvitationPanel", () => {
 
   it("revokes by id", async () => {
     const spy = respond(204);
-    render(<InvitationPanel organizationId={ORG} invitations={open} />);
+    render(<InvitationPanel organizationId={ORG} invitations={open} members={[alice, bob]} />);
     fireEvent.click(screen.getByRole("button", { name: /^Revoke invitation/ }));
     await waitFor(() => expect(router.refresh).toHaveBeenCalled());
     expect(sent(spy)).toMatchObject({ url: `/api/organizations/${ORG}/invitations/i1`, method: "DELETE" });
   });
 
+  it("names the creator by member email, or as a former member once they have left", () => {
+    const { unmount } = render(<InvitationPanel organizationId={ORG} invitations={open} members={[alice, bob]} />);
+    expect(screen.getByTestId("invitation-creator")).toHaveTextContent("alice@demo.gozleme.test");
+    unmount();
+    render(<InvitationPanel organizationId={ORG} invitations={[{ ...open[0]!, createdBy: null }]} members={[bob]} />);
+    expect(screen.getByTestId("invitation-creator")).toHaveTextContent("Former member");
+  });
+
   it("says when there are no open invitations", () => {
-    render(<InvitationPanel organizationId={ORG} invitations={[]} />);
+    render(<InvitationPanel organizationId={ORG} invitations={[]} members={[alice]} />);
     expect(screen.getByTestId("no-invitations")).toBeInTheDocument();
   });
 });

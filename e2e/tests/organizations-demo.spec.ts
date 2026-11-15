@@ -294,6 +294,7 @@ test("boundary: no administrative delegation exists in the UI or the API", async
 });
 
 test("observability: organization flows are traced browser → web → API → PostgreSQL with no personal data", async ({ request }) => {
+  test.setTimeout(180_000);
   let traceId: string | undefined;
   let spans: Awaited<ReturnType<typeof recentSpans>> = [];
   await expect
@@ -328,10 +329,19 @@ test("observability: organization flows are traced browser → web → API → P
   const telemetry = JSON.stringify([...spans, ...apiSpans]);
   for (const v of privateValues) expect(telemetry, `traces must not contain ${v}`).not.toContain(v);
 
-  const metrics = await (await request.get(METRICS_URL)).text();
-  expect(metrics).toMatch(/gozleme_org_operations_total\{[^}]*gozleme_org_operation="invite_redeem"[^}]*\}/);
-  expect(metrics).toMatch(/gozleme_org_operations_total\{[^}]*gozleme_org_failure_category="invalid_invitation"[^}]*\}/);
-  expect(metrics).toMatch(/gozleme_org_operations_total\{[^}]*gozleme_org_failure_category="last_member"[^}]*\}/);
+  // The organization counter is first recorded during this suite; the SDK exports metrics every 60 s.
+  const expected = [/gozleme_org_operation="invite_redeem"/, /gozleme_org_failure_category="invalid_invitation"/, /gozleme_org_failure_category="last_member"/];
+  let metrics = "";
+  await expect
+    .poll(
+      async () => {
+        metrics = await (await request.get(METRICS_URL)).text();
+        const org = metrics.split("\n").filter((l) => l.startsWith("gozleme_org_operations_total{"));
+        return expected.every((re) => org.some((l) => re.test(l)));
+      },
+      { timeout: 90_000, intervals: [5000] },
+    )
+    .toBe(true);
   for (const v of privateValues) expect(metrics, `metrics must not contain ${v}`).not.toContain(v);
 
   const page = await alice.context().newPage();

@@ -48,7 +48,7 @@ export default async function OrganizationPage({ params }: { params: Promise<{ o
           <div className="stack">
             <RenameOrganizationForm key={organization.data.displayName} organizationId={organization.data.id} displayName={organization.data.displayName} />
             <MemberList organizationId={organization.data.id} members={members.data.members} />
-            <InvitationPanel organizationId={organization.data.id} invitations={invitations.data.invitations} />
+            <InvitationPanel organizationId={organization.data.id} invitations={invitations.data.invitations} members={members.data.members} />
           </div>
         )}
       </main>

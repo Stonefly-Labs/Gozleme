@@ -4,19 +4,21 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatUtc } from "@/lib/format";
 import { send, unavailableText } from "@/lib/client";
-import type { Invitation } from "@/lib/organizations";
+import type { Invitation, Member } from "@/lib/organizations";
 import { traced } from "@/telemetry/ui";
 
 /**
  * Single-use invitations (FR-007, FR-008, FR-012). A new code is shown exactly once, in this
- * component's memory only; the open list never shows codes. Any member may create or revoke.
+ * component's memory only; the open list never shows codes. Any member may create or revoke. The
+ * creator is shown by email from the current member list, or as a former member once they have left.
  */
-export function InvitationPanel({ organizationId, invitations }: { organizationId: string; invitations: Invitation[] }) {
+export function InvitationPanel({ organizationId, invitations, members }: { organizationId: string; invitations: Invitation[]; members: Member[] }) {
   const router = useRouter();
   const [code, setCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const base = `/api/organizations/${encodeURIComponent(organizationId)}/invitations`;
+  const creator = (userId: string | null) => members.find((m) => m.userId === userId)?.email ?? "Former member";
 
   async function create() {
     setBusy(true);
@@ -64,6 +66,7 @@ export function InvitationPanel({ organizationId, invitations }: { organizationI
             <tr>
               <th scope="col">Created</th>
               <th scope="col">Expires</th>
+              <th scope="col">Created by</th>
               <th scope="col">
                 <span className="visually-hidden">Actions</span>
               </th>
@@ -74,6 +77,7 @@ export function InvitationPanel({ organizationId, invitations }: { organizationI
               <tr key={i.id} data-testid="invitation-row">
                 <td>{formatUtc(i.createdAt)}</td>
                 <td>{formatUtc(i.expiresAt)}</td>
+                <td data-testid="invitation-creator">{creator(i.createdBy)}</td>
                 <td className="cell-actions">
                   <button type="button" className="button" disabled={busy} onClick={() => revoke(i.id)} aria-label={`Revoke invitation created ${formatUtc(i.createdAt)}`}>
                     Revoke

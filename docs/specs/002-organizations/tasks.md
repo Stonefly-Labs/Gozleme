@@ -277,3 +277,7 @@ T018 web/src/lib/organizations.ts   T019 web/src/app/api/organizations/**   T020
 2. US1, then a checkpoint: create, list, switch and rename work end to end in the UI (MVP).
 3. US2: invitations. US3: members. US4: isolation hardening. Each one's tests must be green before moving on.
 4. US5: boundary, seed and cumulative demo. Then polish, gates and the demo evidence.
+
+## Phase 9: Convergence
+
+- [X] T047 Show each open invitation's creator (member email resolved from the organization's member list, "Former member" when the creator has left) in `web/src/components/InvitationPanel.tsx`, passing members from `web/src/app/organizations/[organizationId]/page.tsx`, with a component test in `web/src/components/Organizations.test.tsx` per FR-012 (partial)
