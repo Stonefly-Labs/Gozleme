@@ -126,9 +126,10 @@ forces sequential scans for both roles.
 
 ## R5 — Helper functions
 
-**Decision**: These functions are all in schema `gozleme` and owned by `gozleme_migrator`. All are
-`SECURITY DEFINER` with `SET search_path = pg_catalog, pg_temp`, `EXECUTE` is revoked from `PUBLIC`,
-and each is granted explicitly to `gozleme_app`:
+**Decision**: These functions are all in schema `gozleme` and owned by `gozleme_migrator`, with
+`SET search_path = pg_catalog, pg_temp`. `EXECUTE` is revoked from `PUBLIC` on every one of them, and
+each is granted explicitly to `gozleme_app`. All are `SECURITY DEFINER` except `invitation_capability`
+and `rls_internal` (as implemented; amended per GOZ-0003-IF-17):
 
 | Function | Returns | Purpose |
 |---|---|---|
@@ -136,13 +137,15 @@ and each is granted explicitly to `gozleme_app`:
 | `current_account_id()` | `uuid` or NULL | Re-verifies the stored token on every call (STABLE) |
 | `account_organizations()` | `SETOF uuid` | Organizations of the verified account (internal, R4) |
 | `is_new_organization_of_current_account(org uuid)` | `boolean` | `created_by` = account and no memberships yet (internal) |
-| `invitation_capability()` | `bytea` or NULL | Decoded `gozleme.invitation_capability` setting (32 bytes, else NULL) |
+| `invitation_capability()` | `bytea` or NULL | Decoded `gozleme.invitation_capability` setting (32 bytes, else NULL); not `SECURITY DEFINER` |
 | `lock_invited_organization(code_hash bytea)` | `uuid` or NULL | Takes `FOR KEY SHARE` on the organization of the invitation with that hash (internal) |
-| `rls_internal()` | `boolean` | Owner-in-definer guard (R4); not `SECURITY DEFINER`; executable by `PUBLIC`, since it is harmless |
+| `rls_internal()` | `boolean` | Owner-in-definer guard (R4, amended); not `SECURITY DEFINER`; `PUBLIC` revoked like the others |
 
 HMAC input is `convert_to(payload, 'UTF8')` because `pgcrypto` has no `hmac(text, bytea, text)`
-overload. The verifier traps only cast errors (`invalid_text_representation`,
-`numeric_value_out_of_range`), never all errors, so a missing extension or key surfaces as an error.
+overload. As implemented, the verifier traps no errors at all: it validates the token's shape with
+regular expressions (UUID, an expiry of at most 12 digits, 64 hex characters) before any cast, so
+malformed input returns `invalid` without an exception. A missing extension still raises an error.
+A missing key row returns `invalid`, which the startup self-check reports as audit event 1203.
 
 Policies use `(SELECT gozleme.current_account_id())` and `IN (SELECT gozleme.account_organizations())`.
 The planner evaluates both once per statement (initplan or hashed subplan), not once per row.
@@ -231,7 +234,9 @@ queries `pg_class`/`pg_policy` for schema `gozleme` and reports:
 - a tenant-owned table without `relrowsecurity`, without `relforcerowsecurity` or with no policy;
 - any table in `SharedPublic`;
 - a `SECURITY DEFINER` function in `gozleme` that is not in the pinned helper list (R5), or lacks a fixed `search_path`. Any such function would get the R4 owner bypass;
-- `EXECUTE` on a `gozleme` function granted to `PUBLIC`, other than `rls_internal`;
+- a migrator-owned `SECURITY DEFINER` function in any other non-system schema (GOZ-0003-IF-12);
+- a view, materialized view or foreign table in `gozleme`, since none can be classified and a non-`security_invoker` view reads as the owner (GOZ-0003-IF-12);
+- `EXECUTE` granted to `PUBLIC` on any non-extension function in `gozleme` or `gozleme_private`;
 - any privilege for `gozleme_app` in `gozleme_private`.
 
 An integration test runs it on the migrated database and expects no violations. Negative tests create

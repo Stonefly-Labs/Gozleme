@@ -56,6 +56,39 @@ internal static class RlsCatalog
             }
         }
 
+        // Views, materialized views and foreign tables have no classification. A view that is not
+        // security_invoker reads its tables as the owner, which rls_internal() treats as a helper (GOZ-0003-IF-12).
+        await using (var relations = new NpgsqlCommand("""
+            SELECT c.relname, CASE c.relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' ELSE 'foreign table' END
+            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'gozleme' AND c.relkind IN ('v', 'm', 'f')
+            ORDER BY c.relname
+            """, connection))
+        await using (var reader = await relations.ExecuteReaderAsync(ct))
+        {
+            while (await reader.ReadAsync(ct))
+            {
+                violations.Add($"gozleme.{reader.GetString(0)} is a {reader.GetString(1)}, which cannot be classified and could expose tenant rows");
+            }
+        }
+
+        // An owner-defined definer function anywhere bypasses every tenant policy through rls_internal().
+        await using (var elsewhere = new NpgsqlCommand("""
+            SELECT n.nspname, p.proname
+            FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+            WHERE p.prosecdef AND p.proowner = 'gozleme_migrator'::regrole
+              AND n.nspname NOT IN ('gozleme', 'gozleme_private', 'pg_catalog', 'information_schema')
+              AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = p.oid AND d.deptype = 'e')
+            ORDER BY n.nspname, p.proname
+            """, connection))
+        await using (var reader = await elsewhere.ExecuteReaderAsync(ct))
+        {
+            while (await reader.ReadAsync(ct))
+            {
+                violations.Add($"{reader.GetString(0)}.{reader.GetString(1)} is SECURITY DEFINER but not a pinned helper; it would bypass row-level security");
+            }
+        }
+
         await using (var functions = new NpgsqlCommand("""
             SELECT n.nspname, p.proname, p.prosecdef, coalesce(array_to_string(p.proconfig, ';'), ''),
                    EXISTS (SELECT 1 FROM aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a WHERE a.grantee = 0 AND a.privilege_type = 'EXECUTE')

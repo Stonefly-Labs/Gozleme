@@ -41,6 +41,10 @@ public sealed class RlsCatalogTests(PgvectorDatabaseFixture fixture)
         { "CREATE OR REPLACE FUNCTION gozleme.lock_invited_organization(code_hash bytea) RETURNS uuid LANGUAGE sql SECURITY DEFINER AS 'SELECT NULL::uuid'", "gozleme.lock_invited_organization is SECURITY DEFINER without a fixed search_path" },
         { "GRANT EXECUTE ON FUNCTION gozleme.current_account_id() TO PUBLIC", "gozleme.current_account_id is executable by PUBLIC" },
         { "GRANT USAGE ON SCHEMA gozleme_private TO gozleme_app", "gozleme_app has a privilege on schema gozleme_private" },
+        { "CREATE VIEW gozleme.rogue_view AS SELECT id FROM gozleme.organizations", "gozleme.rogue_view is a view" },
+        { "CREATE MATERIALIZED VIEW gozleme.rogue_matview AS SELECT id FROM gozleme.organizations WITH NO DATA", "gozleme.rogue_matview is a materialized view" },
+        { "CREATE SCHEMA rogue; CREATE FUNCTION rogue.peek() RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS 'SELECT count(*) FROM gozleme.organizations'", "rogue.peek is SECURITY DEFINER but not a pinned helper" },
+        { "CREATE FUNCTION public.peek() RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS 'SELECT count(*) FROM gozleme.organizations'", "public.peek is SECURITY DEFINER but not a pinned helper" },
     };
 
     [Theory]
