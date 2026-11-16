@@ -208,10 +208,10 @@ specs:
   prompt: docs/prompts/spec-0003.md
   dependencies:
   - GOZ-0002
-  status: in-progress
-  stage: pr
+  status: complete
+  stage: merged
   branch: feature/goz-0003-tenant-rls
-  pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/10'
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/10
   promptRevision: 4
   gates:
     specification: passed
@@ -223,8 +223,8 @@ specs:
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
-    humanReview: pending
-    merge: pending
+    humanReview: passed
+    merge: passed
   blockers: []
   impactFindings:
   - GOZ-0003-IF-01
@@ -263,7 +263,7 @@ specs:
     reviews:
     - docs/specs/003-tenant-rls/reviews/impact-analysis.md
     - docs/specs/003-tenant-rls/reviews/impact-findings.json
-  nextAction: 'PR #10 ready for human merge (all gates green at head; maintainer decided IF-03/04/08/11/15 on 2026-11-16). Human maintainer merges (agents never merge); mark complete only after verified merge.'
+  nextAction: 'Complete — merged to main in 0fc67d21f0771a3793248c48a9aff0043038af25 (PR #10, verified 2026-11-16).'
 - id: GOZ-0004
   number: 4
   title: Scoped RBAC permission foundation
@@ -296,7 +296,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Await prerequisites and create allowed working branch
+  nextAction: 'Prerequisite GOZ-0003 merged; decide the GOZ-0004 clarification point from GOZ-0003-IF-03/IF-19 (role column before its guard) and start on feature/goz-0004-*'
 - id: GOZ-0005
   number: 5
   title: Publisher identities and canonical capability IDs

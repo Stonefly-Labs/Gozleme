@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,12 @@ public sealed class GozlemeApiFactory(
     IReadOnlyDictionary<string, string?>? settings = null,
     Action<IServiceCollection>? configureServices = null) : WebApplicationFactory<Program>
 {
+    /// <summary>
+    /// Which factory served each request trace. Activity listeners are process-wide, so every factory's
+    /// exporter also receives spans from requests that other test classes send to their own hosts.
+    /// </summary>
+    private static readonly ConcurrentDictionary<ActivityTraceId, GozlemeApiFactory> RequestOwners = new();
+
     private static readonly Dictionary<string, string?> Defaults = new(StringComparer.Ordinal)
     {
         ["Gozleme:Auth:RateLimit:SignInPerMinute"] = "1000",
@@ -35,12 +42,15 @@ public sealed class GozlemeApiFactory(
 
     public List<Metric> Metrics { get; } = [];
 
-    /// <summary>Snapshot of exported spans (the in-memory exporter appends from request threads).</summary>
+    /// <summary>
+    /// Snapshot of exported spans (the in-memory exporter appends from request threads), without spans
+    /// of requests served by another factory. Spans outside any request (startup, background) are kept.
+    /// </summary>
     public Activity[] SpansSnapshot()
     {
         lock (Activities)
         {
-            return [.. Activities];
+            return [.. Activities.Where(a => !RequestOwners.TryGetValue(a.TraceId, out var owner) || owner == this)];
         }
     }
 
@@ -61,8 +71,27 @@ public sealed class GozlemeApiFactory(
         {
             services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(new SimpleActivityExportProcessor(new LockedActivityExporter(Activities))));
             services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddInMemoryExporter(Metrics));
+            services.AddSingleton<IStartupFilter>(new RecordRequestOwner(this));
             configureServices?.Invoke(services);
         });
+    }
+
+    /// <summary>Records the request's trace before any of its spans can end, so ownership is never late.</summary>
+    private sealed class RecordRequestOwner(GozlemeApiFactory owner) : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use((context, nextMiddleware) =>
+            {
+                if (Activity.Current is { } activity)
+                {
+                    RequestOwners[activity.TraceId] = owner;
+                }
+
+                return nextMiddleware(context);
+            });
+            next(app);
+        };
     }
 
     private sealed class LockedActivityExporter(List<Activity> sink) : BaseExporter<Activity>
