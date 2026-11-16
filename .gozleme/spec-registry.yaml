@@ -211,7 +211,7 @@ specs:
   status: in-progress
   stage: pr
   branch: feature/goz-0003-tenant-rls
-  pullRequest: null
+  pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/10'
   promptRevision: 4
   gates:
     specification: passed

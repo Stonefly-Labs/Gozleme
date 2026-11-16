@@ -22,8 +22,8 @@ stages:
   merge: {status: pending}
 attempts: []
 blockers: []
-pullRequest: null
-nextAction: 'Open the PR for human review; human maintainer merges (agents never merge). Mark complete only after verified merge. Human decisions IF-03, IF-04, IF-08, IF-11, IF-15 pending with the maintainer (none blocks this PR; IF-03 is due before the GOZ-0004 plan).'
+pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/10
+nextAction: 'PR #10 ready for human review; human maintainer merges (agents never merge). Five human decisions pending (IF-03, IF-04, IF-08, IF-11, IF-15). Mark complete only after verified merge.'
 evidence:
   tests:
     - {suite: dotnet, result: passed, count: 256, commit: 424a15e}
