@@ -1,6 +1,6 @@
 {
   "sourceSpec": "GOZ-0002",
-  "implementationRevision": "cc1e518 (feature/goz-0002-organizations; first analysed at f95be4c, whose code was demonstrated 29/29 at 8a9941e; cc1e518 adds the IF-04, IF-17 and IF-18 corrections; make lint and make test pass at cc1e518 (203 .NET, 131 web) as reported by drive-speckit; the fresh cumulative demo at cc1e518 is being recorded by drive-speckit)",
+  "implementationRevision": "4c73a92 (feature/goz-0002-organizations; analysed at f95be4c, whose code was demonstrated 29/29 at 8a9941e; re-analysed at cc1e518 (IF-04, IF-17, IF-18 corrections) and at 4c73a92 (IF-20 correction); drive-speckit reports make lint clean and make test 204 .NET and 131 web passing at 4c73a92; the fresh cumulative demo at 4c73a92 is pending and drive-speckit will record it)",
   "analyzedAt": "2026-11-15",
   "findings": [
     {
@@ -441,14 +441,15 @@
         "Interleaving: redemption locks invitation X (created by the departing member), removal locks the organization, redemption's insert waits on the organization lock, removal waits on X. PostgreSQL aborts one transaction with 40P01. Before cc1e518 removal never locked invitations, so this cycle could not occur.",
         "If removal is the victim: DatabaseUnavailable.cs:44-49 maps only connection failures and 57P* to 503, so the 40P01 PostgresException is unhandled. The API returns 500, the web helper shows 503 and the member stays.",
         "If redemption is the victim: OrganizationEndpoints.cs:342-347 catches every DbUpdateException as 'a concurrent redemption made this account a member' and returns 200 {alreadyMember: true, organizationId} although nothing was committed. The same misreport applies to any other DbUpdateException, not only the unique-key race it was written for.",
-        "Both outcomes fail closed: no membership is created, and the invitation is revoked or stays open. The cost is a misleading response or a 500, not a breach. No test covers concurrent removal and redemption of the departing member's code (MembershipTests.cs, InvitationTests.cs)."
+        "Both outcomes fail closed: no membership is created, and the invitation is revoked or stays open. The cost is a misleading response or a 500, not a breach. No test covers concurrent removal and redemption of the departing member's code (MembershipTests.cs, InvitationTests.cs).",
+        "Corrected at 4c73a92: RedeemAsync reads the invitation's organization_id by code_hash without a lock (OrganizationEndpoints.cs:316). It then locks the organizations row FOR KEY SHARE (:322) and then the invitation FOR UPDATE (:323), re-checking that it is open. Removal (:174, :201) and redemption therefore both lock the organization before the invitation. The catch is narrowed to PostgresException 23505 on pk_memberships (:352; the constraint is named in migration 20261116000000_Organizations.cs:110). The test MembershipTests.Removing_a_member_while_their_code_is_redeemed_never_errors (8 rounds) failed 3/3 against the cc1e518 endpoint and passed 3/3 after the fix, as reported by drive-speckit."
       ],
       "affectedSpecs": [
         "GOZ-0002",
         "GOZ-0003"
       ],
       "recommendation": "Bounded GOZ-0002 correction:\n(1) Narrow the redemption catch to a unique violation on the memberships primary key (PostgresException SqlState 23505). Let anything else propagate.\n(2) Give redemption the same lock order as removal. Read the invitation's organization_id by code_hash without a lock. Lock that organization row (for example FOR KEY SHARE or FOR SHARE, which waits for an in-flight removal), then SELECT … FOR UPDATE the invitation and re-check that it is open. Alternatively, removal could take the invitations with SKIP LOCKED, but that leaves the residual of an aborted redemption keeping the code open, so it is not preferred.\n(3) Add a concurrency integration test: remove a member while its code is being redeemed. Assert that no 500 is returned, no false alreadyMember is reported, and the end state is either joined-then-removed-with-code-revoked or revoked-and-refused.\nThen re-run the demo and re-analyse. GOZ-0003's prompt now records the single lock order for its RLS design.",
-      "disposition": "code-fix-needed: GOZ-0002 bounded correction (redemption lock order, narrowed catch, concurrency test); GOZ-0003 prompt note applied"
+      "disposition": "corrected in GOZ-0002 at 4c73a92; GOZ-0003 prompt lock-order note applied"
     }
   ],
   "reanalyzedAt": "2026-11-15"

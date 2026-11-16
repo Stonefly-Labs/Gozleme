@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0002
-stage: converge
+stage: pr
 status: in-progress
 promptRevision: 3
 branch: feature/goz-0002-organizations
@@ -12,33 +12,34 @@ decisions:
 - {at: '2026-11-15', by: maintainer, topic: org-identity, decision: 'Permanent opaque ID plus editable non-unique display name; unique handles/namespaces left to GOZ-0005'}
 - {at: '2026-11-15', by: maintainer, topic: 'GOZ-0002-IF-01 row-level security exception', decision: 'Accepted with conditions: application-layer isolation only until GOZ-0003; GOZ-0003 is the next spec that adds or touches organization-scoped data (GOZ-0040, global tables only, may precede it); no release or tag until GOZ-0003 lands; GOZ-0039 release gate verifies RLS on every organization table'}
 - {at: '2026-11-15', by: maintainer, topic: 'GOZ-0002-IF-04 departing member invitations', decision: 'Fix in GOZ-0002: removal or leaving revokes the departing account open invitations in the same transaction (audit 1104), then re-run demo and impact analysis'}
+- {at: '2026-11-15', by: maintainer, topic: 'GOZ-0041 ordering vs GOZ-0003', decision: 'GOZ-0041 may be built before GOZ-0003 because it adds only account-level tables; prerequisites unchanged'}
 stages:
   specify: {status: done, artifact: docs/specs/002-organizations/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/002-organizations/plan.md, at: '2026-11-15'}
   tasks: {status: done, artifact: docs/specs/002-organizations/tasks.md, count: 46, at: '2026-11-15'}
   implement: {status: done, at: '2026-11-15'}
-  demo: {status: done, at: '2026-11-15', commit: 8a9941e3, result: passed, record: docs/specs/002-organizations/evidence/demo-run.json, note: 'fresh Compose project; GOZ-0000 and GOZ-0001 suites replayed green'}
-  converge: {status: done, at: '2026-11-15', passes: 1, appended: [T047], outcome: 'T047 implemented (FR-012 invitation creator); no remaining gaps'}
-  impactAnalysis: {status: pending}
-  roadmapSync: {status: pending}
+  demo: {status: done, at: '2026-11-16', commit: 4c73a921, result: passed, record: docs/specs/002-organizations/evidence/demo-run.json, note: 'fresh Compose project; GOZ-0000 and GOZ-0001 suites replayed green; supersedes 8a9941e3 after IF-04/IF-20 corrections'}
+  converge: {status: done, at: '2026-11-15', passes: 1, appended: [T047], outcome: 'T047 implemented (FR-012 invitation creator); impact corrections T048-T051 implemented with tests; no remaining gaps'}
+  impactAnalysis: {status: done, at: '2026-11-15', analysedAt: f95be4c, reanalysedAt: [cc1e518, 4c73a92], findings: 20, report: docs/specs/002-organizations/reviews/impact-analysis.md, corrected: [GOZ-0002-IF-04, GOZ-0002-IF-17, GOZ-0002-IF-18, GOZ-0002-IF-20], humanDecisions: [GOZ-0002-IF-01, GOZ-0002-IF-04]}
+  roadmapSync: {status: done, at: '2026-11-15', note: 'GOZ-0003..0039 promptRevision 3->4; GOZ-0040 and GOZ-0041 1->2; GOZ-0002 entry: stage converge, implementation+tests gates passed, IF-01..IF-20 recorded; demo gate pending fresh demo at 4c73a92'}
 attempts:
   - {failure: 'demo: org API spans past Jaeger 50-trace page (status polling traffic)', fix: 'recentSpans filters by operation name', attempts: 1, resolved: true}
   - {failure: 'demo (fresh stack): org counter not yet exported when scraped (60 s SDK interval)', fix: 'poll the metrics scrape up to 90 s', attempts: 1, resolved: true}
   - {failure: 'gitleaks generic-api-key false positive on an API URL literal in web test', fix: 'assert URL host and path separately (unpushed commit rewritten)', attempts: 1, resolved: true}
 blockers: []
-nextAction: Post-convergence spec impact analysis (spec-impact-analyst), then Roadmap Steward sync and PR
+nextAction: 'PR ready for human review; human maintainer merges (agents never merge). Mark complete only after verified merge.'
 gates:
   at: '2026-11-15'
   makeLint: passed
-  makeTest: 'passed (202 .NET unit+integration, 131 web Vitest)'
+  makeTest: 'passed at 4c73a92 (204 .NET unit+integration, 131 web Vitest)'
   helmLint: passed
   gitleaksGit: 'passed (no leaks)'
 evidence:
   tests:
-    - {suite: dotnet, result: passed, count: 202}
+    - {suite: dotnet, result: passed, count: 204}
     - {suite: web-vitest, result: passed, count: 131}
   demos:
-    - {record: docs/specs/002-organizations/evidence/demo-run.json, commit: 8a9941e3, result: passed, tests: '29/29', workingTreeClean: true, sc001: 'each org create under 1 s (automated)'}
+    - {record: docs/specs/002-organizations/evidence/demo-run.json, commit: 4c73a921, result: passed, tests: '29/29', workingTreeClean: true, sc001: 'each org create under 1 s (automated)', supersedes: 8a9941e3}
   screenshots:
     - docs/specs/002-organizations/evidence/screenshots/
     - docs/specs/002-organizations/evidence/screenshots/regression-goz-0000/

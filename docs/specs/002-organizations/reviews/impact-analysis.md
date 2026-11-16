@@ -1,10 +1,10 @@
 # GOZ-0002 post-convergence spec impact analysis
 
 **Source spec:** GOZ-0002, Organizations and membership
-**Implementation revision:** analysed at `f95be4c` and re-analysed at `cc1e518` on `feature/goz-0002-organizations`, after the corrections described in "Re-analysis at `cc1e518`" below.
+**Implementation revision:** analysed at `f95be4c`, then re-analysed at `cc1e518` and `4c73a92` on `feature/goz-0002-organizations`, after the corrections described under "Re-analysis" below.
 - The demo for `f95be4c` ran on a clean tree at `8a9941e`: 29 of 29 recorded assertions passed, with the GOZ-0000 and GOZ-0001 suites replayed.
-- `cc1e518` changes `src/` and `deploy/`, so that result no longer covers the code. drive-speckit is re-running the fresh cumulative demo and will record the result itself.
-- drive-speckit reports `make lint` and `make test` passing at `cc1e518` (203 .NET tests, 131 web tests).
+- `cc1e518` and `4c73a92` change `src/` and `deploy/`, so that result no longer covers the code. A fresh cumulative demo at `4c73a92` is pending, and drive-speckit will record it.
+- drive-speckit reports `make lint` clean and `make test` passing at `4c73a92` (204 .NET tests, 131 web tests).
 **Analyst:** Spec Impact Analyst (`analyze-spec-impact`), 2026-11-15
 **Structured findings:** `docs/specs/002-organizations/reviews/impact-findings.json` (20 findings; validates against `.gozleme/schemas/impact-findings.schema.json`)
 
@@ -66,7 +66,7 @@
 | GOZ-0002-IF-17 | low | Planning documents differ from the code (endpoint count, test file names, R11 wording, spec status) | 0002 | **corrected at `cc1e518`** (the spec status header is kept by project convention) |
 | GOZ-0002-IF-18 | low | Helm does not expose `Gozleme:Organizations:*`, although the spec says an operator can configure them | 0002, 0039 | **corrected at `cc1e518`** |
 | GOZ-0002-IF-19 | medium | Later caches must invalidate on membership change, because removal relies on no caching | 0023 | applied to prompts |
-| GOZ-0002-IF-20 | medium | **New at `cc1e518`:** removal now locks the organization and then invitations, while redemption locks the invitation and then needs the organization (foreign-key `KEY SHARE`), so the two can deadlock. Redemption's broad `DbUpdateException` catch then answers a false `alreadyMember: true`, and removal answers 500 | 0002, 0003 | **code-fix-needed** (lock order, narrow catch, concurrency test); GOZ-0003 note applied |
+| GOZ-0002-IF-20 | medium | **New at `cc1e518`:** removal now locks the organization and then invitations, while redemption locks the invitation and then needs the organization (foreign-key `KEY SHARE`), so the two can deadlock. Redemption's broad `DbUpdateException` catch then answers a false `alreadyMember: true`, and removal answers 500 | 0002, 0003 | **corrected at `4c73a92`**; GOZ-0003 note applied |
 
 The evidence (file:line), recommendation and affected specs for each finding are in `impact-findings.json`.
 
@@ -163,10 +163,26 @@ Recommended bounded correction:
 
 Then re-run the demo and re-analyse. `spec-0003.md` now records the single organization-then-invitation lock order for its RLS design.
 
+### Re-analysis at `4c73a92`
+
+**IF-20 is verified corrected.** In `RedeemAsync`:
+- It looks up `organization_id` by `code_hash` without a lock (`:316`). That value never changes, so reading it unlocked is safe.
+- It then takes `FOR KEY SHARE` on the organization row (`:322`), then `FOR UPDATE` on the invitation (`:323`), and re-checks that the invitation is open.
+- Its catch now handles only `23505` on `pk_memberships` (`:352`, a constraint name confirmed in the migration). Any other database error propagates instead of being reported as `alreadyMember`.
+
+Lock ordering against each other operation:
+- **Removal:** it holds `FOR UPDATE` on the organization (`:174`), so redemption waits and then sees the invitation revoked. If redemption holds `KEY SHARE` first, removal waits, and its invitation query then finds the invitation used.
+- **Concurrent redemptions:** their `KEY SHARE` locks are compatible, and the invitation lock serializes them.
+- **Rename:** an `UPDATE` that leaves the key unchanged takes `FOR NO KEY UPDATE`, which does not conflict with `KEY SHARE`.
+
+`MembershipTests.Removing_a_member_while_their_code_is_redeemed_never_errors` covers the race. drive-speckit reports it failed 3/3 before the fix and passed 3/3 after.
+
+No new findings.
+
 ## Not asserted
 
-- I did not run the test suites or the demo. Demo results come from `evidence/demo-run.json` (`8a9941e`); the `cc1e518` demo is pending and drive-speckit will record it. Gate results at `cc1e518` are as drive-speckit reported them.
-- I did not reproduce the IF-20 deadlock. The finding rests on PostgreSQL's documented row-lock conflict table and on reading the code.
+- I did not run the test suites or the demo. Demo results come from `evidence/demo-run.json` (`8a9941e`); the `4c73a92` demo is pending and drive-speckit will record it. Gate results at `4c73a92` are as drive-speckit reported them.
+- I did not reproduce the IF-20 deadlock myself. The finding rests on PostgreSQL's documented row-lock conflicts and on reading the code. The before-and-after test results come from drive-speckit.
 - I did not review the concurrency tests' timing robustness beyond reading their structure.
 - Helm has never been installed on a live cluster.
 - This analysis did not commit, push, merge, switch branches or edit the registry.
