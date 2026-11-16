@@ -1,11 +1,11 @@
 # GOZ-0003 post-convergence spec impact analysis
 
 **Source spec:** GOZ-0003, Tenant RLS and visibility scaffolding
-**Implementation revision:** analysed at `9131bda` on `feature/goz-0003-tenant-rls`, then re-analysed at `a81e54e` after the IF-12 and IF-17 corrections (see "Re-analysis at `a81e54e`" below). The served code last changed at `424a15e`; `9131bda` adds only evidence and progress files, and `a81e54e` changes only the catalog check, its tests and research.md.
+**Implementation revision:** analysed at `9131bda` on `feature/goz-0003-tenant-rls`, then re-analysed at `a81e54e` after the IF-12 and IF-17 corrections, and at `a0421c0` after the second convergence pass (fix `9373c0f`). See the "Re-analysis" sections below. The served code last changed at `424a15e`; `9131bda` adds only evidence and progress files, and `a81e54e` changes only the catalog check, its tests and research.md.
 - The cumulative demo ran at `424a15e` on a fresh stack with a clean tree. 33 of 33 assertions passed, with the GOZ-0000, GOZ-0001 and GOZ-0002 suites replayed (`evidence/demo-run.json`, `evidence/rls-evidence.json`).
 - drive-speckit reports 256 .NET tests and 131 web tests passing at `424a15e`.
 **Analyst:** Spec Impact Analyst (`analyze-spec-impact`), 2026-11-15
-**Structured findings:** `docs/specs/003-tenant-rls/reviews/impact-findings.json` (18 findings; validates against `.gozleme/schemas/impact-findings.schema.json`)
+**Structured findings:** `docs/specs/003-tenant-rls/reviews/impact-findings.json` (19 findings; validates against `.gozleme/schemas/impact-findings.schema.json`)
 
 ## Scope inspected
 
@@ -64,9 +64,10 @@
 | GOZ-0003-IF-15 | medium | Routing of GOZ-0003-OBS-01, the pre-existing GOZ-0001 re-sign-in session defect | 0001, 0040, 0041 | **human decision** |
 | GOZ-0003-IF-16 | low | The context key is a high-value secret that sandboxes and secret scans must cover | 0037, 0038, 0039 | applied to prompts |
 | GOZ-0003-IF-17 | low | research.md R5 and R11 differ from the code (`rls_internal` `PUBLIC` execute, verifier error trapping). The registry stage is stale | 0003 | **corrected at `a81e54e`** (research.md); registry sync with the Roadmap Steward |
+| GOZ-0003-IF-19 | medium | Policies cannot compare old and new rows. Guard triggers become the pattern for identity and lifecycle columns (from convergence C1), and `memberships` has no guard | 0004, 0021, 0023, 0033–0035, 0039–0041, all | applied to prompts (re-analysis at `a0421c0`) |
 | GOZ-0003-IF-18 | low | Stale prompt references (`BootstrapBoundaryTests.cs:23`→`:24`, the "until GOZ-0003 merges" bullet, a renamed test) | 0012, all | applied to prompts |
 
-Totals after re-analysis at `a81e54e`: 11 applied to prompts, 5 needing a human decision, and 2 corrected in GOZ-0003 (IF-12 in code, IF-17 in documentation). None is purely informational.
+Totals after re-analysis at `a0421c0`: 12 applied to prompts, 5 needing a human decision, and 2 corrected in GOZ-0003 (IF-12 in code, IF-17 in documentation). None is purely informational.
 
 ## Prompt edits applied (within authority)
 
@@ -110,7 +111,7 @@ No outcome, scope, boundary, prerequisite, dependency, invariant or MVP commitme
    - **(B)** DDL defaults only. Any per-row rule is deferred to application-time migration.
    - **(C)** A pinned, migration-only definer function for each backfill, added under security review and dropped afterwards.
 
-   Each option amends the `force-rls` decision text, contract §5 and `local-development.md`.
+   Each option amends the `force-rls` decision text, contract §5 and `local-development.md`. Since `9373c0f` the decision must also say whether a reviewed migration may disable a guard trigger (IF-19). The trigger binds every role, and only the owner's `ALTER TABLE … DISABLE TRIGGER` lifts it. Recommended default: no. Guarded columns are not backfilled; a needed change extends the guard deliberately in a new migration.
 2. **GOZ-0003-IF-04: tenant access for non-account principals.** Decide by the GOZ-0015 plan, or earlier if any spec from GOZ-0005 to GOZ-0014 adds background work. Options:
    - **(A)** A second signed token kind scoped to one organization and one purpose, with a new policy branch. It extends contract §1 and §3.
    - **(B)** The worker acts as the enqueuing account and re-verifies membership at processing time.
@@ -186,9 +187,56 @@ These edits are refreshes, not new obligations, so they need no new revision bum
 
 No new findings. `make validate` passes.
 
+### Re-analysis at `a0421c0`
+
+I reviewed the delta from `622d27d`:
+- the migration change: an open-only capability `USING` clause and the `invitations_guard` trigger;
+- the `RlsCatalog` comment;
+- `TenantContextBoundaryTests.An_invitation_code_cannot_move_reopen_or_extend_its_invitation` and `TenantKeyConfigurationTests`;
+- research R7 and R11, contract §3, `tasks.md` and `progress.yaml`;
+- the demo record.
+
+**C1 is verified closed.** The cause was that a policy cannot see the old row: the capability `WITH CHECK` saw only the new row, so an `organization_id` change passed. The fix works in two layers:
+- **Policy:** the capability `USING` clause now admits only an open invitation. A revoked, used or expired invitation is invisible to the holder for `UPDATE`, which the test shows as 0 rows.
+- **Trigger:** `invitations_guard` makes identity fixed and lifecycle one-way for every role. A member's reopen is refused with `42501`.
+
+The guard itself is sound:
+- **Catalog:** it is not a definer, has a fixed `search_path` and has `PUBLIC` revoked, so the catalog check stays clean. A trigger function needs no grant.
+- **Cascades:** it raises `42501`, so `TenantTransaction` answers the empty 404. The `*_by` → NULL allowance keeps the GOZ-0002 `ON DELETE SET NULL` cascades working, and cascaded updates do fire user triggers.
+- **Membership insert:** the `memberships_insert` invitation branch still requires the invitation to be in the same organization and match the capability hash, and the guard now prevents the move that made the C1 join possible.
+
+The lock order is unchanged.
+
+**C2:** `TenantKeyConfigurationTests` covers FR-012. The API refuses to start, and `migrate` exits 1, when the key is missing or shorter than 32 characters. No downstream impact.
+
+**New finding GOZ-0003-IF-19 (medium, applied to prompts).** Guard triggers are now the pattern for identity and lifecycle columns that policies cannot protect.
+- **Common conventions, all 38 prompts:** a new IF-19 bullet under the conventions section, which is now headed with IF-19. The IF-02 data-migration bullet notes that guards bind every role.
+- **Spec-specific IF-19 sections:**
+  - 0004: `memberships` has no guard, and its own-row `UPDATE` branch would let a member rewrite `joined_via` or a future role column at the database layer. Keep `organization_id`/`user_id` fixed, block role changes through the own-row branch, and do not key the initial-role rule on an unguarded `joined_via`.
+  - 0021: set-once approval decisions.
+  - 0023: epochs only increase.
+  - 0033: revocation anti-rollback.
+  - 0034: grant lifecycle and open-only capability.
+  - 0035: withdrawal set-once; retention deletes guarded rows rather than scrubbing them.
+  - 0039: the gate verifies that pinned guards exist and are enabled; restore is unaffected; avoid `session_replication_role = replica`.
+  - 0040: reset and verification tokens.
+  - 0041: immutable identity links.
+
+**Changed findings:**
+- **IF-03:** the guard also binds owner and superuser updates, so the pending decision must cover disabling guards in migrations (recommended default: no).
+- **IF-11:** restore uses `INSERT`/`COPY` and is not blocked by a `BEFORE UPDATE` guard.
+- **IF-12:** the earlier comment-rationale note is resolved. `9373c0f` rewrote the comment, and a probe recorded in R11 confirms that a plain view does not bypass the guard.
+
+**Optional cosmetic fix:** contract `tenant-context.md` §3 now has two items numbered 6.
+
+**Prompt revision:** these edits belong to the same unmerged GOZ-0003 revision as the earlier ones. The registry on this branch already records `promptRevision` 5 for GOZ-0004 to GOZ-0039 and 3 for GOZ-0040 and GOZ-0041, and none of it has reached `main`, so no further bump is needed. The Roadmap Steward should add GOZ-0003-IF-19 to the GOZ-0003 finding list and refresh the evidence paths.
+
+`make validate` passes.
+
 ## Not asserted
 
-- I did not run the test suites or the demo. Results come from `evidence/demo-run.json` (`424a15e`) and from drive-speckit.
+- I did not run the test suites or the demo. Results come from `evidence/demo-run.json` (`424a15e`, then `9373c0f`/`a0421c0`) and from drive-speckit.
+- I did not run the C1 regression test myself or probe the guard trigger beyond reading it; the view-bypass probe in R11 is drive-speckit's.
 - I did not reproduce the IF-11 `pg_dump`/`COPY` behaviour under FORCE. It rests on documented PostgreSQL row-security semantics.
 - I did not reproduce GOZ-0003-OBS-01. Its description comes from `progress.yaml`, and I confirmed only that the cited test signs in twice on an already signed-in client.
 - I did not run the IF-12 negative tests myself. They run on the migrator's own connection and create a definer function in a new schema and in `public`, so drive-speckit's report that all 15 catalog tests pass confirms that the migrator can create both.
