@@ -319,8 +319,11 @@ test("observability: organization flows are traced browser → web → API → P
 
   const apiSpans: typeof spans = [];
   for (const name of ["gozleme.org.create", "gozleme.org.rename", "gozleme.org.select", "gozleme.org.invite_create", "gozleme.org.invite_revoke", "gozleme.org.invite_redeem", "gozleme.org.member_remove", "gozleme.org.member_leave"]) {
-    const found = await recentSpans("gozleme-api", 15, name);
-    expect(found.some((s) => s.name === name), name).toBe(true);
+    // Poll: the last operations of the suite may not be exported to Jaeger yet (flaky in CI otherwise).
+    let found: typeof spans = [];
+    await expect
+      .poll(async () => (found = await recentSpans("gozleme-api", 15, name)).some((s) => s.name === name), { message: name, timeout: 30_000, intervals: [1000, 2000] })
+      .toBe(true);
     apiSpans.push(...found);
   }
 
