@@ -179,6 +179,32 @@ test("sign out everywhere ends the account's sessions in every browser", async (
   await second.screenshot({ path: `${shots}/05-signed-out-everywhere-second-browser.png`, fullPage: true });
 });
 
+test("signing in again from a sign-in form opened before the browser signed in keeps a working session", async ({ browser }) => {
+  // GOZ-0003-OBS-01: the second sign-in presents a live session, which must be replaced, not renewed.
+  const context = await browser.newContext();
+  const stale = await context.newPage();
+  await stale.goto("/login");
+  const first = await context.newPage();
+  await first.goto("/login");
+  await signIn(first, DEMO.carol, DEMO_PASSWORD);
+  await expect(first.getByTestId("account-email")).toHaveText(DEMO.carol);
+  const previous = (await context.cookies()).find((c) => c.name === "gozleme_session")!;
+
+  await signIn(stale, DEMO.carol, DEMO_PASSWORD);
+  await expect(stale.getByTestId("account-email")).toHaveText(DEMO.carol);
+  await stale.reload();
+  await expect(stale.getByTestId("account-email")).toHaveText(DEMO.carol);
+  await first.reload();
+  await expect(first.getByTestId("account-email")).toHaveText(DEMO.carol);
+
+  const current = (await context.cookies()).find((c) => c.name === "gozleme_session")!;
+  expect(current.value).not.toBe(previous.value);
+  const retired = await fetch(`${API_URL}/api/v1/auth/session`, { headers: { cookie: `gozleme_session=${previous.value}` } });
+  expect(retired.status).toBe(401);
+  await expectAccessible(stale);
+  await stale.screenshot({ path: `${shots}/09-signed-in-again-session-kept.png`, fullPage: true });
+});
+
 test("lockout: five failures lock the account; every failure reads exactly like an unknown email", async ({ page }) => {
   await page.goto("/login");
   for (let i = 0; i < 5; i++) {

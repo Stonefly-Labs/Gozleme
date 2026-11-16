@@ -12,7 +12,7 @@ namespace Gozleme.Api.Identity;
 /// <summary>
 /// PostgreSQL-backed cookie session store (research R2). The cookie carries only a random 256-bit
 /// key; the row is looked up by its SHA-256, so deleting a row revokes that session exactly and a
-/// replayed cookie becomes anonymous. Each sign-in stores a new key (session fixation protection).
+/// replayed cookie becomes anonymous. Each sign-in stores a new key (session fixation protection, <see cref="SessionRotation"/>).
 /// </summary>
 internal sealed class DbTicketStore(
     IDbContextFactory<GozlemeDbContext> contexts,
@@ -21,9 +21,6 @@ internal sealed class DbTicketStore(
     TimeProvider time) : ITicketStore
 {
     public const string AbsoluteExpiryItem = "gozleme.absolute_expires";
-
-    /// <summary>HttpContext item holding the session key resolved for the current request.</summary>
-    private const string CurrentKeyItem = "gozleme.session_key";
 
     private readonly IDataProtector _protector = dataProtection.CreateProtector("Gozleme.Identity.SessionTicket.v1");
 
@@ -75,21 +72,6 @@ internal sealed class DbTicketStore(
     }
 
     public Task<AuthenticationTicket?> RetrieveAsync(string key) => RetrieveAsync(key, CancellationToken.None);
-
-    public async Task<AuthenticationTicket?> RetrieveAsync(string key, HttpContext httpContext, CancellationToken cancellationToken)
-    {
-        var ticket = await RetrieveAsync(key, cancellationToken);
-        if (ticket is not null)
-        {
-            httpContext.Items[CurrentKeyItem] = key;
-        }
-
-        return ticket;
-    }
-
-    /// <summary>Ends the session this request arrived with, if any (called before issuing a new one).</summary>
-    public Task RemoveCurrentAsync(HttpContext httpContext) =>
-        httpContext.Items[CurrentKeyItem] is string key ? RemoveAsync(key, httpContext.RequestAborted) : Task.CompletedTask;
 
     public async Task<AuthenticationTicket?> RetrieveAsync(string key, CancellationToken cancellationToken)
     {

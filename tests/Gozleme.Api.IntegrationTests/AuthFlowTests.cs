@@ -128,18 +128,49 @@ public sealed class AuthFlowTests(PgvectorDatabaseFixture fixture) : IAsyncLifet
     }
 
     [Fact]
-    public async Task Every_sign_in_issues_a_new_session_and_retires_the_previous_one()
+    public async Task Every_sign_in_from_a_signed_in_client_issues_a_new_live_session_and_retires_the_presented_one()
     {
-        var (client, email) = await AuthClient.SignedInAsync(_factory);
-        using var _ = client;
-        using var first = await AuthClient.SignInAsync(client, email, AuthClient.Password);
-        using var second = await AuthClient.SignInAsync(client, email, AuthClient.Password);
-        var firstPair = AuthClient.SessionCookiePair(first);
-        var secondPair = AuthClient.SessionCookiePair(second);
+        // GOZ-0003-OBS-01: the client presents a live session each time, so a rotation that only renews
+        // the presented key would hand back a cookie for the session it just deleted.
+        using var client = AuthClient.Create(_factory);
+        var email = AuthClient.NewEmail();
+        using var registered = await AuthClient.RegisterAsync(client, email, AuthClient.Password);
+        var previous = AuthClient.SessionCookiePair(registered);
 
-        Assert.NotEqual(firstPair, secondPair);
-        Assert.Equal(HttpStatusCode.Unauthorized, await AuthClient.ReplayAsync(_factory, firstPair));
-        Assert.Equal(HttpStatusCode.OK, await AuthClient.ReplayAsync(_factory, secondPair));
+        for (var i = 0; i < 2; i++)
+        {
+            using var signedIn = await AuthClient.SignInAsync(client, email, AuthClient.Password);
+            Assert.Equal(HttpStatusCode.OK, signedIn.StatusCode);
+            Assert.Single(AuthClient.SessionSetCookies(signedIn));
+            var current = AuthClient.SessionCookiePair(signedIn);
+
+            Assert.NotEqual(previous, current);
+            Assert.Equal(HttpStatusCode.Unauthorized, await AuthClient.ReplayAsync(_factory, previous));
+            Assert.Equal(HttpStatusCode.OK, await AuthClient.ReplayAsync(_factory, current));
+            using var session = await AuthClient.GetAsync(client, "/api/v1/auth/session");
+            Assert.Equal(HttpStatusCode.OK, session.StatusCode);
+            previous = current;
+        }
+
+        Assert.Equal(1, await Db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.auth_sessions s JOIN gozleme.users u ON u.id = s.user_id WHERE u.email = '{email}'"));
+    }
+
+    [Fact]
+    public async Task Registering_from_a_signed_in_client_issues_a_live_session_for_the_new_account_and_retires_the_presented_one()
+    {
+        using var client = AuthClient.Create(_factory);
+        using var first = await AuthClient.RegisterAsync(client, AuthClient.NewEmail(), AuthClient.Password);
+        var previous = AuthClient.SessionCookiePair(first);
+        var secondEmail = AuthClient.NewEmail();
+
+        using var second = await AuthClient.RegisterAsync(client, secondEmail, AuthClient.Password);
+        Assert.Equal(HttpStatusCode.Created, second.StatusCode);
+        Assert.Single(AuthClient.SessionSetCookies(second));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, await AuthClient.ReplayAsync(_factory, previous));
+        Assert.Equal(HttpStatusCode.OK, await AuthClient.ReplayAsync(_factory, AuthClient.SessionCookiePair(second)));
+        using var session = await AuthClient.GetAsync(client, "/api/v1/auth/session");
+        Assert.Equal(secondEmail, (await AuthClient.JsonAsync(session)).GetProperty("email").GetString());
     }
 
     [Fact]

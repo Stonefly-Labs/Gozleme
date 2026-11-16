@@ -48,8 +48,7 @@ internal static class AuthEndpoints
         CredentialsRequest request,
         HttpContext http,
         UserManager<GozlemeUser> users,
-        SignInManager<GozlemeUser> signIn,
-        DbTicketStore sessions,
+        SessionRotation rotation,
         IOptions<AuthOptions> options,
         SecurityAudit audit,
         TimeProvider time)
@@ -115,8 +114,7 @@ internal static class AuthEndpoints
             return Error(StatusCodes.Status409Conflict, AuthError.RegistrationFailed);
         }
 
-        await sessions.RemoveCurrentAsync(http); // session fixation: never carry a prior session forward
-        await signIn.SignInAsync(user, isPersistent: false);
+        await rotation.SignInWithNewSessionAsync(http, user); // session fixation: never carry a prior session forward
         AuthTelemetry.Succeeded(activity, AuthOperation.Register);
         audit.Registered(user.Id);
         return TypedResults.Created((string?)null, Session(user, now, options.Value));
@@ -125,7 +123,7 @@ internal static class AuthEndpoints
     private static async Task<Results<Ok<SessionResponse>, JsonHttpResult<AuthError>>> SignInAsync(
         CredentialsRequest request,
         HttpContext http,
-        DbTicketStore sessions,
+        SessionRotation rotation,
         UserManager<GozlemeUser> users,
         SignInManager<GozlemeUser> signIn,
         IPasswordHasher<GozlemeUser> hasher,
@@ -154,12 +152,7 @@ internal static class AuthEndpoints
         var result = await signIn.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
         if (result.Succeeded)
         {
-            await sessions.RemoveCurrentAsync(http); // session fixation: a new session key on every sign-in
-            await signIn.SignInAsync(user, isPersistent: false);
-        }
-
-        if (result.Succeeded)
-        {
+            await rotation.SignInWithNewSessionAsync(http, user); // session fixation: a new session key on every sign-in
             var now = time.GetUtcNow();
             user.LastSignInAt = now;
             await users.UpdateAsync(user);
