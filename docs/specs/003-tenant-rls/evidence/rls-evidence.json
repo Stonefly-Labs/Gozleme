@@ -1,6 +1,6 @@
 {
   "spec": "GOZ-0003",
-  "capturedAt": "2026-11-16T14:21:44.291Z",
+  "capturedAt": "2026-11-16T20:53:11.865Z",
   "superuserOrganizationCount": 8,
   "catalog": "invitations:true:true:4,memberships:true:true:4,organizations:true:true:3",
   "contexts": [

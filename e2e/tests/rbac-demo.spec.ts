@@ -115,7 +115,7 @@ test("a member sees role badges but no admin controls, and the API refuses a mem
   await expect(carol.getByRole("list", { name: `Roles of ${DEMO.carol}` }).getByRole("listitem")).toHaveText(["member"]);
   await expect(carol.getByRole("list", { name: `Roles of ${DEMO.alice}` }).getByRole("listitem")).toHaveText(["admin", "member"]);
   await expect(carol.getByLabel("Organization name")).toHaveCount(0);
-  await expect(carol.getByRole("heading", { name: "Invitations" })).toHaveCount(0);
+  await expect(carol.getByRole("heading", { name: "Invitations", exact: true })).toHaveCount(0);
   await expect(carol.getByRole("button", { name: /^Remove / })).toHaveCount(0);
   await expect(carol.getByRole("button", { name: /^Edit roles/ })).toHaveCount(0);
   await expect(carol.getByRole("button", { name: "Leave organization" })).toBeVisible();
@@ -144,7 +144,7 @@ test("an admin grants admin in the UI and the member's next rename succeeds", as
   await carol.getByLabel("Organization name").fill(RENAMED);
   await carol.getByRole("button", { name: "Rename" }).click();
   await expect(carol.getByTestId("organization-name")).toHaveText(RENAMED);
-  await expect(carol.getByRole("heading", { name: "Invitations" })).toBeVisible();
+  await expect(carol.getByRole("heading", { name: "Invitations", exact: true })).toBeVisible();
   await expectAccessible(carol);
   await carol.screenshot({ path: `${shots}/04-carol-renames-after-grant.png`, fullPage: true });
   expect((await api(carol, "PATCH", "", { displayName: DEMO_ORG.name })).status).toBe(200);
