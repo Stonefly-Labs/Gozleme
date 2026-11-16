@@ -272,10 +272,10 @@ specs:
   prompt: docs/prompts/spec-0004.md
   dependencies:
   - GOZ-0003
-  status: in-progress
+  status: ready-for-human-merge
   stage: pr
   branch: feature/goz-0004-scoped-rbac
-  pullRequest: null
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/17
   promptRevision: 6
   gates:
     specification: passed
@@ -319,7 +319,7 @@ specs:
     reviews:
     - docs/specs/004-scoped-rbac/reviews/impact-analysis.md
     - docs/specs/004-scoped-rbac/reviews/impact-findings.json
-  nextAction: 'Ready for PR and human review: make test 318 .NET + 139 web, make demo 41/41; converged (T038-T040); impact analysis IF-01..IF-14 (IF-14 fixed on branch; IF-02=A and IF-13=B decided by the maintainer 2026-11-16); roadmap synced. Human maintainer merges (agents never merge).'
+  nextAction: 'PR #17 ready for human review and merge (all CI checks passed at efad962). Human maintainer merges; agents never merge.'
 - id: GOZ-0005
   number: 5
   title: Publisher identities and canonical capability IDs

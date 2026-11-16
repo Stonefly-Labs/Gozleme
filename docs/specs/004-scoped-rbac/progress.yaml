@@ -34,7 +34,7 @@ attempts:
 - {at: '2026-11-16', stage: demo, failure: 'signed context in postgres STATEMENT log from demo psql -c evidence calls', repair: 'psql -f - (per-statement)', result: fixed}
 blockers: []
 pullRequest: null
-nextAction: 'Open the PR (absolute-URL screenshots), verify CI, mark ready-for-human-merge; human maintainer merges.'
+nextAction: 'PR #17 ready-for-human-merge (all CI checks passed at efad962); human maintainer merges.'
 evidence:
   tests: ['make test: 318 .NET (unit + Testcontainers) and 139 Vitest passing', 'make lint: clean', 'make validate: clean']
   demos: [docs/specs/004-scoped-rbac/evidence/demo-run.json, docs/specs/004-scoped-rbac/evidence/rbac-evidence.json]
