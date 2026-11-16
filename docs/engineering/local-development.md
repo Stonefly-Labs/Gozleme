@@ -97,7 +97,7 @@ what `member` does. The creator of an organization holds `admin`; a redeemer hol
 An admin changes roles from the member list (`PUT …/members/{userId}/roles`). The change applies
 on the member's next request, and losing `admin` revokes that account's open invitations. An
 organization always keeps at least one admin, so the last admin can neither demote itself nor
-leave. The action/role table is `docs/specs/004-scoped-rbac/contracts/permissions.md`, and the
+leave. The action/role table is `docs/architecture/contracts/organization-permissions.md`, and the
 code must render it exactly.
 
 The database enforces the same rules on its own: the `memberships_guard` trigger and the

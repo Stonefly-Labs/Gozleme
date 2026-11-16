@@ -16,7 +16,7 @@ make demo       # cumulative Playwright run; goz-0004 is now the highest project
 
 Key suites: `RbacIsolationTests` (database matrix as the app and owner logins),
 `OrganizationPermissionContractTests` (endpoint → action pin, role table equals
-`contracts/permissions.md`), `RoleAssignmentTests` (API matrix, next-request effect, last admin,
+`docs/architecture/contracts/organization-permissions.md`), `RoleAssignmentTests` (API matrix, next-request effect, last admin,
 revocation on demotion), `RbacMigrationTests` (pre-existing rows read `{admin,member}`), plus the
 updated GOZ-0002/0003 suites.
 

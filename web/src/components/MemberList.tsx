@@ -10,7 +10,7 @@ import { traced } from "@/telemetry/ui";
 export const LAST_MEMBER = "An organization must keep at least one member.";
 export const LAST_ADMIN = "An organization needs at least one admin.";
 
-/** Roles an admin may grant; `member` is always held and shown fixed (GOZ-0004 contracts/permissions.md). */
+/** Roles an admin may grant; `member` is always held and shown fixed (GOZ-0004 docs/architecture/contracts/organization-permissions.md). */
 const GRANTABLE: Exclude<Role, "member">[] = ["admin", "publisher", "reviewer", "approver"];
 
 /**

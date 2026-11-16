@@ -7,7 +7,7 @@ description: "Task list for GOZ-0004 Scoped RBAC permission foundation"
 
 **Input**: Design documents from `docs/specs/004-scoped-rbac/`
 
-**Prerequisites**: plan.md, spec.md, research.md (R1–R13), data-model.md, contracts/permissions.md, contracts/rbac-api.openapi.yaml, quickstart.md
+**Prerequisites**: plan.md, spec.md, research.md (R1–R13), data-model.md, docs/architecture/contracts/organization-permissions.md, contracts/rbac-api.openapi.yaml, quickstart.md
 
 **Tests**: Required. The spec and prompt demand positive and negative tests, database-layer escalation tests as both logins, a boundary test for "full policy evaluator comes later", telemetry no-secret checks and a cumulative browser demo (FR-016, FR-022; Constitution IV/VI).
 
@@ -31,7 +31,7 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 - [X] T001 Create `src/Gozleme.Api/Organizations/OrganizationPermissions.cs`:
   - `OrganizationRole` constants `admin`, `approver`, `member`, `publisher`, `reviewer`, and `All` (sorted).
   - `OrgAction` constants (`organization.read`, `organization.select`, `organization.rename`, `membership.list`, `membership.leave`, `membership.remove`, `membership.roles.change`, `invitation.list`, `invitation.create`, `invitation.revoke`), each mapped to a resource type (`organization` | `membership` | `invitation`).
-  - The role table from `contracts/permissions.md` (`publisher`/`reviewer`/`approver` equal to `member`; no role implies another).
+  - The role table from `docs/architecture/contracts/organization-permissions.md` (`publisher`/`reviewer`/`approver` equal to `member`; no role implies another).
   - `OrganizationPermissions.For(IEnumerable<string> roles) → IReadOnlySet<string>` (union of the roles' actions; unknown roles grant nothing).
   - `OrganizationPermissions.RenderTable()`, producing the fixed-width text table used by the contract.
   - `OrgActionAttribute(params string[] actions)` endpoint metadata.
@@ -107,7 +107,7 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 
 ### Implementation for User Story 1
 
-- [X] T014 [US1] Move every organization-scoped handler in `src/Gozleme.Api/Organizations/OrganizationEndpoints.cs` to `AuthorizeAsync` with its action (contracts/permissions.md "Endpoint → action"). Handlers: Get, Select, Rename, Members, Invitations, CreateInvitation, RevokeInvitation and RemoveMember (`membership.leave` when the target is the caller, else `membership.remove`). Add `.WithMetadata(new OrgActionAttribute(...))` to each mapping. `GetAsync` returns `OrganizationDetailResponse` with the caller's sorted roles and `OrganizationPermissions.For(roles)`. `MembersAsync` includes each member's sorted roles. Update the class comment (interim role-neutral rule removed)
+- [X] T014 [US1] Move every organization-scoped handler in `src/Gozleme.Api/Organizations/OrganizationEndpoints.cs` to `AuthorizeAsync` with its action (docs/architecture/contracts/organization-permissions.md "Endpoint → action"). Handlers: Get, Select, Rename, Members, Invitations, CreateInvitation, RevokeInvitation and RemoveMember (`membership.leave` when the target is the caller, else `membership.remove`). Add `.WithMetadata(new OrgActionAttribute(...))` to each mapping. `GetAsync` returns `OrganizationDetailResponse` with the caller's sorted roles and `OrganizationPermissions.For(roles)`. `MembersAsync` includes each member's sorted roles. Update the class comment (interim role-neutral rule removed)
 - [X] T015 [US1] Add `PUT /{organizationId}/members/{userId}/roles` (`SetRolesAsync`, `OrgOperation.MemberRoles`, body limit, `OrgActionAttribute(OrgAction.MembershipRolesChange)`) in `OrganizationEndpoints.cs`:
   1. Authorize.
   2. Validate (`member` added; unknown role → 400).
@@ -139,7 +139,7 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 - [X] T020 [P] [US2] `tests/Gozleme.Api.IntegrationTests/OrganizationPermissionContractTests.cs`:
   - enumerate `EndpointDataSource`; every route under `/api/v1/organizations/{organizationId}` has `OrgActionAttribute` with known actions;
   - every action has a role-table entry;
-  - `OrganizationPermissions.RenderTable()` equals the fenced block in `docs/specs/004-scoped-rbac/contracts/permissions.md`, read relative to the repository root.
+  - `OrganizationPermissions.RenderTable()` equals the fenced block in `docs/architecture/contracts/organization-permissions.md`, read relative to the repository root.
   - Negative case: a test-only endpoint mapped without the attribute is reported.
 - [X] T021 [P] [US2] Matrix test in `RoleAssignmentTests.cs`. For each single-role set `{member}`, `{member,publisher}`, `{member,reviewer}`, `{member,approver}` and `{admin,member}`, call every action endpoint as carol and compare allow/deny with `OrganizationPermissions` (100%, SC-002), restoring state between cases
 - [X] T022 [P] [US2] Policy-evaluator boundary (FR-016, FR-017), with `tests/Gozleme.Api.IntegrationTests/OrganizationBoundaryTests.cs`:

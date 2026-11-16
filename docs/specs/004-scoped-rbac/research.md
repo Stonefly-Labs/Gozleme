@@ -123,7 +123,7 @@ documents (FR-016). GOZ-0018 replaces the body behind the same signature.
 **Pinning (FR-006)**: each organization-scoped endpoint declares `.WithMetadata(new OrgActionAttribute(OrgAction.X))`.
 `OrganizationPermissionContractTests` enumerates `EndpointDataSource` and fails on an
 `/organizations/{organizationId}…` endpoint without exactly one action, an action without a role-table
-entry, or a role-table row that differs from `contracts/permissions.md`. The test renders the table
+entry, or a role-table row that differs from `docs/architecture/contracts/organization-permissions.md`. The test renders the table
 from code and compares it with the fenced block in the document.
 
 **Alternatives rejected**: ASP.NET Core authorization policies with requirement handlers (they would

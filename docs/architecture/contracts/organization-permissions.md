@@ -6,6 +6,10 @@ fenced block below; `OrganizationPermissionContractTests` fails otherwise (FR-00
 this contract by adding actions and role rows in their own slices. They never edit a role's meaning
 silently. GOZ-0018 replaces the evaluation behind the same decision point.
 
+_Living contract. Introduced by GOZ-0004; moved here from `docs/specs/004-scoped-rbac/contracts/permissions.md`
+by maintainer decision GOZ-0004-IF-13 (option B, 2026-11-16). Specs that add organization actions edit
+this file in their own slice. The broader authorization architecture is `docs/architecture/authorization-contract.md`._
+
 ## Decision procedure
 
 1. **Membership first.** A malformed organization id, an unknown organization and a non-member all get the identical empty `404` with `Cache-Control: no-store`. A non-member never sees `403`.

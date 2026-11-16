@@ -62,7 +62,7 @@ public sealed class OrganizationPermissionContractTests(PgvectorDatabaseFixture 
     [Fact]
     public void The_code_renders_exactly_the_published_role_table()
     {
-        var contract = File.ReadAllText(GozlemeDatabase.RepoPath("docs/specs/004-scoped-rbac/contracts/permissions.md"));
+        var contract = File.ReadAllText(GozlemeDatabase.RepoPath("docs/architecture/contracts/organization-permissions.md"));
         var start = contract.IndexOf("```text\n", StringComparison.Ordinal) + "```text\n".Length;
         var published = contract[start..contract.IndexOf("```", start, StringComparison.Ordinal)];
         Assert.Equal(published.TrimEnd('\n'), OrganizationPermissions.RenderTable().TrimEnd('\n'));

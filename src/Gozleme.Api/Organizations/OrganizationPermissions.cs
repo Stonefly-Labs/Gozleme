@@ -32,7 +32,7 @@ internal static class OrganizationRole
     }
 }
 
-/// <summary>Resource types an organization action applies to (contracts/permissions.md).</summary>
+/// <summary>Resource types an organization action applies to (docs/architecture/contracts/organization-permissions.md).</summary>
 internal static class OrgResource
 {
     public const string Organization = "organization";
@@ -40,7 +40,7 @@ internal static class OrgResource
     public const string Invitation = "invitation";
 }
 
-/// <summary>Organization actions (contracts/permissions.md). Bounded: span attributes and metric label values.</summary>
+/// <summary>Organization actions (docs/architecture/contracts/organization-permissions.md). Bounded: span attributes and metric label values.</summary>
 internal static class OrgAction
 {
     public const string OrganizationRead = "organization.read";
@@ -101,7 +101,7 @@ internal static class OrganizationPermissions
     public static bool Allows(IEnumerable<string> roles, string action, string resourceType) =>
         OrgAction.All.Contains((action, resourceType)) && For(roles).Contains(action);
 
-    /// <summary>The role table as published in contracts/permissions.md (pinned by OrganizationPermissionContractTests).</summary>
+    /// <summary>The role table as published in docs/architecture/contracts/organization-permissions.md (pinned by OrganizationPermissionContractTests).</summary>
     public static string RenderTable()
     {
         const int actionWidth = 25, resourceWidth = 14;

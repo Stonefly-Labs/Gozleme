@@ -28,7 +28,7 @@ I ran read-only queries, and one reproduction inside a rolled-back transaction (
 - **Demo:** `e2e/tests/rbac-demo.spec.ts`, plus the `playwright.config.ts`, `evidence.ts`, `bootstrap-demo.spec.ts` and `organizations-demo.spec.ts` changes.
 - **Spec workspace:**
   - spec.md, plan.md and research.md (R1 to R13);
-  - `contracts/permissions.md` and `contracts/rbac-api.openapi.yaml`;
+  - `contracts/permissions.md` (moved to `docs/architecture/contracts/organization-permissions.md` under IF-13, option B) and `contracts/rbac-api.openapi.yaml`;
   - progress.yaml, including maintainer decisions Q1 to Q5 and option B.
 - **Governance:** `security-invariants.md`, `architecture-baseline.md` (it does not mention RBAC), `.gozleme/spec-registry.yaml` (DAG), and the GOZ-0003 impact analysis as the precedent.
 - **Downstream prompts:** all 37 prompts from GOZ-0005 to GOZ-0041.
@@ -41,7 +41,7 @@ I ran read-only queries, and one reproduction inside a rolled-back transaction (
 |---|---|
 | Roles | `memberships.roles text[]`, with `ck_memberships_roles`. The roles are a subset of {admin, approver, member, publisher, reviewer}; `member` is always held and NULL is not allowed. The guard stores the set distinct and sorted. Existing rows became `{admin,member}` through a temporary default, and the default is now `{member}`. Creators get `{admin,member}` and redeemers `{member}`. |
 | Decision | `OrganizationAccess.AuthorizeAsync` checks membership first (empty 404, no decision recorded), then calls `OrganizationPermissions.Allows(roles, action, resourceType)`. A deny gets `403 {"error":"forbidden"}` and audit 1301 after commit. Role-dependent writes re-check under `lock_organization_members`. |
-| Contract | 10 actions over 3 resource types. publisher, reviewer and approver equal member (Q4 = A). `OrganizationPermissionContractTests` pins the rendered table to `contracts/permissions.md`, 9 scoped endpoints, the declared set equal to `OrgAction.All`, and 3 resource types. It recognises only routes under `/api/v1/organizations/{organizationId}`. |
+| Contract | 10 actions over 3 resource types. publisher, reviewer and approver equal member (Q4 = A). `OrganizationPermissionContractTests` pins the rendered table to the contract (now `docs/architecture/contracts/organization-permissions.md`, IF-13), 9 scoped endpoints, the declared set equal to `OrgAction.All`, and 3 resource types. It recognises only routes under `/api/v1/organizations/{organizationId}`. |
 | Database | Admin-only `organizations_update` and invitation writes, through the non-definer `account_is_admin`. `memberships_insert` limits role sets. `memberships_guard` makes identity columns immutable, limits `selected_at` to the caller's own row, requires admin for role changes, removals and adding others, and enforces the last-admin rule under the advisory lock. It binds the owner and superusers; foreign-key cascades pass at `pg_trigger_depth() > 1`. Reads stay member-level. No new definer. |
 | Locks | Order: advisory → organization → invitation. A non-admin's `FOR UPDATE` on `organizations` and `invitations` locks nothing, because the UPDATE policy hides the rows. |
 | Telemetry | Span `gozleme.authz.decision` and counter `gozleme.authz.decisions`, both with {action, resource_type, outcome}. `gozleme.org.operations` gains `forbidden`, `last_admin` and `member_roles`. Audit 1301 and 1302, in the range 1301–1310. |
@@ -53,7 +53,7 @@ I ran read-only queries, and one reproduction inside a rolled-back transaction (
 | ID | Sev | Finding | Affected specs | Disposition |
 |---|---|---|---|---|
 | GOZ-0004-IF-01 | high | Single decision point and pinned action/resource contract: obligations for every new organization-scoped endpoint, web gating on `permissions` | 0005–0039 (0040, 0041 conditional) | applied to prompts |
-| GOZ-0004-IF-02 | high | Database-layer posture for later role-gated writes and reads is undecided; Q3 = B covered GOZ-0004's admin writes only | 0005, 0012, 0014, 0018–0021, 0034, 0035, all with role-gated tables | **needs human decision** |
+| GOZ-0004-IF-02 | high | Database-layer posture for later role-gated writes and reads is undecided; Q3 = B covered GOZ-0004's admin writes only | 0005, 0012, 0014, 0018–0021, 0034, 0035, all with role-gated tables | **human-decided 2026-11-16: option A**; applied to prompts |
 | GOZ-0004-IF-03 | high | GOZ-0018 replaces the evaluation behind `AuthorizeAsync`, but the database already caps organization-management actions to admins | 0018, 0019, 0020 | applied to prompts |
 | GOZ-0004-IF-04 | medium | Boundary pins later specs must narrow deliberately (table names, decision signatures, delegation routes) | 0018, 0019, 0020, 0034, all | applied to prompts |
 | GOZ-0004-IF-05 | high | publisher, reviewer and approver have no holders and no backfill; their owners handle role loss and separation of duties | 0005, 0021, 0014, 0034 | applied to prompts |
@@ -64,10 +64,10 @@ I ran read-only queries, and one reproduction inside a rolled-back transaction (
 | GOZ-0004-IF-10 | medium | Known residual: account deletion cascades past the last-member and last-admin rules, and nothing can restore an admin | 0035, 0039, 0040, 0041 | applied to prompts |
 | GOZ-0004-IF-11 | medium | Restore and release gate must account for guard triggers | 0039 | applied to prompts |
 | GOZ-0004-IF-12 | low | Spec-specific stale references made concrete | 0014, 0018, 0021, 0023, 0034, 0040, 0041 | applied to prompts |
-| GOZ-0004-IF-13 | low | The living permission contract sits in GOZ-0004's workspace, pinned by a test, and later specs must edit it | 0004, 0005, 0014, 0018, 0021, 0034 | **needs human decision** |
+| GOZ-0004-IF-13 | low | The living permission contract sits in GOZ-0004's workspace, pinned by a test, and later specs must edit it | 0004, 0005, 0014, 0018, 0021, 0034 | **human-decided 2026-11-16: option B**; contract moved on the branch; applied to prompts |
 | GOZ-0004-IF-14 | low | Defect: any member can set another member's `invitation_id` to NULL in the database (reproduced) | 0004 | **fixed on the branch** (guard refuses any direct `invitation_id` change; `RbacIsolationTests`) |
 
-Totals: 11 applied to prompts, 2 need a maintainer decision (IF-02, IF-13), and 1 was returned to drive-speckit as a bounded correction (IF-14) and fixed on the branch before the PR. No finding is critical, none changes the DAG, and none changes an outcome, scope, prerequisite or invariant.
+Totals after the 2026-11-16 decisions: 11 applied to prompts, 2 decided by the maintainer and applied (IF-02 option A, IF-13 option B), and 1 was returned to drive-speckit as a bounded correction (IF-14) and fixed on the branch before the PR. No finding is critical, none changes the DAG, and none changes an outcome, scope, prerequisite or invariant.
 
 ## Prompt edits applied (within authority)
 
@@ -104,13 +104,25 @@ The section explicitly supersedes four pieces of earlier wording: the GOZ-0002-I
 **Roadmap Steward:**
 - Bump `promptRevision` from 5 to 6 for GOZ-0005 to GOZ-0039, and from 3 to 4 for GOZ-0040 and GOZ-0041.
 - Record GOZ-0004-IF-01 to IF-14 on the GOZ-0004 registry entry, with the `impactAnalysis` gate and the evidence paths.
-- Record the two open decisions (IF-02 and IF-13) with `decideBefore: 'GOZ-0005 plan'`.
+- Record the two maintainer decisions (IF-02 option A and IF-13 option B, 2026-11-16) as decided.
 
 I did not edit the registry.
 
 Earlier provenance bullets are left as written, and the new sections supersede them explicitly, as in the GOZ-0002 and GOZ-0003 precedents. A script applied the edits idempotently: it skips any prompt that already contains `GOZ-0004-IF-`. `make validate` passes after the edits (see below).
 
-## Maintainer decisions requested
+## Maintainer decisions (2026-11-16)
+
+The maintainer replied verbatim "1: A, 2: B".
+
+- **IF-02: option A.** Every later role-gated **write** is also enforced in the database, mirroring Q3 = B, through a non-definer SQL function `gozleme.account_has_role(org, role)` that generalises `account_is_admin`. Reads stay member-level in the database, and GOZ-0018 conditions stay application-only.
+  - In all 37 prompts, the "open; ask the maintainer" bullet in the common section was replaced in place with this rule. The spec-specific IF-02 bullets in 0005, 0012, 0014, 0018, 0021 and 0034 were resolved.
+  - Left to consuming specs: the first consumer (expected GOZ-0005) adds the function and decides whether `account_is_admin` is re-expressed through it. Each spec designs its own per-table policy shape. GOZ-0021 decides whether its row-comparing separation-of-duties rules use a guard trigger or stay in the application.
+- **IF-13: option B.** The coordinator moved the contract with `git mv`, adding a provenance note, to `docs/architecture/contracts/organization-permissions.md`. `OrganizationPermissionContractTests`, the code, tests, the web and the GOZ-0004 spec artifacts now reference the new path.
+  - The prompts call it a living contract that each spec edits in its own slice.
+- Each of the 37 prompts ends with a `Maintainer decisions applied (GOZ-0004-IF-02, IF-13, 2026-11-16)` provenance note.
+- The coordinator had already updated the prompts' `invitation_id` wording for IF-14 ("fixed before merge").
+
+## Maintainer decisions requested (2026-11-16; now decided, kept for the record)
 
 1. **GOZ-0004-IF-02: database posture for later role-gated actions.** Decide before the GOZ-0005 plan.
    - **A.** Every later role-gated *write* is also enforced in PostgreSQL, through a non-definer generalisation of `account_is_admin` such as `gozleme.account_has_role(org, role)`, with a per-role isolation matrix. GOZ-0018 policy conditions stay in the application only. Reads stay member-level.

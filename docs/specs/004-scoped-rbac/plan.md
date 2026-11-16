@@ -12,7 +12,7 @@ application decision point and, independently, in PostgreSQL.
 - **Roles** (Q1, Q4, Q5): `admin`, `approver`, `member`, `publisher` and `reviewer`, held as a set in a new `memberships.roles text[]` column. Every membership holds `member`. Only `admin` adds rights in this slice, and no role implies another (research R1, R7).
 - **Upgrade** (option B): a schema default gives every existing membership `{admin,member}`, then the default becomes `{member}`. There is no data migration and no GOZ-0003-IF-03 lift. A creator gets `{admin,member}` and an invitee `{member}`. Verified on PostgreSQL 17 (R2).
 - **Decision point**: `OrganizationAccess.AuthorizeAsync` checks membership first, so non-members still get the empty 404, then evaluates (roles, action) → 403 `forbidden`. Roles are read from the database in the request's transaction, so a change takes effect on the next request with no sign-out (R6).
-- **Contract**: `contracts/permissions.md` lists ten actions on three resource types and the role table. Endpoints declare their action, and a test pins both the endpoint metadata and the document (R6, R7).
+- **Contract**: `docs/architecture/contracts/organization-permissions.md` lists ten actions on three resource types and the role table. Endpoints declare their action, and a test pins both the endpoint metadata and the document (R6, R7).
 - **Database layer** (Q3 = B): admin-only policies on `organizations` and `invitations` through a **non-definer** `account_is_admin()`, plus a `memberships_guard` trigger. The guard covers role changes, removals, adding another account, immutable identity columns and the last admin, serialized per organization. No new privileged helper is needed (verified, R3–R5).
 - **Invitations** (Q2): admin-only. Losing `admin` revokes the account's open invitations in the same transaction.
 - **Product**: role badges for every member, a role editor for admins, permission-aware controls, a new `PUT …/members/{userId}/roles` endpoint and its web route (R9, R10).
@@ -72,7 +72,7 @@ There is no new table, no data migration, and no new role or volume reset. `Down
 | II. Portable baseline | No new service, package, extension or configuration. Compose stays offline. Helm upgrade is DDL-only | PASS |
 | III. Permanent identity | Roles are assigned by permanent opaque account id only, never by email (GOZ-0002-IF-14) | PASS |
 | IV. Tenant isolation (NON-NEGOTIABLE) | The membership check stays first, with identical 404s. Roles are read from the database per request. RLS stays forced, and the role rules are a second independent layer, tested as the app and owner logins. No `BYPASSRLS`, no new definer, no new role. The limits (SQL inside one's own valid context; the account-deletion cascade) are documented | PASS |
-| V. Contracts and bounded slices | `contracts/permissions.md` (pinned by test) and an OpenAPI delta. No policy evaluator, custom roles or grants (GOZ-0018); publisher and approval actions deferred (GOZ-0005, GOZ-0021) | PASS |
+| V. Contracts and bounded slices | `docs/architecture/contracts/organization-permissions.md` (pinned by test) and an OpenAPI delta. No policy evaluator, custom roles or grants (GOZ-0018); publisher and approval actions deferred (GOZ-0005, GOZ-0021) | PASS |
 | VI. Demo-first | Cumulative `goz-0004` browser demo with screenshots, database evidence, Jaeger spans and a no-secret scan; earlier suites kept | PASS |
 | VII. Protected main | Feature branch; human merge only | PASS |
 | VIII. Converge → impact → hand-off | Through `drive-speckit` | PASS |

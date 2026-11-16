@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Gozleme.Api.Persistence.Migrations;
 
 /// <summary>
-/// Built-in organization roles (GOZ-0004; research R1–R5, data-model.md, contracts/permissions.md).
+/// Built-in organization roles (GOZ-0004; research R1–R5, data-model.md, docs/architecture/contracts/organization-permissions.md).
 /// <list type="bullet">
 /// <item><c>memberships.roles</c>: existing rows read <c>{admin,member}</c> from the column default
 /// (maintainer decision, option B), which then becomes <c>{member}</c>. DDL only: no data migration and no

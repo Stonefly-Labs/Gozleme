@@ -7,7 +7,7 @@ info:
     which stays as the historical GOZ-0002 contract). Everything not listed here is unchanged: session
     required, Cache-Control no-store, x-gozleme-client on unsafe methods, identical empty 404 for a
     malformed, unknown or non-member organization, 503 while PostgreSQL is unreachable. The interim
-    role-neutral rule is replaced by the built-in roles in contracts/permissions.md: after the
+    role-neutral rule is replaced by the built-in roles in docs/architecture/contracts/organization-permissions.md: after the
     membership check, an operation the caller's roles do not permit answers 403 {"error":"forbidden"}
     and changes nothing. A non-member never receives 403. Changed operations: rename (PATCH), invitation
     list/create/revoke and removal of another member are admin-only; leaving stays open to every member.

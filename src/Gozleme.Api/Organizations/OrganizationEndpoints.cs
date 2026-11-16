@@ -16,7 +16,7 @@ namespace Gozleme.Api.Organizations;
 /// an unknown organization and a non-member answer the same empty 404. GOZ-0004 then asks
 /// <see cref="OrganizationAccess.AuthorizeAsync"/> whether the caller's built-in roles permit the
 /// endpoint's declared <see cref="OrgActionAttribute"/> action; a member who lacks it gets 403
-/// (contracts/permissions.md). Since GOZ-0003 every call runs in one <see cref="TenantTransaction"/>, so
+/// (docs/architecture/contracts/organization-permissions.md). Since GOZ-0003 every call runs in one <see cref="TenantTransaction"/>, so
 /// PostgreSQL row-level security enforces the same boundary, and since GOZ-0004 the admin-only writes,
 /// as a second, independent layer.
 /// </summary>

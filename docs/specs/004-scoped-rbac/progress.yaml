@@ -12,6 +12,8 @@ decisions:
 - {at: '2026-11-16', by: maintainer, topic: rls-role-posture, decision: 'Q3 option B: row-level rules and guards restrict every admin-only write (rename, invitation writes, removal of other members, role changes) to admins of that organization. Any new privileged database helper this needs goes back to the maintainer as a security-review item before implementation.'}
 - {at: '2026-11-16', by: maintainer, topic: inert-roles, decision: 'Q4 option A: publisher, reviewer and approver permit exactly what member permits in this slice; no role implies another (admin does not hold them implicitly).'}
 - {at: '2026-11-16', by: maintainer, topic: role-storage, decision: 'Q5 option B: a set of roles held in the membership row (first answered C, a separate table; corrected to B the same day). The option-B initial-role rule applies unchanged via schema default.'}
+- {at: '2026-11-16', by: maintainer, topic: later-role-db-enforcement, finding: GOZ-0004-IF-02, decision: 'Option A: every later role-gated write is also enforced in the database via a non-definer account_has_role(org, role) generalising account_is_admin; reads stay member-level at the database; GOZ-0018 conditions stay application-only.'}
+- {at: '2026-11-16', by: maintainer, topic: permission-contract-location, finding: GOZ-0004-IF-13, decision: 'Option B: contract moved in this PR to docs/architecture/contracts/organization-permissions.md (living; later specs edit it in their own slice); OrganizationPermissionContractTests reads the new path.'}
 agentChoices:
 - {at: '2026-11-16', topic: member-baseline, choice: 'member is an always-held baseline in every role set (FR-002); disclosed to the maintainer, not objected to.'}
 - {at: '2026-11-16', topic: last-manager-in-database, choice: 'FR-013a extends the last-manager rule to the database layer as a consequence of Q3 option B; disclosed to the maintainer for veto.'}
@@ -23,7 +25,7 @@ stages:
   implement: {status: done, at: '2026-11-16', tasks: '37/37', note: 'make test 316 .NET + 139 web passing; make lint and make validate clean. T017 deviation (403 kept without refresh) resolved by convergence T038: a 403 re-renders the page with a persistent notice. TwoTenants fixture makes carol admin in A (she creates the fixture invitation).'}
   demo: {status: done, at: '2026-11-16', result: passed, record: docs/specs/004-scoped-rbac/evidence/demo-run.json, playwright: '41 passed (goz-0000..goz-0004)', screenshots: 39, repairs: ['exact Invitations heading match', 'demo evidence SQL sent statement by statement so a refused statement is logged without the signed context (test-only; the API never logged a context)'], note: 'run 4 failed only on a stale API pool after recreating postgres to clear pre-fix log lines; run 5 clean'}
   converge: {status: done, at: '2026-11-16', result: converged, pass1: 'tasks_appended T038-T040 (1 contradicts MEDIUM: 403 must refresh controls and keep the message; 2 partial LOW: FR-016 pure decision function, removal-vs-role-change race test)', pass2: 'converged after implementing T038-T040; make test 318 .NET + 139 web, lint, validate clean; make demo 41 passed'}
-  impactAnalysis: {status: done, at: '2026-11-16', revision: 7179977, report: docs/specs/004-scoped-rbac/reviews/impact-analysis.md, findings: docs/specs/004-scoped-rbac/reviews/impact-findings.json, summary: 'IF-01..IF-14; 11 applied to 37 living prompts; IF-14 (member could null invitation_id) fixed on branch; IF-02 and IF-13 need maintainer decision'}
+  impactAnalysis: {status: done, at: '2026-11-16', revision: 7179977, report: docs/specs/004-scoped-rbac/reviews/impact-analysis.md, findings: docs/specs/004-scoped-rbac/reviews/impact-findings.json, summary: 'IF-01..IF-14; 11 applied to 37 living prompts; IF-14 (member could null invitation_id) fixed on branch; IF-02 decided A and IF-13 decided B by the maintainer the same day'}
   roadmapSync: {status: pending}
   merge: {status: pending}
 attempts:
@@ -32,7 +34,7 @@ attempts:
 - {at: '2026-11-16', stage: demo, failure: 'signed context in postgres STATEMENT log from demo psql -c evidence calls', repair: 'psql -f - (per-statement)', result: fixed}
 blockers: []
 pullRequest: null
-nextAction: 'Maintainer decisions GOZ-0004-IF-02 and IF-13, then review-roadmap registry sync and the PR.'
+nextAction: 'review-roadmap registry sync, then the PR.'
 evidence:
   tests: ['make test: 318 .NET (unit + Testcontainers) and 139 Vitest passing', 'make lint: clean', 'make validate: clean']
   demos: [docs/specs/004-scoped-rbac/evidence/demo-run.json, docs/specs/004-scoped-rbac/evidence/rbac-evidence.json]

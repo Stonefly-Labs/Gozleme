@@ -8,7 +8,7 @@ export interface Organization {
   createdAt: string;
 }
 
-/** Built-in roles (GOZ-0004 contracts/permissions.md). Every member holds `member`. */
+/** Built-in roles (GOZ-0004 docs/architecture/contracts/organization-permissions.md). Every member holds `member`. */
 export const ROLES = ["admin", "approver", "member", "publisher", "reviewer"] as const;
 export type Role = (typeof ROLES)[number];
 
