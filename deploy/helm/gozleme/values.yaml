@@ -30,6 +30,10 @@ auth:
 # clients share one rate-limit budget per web pod (fails safe). See README "Client addresses".
 network:
   trustedProxies: ""
+# Organizations (GOZ-0002): invitation lifetime (1-720 h) and per-account redemption attempts per minute (1-100).
+organizations:
+  invitationExpiryHours: 168
+  redeemPerMinute: 10
 
 migrate:
   enabled: true

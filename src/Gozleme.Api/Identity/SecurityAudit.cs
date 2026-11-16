@@ -1,7 +1,7 @@
 namespace Gozleme.Api.Identity;
 
 /// <summary>
-/// Security audit events (FR-029): category <c>Gozleme.Security.Audit</c>, opaque account id only —
+/// Security audit events (GOZ-0001 FR-029; organization events GOZ-0002 FR-023): category <c>Gozleme.Security.Audit</c>, opaque account id only —
 /// never an email, password, cookie or session key. Exported through the normal log pipeline.
 /// </summary>
 internal sealed partial class SecurityAudit(ILoggerFactory loggers)
@@ -39,4 +39,28 @@ internal sealed partial class SecurityAudit(ILoggerFactory loggers)
 
     [LoggerMessage(EventId = 1010, EventName = "gozleme.audit.seeded", Level = LogLevel.Information, Message = "Demo account seeded {UserId}")]
     public partial void Seeded(Guid userId);
+
+    [LoggerMessage(EventId = 1101, EventName = "gozleme.audit.org_created", Level = LogLevel.Information, Message = "Organization created {OrganizationId} by {UserId}")]
+    public partial void OrganizationCreated(Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1102, EventName = "gozleme.audit.org_renamed", Level = LogLevel.Information, Message = "Organization renamed {OrganizationId} by {UserId}")]
+    public partial void OrganizationRenamed(Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1103, EventName = "gozleme.audit.org_invitation_created", Level = LogLevel.Information, Message = "Invitation created {InvitationId} for {OrganizationId} by {UserId}")]
+    public partial void InvitationCreated(Guid invitationId, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1104, EventName = "gozleme.audit.org_invitation_revoked", Level = LogLevel.Information, Message = "Invitation revoked {InvitationId} for {OrganizationId} by {UserId}")]
+    public partial void InvitationRevoked(Guid invitationId, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1105, EventName = "gozleme.audit.org_invitation_redeemed", Level = LogLevel.Information, Message = "Invitation redeemed {InvitationId}; {UserId} joined {OrganizationId}")]
+    public partial void InvitationRedeemed(Guid invitationId, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1106, EventName = "gozleme.audit.org_invitation_refused", Level = LogLevel.Warning, Message = "Invitation redemption refused ({Category}) {UserId}")]
+    public partial void InvitationRefused(string category, Guid userId);
+
+    [LoggerMessage(EventId = 1107, EventName = "gozleme.audit.org_member_removed", Level = LogLevel.Information, Message = "Member {TargetUserId} removed from {OrganizationId} by {UserId}")]
+    public partial void MemberRemoved(Guid organizationId, Guid targetUserId, Guid userId);
+
+    [LoggerMessage(EventId = 1108, EventName = "gozleme.audit.org_member_left", Level = LogLevel.Information, Message = "Member {UserId} left {OrganizationId}")]
+    public partial void MemberLeft(Guid organizationId, Guid userId);
 }

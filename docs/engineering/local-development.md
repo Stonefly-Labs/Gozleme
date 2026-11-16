@@ -22,7 +22,7 @@ Azure, AWS, OIDC or embedding provider is used.
 | Tests | `make test` (backend unit + Testcontainers integration, frontend unit) |
 | Lint | `make lint` |
 | Governance validation | `make validate` |
-| Autonomous demo | `make demo SPEC=GOZ-0001` → replays every earlier demo, then this spec's; writes `docs/specs/001-local-identity/evidence/` (earlier specs' screenshots under `screenshots/regression-goz-NNNN/`) |
+| Autonomous demo | `make demo SPEC=GOZ-0002` → replays every earlier demo, then this spec's; writes `docs/specs/002-organizations/evidence/` (earlier specs' screenshots under `screenshots/regression-goz-NNNN/`) |
 | Logs / status | `make logs`, `make ps` |
 | Stop / reset | `make down`; `make reset` deletes the database volume |
 
@@ -43,6 +43,31 @@ plain-HTTP local development, and `GOZLEME_TRUSTED_PROXIES` lists the only netwo
 
 The local PostgreSQL image is `pgvector/pgvector:pg17` so the optional extension is available;
 it is never created or required. Set `GOZLEME_POSTGRES_IMAGE=postgres:17-alpine` to run without it.
+
+## Organizations and membership (GOZ-0002)
+
+Any signed-in account can create an organization at `/organizations` and becomes its first
+member. An organization has a permanent opaque id and an editable display name that need not be
+unique. The header switcher lists only your organizations; the selection is a stored preference
+(`memberships.selected_at`), never authority: every organization page and API call re-checks
+membership in PostgreSQL, so removing a member takes effect on their next request without signing
+them out. A non-member, an unknown id and a malformed id all get the same "not found".
+
+People join only through single-use invitation codes (`/join`): a member creates one, shares it
+out of band, and it works once. Only a SHA-256 hash of each code is stored; codes are revocable
+and expire. Membership is role-neutral until GOZ-0004: any member may rename, invite, revoke,
+remove any other member or leave, and the last member can neither leave nor be removed. There is
+no "add by email", no organization deletion and no administrative delegation.
+
+| Setting | Default | Bounds |
+|---|---|---|
+| `Gozleme__Organizations__InvitationExpiryHours` | `168` (7 days) | 1–720 |
+| `Gozleme__Organizations__RedeemPerMinute` (per account) | `10` | 1–100 |
+
+The demo `seed` also creates `carol@demo.gozleme.test` and **Seeded Demo Org** (fixed id
+`0193a000-0000-7000-8000-000000000002`, members alice and carol); every `seed` run restores it.
+Until GOZ-0003 enables row-level security, organization isolation is enforced by the
+application only.
 
 ## Observability (foundational)
 

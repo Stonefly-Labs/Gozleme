@@ -57,6 +57,10 @@ dependency of Gözleme workloads.
   `X-Forwarded-For`, because Next.js keeps a client-supplied value. With the default (empty), all
   clients behind one web pod share a budget. Account lockout and a global per-instance ceiling
   apply regardless. Rate limits are per API instance, not distributed.
+- **Organizations (GOZ-0002).** `organizations.invitationExpiryHours` (default `168`, 1–720) and
+  `organizations.redeemPerMinute` (default `10` per account, 1–100). Organization isolation is
+  enforced by the application only until GOZ-0003 enables row-level security; do not cut a
+  release before then (maintainer decision on GOZ-0002-IF-01).
 - **Operator recovery (never over HTTP).** There is no email-based reset yet:
 
   ```bash

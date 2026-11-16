@@ -12,7 +12,7 @@ namespace Gozleme.Api.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Hosts the real API against a test database as the ordinary app role, capturing logs and telemetry.
-/// <paramref name="settings"/> override configuration; auth rate limits are raised by default so only
+/// <paramref name="settings"/> override configuration; auth and redemption rate limits are raised by default so only
 /// rate-limit tests hit them.
 /// </summary>
 public sealed class GozlemeApiFactory(
@@ -25,6 +25,7 @@ public sealed class GozlemeApiFactory(
         ["Gozleme:Auth:RateLimit:SignInPerMinute"] = "1000",
         ["Gozleme:Auth:RateLimit:RegisterPerMinute"] = "1000",
         ["Gozleme:Auth:RateLimit:GlobalPerMinute"] = "100000",
+        ["Gozleme:Organizations:RedeemPerMinute"] = "100",
     };
 
     public ConcurrentQueue<string> Logs { get; } = new();

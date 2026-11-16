@@ -1,0 +1,203 @@
+openapi: 3.1.0
+info:
+  title: Gözleme Organizations API
+  version: "1"
+  description: >
+    Organizations and role-neutral membership (GOZ-0002). Internal API consumed only by the Gözleme
+    web tier (same-origin BFF); no CORS. Every operation requires a session (401 otherwise) and
+    answers `Cache-Control: no-store`. Unsafe methods require `x-gozleme-client: web` (403
+    otherwise). An organization, member or invitation id that is malformed, does not exist, or
+    belongs to an organization the caller is not a member of answers an identical empty 404.
+    While PostgreSQL is unreachable every operation answers 503 `{"error":"unavailable"}`.
+    Interim rule until GOZ-0004: every member may perform every operation below. There are no
+    roles, owners, administrators or delegated permissions; unknown request fields are ignored.
+servers:
+  - url: http://api:8080
+security:
+  - session: []
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: gozleme_session
+  parameters:
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      schema: { type: string, description: Opaque UUID; anything else is treated as not found }
+  responses:
+    NotFound:
+      description: Not found, not a member, or malformed id (indistinguishable; empty body)
+    Unauthenticated:
+      description: No valid session (empty body)
+    CrossSite:
+      description: Missing web-client header
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Validation:
+      description: Field validation failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [validation_failed, invalid_invitation, last_member, rate_limited, forbidden, unavailable]
+        fields:
+          type: object
+          additionalProperties: { type: array, items: { type: string } }
+    DisplayName:
+      type: object
+      required: [displayName]
+      properties:
+        displayName: { type: string, minLength: 1, maxLength: 100, description: Trimmed; control characters rejected; not unique }
+    Organization:
+      type: object
+      required: [id, displayName, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string }
+        createdAt: { type: string, format: date-time }
+    OrganizationList:
+      type: object
+      required: [organizations, activeOrganizationId]
+      properties:
+        organizations:
+          type: array
+          description: Only the caller's organizations, ordered by displayName then id
+          items: { $ref: '#/components/schemas/Organization' }
+        activeOrganizationId:
+          type: [string, 'null']
+          format: uuid
+          description: Context preference (research R4); never authority
+    Member:
+      type: object
+      required: [userId, email, joinedAt, joinedVia, isSelf]
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: string, description: Shown to co-members only }
+        joinedAt: { type: string, format: date-time }
+        joinedVia: { type: string, enum: [creator, invitation] }
+        isSelf: { type: boolean }
+    Invitation:
+      type: object
+      required: [id, createdAt, expiresAt, createdBy]
+      properties:
+        id: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        createdBy: { type: [string, 'null'], format: uuid }
+    CreatedInvitation:
+      allOf:
+        - $ref: '#/components/schemas/Invitation'
+        - type: object
+          required: [code]
+          properties:
+            code: { type: string, description: 'Shown once; 32 Crockford base32 chars in dash-separated groups of 4' }
+    Redeem:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, maxLength: 64, description: Case-insensitive; dashes/whitespace ignored }
+    Redeemed:
+      type: object
+      required: [organizationId, alreadyMember]
+      properties:
+        organizationId: { type: string, format: uuid }
+        alreadyMember: { type: boolean }
+paths:
+  /api/v1/organizations:
+    get:
+      summary: The caller's organizations and active context
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/OrganizationList' } } } }
+        "401": { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      summary: Create an organization; the caller becomes its first member and it becomes active
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DisplayName' } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Organization' } } } }
+        "400": { $ref: '#/components/responses/Validation' }
+        "401": { $ref: '#/components/responses/Unauthenticated' }
+        "403": { $ref: '#/components/responses/CrossSite' }
+  /api/v1/organizations/{organizationId}:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    get:
+      summary: One organization the caller belongs to
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Organization' } } } }
+        "404": { $ref: '#/components/responses/NotFound' }
+    patch:
+      summary: Rename (any member)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/DisplayName' } } } }
+      responses:
+        "200": { description: Renamed, content: { application/json: { schema: { $ref: '#/components/schemas/Organization' } } } }
+        "400": { $ref: '#/components/responses/Validation' }
+        "404": { $ref: '#/components/responses/NotFound' }
+  /api/v1/organizations/{organizationId}/select:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    post:
+      summary: Make this organization the caller's active context (preference only)
+      responses:
+        "204": { description: Selected }
+        "404": { $ref: '#/components/responses/NotFound' }
+  /api/v1/organizations/{organizationId}/members:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    get:
+      summary: Current members (any member)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, required: [members], properties: { members: { type: array, items: { $ref: '#/components/schemas/Member' } } } } } } }
+        "404": { $ref: '#/components/responses/NotFound' }
+  /api/v1/organizations/{organizationId}/members/{userId}:
+    parameters:
+      - { $ref: '#/components/parameters/OrganizationId' }
+      - { name: userId, in: path, required: true, schema: { type: string } }
+    delete:
+      summary: Remove a member, or leave when userId is the caller (any member)
+      responses:
+        "204": { description: Removed / left }
+        "404": { $ref: '#/components/responses/NotFound' }
+        "409":
+          description: The last member cannot leave or be removed
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+  /api/v1/organizations/{organizationId}/invitations:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    get:
+      summary: Open invitations (codes are never returned again)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, required: [invitations], properties: { invitations: { type: array, items: { $ref: '#/components/schemas/Invitation' } } } } } } }
+        "404": { $ref: '#/components/responses/NotFound' }
+    post:
+      summary: Create a single-use invitation (any member)
+      responses:
+        "201": { description: Created; code shown once, content: { application/json: { schema: { $ref: '#/components/schemas/CreatedInvitation' } } } }
+        "404": { $ref: '#/components/responses/NotFound' }
+  /api/v1/organizations/{organizationId}/invitations/{invitationId}:
+    parameters:
+      - { $ref: '#/components/parameters/OrganizationId' }
+      - { name: invitationId, in: path, required: true, schema: { type: string } }
+    delete:
+      summary: Revoke an open invitation (any member)
+      responses:
+        "204": { description: Revoked }
+        "404": { $ref: '#/components/responses/NotFound' }
+  /api/v1/invitations/redeem:
+    post:
+      summary: Join through an invitation code
+      description: >
+        Unknown, used, revoked, expired and malformed codes all answer the identical 400
+        `{"error":"invalid_invitation"}`. Rate limited per account (429 + Retry-After). An existing
+        member gets 200 with alreadyMember true and the code is not consumed.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Redeem' } } } }
+      responses:
+        "200": { description: Joined (or already a member), content: { application/json: { schema: { $ref: '#/components/schemas/Redeemed' } } } }
+        "400": { description: Invalid or expired invitation, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        "401": { $ref: '#/components/responses/Unauthenticated' }
+        "429": { description: Rate limited, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

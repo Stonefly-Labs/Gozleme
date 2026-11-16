@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Gozleme.Api.Persistence.Migrations
 {
     [DbContext(typeof(GozlemeDbContext))]
-    internal sealed partial class GozlemeDbContextModelSnapshot : ModelSnapshot
+    partial class GozlemeDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -155,6 +155,159 @@ namespace Gozleme.Api.Persistence.Migrations
                     b.ToTable("users", "gozleme");
                 });
 
+            modelBuilder.Entity("Gozleme.Api.Organizations.Invitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<byte[]>("CodeHash")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<Guid?>("RevokedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("revoked_by");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<Guid?>("UsedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("used_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_invitations");
+
+                    b.HasIndex("CodeHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_invitations_code_hash");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("ix_invitations_created_by");
+
+                    b.HasIndex("RevokedBy")
+                        .HasDatabaseName("ix_invitations_revoked_by");
+
+                    b.HasIndex("UsedBy")
+                        .HasDatabaseName("ix_invitations_used_by");
+
+                    b.HasIndex("OrganizationId", "CreatedAt")
+                        .HasDatabaseName("ix_invitations_organization_id_created_at");
+
+                    b.ToTable("invitations", "gozleme", t =>
+                        {
+                            t.HasCheckConstraint("ck_invitations_code_hash_length", "octet_length(code_hash) = 32");
+
+                            t.HasCheckConstraint("ck_invitations_used_or_revoked", "NOT (used_at IS NOT NULL AND revoked_at IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Organizations.Membership", b =>
+                {
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid?>("InvitationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invitation_id");
+
+                    b.Property<DateTimeOffset>("JoinedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("joined_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("JoinedVia")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("joined_via");
+
+                    b.Property<DateTimeOffset?>("SelectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("selected_at");
+
+                    b.HasKey("OrganizationId", "UserId")
+                        .HasName("pk_memberships");
+
+                    b.HasIndex("InvitationId")
+                        .HasDatabaseName("ix_memberships_invitation_id");
+
+                    b.HasIndex("UserId", "SelectedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_memberships_user_id_selected_at");
+
+                    b.ToTable("memberships", "gozleme", t =>
+                        {
+                            t.HasCheckConstraint("ck_memberships_joined_via", "joined_via IN ('creator', 'invitation')");
+                        });
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Organizations.Organization", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_name");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_organizations");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("ix_organizations_created_by");
+
+                    b.ToTable("organizations", "gozleme");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
@@ -267,6 +420,66 @@ namespace Gozleme.Api.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_auth_sessions_users_user_id");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Organizations.Invitation", b =>
+                {
+                    b.HasOne("Gozleme.Api.Identity.GozlemeUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_invitations_users_created_by");
+
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_invitations_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Identity.GozlemeUser", null)
+                        .WithMany()
+                        .HasForeignKey("RevokedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_invitations_users_revoked_by");
+
+                    b.HasOne("Gozleme.Api.Identity.GozlemeUser", null)
+                        .WithMany()
+                        .HasForeignKey("UsedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_invitations_users_used_by");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Organizations.Membership", b =>
+                {
+                    b.HasOne("Gozleme.Api.Organizations.Invitation", null)
+                        .WithMany()
+                        .HasForeignKey("InvitationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_memberships_invitations_invitation_id");
+
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_memberships_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Identity.GozlemeUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_memberships_users_user_id");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Organizations.Organization", b =>
+                {
+                    b.HasOne("Gozleme.Api.Identity.GozlemeUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_organizations_users_created_by");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>

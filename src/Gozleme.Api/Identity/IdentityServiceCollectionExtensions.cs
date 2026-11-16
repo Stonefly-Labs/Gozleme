@@ -116,10 +116,18 @@ internal static class IdentityServiceCollectionExtensions
             var seconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter) ? (int)Math.Ceiling(retryAfter.TotalSeconds) : 60;
             context.HttpContext.Response.Headers.RetryAfter = seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
             context.HttpContext.Response.Headers.CacheControl = "no-store";
-            var operation = context.HttpContext.Request.Path.StartsWithSegments("/api/v1/auth/register", StringComparison.Ordinal)
-                ? AuthOperation.Register
-                : AuthOperation.SignIn;
-            AuthTelemetry.Failed(System.Diagnostics.Activity.Current, operation, AuthFailure.RateLimited);
+            if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<RateLimitedOperation>() is { } labelled)
+            {
+                labelled.Record(System.Diagnostics.Activity.Current);
+            }
+            else
+            {
+                var operation = context.HttpContext.Request.Path.StartsWithSegments("/api/v1/auth/register", StringComparison.Ordinal)
+                    ? AuthOperation.Register
+                    : AuthOperation.SignIn;
+                AuthTelemetry.Failed(System.Diagnostics.Activity.Current, operation, AuthFailure.RateLimited);
+            }
+
             await context.HttpContext.Response.WriteAsJsonAsync(new AuthError(AuthFailure.RateLimited), cancellationToken);
         };
 
@@ -150,3 +158,6 @@ internal static class IdentityServiceCollectionExtensions
         return Task.CompletedTask;
     }
 }
+
+/// <summary>Endpoint metadata: how a rate-limit rejection on this endpoint is recorded in telemetry.</summary>
+internal sealed record RateLimitedOperation(Action<System.Diagnostics.Activity?> Record);

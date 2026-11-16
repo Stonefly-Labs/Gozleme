@@ -16,7 +16,8 @@ import {
 
 /**
  * GOZ-0000 autonomous demo: live dashboard reading real API + PostgreSQL status, real
- * dependency failures (containers stopped), recovery, and the catalog boundary.
+ * dependency failures (containers stopped), recovery, and the catalog boundary (organizations
+ * superseded by GOZ-0002).
  *
  * Narrowed by GOZ-0001 (IF-01, FR-036/FR-037): runs signed in as the seeded synthetic account (the
  * project's storageState; the cookie is host-scoped, so direct API calls carry it too). While the
@@ -25,7 +26,7 @@ import {
  */
 const UNREACHABLE_503 = /^Database unreachable; request answered 503 \((NpgsqlException|PostgresException)\)$/;
 const shots = shotsDir("goz-0000");
-const LATEST_MIGRATION = /_LocalIdentity$/;
+const LATEST_MIGRATION = /_Organizations$/;
 
 test.describe.configure({ mode: "serial" });
 
@@ -125,10 +126,10 @@ test("unreachable: stopping the API shows API unreachable and no stale database 
   await expect(page.getByTestId("overall-status")).toHaveText("Healthy", { timeout: 60_000 });
 });
 
-test("boundary: organization and catalog features are not implemented", async ({ page, request }) => {
+test("boundary: catalog features are not implemented", async ({ page, request }) => {
+  // Narrowed by GOZ-0002 (IF-10): organizations now exist and are covered by the goz-0002 suite.
   for (const [method, path] of [
     ["GET", "/api/v1/catalog"],
-    ["GET", "/api/v1/organizations"],
     ["GET", "/api/v1/users"],
     ["GET", "/api/v1/search?q=mcp"],
     ["POST", "/api/v1/auth/login"],
@@ -136,13 +137,13 @@ test("boundary: organization and catalog features are not implemented", async ({
     const res = await request.fetch(`${API_URL}${path}`, { method });
     expect(res.status(), `${method} ${path}`).toBe(404);
   }
-  // `/login` is superseded by GOZ-0001 local sign-in; organizations and catalog still do not exist.
-  for (const path of ["/catalog", "/organizations"]) {
-    const res = await page.goto(path);
-    expect(res?.status(), path).toBe(404);
-  }
+  // `/login` is superseded by GOZ-0001 local sign-in and `/organizations` by GOZ-0002; the catalog still does not exist.
+  const res = await page.goto("/catalog");
+  expect(res?.status(), "/catalog").toBe(404);
   await page.goto("/");
-  await expect(page.getByRole("link")).toHaveCount(0); // no catalog or organization navigation yet
+  // The only navigation is the GOZ-0002 organizations header: no catalog links yet.
+  await expect(page.getByRole("banner").getByRole("link")).toHaveText(["Organizations", "Join"]);
+  await expect(page.getByRole("link")).toHaveCount(2);
 });
 
 test("observability: one trace threads browser → web → API → PostgreSQL, with metrics and no secrets", async ({ page, request }) => {

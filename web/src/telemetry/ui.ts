@@ -1,12 +1,27 @@
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { BROWSER_SERVICE_NAME } from "./browser";
 
+/** Bounded UI flows: identity (GOZ-0001) and organizations (GOZ-0002). */
+export type UiFlow =
+  | "sign_in"
+  | "register"
+  | "sign_out"
+  | "sign_out_all"
+  | "org_create"
+  | "org_rename"
+  | "org_select"
+  | "invite_create"
+  | "invite_revoke"
+  | "invite_redeem"
+  | "member_remove"
+  | "member_leave";
+
 /**
- * Browser span around a UI identity flow (`gozleme.ui.<flow>`), so its fetch joins one trace from
- * the browser through web, API and database. Only the bounded outcome is recorded — never form values.
+ * Browser span around a UI flow (`gozleme.ui.<flow>`), so its fetch joins one trace from
+ * the browser through web, API and database. Only the bounded outcome is recorded — never form values, names or codes.
  */
 export async function traced<T>(
-  flow: "sign_in" | "register" | "sign_out" | "sign_out_all",
+  flow: UiFlow,
   run: () => Promise<T>,
   succeeded: (result: T) => boolean = (result) => !!result,
 ): Promise<T> {

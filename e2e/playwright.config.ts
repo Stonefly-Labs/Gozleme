@@ -30,5 +30,6 @@ export default defineConfig({
     { name: "setup", testMatch: /auth\.setup\.ts/, use: chrome },
     { name: "goz-0000", testMatch: /bootstrap-demo\.spec\.ts/, dependencies: ["setup"], use: { ...chrome, storageState: AUTH_STATE } },
     { name: "goz-0001", testMatch: /identity-demo\.spec\.ts/, dependencies: ["goz-0000"], use: chrome },
+    { name: "goz-0002", testMatch: /organizations-demo\.spec\.ts/, dependencies: ["goz-0001"], use: chrome },
   ],
 });
