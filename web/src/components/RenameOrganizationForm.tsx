@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { displayNameError, send, unavailableText } from "@/lib/client";
+import { displayNameError, forbiddenText, send, unavailableText } from "@/lib/client";
 import { traced } from "@/telemetry/ui";
 
-/** Any member may rename; the organization's id never changes (FR-003). */
+/** Admins may rename (GOZ-0004); the organization's id never changes (FR-003). */
 export function RenameOrganizationForm({ organizationId, displayName }: { organizationId: string; displayName: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,10 @@ export function RenameOrganizationForm({ organizationId, displayName }: { organi
       router.refresh();
       return;
     }
-    setError(status === 400 ? (displayNameError(json) ?? "Enter a name of 1–100 characters.") : status === 404 ? "Organization not found." : unavailableText);
+    setError(
+      status === 400 ? (displayNameError(json) ?? "Enter a name of 1–100 characters.") : status === 404 ? "Organization not found." : status === 403 ? forbiddenText : unavailableText,
+    );
+    // No refresh on 403: the refreshed page drops this form, and the message with it.
   }
 
   return (

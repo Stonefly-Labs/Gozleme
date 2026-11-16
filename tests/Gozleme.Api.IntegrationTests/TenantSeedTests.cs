@@ -54,21 +54,42 @@ public sealed class TenantSeedTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Seed_restores_a_drifted_tenant_acting_as_whichever_seeded_member_remains()
+    public async Task Seed_restores_a_drifted_tenant_acting_as_whichever_seeded_admin_remains()
     {
         Assert.Equal(OperatorCommands.Ok, (await SeedAsync()).Code);
-        var demo = OperatorCommands.DemoOrganizationId;
-        var alice = await _db.ScalarAsync<Guid>("SELECT id FROM gozleme.users WHERE email = 'alice@demo.gozleme.test'");
-        var bob = await _db.ScalarAsync<Guid>("SELECT id FROM gozleme.users WHERE email = 'bob@demo.gozleme.test'");
-        await GozlemeDatabase.ExecuteAsync($"""
-            DELETE FROM gozleme.memberships WHERE organization_id = '{demo}' AND user_id = '{alice}';
-            INSERT INTO gozleme.memberships (organization_id, user_id, joined_at, joined_via) VALUES ('{demo}', '{bob}', now(), 'invitation');
-            UPDATE gozleme.organizations SET display_name = 'Drifted' WHERE id = '{demo}';
-            """, _db.SuperuserConnectionString);
+        Assert.Equal("alice@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member", await MemberRoles(OperatorCommands.DemoOrganizationId));
+        Assert.Equal("dave@demo.gozleme.test:admin,member", await MemberRoles(OperatorCommands.PartnerOrganizationId));
 
-        Assert.Equal(OperatorCommands.Ok, (await SeedAsync()).Code); // only carol is left to act as
-        Assert.Equal("alice@demo.gozleme.test,carol@demo.gozleme.test", await Members(demo));
+        var demo = OperatorCommands.DemoOrganizationId;
+        var (alice, bob) = (await UserId("alice"), await UserId("bob"));
+        await Drift($"""
+            DELETE FROM gozleme.memberships WHERE organization_id = '{demo}' AND user_id = '{alice}';
+            INSERT INTO gozleme.memberships (organization_id, user_id, joined_at, joined_via, roles) VALUES ('{demo}', '{bob}', now(), 'invitation', {AdminMember});
+            UPDATE gozleme.memberships SET roles = {AdminMember} WHERE organization_id = '{demo}' AND user_id = '{await UserId("carol")}';
+            UPDATE gozleme.organizations SET display_name = 'Drifted' WHERE id = '{demo}';
+            """);
+
+        Assert.Equal(OperatorCommands.Ok, (await SeedAsync()).Code); // only carol is left to act as, and she holds admin
+        Assert.Equal("alice@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member", await MemberRoles(demo));
         Assert.Equal(OperatorCommands.DemoOrganizationName, await _db.ScalarAsync<string>($"SELECT display_name FROM gozleme.organizations WHERE id = '{demo}'"));
+    }
+
+    [Fact]
+    public async Task A_tenant_whose_remaining_seeded_members_are_not_admins_cannot_be_restored()
+    {
+        // GOZ-0004 research R11: seed acts only as a seeded admin, so an ordinary member's rights cannot restore it.
+        Assert.Equal(OperatorCommands.Ok, (await SeedAsync()).Code);
+        var demo = OperatorCommands.DemoOrganizationId;
+        var (alice, bob) = (await UserId("alice"), await UserId("bob"));
+        await Drift($"""
+            DELETE FROM gozleme.memberships WHERE organization_id = '{demo}' AND user_id = '{alice}';
+            INSERT INTO gozleme.memberships (organization_id, user_id, joined_at, joined_via, roles) VALUES ('{demo}', '{bob}', now(), 'invitation', {AdminMember});
+            """);
+
+        var (code, _, stderr) = await SeedAsync();
+        Assert.Equal(OperatorCommands.Failed, code);
+        Assert.Contains(OperatorCommands.UnrestorableMessage, stderr, StringComparison.Ordinal);
+        Assert.Equal("bob@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member", await MemberRoles(demo));
     }
 
     [Fact]
@@ -77,10 +98,10 @@ public sealed class TenantSeedTests : IAsyncLifetime
         Assert.Equal(OperatorCommands.Ok, (await SeedAsync()).Code);
         var partner = OperatorCommands.PartnerOrganizationId;
         var bob = await _db.ScalarAsync<Guid>("SELECT id FROM gozleme.users WHERE email = 'bob@demo.gozleme.test'");
-        await GozlemeDatabase.ExecuteAsync($"""
-            INSERT INTO gozleme.memberships (organization_id, user_id, joined_at, joined_via) VALUES ('{partner}', '{bob}', now(), 'invitation');
+        await Drift($"""
+            INSERT INTO gozleme.memberships (organization_id, user_id, joined_at, joined_via, roles) VALUES ('{partner}', '{bob}', now(), 'invitation', {AdminMember});
             DELETE FROM gozleme.memberships WHERE organization_id = '{partner}' AND user_id <> '{bob}';
-            """, _db.SuperuserConnectionString);
+            """);
 
         var (code, _, stderr) = await SeedAsync();
         Assert.Equal(OperatorCommands.Failed, code);
@@ -96,6 +117,18 @@ public sealed class TenantSeedTests : IAsyncLifetime
         Assert.Equal(OperatorCommands.Ok, (await RunAsync("unlock", ["--email", "lockout@demo.gozleme.test"], withKey: false)).Code);
         Assert.Equal(OperatorCommands.Ok, (await RunAsync("reset-password", ["--email", "bob@demo.gozleme.test", "--password-stdin"], withKey: false, stdin: "a-fresh-operator-passphrase")).Code);
     }
+
+    private const string AdminMember = "'{admin,member}'";
+
+    /// <summary>Out-of-band drift as the superuser; replica mode skips memberships_guard, which binds superusers too (GOZ-0004).</summary>
+    private Task Drift(string sql) => GozlemeDatabase.ExecuteAsync("SET session_replication_role = replica;\n" + sql, _db.SuperuserConnectionString);
+
+    private Task<Guid> UserId(string name) => _db.ScalarAsync<Guid>($"SELECT id FROM gozleme.users WHERE email = '{name}@demo.gozleme.test'");
+
+    private Task<string> MemberRoles(Guid organizationId) => _db.ScalarAsync<string>($"""
+        SELECT string_agg(u.email || ':' || array_to_string(m.roles, ','), ';' ORDER BY u.email)
+        FROM gozleme.memberships m JOIN gozleme.users u ON u.id = m.user_id WHERE m.organization_id = '{organizationId}'
+        """);
 
     private Task<(int Code, string Stdout, string Stderr)> SeedAsync() =>
         RunAsync("seed", [$"--{OperatorCommands.DemoPasswordKey}={DemoPassword}"], withKey: true);

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Invitation, Member, Organization } from "@/lib/organizations";
 import { CreateOrganizationForm } from "./CreateOrganizationForm";
 import { InvitationPanel } from "./InvitationPanel";
-import { LAST_MEMBER, MemberList } from "./MemberList";
+import { LAST_ADMIN, LAST_MEMBER, MemberList } from "./MemberList";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import { OrganizationsUnavailable } from "./OrganizationsUnavailable";
 import { INVALID_INVITATION, RedeemInvitationForm } from "./RedeemInvitationForm";
@@ -17,8 +17,11 @@ const orgs: Organization[] = [
   { id: ORG, displayName: "Demo Org Alpha", createdAt: "2026-11-15T10:00:00Z" },
   { id: "0193a000-0000-7000-8000-000000000003", displayName: "Demo Org Beta", createdAt: "2026-11-15T10:01:00Z" },
 ];
-const alice: Member = { userId: "u-alice", email: "alice@demo.gozleme.test", joinedAt: "2026-11-15T10:00:00Z", joinedVia: "creator", isSelf: true };
-const bob: Member = { userId: "u-bob", email: "bob@demo.gozleme.test", joinedAt: "2026-11-15T10:05:00Z", joinedVia: "invitation", isSelf: false };
+const alice: Member = { userId: "u-alice", email: "alice@demo.gozleme.test", joinedAt: "2026-11-15T10:00:00Z", joinedVia: "creator", isSelf: true, roles: ["admin", "member"] };
+const bob: Member = { userId: "u-bob", email: "bob@demo.gozleme.test", joinedAt: "2026-11-15T10:05:00Z", joinedVia: "invitation", isSelf: false, roles: ["member"] };
+const ADMIN = ["organization.read", "organization.select", "organization.rename", "membership.list", "membership.leave", "membership.remove", "membership.roles.change", "invitation.list", "invitation.create", "invitation.revoke"];
+const MEMBER = ["organization.read", "organization.select", "membership.list", "membership.leave"];
+const FORBIDDEN = "You no longer have permission to do that.";
 
 function respond(status: number, body?: unknown) {
   return vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(body === undefined ? null : JSON.stringify(body), { status }));
@@ -63,6 +66,25 @@ describe("RenameOrganizationForm", () => {
   });
 });
 
+describe("permission refusals", () => {
+  // These forms disappear for a non-admin on the next load, so they keep the message instead of refreshing it away.
+  it("a 403 on rename shows the permission message", async () => {
+    respond(403, { error: "forbidden" });
+    render(<RenameOrganizationForm organizationId={ORG} displayName="Demo Org Beta" />);
+    fireEvent.click(screen.getByRole("button", { name: "Rename" }));
+    expect(await screen.findByText(FORBIDDEN)).toBeInTheDocument();
+    expect(router.refresh).not.toHaveBeenCalled();
+  });
+
+  it("a 403 on creating an invitation shows the permission message", async () => {
+    respond(403, { error: "forbidden" });
+    render(<InvitationPanel organizationId={ORG} invitations={[]} members={[alice]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Create invitation" }));
+    expect(await screen.findByText(FORBIDDEN)).toBeInTheDocument();
+    expect(router.refresh).not.toHaveBeenCalled();
+  });
+});
+
 describe("OrganizationSwitcher", () => {
   it("lists only the given organizations, marks the active one and records a selection", async () => {
     const spy = respond(204);
@@ -82,13 +104,15 @@ describe("OrganizationSwitcher", () => {
 });
 
 describe("MemberList", () => {
-  it("shows email and join date, confirms before removing, and has no role controls", async () => {
+  it("shows email, join date and role badges, and confirms before removing", async () => {
     const spy = respond(204);
-    render(<MemberList organizationId={ORG} members={[alice, bob]} />);
+    render(<MemberList organizationId={ORG} members={[alice, bob]} permissions={ADMIN} />);
     expect(screen.getAllByTestId("member-row")).toHaveLength(2);
     expect(screen.getByText("bob@demo.gozleme.test")).toBeInTheDocument();
     expect(screen.getByText("2026-11-15 10:05 UTC")).toBeInTheDocument();
-    expect(screen.queryByText(/role|admin|owner|promote|transfer/i)).not.toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "Roles of alice@demo.gozleme.test" })).getAllByRole("listitem").map((r) => r.textContent)).toEqual(["admin", "member"]);
+    expect(within(screen.getByRole("list", { name: "Roles of bob@demo.gozleme.test" })).getAllByRole("listitem").map((r) => r.textContent)).toEqual(["member"]);
+    expect(screen.queryByText(/owner|promote|transfer/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Remove bob@demo.gozleme.test" }));
     expect(spy).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Confirm remove" }));
@@ -98,7 +122,7 @@ describe("MemberList", () => {
 
   it("explains the last-member rule when leaving is refused", async () => {
     respond(409, { error: "last_member" });
-    render(<MemberList organizationId={ORG} members={[alice]} />);
+    render(<MemberList organizationId={ORG} members={[alice]} permissions={ADMIN} />);
     fireEvent.click(screen.getByRole("button", { name: "Leave organization" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm leave" }));
     expect(await screen.findByTestId("member-error")).toHaveTextContent(LAST_MEMBER);
@@ -107,10 +131,47 @@ describe("MemberList", () => {
 
   it("returns to the organization list after leaving", async () => {
     respond(204);
-    render(<MemberList organizationId={ORG} members={[alice, bob]} />);
+    render(<MemberList organizationId={ORG} members={[alice, bob]} permissions={MEMBER} />);
     fireEvent.click(screen.getByRole("button", { name: "Leave organization" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm leave" }));
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/organizations"));
+  });
+
+  it("gives a member badges and Leave only: no role editor and no Remove for others", () => {
+    render(<MemberList organizationId={ORG} members={[{ ...alice, roles: ["member"] }, bob]} permissions={MEMBER} />);
+    expect(screen.getAllByTestId("role-badge")).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: /Edit roles/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Remove/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Leave organization" })).toBeInTheDocument();
+  });
+
+  it("lets an admin edit roles with four checkboxes, member fixed and no combobox", async () => {
+    const spy = respond(200, { ...bob, roles: ["admin", "member"] });
+    render(<MemberList organizationId={ORG} members={[alice, bob]} permissions={ADMIN} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit roles of bob@demo.gozleme.test" }));
+    const editor = screen.getByRole("form", { name: "Edit roles of bob@demo.gozleme.test" });
+    expect(within(editor).getAllByRole("checkbox").filter((c) => !(c as HTMLInputElement).disabled).map((c) => (c as HTMLInputElement).name)).toEqual(["admin", "publisher", "reviewer", "approver"]);
+    expect(within(editor).getByRole("checkbox", { name: /member/ })).toBeDisabled();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    fireEvent.click(within(editor).getByRole("checkbox", { name: "admin" }));
+    fireEvent.click(within(editor).getByRole("button", { name: "Save roles" }));
+    await waitFor(() => expect(router.refresh).toHaveBeenCalled());
+    expect(sent(spy)).toEqual({ url: `/api/organizations/${ORG}/members/u-bob/roles`, method: "PUT", body: { roles: ["member", "admin"] } });
+  });
+
+  it("explains the last-admin rule and a lost permission", async () => {
+    respond(409, { error: "last_admin" });
+    render(<MemberList organizationId={ORG} members={[alice, bob]} permissions={ADMIN} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit roles of alice@demo.gozleme.test" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "admin" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save roles" }));
+    expect(await screen.findByTestId("member-error")).toHaveTextContent(LAST_ADMIN);
+
+    vi.restoreAllMocks();
+    respond(403, { error: "forbidden" });
+    fireEvent.click(screen.getByRole("button", { name: "Save roles" }));
+    await waitFor(() => expect(screen.getByTestId("member-error")).toHaveTextContent(FORBIDDEN));
+    expect(router.refresh).toHaveBeenCalled();
   });
 });
 

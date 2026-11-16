@@ -57,6 +57,16 @@ public static class OrgClient
     public static Task<HttpResponseMessage> RemoveAsync(HttpClient client, string orgId, string userId) =>
         client.DeleteAsync(new Uri($"{Base}/{orgId}/members/{userId}", UriKind.Relative), TestContext.Current.CancellationToken);
 
+    /// <summary><c>PUT …/members/{userId}/roles</c> (GOZ-0004); <c>member</c> is added by the server.</summary>
+    public static Task<HttpResponseMessage> SetRolesRawAsync(HttpClient client, string orgId, string userId, params string[] roles) =>
+        client.PutAsJsonAsync(new Uri($"{Base}/{orgId}/members/{userId}/roles", UriKind.Relative), new { roles }, TestContext.Current.CancellationToken);
+
+    public static async Task SetRolesAsync(HttpClient client, string orgId, string userId, params string[] roles)
+    {
+        using var response = await SetRolesRawAsync(client, orgId, userId, roles);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     public static async Task<JsonElement[]> MembersAsync(HttpClient client, string orgId)
     {
         using var response = await AuthClient.GetAsync(client, $"{Base}/{orgId}/members");
@@ -71,7 +81,7 @@ public static class OrgClient
         return (await AuthClient.JsonAsync(response)).GetProperty("userId").GetString()!;
     }
 
-    /// <summary>Invites <paramref name="joiner"/> into <paramref name="orgId"/> and redeems.</summary>
+    /// <summary>Invites <paramref name="joiner"/> into <paramref name="orgId"/> and redeems; <paramref name="member"/> must be an admin, and the joiner holds member only.</summary>
     public static async Task JoinAsync(HttpClient member, HttpClient joiner, string orgId)
     {
         var (_, code) = await InviteAsync(member, orgId);

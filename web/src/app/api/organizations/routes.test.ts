@@ -3,6 +3,7 @@ import { POST as redeem } from "../invitations/redeem/route";
 import { PATCH as rename, GET as getOne } from "./[organizationId]/route";
 import { DELETE as revoke } from "./[organizationId]/invitations/[invitationId]/route";
 import { GET as listInvitations, POST as invite } from "./[organizationId]/invitations/route";
+import { PUT as setRoles } from "./[organizationId]/members/[userId]/roles/route";
 import { DELETE as remove } from "./[organizationId]/members/[userId]/route";
 import { GET as members } from "./[organizationId]/members/route";
 import { POST as select } from "./[organizationId]/select/route";
@@ -28,6 +29,7 @@ const unsafe: [string, string, Handler, unknown][] = [
   ["POST …/invitations", "POST", invite as Handler, org],
   ["DELETE …/invitations/{id}", "DELETE", revoke as Handler, orgInvitation],
   ["DELETE …/members/{id}", "DELETE", remove as Handler, orgUser],
+  ["PUT …/members/{id}/roles", "PUT", setRoles as Handler, orgUser],
   ["POST /api/invitations/redeem", "POST", redeem as Handler, undefined],
 ];
 
@@ -55,6 +57,7 @@ describe("organization route handlers (CSRF layer 1, GOZ-0001-IF-01)", () => {
     ["POST", invite as Handler, org, new RegExp(`/api/v1/organizations/${ORG}/invitations$`)],
     ["DELETE", revoke as Handler, orgInvitation, new RegExp(`/api/v1/organizations/${ORG}/invitations/i1$`)],
     ["DELETE", remove as Handler, orgUser, new RegExp(`/api/v1/organizations/${ORG}/members/u1$`)],
+    ["PUT", setRoles as Handler, orgUser, new RegExp(`/api/v1/organizations/${ORG}/members/u1/roles$`)],
     ["POST", redeem as Handler, undefined, /\/api\/v1\/invitations\/redeem$/],
   ])("same-origin %s forwards to the matching API path", async (method, handler, ctx, path) => {
     const upstream = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));

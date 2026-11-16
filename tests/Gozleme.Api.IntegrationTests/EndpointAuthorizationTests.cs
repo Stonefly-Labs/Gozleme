@@ -49,5 +49,8 @@ public sealed class EndpointAuthorizationTests(PgvectorDatabaseFixture fixture) 
         }
 
         Assert.Equal(AnonymousEndpoints, anonymous.Order(StringComparer.Ordinal));
+        Assert.Contains(endpoints, e => e.RoutePattern.RawText == "/api/v1/organizations/{organizationId}/members/{userId}/roles"
+            && e.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods.SequenceEqual(["PUT"])
+            && e.Metadata.GetMetadata<IAllowAnonymous>() is null); // GOZ-0004: session required
     }
 }

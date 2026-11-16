@@ -55,9 +55,9 @@ them out. A non-member, an unknown id and a malformed id all get the same "not f
 
 People join only through single-use invitation codes (`/join`): a member creates one, shares it
 out of band, and it works once. Only a SHA-256 hash of each code is stored; codes are revocable
-and expire. Membership is role-neutral until GOZ-0004: any member may rename, invite, revoke,
-remove any other member or leave, and the last member can neither leave nor be removed. There is
-no "add by email", no organization deletion and no administrative delegation.
+and expire. What a member may do depends on its built-in roles (GOZ-0004, below); anyone may
+leave, and the last member can neither leave nor be removed. There is no "add by email", no
+organization deletion and no ownership transfer.
 
 | Setting | Default | Bounds |
 |---|---|---|
@@ -87,6 +87,28 @@ context sees no tenant rows. The full contract is in
 - **Spot check**: `docker compose exec postgres psql -U gozleme_app -d gozleme -c "SELECT count(*) FROM gozleme.organizations"` returns `0`.
 - **Not protected against**: SQL injected into a request (it runs with that request's own context), or compromised owner, superuser or context-key credentials.
 - **Demo tenants**: `seed` acts as a seeded member of each demo organization, never with wider rights. It also creates `dave@demo.gozleme.test` and **Seeded Partner Org** (`0193a000-0000-7000-8000-000000000003`, member dave), the second tenant.
+
+## Built-in roles (GOZ-0004)
+
+Every membership holds a set of built-in roles: `member` always, plus any of `admin`,
+`publisher`, `reviewer` and `approver`. Only `admin` adds rights today (rename, invitations,
+removing others, changing roles); the other three are reserved for later specs and permit exactly
+what `member` does. The creator of an organization holds `admin`; a redeemer holds `member` only.
+An admin changes roles from the member list (`PUT …/members/{userId}/roles`). The change applies
+on the member's next request, and losing `admin` revokes that account's open invitations. An
+organization always keeps at least one admin, so the last admin can neither demote itself nor
+leave. The action/role table is `docs/specs/004-scoped-rbac/contracts/permissions.md`, and the
+code must render it exactly.
+
+The database enforces the same rules on its own: the `memberships_guard` trigger and the
+admin-only policies refuse escalation, admin-only writes by members, identity-column rewrites and
+removing the last admin. They bind the owner login and superusers too. A member's attempt is
+`403 {"error":"forbidden"}` (audit 1301), a role change is audited as 1302, and every decision
+emits the span `gozleme.authz.decision` and the counter `gozleme.authz.decisions`.
+
+- **Upgrading existing data**: the `ScopedRbac` migration changes only the schema. Every member that exists before it becomes `{admin,member}`, so nobody loses the ability to manage their organization; admins can then remove `admin` from members in the UI. There is no data migration.
+- **Out-of-band SQL**: because the guard binds superusers, a manual repair of memberships needs `SET session_replication_role = replica` in its own session (tests use this for drift).
+- **Demo seed**: `seed` acts as a seeded admin. It restores alice `{admin,member}` and carol `{member}` in Seeded Demo Org and dave `{admin,member}` in Seeded Partner Org. If no seeded member of an organization holds `admin`, it stops with "run make reset".
 
 ### Adding a tenant-owned table
 

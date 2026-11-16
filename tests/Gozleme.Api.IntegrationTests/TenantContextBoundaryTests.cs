@@ -158,7 +158,8 @@ public sealed class TenantContextBoundaryTests(PgvectorDatabaseFixture fixture) 
 
             await using var count = new NpgsqlCommand($"SELECT count(*) FROM gozleme.organizations WHERE id = '{_t.OrgA}'", connection, transaction);
             var before = (long)(await count.ExecuteScalarAsync())!;
-            await GozlemeDatabase.ExecuteAsync($"DELETE FROM gozleme.memberships WHERE organization_id = '{_t.OrgA}' AND user_id = '{_t.CarolId}'", Db.SuperuserConnectionString);
+            // An out-of-band removal; replica mode skips memberships_guard, which binds superusers too (GOZ-0004).
+            await GozlemeDatabase.ExecuteAsync($"SET session_replication_role = replica; DELETE FROM gozleme.memberships WHERE organization_id = '{_t.OrgA}' AND user_id = '{_t.CarolId}'", Db.SuperuserConnectionString);
             var after = (long)(await count.ExecuteScalarAsync())!;
             return (before, after);
         });

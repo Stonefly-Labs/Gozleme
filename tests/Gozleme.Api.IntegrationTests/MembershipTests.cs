@@ -4,7 +4,10 @@ using Gozleme.Api.IntegrationTests.Infrastructure;
 
 namespace Gozleme.Api.IntegrationTests;
 
-/// <summary>US3 (FR-014–FR-017, SC-004): member list, removal on the next request, leaving, the last-member guard.</summary>
+/// <summary>
+/// US3 (FR-014–FR-017, SC-004): member list, removal on the next request, leaving, the last-member guard.
+/// Since GOZ-0004 an invitee holds member only, so tests that need a second inviter or remover grant it admin first.
+/// </summary>
 public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
     private GozlemeApiFactory _factory = null!;
@@ -20,7 +23,7 @@ public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLif
     public ValueTask DisposeAsync() => _factory.DisposeAsync();
 
     [Fact]
-    public async Task Member_list_shows_only_id_email_join_date_and_how_they_joined()
+    public async Task Member_list_shows_only_id_email_join_date_how_they_joined_and_roles()
     {
         var (alice, aliceEmail) = await AuthClient.SignedInAsync(_factory);
         var (bob, bobEmail) = await AuthClient.SignedInAsync(_factory);
@@ -32,7 +35,7 @@ public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLif
         var members = await OrgClient.MembersAsync(alice, org);
         Assert.Equal([aliceEmail, bobEmail], members.Select(m => m.GetProperty("email").GetString()));
         Assert.All(members, m => Assert.Equal(
-            ["userId", "email", "joinedAt", "joinedVia", "isSelf"],
+            ["userId", "email", "joinedAt", "joinedVia", "isSelf", "roles"],
             m.EnumerateObject().Select(p => p.Name)));
     }
 
@@ -100,6 +103,7 @@ public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLif
 
         var pair = await OrgClient.CreateAsync(alice, "Pair");
         await OrgClient.JoinAsync(alice, bob, pair);
+        await OrgClient.SetRolesAsync(alice, pair, await OrgClient.UserIdAsync(bob), "admin"); // else alice is the last admin
         Assert.Equal(pair, await OrgClient.ActiveAsync(alice));
         using (var leave = await OrgClient.RemoveAsync(alice, pair, aliceId))
         {
@@ -123,6 +127,8 @@ public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLif
         var org = await OrgClient.CreateAsync(alice, "Departures");
         await OrgClient.JoinAsync(alice, bob, org);
         await OrgClient.JoinAsync(alice, carol, org);
+        await OrgClient.SetRolesAsync(alice, org, await OrgClient.UserIdAsync(bob), "admin");
+        await OrgClient.SetRolesAsync(alice, org, await OrgClient.UserIdAsync(carol), "admin");
         var (bobsInvite, bobsCode) = await OrgClient.InviteAsync(bob, org);
         var (alicesInvite, _) = await OrgClient.InviteAsync(alice, org);
         var (carolsInvite, carolsCode) = await OrgClient.InviteAsync(carol, org);
@@ -166,8 +172,9 @@ public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLif
             using var _c = carol;
             var org = await OrgClient.CreateAsync(alice, "Crossing");
             await OrgClient.JoinAsync(alice, bob, org);
-            var (_, code) = await OrgClient.InviteAsync(bob, org);
             var bobId = await OrgClient.UserIdAsync(bob);
+            await OrgClient.SetRolesAsync(alice, org, bobId, "admin");
+            var (_, code) = await OrgClient.InviteAsync(bob, org);
 
             var removal = Status(OrgClient.RemoveAsync(alice, org, bobId));
             using var redeem = await OrgClient.RedeemAsync(carol, code);
@@ -203,6 +210,7 @@ public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLif
             await OrgClient.JoinAsync(alice, bob, org);
             var aliceId = await OrgClient.UserIdAsync(alice);
             var bobId = await OrgClient.UserIdAsync(bob);
+            await OrgClient.SetRolesAsync(alice, org, bobId, "admin");
 
             var results = await Task.WhenAll(
                 Status(OrgClient.RemoveAsync(alice, org, bobId)),

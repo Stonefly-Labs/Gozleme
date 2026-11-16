@@ -252,6 +252,13 @@ namespace Gozleme.Api.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("joined_via");
 
+                    b.Property<string[]>("Roles")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasColumnName("roles")
+                        .HasDefaultValueSql("'{member}'::text[]");
+
                     b.Property<DateTimeOffset?>("SelectedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("selected_at");
@@ -269,6 +276,8 @@ namespace Gozleme.Api.Persistence.Migrations
                     b.ToTable("memberships", "gozleme", t =>
                         {
                             t.HasCheckConstraint("ck_memberships_joined_via", "joined_via IN ('creator', 'invitation')");
+
+                            t.HasCheckConstraint("ck_memberships_roles", "roles <@ ARRAY['admin', 'approver', 'member', 'publisher', 'reviewer']::text[] AND 'member' = ANY (roles) AND array_position(roles, NULL) IS NULL");
                         });
                 });
 

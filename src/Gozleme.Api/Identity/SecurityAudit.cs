@@ -1,7 +1,7 @@
 namespace Gozleme.Api.Identity;
 
 /// <summary>
-/// Security audit events (GOZ-0001 FR-029; organization events GOZ-0002 FR-023): category <c>Gozleme.Security.Audit</c>, opaque account id only —
+/// Security audit events (GOZ-0001 FR-029; organization events GOZ-0002 FR-023; role events GOZ-0004 FR-019): category <c>Gozleme.Security.Audit</c>, opaque account id only —
 /// never an email, password, cookie or session key. Exported through the normal log pipeline.
 /// </summary>
 internal sealed partial class SecurityAudit(ILoggerFactory loggers)
@@ -73,4 +73,11 @@ internal sealed partial class SecurityAudit(ILoggerFactory loggers)
 
     [LoggerMessage(EventId = 1203, EventName = "gozleme.audit.tenant_context_self_check_failed", Level = LogLevel.Error, Message = "Tenant context self-check failed ({Reason}); the context key may differ from the provisioned key")]
     public partial void TenantContextSelfCheckFailed(string reason);
+
+    // Organization roles (GOZ-0004): 1301–1310. Actions and role names are fixed vocabularies; ids are opaque.
+    [LoggerMessage(EventId = 1301, EventName = "gozleme.audit.authz_denied", Level = LogLevel.Warning, Message = "Authorization denied ({Action}) in {OrganizationId} {UserId}")]
+    public partial void AuthorizationDenied(string action, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1302, EventName = "gozleme.audit.org_member_roles_changed", Level = LogLevel.Information, Message = "Member {TargetUserId} roles changed from {Before} to {After} in {OrganizationId} by {UserId}")]
+    public partial void MemberRolesChanged(Guid organizationId, Guid targetUserId, string before, string after, Guid userId);
 }

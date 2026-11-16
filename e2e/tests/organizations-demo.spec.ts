@@ -271,14 +271,16 @@ test("isolation: a non-member cannot tell real organizations from unknown or mal
   expect(bobs.organizations.map((o) => o.displayName)).not.toContain("x");
 });
 
-test("boundary: no administrative delegation exists in the UI or the API", async () => {
+test("boundary: no ownership or delegation surface exists in the UI or the API", async () => {
+  // Narrowed by GOZ-0004 (research R12): built-in role badges and the admin's role checkboxes are
+  // expected now; ownership, transfer and any role picker beyond those checkboxes are still absent.
   await alice.goto(`/organizations/${state.alpha}`);
-  await expect(alice.locator("main")).not.toContainText(/\b(role|admin|administrator|owner|promote|transfer|permission)s?\b/i);
+  await expect(alice.locator("main")).not.toContainText(/\b(administrator|owner|promote|transfer)s?\b/i);
   await expect(alice.getByRole("combobox")).toHaveCount(1); // only the context switcher
   const aliceId = (await (await alice.request.get(`${API_URL}/api/v1/auth/session`)).json()).userId;
   for (const [method, suffix] of [
     ["PATCH", `/members/${aliceId}`],
-    ["PUT", `/members/${aliceId}/role`],
+    ["PUT", `/members/${aliceId}/role`], // the only role route is PUT …/roles (GOZ-0004)
     ["POST", "/transfer"],
     ["POST", "/admins"],
     ["GET", "/roles"],

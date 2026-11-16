@@ -100,6 +100,9 @@ a { color: var(--focus); }
 .table { width: 100%; border-collapse: collapse; }
 .table th, .table td { text-align: left; padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: middle; }
 .table th { font-size: 0.875rem; color: var(--muted); }
+.role-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.role-editor { display: grid; gap: 6px; margin-top: 8px; }
+.role-option { display: flex; align-items: center; gap: 6px; }
 .cell-wrap { overflow-wrap: anywhere; }
 .cell-actions { text-align: right; white-space: nowrap; }
 .cell-actions .button + .button { margin-left: 8px; }

@@ -1,4 +1,4 @@
-# Gözleme Helm chart (GOZ-0000 foundation + GOZ-0001 local identity + GOZ-0003 tenant RLS)
+# Gözleme Helm chart (GOZ-0000 foundation + GOZ-0001 local identity + GOZ-0003 tenant RLS + GOZ-0004 roles)
 
 Structure-level chart for the API, dashboard and migration Job. It is rendered and linted in CI;
 it has **not** yet been validated against a live Kubernetes cluster (tracked for the
@@ -77,6 +77,13 @@ dependency of Gözleme workloads.
   Row-level security does not protect against SQL injected into a request, which runs with that
   request's own account context, nor against compromised owner, superuser or context-key
   credentials.
+- **Built-in roles (GOZ-0004).** **Upgrading from a release before GOZ-0004:** the pre-upgrade
+  migration Job is DDL-only (`ScopedRbac`). It needs no new values or secrets. Every existing
+  member becomes `admin` and `member`, so no organization loses its managers. New invitees get
+  `member` only; afterwards, admins tidy roles from each organization's member list. The database
+  refuses role escalation and removing an organization's last admin even for the owner and
+  superusers, so repair memberships with SQL only in a session with
+  `SET session_replication_role = replica`.
 - **Operator recovery (never over HTTP).** There is no email-based reset yet:
 
   ```bash

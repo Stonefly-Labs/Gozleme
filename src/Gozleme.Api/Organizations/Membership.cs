@@ -1,8 +1,9 @@
 namespace Gozleme.Api.Organizations;
 
 /// <summary>
-/// One account in one organization. Role-neutral by design (FR-018): there is no role, owner or
-/// admin field. <see cref="SelectedAt"/> is the account's context preference, never authority (research R4).
+/// One account in one organization. <see cref="Roles"/> is its set of built-in roles (GOZ-0004 FR-002),
+/// always holding <c>member</c> and read from the database on every request; there is still no owner
+/// field. <see cref="SelectedAt"/> is the account's context preference, never authority (GOZ-0002 research R4).
 /// </summary>
 internal sealed class Membership
 {
@@ -20,4 +21,6 @@ internal sealed class Membership
     public Guid? InvitationId { get; set; }
 
     public DateTimeOffset? SelectedAt { get; set; }
+
+    public string[] Roles { get; set; } = [OrganizationRole.Member];
 }
