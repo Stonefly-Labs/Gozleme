@@ -153,7 +153,7 @@ specs:
   status: in-progress
   stage: pr
   branch: feature/goz-0002-organizations
-  pullRequest: null
+  pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/8'
   promptRevision: 3
   gates:
     specification: passed

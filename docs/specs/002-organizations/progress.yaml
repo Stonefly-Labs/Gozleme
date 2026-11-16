@@ -27,7 +27,8 @@ attempts:
   - {failure: 'demo (fresh stack): org counter not yet exported when scraped (60 s SDK interval)', fix: 'poll the metrics scrape up to 90 s', attempts: 1, resolved: true}
   - {failure: 'gitleaks generic-api-key false positive on an API URL literal in web test', fix: 'assert URL host and path separately (unpushed commit rewritten)', attempts: 1, resolved: true}
 blockers: []
-nextAction: 'PR ready for human review; human maintainer merges (agents never merge). Mark complete only after verified merge.'
+pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/8
+nextAction: 'PR #8 ready for human review; human maintainer merges (agents never merge). Mark complete only after verified merge.'
 gates:
   at: '2026-11-15'
   makeLint: passed
