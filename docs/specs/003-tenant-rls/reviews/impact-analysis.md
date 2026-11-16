@@ -1,7 +1,7 @@
 # GOZ-0003 post-convergence spec impact analysis
 
 **Source spec:** GOZ-0003, Tenant RLS and visibility scaffolding
-**Implementation revision:** analysed at `9131bda` on `feature/goz-0003-tenant-rls`. The code last changed at `424a15e`; `9131bda` adds only evidence and progress files.
+**Implementation revision:** analysed at `9131bda` on `feature/goz-0003-tenant-rls`, then re-analysed at `a81e54e` after the IF-12 and IF-17 corrections (see "Re-analysis at `a81e54e`" below). The served code last changed at `424a15e`; `9131bda` adds only evidence and progress files, and `a81e54e` changes only the catalog check, its tests and research.md.
 - The cumulative demo ran at `424a15e` on a fresh stack with a clean tree. 33 of 33 assertions passed, with the GOZ-0000, GOZ-0001 and GOZ-0002 suites replayed (`evidence/demo-run.json`, `evidence/rls-evidence.json`).
 - drive-speckit reports 256 .NET tests and 131 web tests passing at `424a15e`.
 **Analyst:** Spec Impact Analyst (`analyze-spec-impact`), 2026-11-15
@@ -55,18 +55,18 @@
 | GOZ-0003-IF-06 | medium | RLS does not hide foreign-key or unique-constraint checks, so they are cross-tenant existence oracles | 0005, 0012, 0014, 0024, 0034 | applied to prompts |
 | GOZ-0003-IF-07 | medium | `SharedPublic` is reserved until GOZ-0012, so catalog tables in GOZ-0005 to GOZ-0011 are tenant-owned. Anonymous requests through the filter count as denials | 0005–0012 | applied to prompts |
 | GOZ-0003-IF-08 | medium | No class exists for instance-wide, non-identity tables before GOZ-0012 | 0005–0011, 0023 | **human decision** (conditional; GOZ-0005 clarification) |
-| GOZ-0003-IF-09 | medium | Telemetry and audit names; the broad `42501` → 404 mapping also masks grant defects | all | applied to prompts (optional narrowing noted) |
+| GOZ-0003-IF-09 | medium | Telemetry and audit names; the broad `42501` → 404 mapping also masks grant defects | all | applied to prompts (optional narrowing declined; known limitation in the PR) |
 | GOZ-0003-IF-10 | medium | dave and Seeded Partner Org, seed semantics and key configuration. The GOZ-0012 "only one fixed org" bullet is stale | all, 0012 | applied to prompts |
 | GOZ-0003-IF-11 | medium | Owner-run backup and restore fail under FORCE. Dumps contain the signing key. Rotation has no overlap window | 0039 | **human decision** (GOZ-0039 clarification) |
-| GOZ-0003-IF-12 | medium | Catalog coverage gaps: definer functions outside `gozleme`; views, materialized views and foreign tables; policy content | 0003, 0013, 0015, 0017, 0039 | **code fix recommended** (drive-speckit); prompts updated |
+| GOZ-0003-IF-12 | medium | Catalog coverage gaps: definer functions outside `gozleme`; views, materialized views and foreign tables; policy content | 0003, 0013, 0015, 0017, 0039 | **corrected at `a81e54e`**; prompts refreshed (policy content stays with GOZ-0039) |
 | GOZ-0003-IF-13 | medium | Search, vector and caching under RLS: hashed-subplan filtering, ANN post-filter recall, unprotected external stores | 0013, 0015–0017, 0023 | applied to prompts |
 | GOZ-0003-IF-14 | medium | GOZ-0040 and GOZ-0041 account tables must join `GlobalIdentity` and its exact-set tests | 0040, 0041 | applied to prompts |
 | GOZ-0003-IF-15 | medium | Routing of GOZ-0003-OBS-01, the pre-existing GOZ-0001 re-sign-in session defect | 0001, 0040, 0041 | **human decision** |
 | GOZ-0003-IF-16 | low | The context key is a high-value secret that sandboxes and secret scans must cover | 0037, 0038, 0039 | applied to prompts |
-| GOZ-0003-IF-17 | low | research.md R5 and R11 differ from the code (`rls_internal` `PUBLIC` execute, verifier error trapping). The registry stage is stale | 0003 | **doc correction** (drive-speckit / Roadmap Steward) |
+| GOZ-0003-IF-17 | low | research.md R5 and R11 differ from the code (`rls_internal` `PUBLIC` execute, verifier error trapping). The registry stage is stale | 0003 | **corrected at `a81e54e`** (research.md); registry sync with the Roadmap Steward |
 | GOZ-0003-IF-18 | low | Stale prompt references (`BootstrapBoundaryTests.cs:23`→`:24`, the "until GOZ-0003 merges" bullet, a renamed test) | 0012, all | applied to prompts |
 
-Totals: 11 applied to prompts, 5 needing a human decision, 1 code fix recommended and 1 documentation correction. None is purely informational: every observation either changed a prompt or needs action.
+Totals after re-analysis at `a81e54e`: 11 applied to prompts, 5 needing a human decision, and 2 corrected in GOZ-0003 (IF-12 in code, IF-17 in documentation). None is purely informational.
 
 ## Prompt edits applied (within authority)
 
@@ -143,7 +143,7 @@ I found no defect against a GOZ-0003 requirement or a confirmed architecture dec
 - seed acting as a member;
 - the Helm "do not cut a release" note being removed (FR-031).
 
-Recommended bounded corrections, which do not block the PR:
+Recommended bounded corrections from the first pass, which did not block the PR (IF-12 and IF-17 were applied at `a81e54e`; see below):
 - **IF-12 (code, recommended):**
   - extend `RlsCatalog` to flag migrator-owned `SECURITY DEFINER` functions in **every** non-system schema, not just `gozleme` and `gozleme_private`;
   - fail on unclassified `gozleme` relations of kind `v`, `m` or `f`;
@@ -153,14 +153,45 @@ Recommended bounded corrections, which do not block the PR:
 - **IF-17 (documentation):** correct research.md R5 (`rls_internal` is not `PUBLIC`-executable, and the verifier uses regex prevalidation with no exception trapping) and R11 (`RlsCatalog` exempts no function from the `PUBLIC` check).
 - **IF-09 (optional):** narrow `TenantContext.IsRefusal` to the row-level-security refusal, so that a missing `GRANT` surfaces as a 500 instead of a counted cross-tenant refusal.
 
-If drive-speckit applies IF-12, I should re-analyse the changed catalog code.
+drive-speckit applied IF-12 and IF-17 at `a81e54e`; the re-analysis follows.
+
+### Re-analysis at `a81e54e`
+
+**IF-12 is verified corrected.** `RlsCatalog.ViolationsAsync` now has two more checks:
+- It fails on every view, materialized view and foreign table in `gozleme` (relkind `v`, `m` or `f`), not just unclassified ones.
+- It fails on every `SECURITY DEFINER` function owned by `gozleme_migrator` in any schema other than `gozleme`, `gozleme_private`, `pg_catalog` and `information_schema`. Extension members are excluded, so `pgcrypto` and `vector` do not trip it.
+
+Restricting the second check to the migrator as owner is correct: `rls_internal()` is true only when `current_user` is `gozleme_migrator`, so a definer owned by any other role grants no bypass. The pinned-helper and fixed-`search_path` checks for `gozleme` are unchanged.
+
+`RlsCatalogTests` adds four negative cases (a view, a materialized view, a definer in a new schema, a definer in `public`). They run on the migrator's own connection and roll back. drive-speckit reports all 15 catalog tests passing.
+
+Two gaps remain by design: policy content is not inspected, and pinned helpers are matched by name, not body. The per-table behavioural matrix (IF-01) and GOZ-0039 carry them.
+
+One non-blocking note. The new code comment gives the reason for rejecting views as "a view that is not `security_invoker` reads its tables as the owner, which `rls_internal()` treats as a helper". The R11 wording follows it. That rationale is probably inaccurate: inside a view, `current_user` stays the invoking role, so `rls_internal()` stays false, and under FORCE the owner's policies apply. Because the check rejects every view regardless, this affects only the comment, not behaviour. I did not test it, and it needs no change before the PR.
+
+**IF-17 is verified corrected.** research.md now matches the code:
+- **R5:** `PUBLIC` is revoked on every function, and `invitation_capability` and `rls_internal` are not definers. The verifier uses regex prevalidation and traps no errors, and a missing key row returns `invalid` (`TenantRls.cs:64-67`).
+- **R11:** it lists the new catalog checks and no longer exempts any function from the `PUBLIC` check, matching `RlsCatalog.cs`.
+
+The stale registry stage stays with the Roadmap Steward.
+
+**IF-09:** drive-speckit kept `TenantContext.IsRefusal` unchanged and will list it in the PR as a known fail-closed limitation. The prompt guidance already covers it.
+
+**Prompt refresh at this revision:**
+- **Conventions section, all 38 prompts:** the IF-01 bullet now lists the two new catalog failures.
+- **Search bullet (GOZ-0013, GOZ-0015, GOZ-0017):** views and materialized views are now rejected outright, so adding one means extending `TableClassification`, the catalog check and the isolation matrix.
+- **GOZ-0039 IF-12 bullet:** it now lists only the remaining gaps.
+
+These edits are refreshes, not new obligations, so they need no new revision bump beyond the one already requested.
+
+No new findings. `make validate` passes.
 
 ## Not asserted
 
 - I did not run the test suites or the demo. Results come from `evidence/demo-run.json` (`424a15e`) and from drive-speckit.
 - I did not reproduce the IF-11 `pg_dump`/`COPY` behaviour under FORCE. It rests on documented PostgreSQL row-security semantics.
 - I did not reproduce GOZ-0003-OBS-01. Its description comes from `progress.yaml`, and I confirmed only that the cited test signs in twice on an already signed-in client.
-- I did not test the IF-12 claim that the migrator can create a definer function in `public` or a new schema. It rests on the migrator owning the database (it created `gozleme_private`) and on PostgreSQL 15+ ownership of `public` by `pg_database_owner`.
+- I did not run the IF-12 negative tests myself. They run on the migrator's own connection and create a definer function in a new schema and in `public`, so drive-speckit's report that all 15 catalog tests pass confirms that the migrator can create both.
 - I did not measure IF-13 planner behaviour at volume.
 - Helm has still never been installed on a live cluster.
 - This analysis did not push, merge, switch branches or edit the registry.
