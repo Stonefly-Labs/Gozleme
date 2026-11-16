@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0003
-stage: specify
+stage: plan
 status: in-progress
 promptRevision: 4
 branch: feature/goz-0003-tenant-rls
@@ -12,7 +12,7 @@ decisions:
 - {at: '2026-11-15', by: maintainer, topic: tenant-id-on-spans, decision: 'Keep GOZ-0002 precedent: gozleme.organization.id on spans only after membership confirmed, never a metric label'}
 stages:
   specify: {status: done, artifact: docs/specs/003-tenant-rls/spec.md, at: '2026-11-15'}
-  plan: {status: pending}
+  plan: {status: done, artifact: docs/specs/003-tenant-rls/plan.md, at: '2026-11-15', note: 'R4 owner-in-definer guard verified empirically in scratch pg17 (function-level SET of custom GUC rejected for non-superuser; replaced by session_user guard)'}
   tasks: {status: pending}
   implement: {status: pending}
   demo: {status: pending}
@@ -23,7 +23,7 @@ stages:
 attempts: []
 blockers: []
 pullRequest: null
-nextAction: Run /speckit-plan for docs/specs/003-tenant-rls
+nextAction: Run /speckit-tasks for docs/specs/003-tenant-rls
 evidence:
   tests: []
   demos: []
