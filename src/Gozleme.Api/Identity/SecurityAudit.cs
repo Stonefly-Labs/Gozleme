@@ -63,4 +63,14 @@ internal sealed partial class SecurityAudit(ILoggerFactory loggers)
 
     [LoggerMessage(EventId = 1108, EventName = "gozleme.audit.org_member_left", Level = LogLevel.Information, Message = "Member {UserId} left {OrganizationId}")]
     public partial void MemberLeft(Guid organizationId, Guid userId);
+
+    // Tenancy (GOZ-0003): 1201–1210. Reasons are bounded; never the token, key or code hash.
+    [LoggerMessage(EventId = 1201, EventName = "gozleme.audit.tenant_context_rejected", Level = LogLevel.Warning, Message = "Tenant context rejected ({Reason}) {UserId}")]
+    public partial void TenantContextRejected(string reason, Guid? userId);
+
+    [LoggerMessage(EventId = 1202, EventName = "gozleme.audit.tenant_write_refused", Level = LogLevel.Warning, Message = "Row-level security refused a write {UserId}")]
+    public partial void TenantWriteRefused(Guid? userId);
+
+    [LoggerMessage(EventId = 1203, EventName = "gozleme.audit.tenant_context_self_check_failed", Level = LogLevel.Error, Message = "Tenant context self-check failed ({Reason}); the context key may differ from the provisioned key")]
+    public partial void TenantContextSelfCheckFailed(string reason);
 }

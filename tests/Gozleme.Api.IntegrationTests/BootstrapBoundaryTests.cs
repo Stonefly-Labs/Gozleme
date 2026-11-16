@@ -47,13 +47,14 @@ public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IA
     }
 
     [Fact]
-    public async Task Only_migration_history_table_exists_outside_system_schemas()
+    public async Task Only_migration_history_and_the_context_key_tables_exist_outside_system_schemas()
     {
+        // GOZ-0003 adds gozleme_private.context_keys, which gozleme_app cannot reach (RlsCatalogTests).
         var tables = await fixture.Database.ScalarAsync<string>("""
-            SELECT coalesce(string_agg(schemaname || '.' || tablename, ',' ORDER BY tablename), '')
+            SELECT coalesce(string_agg(schemaname || '.' || tablename, ',' ORDER BY schemaname, tablename), '')
             FROM pg_tables
             WHERE schemaname NOT IN ('pg_catalog', 'information_schema', 'gozleme')
             """);
-        Assert.Equal("public.__EFMigrationsHistory", tables);
+        Assert.Equal("gozleme_private.context_keys,public.__EFMigrationsHistory", tables);
     }
 }

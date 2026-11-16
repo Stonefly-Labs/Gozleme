@@ -26,6 +26,7 @@ public sealed class GozlemeApiFactory(
         ["Gozleme:Auth:RateLimit:RegisterPerMinute"] = "1000",
         ["Gozleme:Auth:RateLimit:GlobalPerMinute"] = "100000",
         ["Gozleme:Organizations:RedeemPerMinute"] = "100",
+        ["Gozleme:Rls:ContextKey"] = GozlemeDatabase.ContextKey,
     };
 
     public ConcurrentQueue<string> Logs { get; } = new();
