@@ -1,7 +1,7 @@
 schemaVersion: '1.0'
 specId: GOZ-0002
-stage: pr
-status: in-progress
+stage: merged
+status: complete
 promptRevision: 3
 branch: feature/goz-0002-organizations
 featureDirectory: docs/specs/002-organizations
@@ -21,6 +21,7 @@ stages:
   demo: {status: done, at: '2026-11-16', commit: 4c73a921, result: passed, record: docs/specs/002-organizations/evidence/demo-run.json, note: 'fresh Compose project; GOZ-0000 and GOZ-0001 suites replayed green; supersedes 8a9941e3 after IF-04/IF-20 corrections'}
   converge: {status: done, at: '2026-11-15', passes: 1, appended: [T047], outcome: 'T047 implemented (FR-012 invitation creator); impact corrections T048-T051 implemented with tests; no remaining gaps'}
   impactAnalysis: {status: done, at: '2026-11-15', analysedAt: f95be4c, reanalysedAt: [cc1e518, 4c73a92], findings: 20, report: docs/specs/002-organizations/reviews/impact-analysis.md, corrected: [GOZ-0002-IF-04, GOZ-0002-IF-17, GOZ-0002-IF-18, GOZ-0002-IF-20], humanDecisions: [GOZ-0002-IF-01, GOZ-0002-IF-04]}
+  merge: {status: verified, pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/8', mergeCommit: 6f658c2e52aca3542d7ad23d0d437b883279195d, head: 99e46dafa72292ac5a8e8df92510b04d17c3dd89, mergedBy: christopherhouse, mergedAt: '2026-11-16T01:08:48Z', verifiedBy: 'gh pr view + git merge-base --is-ancestor', ci: 'head 99e46da 12/12 checks passed', at: '2026-11-15'}
   roadmapSync: {status: done, at: '2026-11-15', note: 'GOZ-0003..0039 promptRevision 3->4; GOZ-0040 and GOZ-0041 1->2; GOZ-0002 entry: stage converge, implementation+tests gates passed, IF-01..IF-20 recorded; demo gate pending fresh demo at 4c73a92'}
 attempts:
   - {failure: 'demo: org API spans past Jaeger 50-trace page (status polling traffic)', fix: 'recentSpans filters by operation name', attempts: 1, resolved: true}
@@ -28,7 +29,7 @@ attempts:
   - {failure: 'gitleaks generic-api-key false positive on an API URL literal in web test', fix: 'assert URL host and path separately (unpushed commit rewritten)', attempts: 1, resolved: true}
 blockers: []
 pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/8
-nextAction: 'PR #8 ready for human review; human maintainer merges (agents never merge). Mark complete only after verified merge.'
+nextAction: None for GOZ-0002; next spec is GOZ-0003 (Tenant RLS and visibility scaffolding)
 gates:
   at: '2026-11-15'
   makeLint: passed

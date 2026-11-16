@@ -2,14 +2,14 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 42 · **Complete on main:** 2 · **Blocked:** 0 · **Ready for human merge:** 0
+**Specs:** 42 · **Complete on main:** 3 · **Blocked:** 0 · **Ready for human merge:** 0
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
 | [GOZ-0000](../prompts/spec-0000.md) — Repository bootstrap and executable engineering foundation | foundation | complete | merged | — | Complete — merged to main in 8b25d12382a0741eff17ae334a8948122eeb1860 (PR #4, verified 2026-11-14). Open item: protected-main ruleset (GOZ-0000-B1/IF-12). |
 | [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | complete | merged | GOZ-0000 | Complete — merged to main in cf006f28a959ab8982ff251005f76fd41275e3d2 (PR #6, verified 2026-11-15). |
-| [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | in-progress | pr | GOZ-0001 | Ready for human review: demo 29/29 at 4c73a92; impact analysis IF-01..IF-20 dispositioned; roadmap synced. Human maintainer merges (agents never merge). |
-| [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | in-progress | pr | GOZ-0002 | Ready for PR and human review: demo 33/33 at 424a15e; catalog-check fix a81e54e; impact analysis IF-01..IF-18 dispositioned (5 human decisions pending: IF-03, IF-04, IF-08, IF-11, IF-15); roadmap synced. Human maintainer merges (agents never merge). |
+| [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | complete | merged | GOZ-0001 | Complete — merged to main in 6f658c2e52aca3542d7ad23d0d437b883279195d (PR #8, verified 2026-11-15). |
+| [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | in-progress | pr | GOZ-0002 | PR #10 ready for human merge (all gates green at head; maintainer decided IF-03/04/08/11/15 on 2026-11-16). Human maintainer merges (agents never merge); mark complete only after verified merge. |
 | [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | not-started | — | GOZ-0003 | Await prerequisites and create allowed working branch |
 | [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | not-started | — | GOZ-0004 | Await prerequisites and create allowed working branch |
 | [GOZ-0006](../prompts/spec-0006.md) — Typed manifests for capability families | publishing | not-started | — | GOZ-0005 | Await prerequisites and create allowed working branch |

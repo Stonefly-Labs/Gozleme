@@ -150,10 +150,10 @@ specs:
   prompt: docs/prompts/spec-0002.md
   dependencies:
   - GOZ-0001
-  status: in-progress
-  stage: pr
+  status: complete
+  stage: merged
   branch: feature/goz-0002-organizations
-  pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/8'
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/8
   promptRevision: 3
   gates:
     specification: passed
@@ -165,8 +165,8 @@ specs:
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
-    humanReview: pending
-    merge: pending
+    humanReview: passed
+    merge: passed
   blockers: []
   impactFindings:
   - GOZ-0002-IF-01
@@ -199,7 +199,7 @@ specs:
     reviews:
     - docs/specs/002-organizations/reviews/impact-analysis.md
     - docs/specs/002-organizations/reviews/impact-findings.json
-  nextAction: 'Ready for human review: demo 29/29 at 4c73a92; impact analysis IF-01..IF-20 dispositioned; roadmap synced. Human maintainer merges (agents never merge).'
+  nextAction: 'Complete — merged to main in 6f658c2e52aca3542d7ad23d0d437b883279195d (PR #8, verified 2026-11-15).'
 - id: GOZ-0003
   number: 3
   title: Tenant RLS and visibility scaffolding
@@ -263,7 +263,7 @@ specs:
     reviews:
     - docs/specs/003-tenant-rls/reviews/impact-analysis.md
     - docs/specs/003-tenant-rls/reviews/impact-findings.json
-  nextAction: 'Ready for PR and human review: demo 33/33 at 424a15e; catalog-check fix a81e54e; impact analysis IF-01..IF-18 dispositioned (5 human decisions pending: IF-03, IF-04, IF-08, IF-11, IF-15); roadmap synced. Human maintainer merges (agents never merge).'
+  nextAction: 'PR #10 ready for human merge (all gates green at head; maintainer decided IF-03/04/08/11/15 on 2026-11-16). Human maintainer merges (agents never merge); mark complete only after verified merge.'
 - id: GOZ-0004
   number: 4
   title: Scoped RBAC permission foundation
