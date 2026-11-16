@@ -16,7 +16,12 @@ stages:
   tasks: {status: done, artifact: docs/specs/003-tenant-rls/tasks.md, count: 42, at: '2026-11-15'}
   implement: {status: done, at: '2026-11-15', commits: [b791ef4, 9581ddd, ba01486, dc2c9c7, 424a15e], tasks: '44/44'}
   demo: {status: done, at: '2026-11-16', record: docs/specs/003-tenant-rls/evidence/demo-run.json, commit: 424a15e}
-  converge: {status: done, at: '2026-11-16', findings: 3, appended: [T043, T044], note: 'F1 SC-001 write matrix under invalid contexts (HIGH, fixed T043); F2 SC-005 page timing (LOW, fixed T044); F3 owner-login helper recursion under sequential scans found by the cumulative demo (fixed 424a15e, research R4 amended)'}
+  converge:
+    status: done
+    passes:
+      - {at: '2026-11-16', commit: ba01486, findings: 2, appended: [T043, T044], note: 'F1 SC-001 write matrix under invalid contexts (HIGH partial, fixed T043); F2 SC-005 page timing (LOW partial, fixed T044)'}
+      - {at: '2026-11-16', commit: 6c0d0ba, findings: 2, appended: [T045, T046], note: 'C1 invitations_update capability branch let a code holder move, reopen or extend an invitation at the database layer (HIGH contradicts FR-004/FR-003/US2-AC4, fixed 9373c0f with an open-invitation condition and the invitations_guard trigger); C2 no tests for refusing to start without a valid key (MEDIUM partial FR-012, fixed 9373c0f)'}
+    notFromConverge: 'Owner-login helper recursion under sequential scans was found by the cumulative demo failing, not by a converge pass (fixed 424a15e, research R4 amended). The first pass was not re-run after T043/T044 until the second pass, which the maintainer requested.'
   impactAnalysis: {status: done, at: '2026-11-15', analysedAt: 9131bda, reanalysedAt: [a81e54e], findings: 18, report: docs/specs/003-tenant-rls/reviews/impact-analysis.md, appliedToPrompts: 11, corrected: [GOZ-0003-IF-12, GOZ-0003-IF-17], correctedAt: a81e54e, humanDecisions: [GOZ-0003-IF-03, GOZ-0003-IF-04, GOZ-0003-IF-08, GOZ-0003-IF-11, GOZ-0003-IF-15], humanDecisionStatus: pending}
   roadmapSync: {status: done, at: '2026-11-15', basedOn: faaf559, note: 'GOZ-0004..0039 promptRevision 4->5; GOZ-0040 and GOZ-0041 2->3; GOZ-0003 entry: stage pr, implementation/tests/demo/convergence/impactAnalysis/roadmapSync gates passed, IF-01..IF-18 recorded, 5 human decisions recorded as pending; DAG unchanged'}
   merge: {status: pending}
