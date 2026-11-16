@@ -26,7 +26,7 @@ import {
  */
 const UNREACHABLE_503 = /^Database unreachable; request answered 503 \((NpgsqlException|PostgresException)\)$/;
 const shots = shotsDir("goz-0000");
-const LATEST_MIGRATION = /_Organizations$/;
+const LATEST_MIGRATION = /_TenantRls$/;
 
 test.describe.configure({ mode: "serial" });
 

@@ -1,0 +1,435 @@
+{
+  "sourceSpec": "GOZ-0003",
+  "implementationRevision": "a0421c0 (feature/goz-0003-tenant-rls). First analysed at 9131bda (code last changed at 424a15e, demonstrated 33/33). Re-analysed at a81e54e (IF-12 and IF-17 corrections) and at a0421c0, after the second convergence pass at 6c0d0ba, whose fixes landed in 9373c0f: C1 adds the invitations_guard trigger and an open-only capability USING clause; C2 adds TenantKeyConfigurationTests. drive-speckit reports lint clean, 265 .NET and 131 web tests passing, and the demo 33/33 on a fresh stack at 9373c0f and on a clean tree at a0421c0",
+  "analyzedAt": "2026-11-15",
+  "findings": [
+    {
+      "id": "GOZ-0003-IF-01",
+      "severity": "high",
+      "title": "Rules every later tenant-owned table, function and migration must follow, and the pins each migration must update",
+      "evidence": [
+        "src/Gozleme.Api/Persistence/Migrations/20261117000000_TenantRls.cs:160-224 ENABLE + FORCE RLS and per-command CASE-guarded policies on organizations, memberships and invitations; organizations has no DELETE policy (:179)",
+        "src/Gozleme.Api/Persistence/TableClassification.cs:13-37 TenantOwned, GlobalIdentity, SharedPublic (empty) and the pinned DefinerHelpers",
+        "src/Gozleme.Api/Persistence/RlsCatalog.cs:20-97 flags an unclassified table, a tenant table without RLS, FORCE or a policy, any SharedPublic entry, a non-pinned definer function in gozleme, a definer without a fixed search_path, any PUBLIC execute, and any gozleme_app privilege on gozleme_private. It checks only that a policy exists (:47), not what it admits",
+        "PostgreSQL grants EXECUTE to PUBLIC on new functions by default; the foundation migration (20261114000000_Foundation.cs:21-22) sets default privileges for tables and sequences only, so every new function trips RlsCatalog unless it is revoked",
+        "rls_internal() (TenantRls.cs:84-86) is true whenever current_user is the owner and session_user is another login, so any migrator-owned SECURITY DEFINER function bypasses every tenant policy",
+        "e2e/tests/bootstrap-demo.spec.ts:29 LATEST_MIGRATION = /_TenantRls$/; tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:50-58 pins gozleme_private.context_keys and public.__EFMigrationsHistory as the only tables outside gozleme",
+        "docs/specs/003-tenant-rls/contracts/tenant-context.md section 5 and docs/engineering/local-development.md 'Adding a tenant-owned table' document the rules"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
+        "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039",
+        "GOZ-0040",
+        "GOZ-0041"
+      ],
+      "recommendation": "Each new tenant-owned table carries organization_id with a foreign key to organizations, and its creating migration enables and forces RLS with CASE-guarded per-command policies. Add it to TableClassification.TenantOwned and to the RlsIsolationTests cross-tenant matrix for both roles. Revoke PUBLIC execute on every new function. Add no SECURITY DEFINER function without security review. Update the migration and schema pins. The GOZ-0002-IF-01 'application authorization only' bullet is superseded once GOZ-0003 is verified on main.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-02",
+      "severity": "high",
+      "title": "The tenant transaction is a per-route-group endpoint filter that holds one transaction for the whole handler; later endpoints must opt in, use the ambient transaction and keep network I/O out of it",
+      "evidence": [
+        "src/Gozleme.Api/Organizations/OrganizationEndpoints.cs:28,42 TenantTransaction is attached only to the /organizations and /invitations groups",
+        "src/Gozleme.Api/Tenancy/TenantTransaction.cs:29-69 begins one transaction, establishes the signed context, runs the handler, then commits or rolls back. It defers audit actions with AfterCommit (:19-27)",
+        "OrganizationEndpoints.cs RemoveMemberAsync and RedeemAsync no longer open their own transactions; RedeemAsync rolls back the ambient one through db.Database.RollbackTransactionAsync",
+        "TenantContextSigner.cs:13-27 the token names only an account and an expiry; contract section 1",
+        "verify_context compares the expiry with now() (TenantRls.cs:70), and now() is the transaction start time, so a context never expires inside one transaction",
+        "TenantTelemetryTests.Organization_endpoints_without_a_session_principal_establish_nothing: without a principal the filter sees 0 rows"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0016",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0037",
+        "GOZ-0038",
+        "all tenant-data specs"
+      ],
+      "recommendation": "Endpoints outside the organizations group that touch tenant data add .AddEndpointFilter<TenantTransaction>(). Handlers never begin their own transaction or read tenant data through IDbContextFactory or a second DbContext. Work involving storage, provider or peer I/O is split into short transactions, each of which calls TenantContext.EstablishAsync, with the I/O kept outside all of them.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-03",
+      "severity": "high",
+      "title": "Under FORCE RLS, data migrations on tenant tables silently change zero rows, and the decided rule ('data migrations sign a context') cannot express a cross-tenant backfill such as GOZ-0004's initial roles",
+      "evidence": [
+        "progress.yaml maintainer decision force-rls: 'migrations DDL-only, future data migrations set context explicitly'; contract section 5 and local-development.md say data migrations must sign a context and never rely on owner rights",
+        "RlsIsolationTests.Without_a_context_no_tenant_row_is_visible_to_either_role and Without_a_valid_context_neither_role_can_write_any_tenant_row: the owner login sees and changes nothing without a context. A USING-filtered UPDATE or DELETE reports 0 rows, not an error",
+        "A signed account context sees only that account's organizations (account_organizations(), TenantRls.cs:102-111), so the migrator cannot enumerate the accounts it would need to sign for",
+        "MigrationRunner.cs provisions gozleme_private.context_keys only after MigrateAsync succeeds, so on a fresh database a migration has no key available",
+        "contract section 4: the owner can lift its own binding (ALTER TABLE ... NO FORCE, or the gozleme.rls_helper flag), but the rule forbids relying on owner rights",
+        "docs/prompts/spec-0004.md GOZ-0002-IF-03 requires an additive initial-role migration that is safe for the Helm pre-upgrade Job",
+        "Re-analysis at a0421c0: the invitations_guard BEFORE UPDATE trigger (TenantRls.cs, 9373c0f) refuses changes to guarded columns for every role, owner and superuser included. A backfill that rewrites id, organization_id, code_hash or created_at, extends expires_at, or clears revoked_at/used_at is refused even under option (A). The owner can lift it only with ALTER TABLE ... DISABLE TRIGGER, which is another owner right the force-rls decision text forbids relying on"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0014",
+        "GOZ-0017",
+        "GOZ-0035",
+        "GOZ-0039",
+        "any spec with a data migration on tenant tables"
+      ],
+      "recommendation": "The maintainer chooses the sanctioned mechanism for cross-tenant data migrations before the GOZ-0004 plan. Options: (A) inside the migration transaction the owner sets the transaction-local gozleme.rls_helper flag, or runs ALTER TABLE ... NO FORCE then FORCE, which is transactional DDL so other sessions never see the window. It is limited to reviewed migrations, with a test that asserts per-row results as the superuser. (B) Only DDL defaults are allowed, so any per-row rule must be expressible as a column default or deferred to an application-level, request-time migration. (C) A pinned, migration-only definer function per backfill, added to DefinerHelpers under security review and dropped afterwards. The decision amends the force-rls decision text, contract section 5 and local-development.md. Until it is decided, migrations stay DDL-only. Whichever option is chosen must also state whether a reviewed migration may disable a guard trigger (IF-19) inside its own transaction. The recommended default is no: guarded columns are not backfilled, and a needed change is a new migration that extends the guard deliberately.",
+      "disposition": "human-decided 2026-11-16 by the maintainer: option A. A reviewed migration may lift the owner binding only inside its own transaction (the transaction-local gozleme.rls_helper flag, or ALTER TABLE ... NO FORCE then FORCE), with a superuser test asserting per-row results. A migration may never disable a guard trigger: guarded columns are not backfilled, and a needed change extends the guard in a new migration. Applied to contract section 5, docs/engineering/local-development.md and all downstream prompts. Open for GOZ-0004 clarification: whether populating a new column in the same migration, before its guard is created, counts as backfilling a guarded column"
+    },
+    {
+      "id": "GOZ-0003-IF-04",
+      "severity": "high",
+      "title": "No tenant context exists for non-account principals (background workers, sync appliers, scheduled sweeps, federation peers), although the roadmap requires several",
+      "evidence": [
+        "contract section 1: a token names an account only, never an organization or role. Policies admit rows only for current_account_id() memberships (TenantRls.cs:167-224)",
+        "TenantTransaction derives the account from the session principal only (TenantTransaction.cs:32); OperatorCommands.cs seed acts as a seeded member (research R10), which works only because a seeded account is a member of every fixture",
+        "FR-016 and research R4 rejected a BYPASSRLS helper role; security invariant 2: ordinary application roles must not bypass RLS",
+        "Roadmap consumers: GOZ-0015 'durable async index' (architecture-baseline.md:15 'Asynchronous index'), GOZ-0017 reindex, GOZ-0030-0033 import, sync and revocation application, GOZ-0034/0035 grant withdrawal and retention, GOZ-0031/0032 peer-facing snapshot and feed endpoints"
+      ],
+      "affectedSpecs": [
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036"
+      ],
+      "recommendation": "The maintainer decides the access model for non-account principals before the plan of the first spec that needs one (GOZ-0015 at the latest, or earlier if any spec from GOZ-0005 to GOZ-0014 adds background work). Options: (A) a second signed token kind naming one organization and a bounded purpose, verified in the database with the same key and admitted by a new policy branch. It extends contract sections 1 and 3, and the catalog check pins the branch. (B) Work is enqueued during a request with the enqueuing account, and the worker acts as that account in a fresh tenant transaction, re-verifying membership. Work whose account has left fails closed. (C) A dedicated worker database role with BYPASSRLS, an explicit exception to invariant 2 confined to a separate process and credential. It needs 01-roles.sh, Helm and make reset. (D) A per-organization service account that is a member of that organization, which then needs a non-human member type in GOZ-0004. Prompts forbid inventing any of these without the decision.",
+      "disposition": "human-decided 2026-11-16 by the maintainer: option A. Non-account principals use a second signed token kind naming one organization and a bounded purpose, verified in the database with the same key and admitted by a new policy branch pinned by the catalog check; first consumer GOZ-0015. Applied to all downstream prompts. GOZ-0015 designs the token format, the purpose vocabulary, the signer process and the catalog pin. Anonymous discovery is not covered and stays with GOZ-0012"
+    },
+    {
+      "id": "GOZ-0003-IF-05",
+      "severity": "high",
+      "title": "GOZ-0004 roles collide with the member-level RLS write rules: memberships UPDATE admits only the account's own row, so a role change for another member is silently filtered",
+      "evidence": [
+        "TenantRls.cs:198-202 memberships_update USING/WITH CHECK requires user_id = current_account_id() AND organization_id IN account_organizations()",
+        "TenantRls.cs:186-197 memberships_insert admits any row for an existing member's organization (used by seed; research R7 'GOZ-0004 can narrow it with roles'); :203-205 any member may delete any membership of its organization; invitations allow any member to insert, update and delete",
+        "A USING-filtered UPDATE changes 0 rows without SQLSTATE 42501, and EF Core raises DbUpdateConcurrencyException for a tracked entity. TenantTransaction catches only 42501 (TenantContext.IsRefusal), so the result is a 500",
+        "OrganizationBoundaryTests pins the column list and forbids role/owner/admin columns (GOZ-0002-IF-09); TenantSeedTests covers seed restoring members"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004"
+      ],
+      "recommendation": "GOZ-0004 decides, in its own migration, where roles live (a memberships column or a new tenant-owned table). It decides the policy change that lets an authorized member change another member's role, and whether RLS stays member-level (roles enforced by the application only, the documented GOZ-0003 posture) or also narrows writes by role. Tests extend RlsIsolationTests, OrganizationBoundaryTests and TenantSeedTests. Seed assigns roles while acting as a seeded member.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-06",
+      "severity": "medium",
+      "title": "RLS hides rows but not constraint checks: cross-tenant foreign keys and unique indexes are existence oracles",
+      "evidence": [
+        "research R7: foreign-key checks and cascades run with row security disabled internally; RlsIsolationTests.Foreign_key_cascades_still_run_under_forced_rls",
+        "Unique indexes are enforced across all rows regardless of policy (the unique code_hash index, RlsIsolationTests.The_unique_code_hash_index_still_serves_the_capability_lookup)",
+        "Security invariant 3: errors must not reveal unauthorized existence; GOZ-0012 boundary 'no existence leak via pagination or errors'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0005",
+        "GOZ-0012",
+        "GOZ-0014",
+        "GOZ-0024",
+        "GOZ-0034"
+      ],
+      "recommendation": "A spec whose rows reference another organization's records (overlays, relationship edges, grants) or that holds globally unique values (publisher aliases) validates visibility before writing, and answers an invisible target exactly as it answers an unknown one. It also decides explicitly which namespace-reservation conflicts it may reveal.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-07",
+      "severity": "medium",
+      "title": "The shared/public class is reserved and empty until GOZ-0012, so catalog tables created by GOZ-0005 to GOZ-0011 must be tenant-owned, and anonymous requests through the tenant filter count as denials",
+      "evidence": [
+        "TableClassification.cs:24-28 SharedPublic is reserved; RlsCatalog.cs:31-34 any entry is a violation; RlsCatalogTests.A_table_classified_shared_or_public_is_a_violation_until_GOZ_0012",
+        "registry: GOZ-0012 depends on GOZ-0003 and GOZ-0008, so GOZ-0005 to GOZ-0011 (publishers, manifests, revisions, children, artifacts) merge before the shared/public path exists",
+        "TenantTransaction.cs:36-42 a null principal yields establish_context('') = 'missing', which is counted in gozleme.tenant.denials and audited as 1201; TenantTelemetryTests.Organization_endpoints_without_a_session_principal_establish_nothing",
+        "contract section 3.1: with no valid context, zero tenant rows are visible"
+      ],
+      "affectedSpecs": [
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012"
+      ],
+      "recommendation": "GOZ-0005 to GOZ-0011 classify their tables as tenant-owned by the publishing organization (private by default) or as global account-level identity. GOZ-0012 replaces the reservation test and the SharedPublic branch of RlsCatalog with a real rule. It extends contract sections 3 and 5, defines how public publications become visible to other tenants, and gives any approved anonymous discovery a path that does not run as a rejected tenant context.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-08",
+      "severity": "medium",
+      "title": "There is no class for instance-wide, non-identity tables that hold no tenant content, which specs before GOZ-0012 may need",
+      "evidence": [
+        "TableClassification.cs offers only TenantOwned, GlobalIdentity ('Global account-level infrastructure (GOZ-0001)') and the reserved SharedPublic; RlsCatalog.cs:52-55 rejects anything else",
+        "GOZ-0005 'origin-qualified IDs and publisher namespace rules' and 'friendly alias reservation' imply instance-wide uniqueness. GOZ-0009 content-addressed ingest and GOZ-0023 epochs may need instance-wide rows",
+        "FR-017 fixes the three classes; adding a class changes the security boundary that the catalog check enforces"
+      ],
+      "affectedSpecs": [
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0023"
+      ],
+      "recommendation": "Decide when the first spec needs such a table, at GOZ-0005 clarification at the latest. Options: (A) no new class: every catalog table before GOZ-0012 is tenant-owned by the publishing organization, global uniqueness is enforced by a unique index, and the revealed conflict is accepted per IF-06. (B) A fourth class, for example InstanceReference, holding tables with no organization_id, no tenant content and no DML for gozleme_app except a pinned read path, with its own RlsCatalog rule. (C) Bring GOZ-0012's classification work forward. Prompts tell specs to stop and ask rather than misclassify a table as GlobalIdentity.",
+      "disposition": "human-decided 2026-11-16 by the maintainer: option B. A fourth table class (for example InstanceReference) holds tables with no organization_id and no tenant content, with no DML for gozleme_app except a pinned read path, enforced by its own RlsCatalog rule, and is added by the first spec that needs it. Applied to the GOZ-0005 to GOZ-0011 and GOZ-0023 prompts. The shape of the pinned read path is left to the first consumer. Instance-wide tables written at request time fit no class"
+    },
+    {
+      "id": "GOZ-0003-IF-09",
+      "severity": "medium",
+      "title": "Telemetry and audit names and semantics later modules build on, including the broad 42501-to-404 mapping",
+      "evidence": [
+        "src/Gozleme.Api/Tenancy/TenantTelemetry.cs:14-46 span gozleme.tenant.transaction, events gozleme.tenant.context.established and .cleared, counter gozleme.tenant.denials{gozleme.tenant.denial.reason in missing|invalid|expired|refused_write}",
+        "src/Gozleme.Api/Identity/SecurityAudit.cs:67-75 audit 1201-1203 (range 1201-1210); identity uses 1001-1010 and organizations 1101-1108",
+        "TenantContext.cs:27-28 IsRefusal matches any SQLSTATE 42501, which PostgreSQL also raises for a plain 'permission denied' (a missing GRANT). TenantTransaction.cs:62-68 answers it as an empty 404, counts refused_write and audits 1202",
+        "progress.yaml maintainer decision tenant-id-on-spans: gozleme.organization.id only on spans after membership is confirmed, never a metric label"
+      ],
+      "affectedSpecs": [
+        "all downstream specs"
+      ],
+      "recommendation": "Later module spans nest under gozleme.tenant.transaction. Adding a new denial reason is a contract change. New modules take audit ranges from 1301 on. A 404 counted as refused_write in development usually means a missing grant or policy, and authorization never relies on RLS errors. Optional GOZ-0003 polish, not required: narrow IsRefusal to the row-level-security message so that grant defects surface as 500s instead of cross-tenant refusals.",
+      "disposition": "applied-to-future-prompts (optional IsRefusal narrowing declined by drive-speckit at a81e54e; listed in the PR as a known fail-closed limitation)"
+    },
+    {
+      "id": "GOZ-0003-IF-10",
+      "severity": "medium",
+      "title": "New seeded tenant, seed semantics and key configuration; supersedes the GOZ-0002-IF-06 suggestion of a second organization for bob",
+      "evidence": [
+        "src/Gozleme.Api/Identity/OperatorCommands.cs: DemoAccounts adds dave@demo.gozleme.test; PartnerOrganizationId 0193a000-0000-7000-8000-000000000003 'Seeded Partner Org'; SeedOrganizationAsync acts through a seeded member's signed context; UnrestorableMessage",
+        "e2e/tests/evidence.ts DEMO.dave and PARTNER_ORG; e2e/playwright.config.ts project goz-0003 depends on goz-0002",
+        "e2e/tests/tenant-rls-demo.spec.ts:73,198-234 recreates the API with a mismatched key and then restores it; :57 signs tokens in Node for database evidence",
+        "compose.yaml x-context-key for migrate, api and seed; deploy/helm/gozleme/README.md secret key rls-context-key; contract section 6",
+        "docs/prompts/spec-0012.md GOZ-0002-IF-06 bullet says only one fixed organization is seeded, which is now stale"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0012",
+        "all downstream specs"
+      ],
+      "recommendation": "Later demos use DEMO_ORG and PARTNER_ORG as the two disjoint tenants, extend seed by acting as a seeded member, and reuse the database-evidence pattern. The GOZ-0012 prompt is corrected.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-11",
+      "severity": "medium",
+      "title": "Backup and restore cannot run as the owner under forced RLS, backups now contain the signing key, and key rotation has no overlap window",
+      "evidence": [
+        "TenantRls.cs:160-165 FORCE on all three tenant tables; the owner gozleme_migrator is NOSUPERUSER NOBYPASSRLS (deploy/postgres/init/01-roles.sh)",
+        "Documented PostgreSQL behaviour, not reproduced here: pg_dump sets row_security = off, and a query that a policy would affect then fails for a role subject to RLS. COPY FROM into a table with RLS is refused for such a role",
+        "TenantRls.cs:39-43 gozleme_private.context_keys holds the key as bytea in the database, so a database dump contains it",
+        "context_keys has a single row (CHECK id = 1); rotation per deploy/helm/gozleme/README.md and local-development.md leaves organization data unreachable until both the migrator and the API have run with the new key",
+        "docs/prompts/spec-0039.md GOZ-0000-IF-15 already requires verifying role attributes after restore",
+        "Re-analysis at a0421c0: restore inserts rows (COPY/INSERT), so the BEFORE UPDATE invitations_guard does not block it. Restoring with session_replication_role = replica would disable the guard and the foreign-key triggers"
+      ],
+      "affectedSpecs": [
+        "GOZ-0039"
+      ],
+      "recommendation": "The maintainer decides at GOZ-0039 clarification which role runs backup and restore. Options: (A) a superuser, documented as an operator procedure. (B) A dedicated operator role with BYPASSRLS (gozleme_backup), not used by any application process, added to 01-roles.sh and the Helm README and needing make reset. This is an explicit, scoped reading of invariant 2. (C) Defer logical backups and use physical, cluster-level backups only. Whichever is chosen, treat backups as secret-bearing, verify FORCE, policies, pgcrypto placement and gozleme_private privileges after restore, and state the rotation downtime as a residual or plan versioned keys (the token's v1 prefix allows this).",
+      "disposition": "human-decided 2026-11-16 by the maintainer (partly): option A. Backup and restore run as a superuser, as a documented operator procedure. Still open for GOZ-0039 clarification: the key-rotation gap (accept as a residual, or plan versioned keys). Applied to the GOZ-0039 prompt"
+    },
+    {
+      "id": "GOZ-0003-IF-12",
+      "severity": "medium",
+      "title": "Coverage gaps in the catalog check: definer functions outside gozleme, views and materialized views, and policy content",
+      "evidence": [
+        "RlsCatalog.cs:59-66 function scan limited to nspname IN ('gozleme','gozleme_private'); rls_internal() (TenantRls.cs:84-86) is true inside any SECURITY DEFINER function owned by gozleme_migrator in any schema. The migrator owns the database, so it can create schemas and functions (it created gozleme_private) and, as pg_database_owner on PostgreSQL 15 and later, functions in public",
+        "RlsCatalog.cs:23 relkind IN ('r','p') only: views, materialized views (which cannot carry RLS) and foreign tables in gozleme are unclassified and unchecked; default privileges (Foundation.cs:21) grant gozleme_app SELECT on them",
+        "RlsCatalog.cs:47 a tenant table passes with any policy (USING (true) included); pinned helpers are matched by name (:72), not body",
+        "BootstrapBoundaryTests pins tables outside gozleme, but not functions or views",
+        "Corrected at a81e54e: RlsCatalog.cs adds a relation scan of schema gozleme for relkind v, m and f (each reported as a violation) and a scan of migrator-owned SECURITY DEFINER functions in every schema other than gozleme, gozleme_private, pg_catalog and information_schema, excluding extension members",
+        "RlsCatalogTests.Violations adds four negative cases (view, materialized view, a definer in a new schema rogue, a definer in public). They run on the migrator's own connection (RlsCatalogTests InRolledBackChangeAsync uses MigratorConnectionString), so they also confirm that the migrator can create both. drive-speckit reports all 15 catalog tests passing",
+        "Remaining by design: policy content is not inspected, and pinned helpers are matched by name, not body; both are covered by the per-table behavioural matrix (IF-01) and carried to GOZ-0039",
+        "Note: the code comment's rationale ('a view that is not security_invoker reads its tables as the owner, which rls_internal() treats as a helper') is probably inaccurate. Inside a view current_user stays the invoking role, so rls_internal() stays false, and the owner's policies apply under FORCE. The check rejects every view regardless, so this affects only the comment and the R11 wording, not behaviour. Not tested",
+        "Re-analysis at a0421c0: 9373c0f replaces the code comment's view rationale. research.md R11 records a 2026-11-16 probe showing that a plain view does not bypass the guard (current_user stays the caller, and the serving role saw 0 of 5 rows), which resolves the earlier comment-rationale note"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003",
+        "GOZ-0013",
+        "GOZ-0015",
+        "GOZ-0017",
+        "GOZ-0039"
+      ],
+      "recommendation": "Bounded correction for drive-speckit in GOZ-0003, recommended but outside the spec's FR text: scan migrator-owned SECURITY DEFINER functions in every non-system schema, and fail on any gozleme relation of kind v, m or f that is not classified, with matching negative cases in RlsCatalogTests. Policy content is covered by the per-table behavioural matrix (IF-01) and GOZ-0039. Prompts for search and the release gate carry the gaps.",
+      "disposition": "corrected at a81e54e (verified by re-analysis; the comment-rationale note was resolved at 9373c0f; downstream prompts refreshed)"
+    },
+    {
+      "id": "GOZ-0003-IF-13",
+      "severity": "medium",
+      "title": "Search, vector and caching specs must account for how RLS predicates plan, the recall of ANN post-filtering, and the lack of RLS on stores outside tables",
+      "evidence": [
+        "research R5: policies use (SELECT current_account_id()) and IN (SELECT account_organizations()), evaluated once per statement as an initplan or hashed subplan. That is a filter, not an index condition on organization_id",
+        "account_organizations() calls current_account_id(), which re-verifies the HMAC on each call (TenantRls.cs:97-111)",
+        "PostgreSQL applies RLS quals after an index scan; materialized views cannot carry RLS (see IF-12)",
+        "GOZ-0017 boundary 'Tenant-safe ANN recall regression tests'; GOZ-0002-IF-19 cache invalidation on membership change"
+      ],
+      "affectedSpecs": [
+        "GOZ-0013",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0023"
+      ],
+      "recommendation": "Measure plans as gozleme_app with a valid context at realistic volume. Add no materialized view, or index or cache outside PostgreSQL, over tenant data without extending the catalog check and the isolation matrix. Key any external cache by account and security epoch. Embedding and index tables are tenant-owned.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-14",
+      "severity": "medium",
+      "title": "GOZ-0040 and GOZ-0041 account-level tables must join the GlobalIdentity allow-list and its exact-set tests",
+      "evidence": [
+        "TableClassification.cs:19-22 GlobalIdentity lists the six GOZ-0001 tables; RlsCatalogTests.Identity_tables_are_global_and_tenant_tables_are_disjoint_from_them asserts the exact set",
+        "spec.md FR-019: GOZ-0040 and GOZ-0041 account-level tables go on the global allow-list",
+        "registry: GOZ-0040 depends on GOZ-0001 and GOZ-0002, GOZ-0041 on GOZ-0001 and GOZ-0040; neither depends on GOZ-0003, but both will merge onto a main that runs RlsCatalogTests",
+        "Identity endpoints never run TenantTransaction (OrganizationEndpoints.cs:28,42 only)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0040",
+        "GOZ-0041"
+      ],
+      "recommendation": "Add each new account-level table to TableClassification.GlobalIdentity and to both exact-set tests, revoke PUBLIC execute on new functions, and touch no tenant tables. The 'may precede GOZ-0003' ordering note becomes moot once GOZ-0003 is on main.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-15",
+      "severity": "medium",
+      "title": "Routing of observation GOZ-0003-OBS-01: a pre-existing GOZ-0001 defect where re-signing in from a client with a valid session yields an unusable session",
+      "evidence": [
+        "docs/specs/003-tenant-rls/progress.yaml observation GOZ-0003-OBS-01 (open-for-maintainer): reproduced on origin/main by drive-speckit; the API answers 200 but the client and replays of the new cookie get 401",
+        "tests/Gozleme.Api.IntegrationTests/AuthFlowTests.cs:131-143 Every_sign_in_issues_a_new_session_and_retires_the_previous_one signs in twice on an already signed-in client and is reported to pass only incidentally",
+        "src/Gozleme.Api/Identity/AuthEndpoints.cs:125-175 SignInAsync; the defect is in completed spec GOZ-0001, outside GOZ-0003's scope",
+        "Exposed flows: GOZ-0040 reset then sign in and 'every earlier session ends'; GOZ-0041 'links ... from a signed-in session, and later signs in either way'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0001",
+        "GOZ-0040",
+        "GOZ-0041"
+      ],
+      "recommendation": "The maintainer chooses where the fix lands. (A) Recommended: a bounded bugfix PR (bugfix/goz-0001-resign-in-session) against GOZ-0001 behaviour before GOZ-0040 starts, with a non-incidental regression test that uses both the old and the new cookie after re-sign-in. (B) Fold the fix into GOZ-0040's scope, since it owns session-ending flows. (C) Accept it as a documented residual and have sign-in from a signed-in client first sign out. The GOZ-0040 and GOZ-0041 prompts record the defect and forbid a silent fix.",
+      "disposition": "human-decided 2026-11-16 by the maintainer: option A. GOZ-0003-OBS-01 is fixed in a bounded bugfix PR (bugfix/goz-0001-resign-in-session) against GOZ-0001 behaviour before GOZ-0040 starts, with a non-incidental regression test that uses both the old and the new cookie after re-sign-in. The GOZ-0040 prompt makes the merged fix an entry condition, and GOZ-0040 and GOZ-0041 may not fix or work around it themselves. The registry's prerequisites list spec IDs only, so the bugfix gate lives in the prompt"
+    },
+    {
+      "id": "GOZ-0003-IF-16",
+      "severity": "low",
+      "title": "The context key is a new high-value secret; sandboxes and secret scans must account for it",
+      "evidence": [
+        "contract section 4: a compromised context key defeats the rules; section 6: the key is held by the api, migrate and seed environments",
+        "compose.yaml x-context-key; .gitleaks.toml allow-lists only the local default; e2e/tests/compose.ts adds it to forbiddenStrings"
+      ],
+      "affectedSpecs": [
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039"
+      ],
+      "recommendation": "Sandbox and playground workloads never inherit the API's environment, database credentials or this key. Release secret scans and telemetry checks include it.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-17",
+      "severity": "low",
+      "title": "GOZ-0003 planning documents differ from the code",
+      "evidence": [
+        "research.md R5 table: rls_internal() is 'executable by PUBLIC, since it is harmless', but TenantRls.cs:153-158 revokes it from PUBLIC and grants it to gozleme_app (contract section 2 matches the code)",
+        "research.md R11: PUBLIC execute is flagged 'other than rls_internal', but RlsCatalog.cs:82-85 has no exemption",
+        "research.md R5: 'The verifier traps only cast errors (invalid_text_representation, numeric_value_out_of_range)', but verify_context (TenantRls.cs:46-76) has no EXCEPTION block and relies on regex prevalidation",
+        "Registry entry GOZ-0003 still says stage: tasks; progress.yaml stage: converge (Roadmap Steward)",
+        "Corrected at a81e54e: research.md R5 now states that PUBLIC is revoked on every function, that invitation_capability and rls_internal are not definers, that the verifier uses regex validation and traps no errors, and that a missing key returns invalid (matches verify_context, TenantRls.cs:64-67). R11 lists the new catalog checks and no PUBLIC exemption, matching RlsCatalog.cs",
+        "The registry stage and gates are still stale; the Roadmap Steward syncs them next"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003"
+      ],
+      "recommendation": "drive-speckit corrects research R5 and R11 to match the code (documentation only), and the Roadmap Steward syncs the registry stage and gates.",
+      "disposition": "corrected at a81e54e (research.md); registry stage sync remains with the Roadmap Steward"
+    },
+    {
+      "id": "GOZ-0003-IF-18",
+      "severity": "low",
+      "title": "Stale references in downstream prompts",
+      "evidence": [
+        "docs/prompts/spec-0012.md GOZ-0002-IF-09 cites BootstrapBoundaryTests.cs:23 for GET /api/v1/catalog; the InlineData is at :24 on main and at HEAD",
+        "Every downstream prompt carries the GOZ-0002-IF-01 bullet 'Until GOZ-0003 merges, tenant isolation is enforced by application authorization only'",
+        "BootstrapBoundaryTests.Only_migration_history_table_exists_outside_system_schemas was renamed to Only_migration_history_and_the_context_key_tables_exist_outside_system_schemas"
+      ],
+      "affectedSpecs": [
+        "GOZ-0012",
+        "all downstream specs"
+      ],
+      "recommendation": "Record refreshed references in new sections and leave earlier provenance text as written, following the GOZ-0002 precedent.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0003-IF-19",
+      "severity": "medium",
+      "title": "Row policies cannot compare old and new rows: identity and lifecycle columns need guard triggers, now the pattern after convergence C1, and memberships has none",
+      "evidence": [
+        "docs/specs/003-tenant-rls/progress.yaml and research.md R7 amendment (2026-11-16, C1): the original invitations_update capability branch let a code holder move an invitation into another organization and join it through memberships_insert, reopen a revoked invitation, or extend one",
+        "TenantRls.cs (9373c0f): the invitations_update capability USING now requires revoked_at IS NULL AND used_at IS NULL AND expires_at > now(). The gozleme.invitations_guard() BEFORE UPDATE trigger (plpgsql, not a definer, fixed search_path, PUBLIC revoked) keeps id, organization_id, code_hash and created_at fixed, lets expires_at only decrease, makes revoked_at and used_at set-once, and lets *_by change only to NULL (GOZ-0002 SET NULL cascades). It raises insufficient_privilege (42501), which TenantTransaction maps to the empty 404 with refused_write",
+        "contract tenant-context.md section 3 adds the invitation-capability guarantee. Note that it is numbered 6 next to the existing item 6 ('Foreign-key checks ...'), a cosmetic duplicate number",
+        "tests/Gozleme.Api.IntegrationTests/TenantContextBoundaryTests.cs An_invitation_code_cannot_move_reopen_or_extend_its_invitation covers move, move-and-join, extend, a reopen by the holder (0 rows) and a reopen by a member (refused)",
+        "RlsCatalog does not inspect triggers, so dropping or disabling invitations_guard would be caught only by that behavioural test",
+        "memberships has no guard: memberships_update (TenantRls.cs:198-202) admits the account's own row, so at the database layer a member can rewrite its own joined_via, joined_at and invitation_id. A future role column on memberships would be self-editable. Seed creates memberships with joined_via = 'invitation' and no invitation_id (OperatorCommands.cs AddMembers)",
+        "Existing guidance GOZ-0000-IF-04 (spec-0007, 0009, 0023, 0032) covers fully immutable tables by revoking UPDATE/DELETE. Partially mutable lifecycle tables had no pattern"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0021",
+        "GOZ-0023",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0039",
+        "GOZ-0040",
+        "GOZ-0041",
+        "all specs with capability-bearing or lifecycle tables"
+      ],
+      "recommendation": "Extend the IF-01 rules. A table whose identity, tenant key or lifecycle columns may change only one way gets a BEFORE UPDATE guard trigger next to its policies, modelled on invitations_guard: not a definer, fixed search_path, PUBLIC revoked, raising 42501, allowing cascaded SET NULL, and proved by a behavioural test. organization_id is immutable on every tenant table. A policy's capability branch restricts its USING clause to the open state. GOZ-0004 keeps memberships organization_id and user_id fixed, makes role changes impossible through the own-row branch, and does not base its initial-role rule on an unguarded joined_via. Epochs, revocations, grants, withdrawals, approvals, reset tokens and identity links follow the same pattern. The GOZ-0039 gate verifies that pinned guard triggers exist and are enabled. drive-speckit may optionally renumber the duplicate item 6 in contract section 3.",
+      "disposition": "applied-to-future-prompts"
+    }
+  ]
+}

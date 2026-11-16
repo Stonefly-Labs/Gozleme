@@ -4,12 +4,13 @@ using Gozleme.Api.Identity;
 using Gozleme.Api.Organizations;
 using Gozleme.Api.Status;
 using Gozleme.Api.Telemetry;
+using Gozleme.Api.Tenancy;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Npgsql;
 
 namespace Gozleme.Api;
 
-/// <summary>Composes the Gözleme API host: status (GOZ-0000), local identity (GOZ-0001) and organizations (GOZ-0002).</summary>
+/// <summary>Composes the Gözleme API host: status (GOZ-0000), local identity (GOZ-0001), organizations (GOZ-0002) and tenant RLS context (GOZ-0003).</summary>
 internal static class GozlemeApp
 {
     public const string AppConnectionStringName = "Gozleme";
@@ -41,6 +42,8 @@ internal static class GozlemeApp
         builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
         builder.AddGozlemeIdentity();
         builder.AddGozlemeOrganizations();
+        builder.AddGozlemeTenancy();
+        builder.AddTenantContextSelfCheck();
 
         var app = builder.Build();
 

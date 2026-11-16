@@ -5,9 +5,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Gozleme.Api.Organizations;
 
 /// <summary>
-/// The only organization authorization check in this slice (research R3, R9): the caller's membership
-/// row, read from the database on every request. A malformed id, an unknown organization and a
-/// non-member all yield null, which every endpoint answers with the same empty 404.
+/// The application organization authorization check (research R3, R9): the caller's membership row,
+/// read from the database on every request. A malformed id, an unknown organization and a non-member
+/// all yield null, which every endpoint answers with the same empty 404. Since GOZ-0003 PostgreSQL
+/// row-level security enforces the same boundary as a second, independent layer; it never replaces this check.
 /// </summary>
 internal static class OrganizationAccess
 {

@@ -77,7 +77,7 @@ public sealed class DatabaseOutageTests : IAsyncLifetime
         // The same session is honoured again once it can be verified.
         var recovered = await WaitForAsync(async () => await TryGetStatusAsync(bodies, ct), s => s?.GetProperty("status").GetString() == "healthy", ct);
         Assert.NotNull(recovered);
-        Assert.Equal("20261116000000_Organizations", recovered.Value.GetProperty("dependencies")[0].GetProperty("schemaVersion").GetString());
+        Assert.Equal("20261117000000_TenantRls", recovered.Value.GetProperty("dependencies")[0].GetProperty("schemaVersion").GetString());
         Assert.Equal(HttpStatusCode.OK, await StatusCodeAsync("/health/ready", bodies, ct));
 
         string[] forbidden =

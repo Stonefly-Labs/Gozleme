@@ -13,7 +13,8 @@ namespace Gozleme.Api.Persistence;
 /// <summary>
 /// Owns Gözleme schema migrations. GOZ-0001 adds local identity (user-only Identity store),
 /// server-side sessions and the Data Protection key ring; GOZ-0002 adds organizations, memberships
-/// and invitations. All tables live in schema <c>gozleme</c>.
+/// and invitations; GOZ-0003 forces row-level security on those three tenant tables. All tables live
+/// in schema <c>gozleme</c>; the tenant context key lives in <c>gozleme_private</c>.
 /// </summary>
 internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> options)
     : IdentityUserContext<GozlemeUser, Guid>(options), IDataProtectionKeyContext
@@ -68,8 +69,9 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
 
         builder.Entity<DataProtectionKey>().ToTable("data_protection_keys");
 
-        // Tenant-owned (GOZ-0002). Every table carries its tenant key so GOZ-0003 can enable RLS without
-        // a data migration (FR-019). No role, owner or admin column exists by design (FR-018).
+        // Tenant-owned (GOZ-0002). Every table carries its tenant key; GOZ-0003 forces RLS on all three
+        // (migration TenantRls; TableClassification). No role, owner or admin column exists by design (FR-018).
+        // A new tenant-owned table must follow "Adding a tenant-owned table" in docs/engineering/local-development.md.
         builder.Entity<Organization>(org =>
         {
             org.ToTable("organizations");

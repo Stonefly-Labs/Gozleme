@@ -22,7 +22,7 @@ Azure, AWS, OIDC or embedding provider is used.
 | Tests | `make test` (backend unit + Testcontainers integration, frontend unit) |
 | Lint | `make lint` |
 | Governance validation | `make validate` |
-| Autonomous demo | `make demo SPEC=GOZ-0002` → replays every earlier demo, then this spec's; writes `docs/specs/002-organizations/evidence/` (earlier specs' screenshots under `screenshots/regression-goz-NNNN/`) |
+| Autonomous demo | `make demo SPEC=GOZ-0003` → replays every earlier demo, then this spec's; writes `docs/specs/003-tenant-rls/evidence/` (earlier specs' screenshots under `screenshots/regression-goz-NNNN/`) |
 | Logs / status | `make logs`, `make ps` |
 | Stop / reset | `make down`; `make reset` deletes the database volume |
 
@@ -66,8 +66,37 @@ no "add by email", no organization deletion and no administrative delegation.
 
 The demo `seed` also creates `carol@demo.gozleme.test` and **Seeded Demo Org** (fixed id
 `0193a000-0000-7000-8000-000000000002`, members alice and carol); every `seed` run restores it.
-Until GOZ-0003 enables row-level security, organization isolation is enforced by the
-application only.
+
+## Tenant row-level security (GOZ-0003)
+
+Organization data is protected twice: the application membership check, then PostgreSQL
+row-level security, enabled and **forced** (so it binds the owner login too) on
+`organizations`, `memberships` and `invitations`. Each organization request runs in one
+transaction that carries a short-lived account context, signed by the API
+(`v1.<account>.<expires>.<hmac>`, 5 minutes). The database verifies it with a key held in
+`gozleme_private`, which `gozleme_app` cannot read. A missing, forged, tampered or expired
+context sees no tenant rows. The full contract is in
+`docs/specs/003-tenant-rls/contracts/tenant-context.md`.
+
+| Setting | Default (Compose) | Notes |
+|---|---|---|
+| `GOZLEME_CONTEXT_KEY` → `Gozleme__Rls__ContextKey` | `local-dev-context-key-not-a-secret-0001` | ≥ 32 characters; needed by `migrate`, `api` and `seed`; not by `reset-password`/`unlock` |
+
+- **Existing volumes** need no `make reset` (no role changes). The next `make up` runs the migration and provisions the key.
+- **Rotation**: change the key, re-run `docker compose up -d migrate`, then restart the API. In between, organization data is unreachable (fail closed), and the API logs audit event 1203 at startup.
+- **Spot check**: `docker compose exec postgres psql -U gozleme_app -d gozleme -c "SELECT count(*) FROM gozleme.organizations"` returns `0`.
+- **Not protected against**: SQL injected into a request (it runs with that request's own context), or compromised owner, superuser or context-key credentials.
+- **Demo tenants**: `seed` acts as a seeded member of each demo organization, never with wider rights. It also creates `dave@demo.gozleme.test` and **Seeded Partner Org** (`0193a000-0000-7000-8000-000000000003`, member dave), the second tenant.
+
+### Adding a tenant-owned table
+
+The application role is granted DML on every new `gozleme` table automatically, so a new tenant-owned table must:
+
+1. carry `organization_id uuid NOT NULL` with a foreign key to `gozleme.organizations(id)`;
+2. in the **same** migration, `ENABLE` and `FORCE ROW LEVEL SECURITY` and create per-command policies of the form `CASE WHEN gozleme.rls_internal() THEN true ELSE organization_id IN (SELECT gozleme.account_organizations()) END`;
+3. be added to `TableClassification.TenantOwned` (`src/Gozleme.Api/Persistence/TableClassification.cs`).
+
+Global account-level tables go to `TableClassification.GlobalIdentity`. `RlsCatalogTests` fails on any unclassified or unprotected table, any extra `SECURITY DEFINER` function in `gozleme`, and any `PUBLIC` execute grant. Under FORCE a data migration on tenant tables sees no rows without a context, so it silently changes nothing. Maintainer decision 2026-11-16 (GOZ-0003-IF-03): a reviewed migration may lift the owner binding only inside its own transaction, with the transaction-local `gozleme.rls_helper` flag or `ALTER TABLE … NO FORCE ROW LEVEL SECURITY` and then `FORCE` before commit. A superuser test must assert the per-row results. A migration may never disable a guard trigger such as `invitations_guard`: guarded columns are not backfilled, and a needed change extends the guard in a new migration.
 
 ## Observability (foundational)
 

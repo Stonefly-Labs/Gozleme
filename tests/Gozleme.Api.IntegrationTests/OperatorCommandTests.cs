@@ -101,7 +101,7 @@ public sealed class OperatorCommandTests(PgvectorDatabaseFixture fixture) : IAsy
 
         Assert.Equal(OperatorCommands.Ok, (await RunAsync("seed", [settings])).Code);
         Assert.Equal(ids, await Db.ScalarAsync<string>("SELECT string_agg(id::text, ',' ORDER BY email) FROM gozleme.users WHERE email LIKE '%@demo.gozleme.test'"));
-        Assert.Equal(4, ids.Split(',').Length);
+        Assert.Equal(OperatorCommands.DemoAccounts.Length, ids.Split(',').Length);
         using var client = AuthClient.Create(_factory);
         Assert.Equal(HttpStatusCode.OK, (await AuthClient.SignInAsync(client, "lockout@demo.gozleme.test", "it-demo-seed-passphrase")).StatusCode);
         Assert.Equal(OperatorCommands.Usage, (await RunAsync("seed", [])).Code);
@@ -182,7 +182,7 @@ public sealed class OperatorCommandTests(PgvectorDatabaseFixture fixture) : IAsy
         using var input = new StringReader(stdin);
         using var stdout = new StringWriter();
         using var stderr = new StringWriter();
-        var code = await OperatorCommands.RunAsync(command, [.. args, $"--ConnectionStrings:Gozleme={Db.AppConnectionString}"], input, stdout, stderr);
+        var code = await OperatorCommands.RunAsync(command, [.. args, $"--ConnectionStrings:Gozleme={Db.AppConnectionString}", $"--Gozleme:Rls:ContextKey={GozlemeDatabase.ContextKey}"], input, stdout, stderr);
         return (code, stdout.ToString(), stderr.ToString());
     }
 

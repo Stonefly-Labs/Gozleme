@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using Gozleme.Api.Persistence;
+using Gozleme.Api.Tenancy;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -17,6 +19,9 @@ public sealed class GozlemeDatabase : IAsyncDisposable
     public const string MigratorPassword = "it-migrator-Zq81";
     public const string AppPassword = "it-app-Kd47";
     public const string SuperuserPassword = "it-super-Wm63";
+
+    /// <summary>Throwaway tenant context key (GOZ-0003), provisioned by the migrator and given to every test API.</summary>
+    public const string ContextKey = "it-context-key-0003-not-a-secret-Hx52";
 
     private readonly PostgreSqlContainer _container;
     private readonly int _hostPort;
@@ -54,12 +59,55 @@ public sealed class GozlemeDatabase : IAsyncDisposable
 
     public string SuperuserConnectionString => Build("postgres", SuperuserPassword);
 
+    /// <summary>The owner's own login (never <c>SET ROLE</c> from a superuser, which would satisfy the RLS internal guard).</summary>
     public string MigratorConnectionString => Build("gozleme_migrator", MigratorPassword);
 
     public string AppConnectionString => Build("gozleme_app", AppPassword);
 
     public Task<int> MigrateAsync() =>
-        MigrationRunner.RunAsync([$"--ConnectionStrings:{MigrationRunner.MigratorConnectionStringName}={MigratorConnectionString}"]);
+        MigrationRunner.RunAsync([$"--ConnectionStrings:{MigrationRunner.MigratorConnectionStringName}={MigratorConnectionString}", $"--{TenancyOptions.Section}:ContextKey={ContextKey}"]);
+
+    /// <summary>A token signed with the test key; defaults to a 5-minute lifetime.</summary>
+    public static string SignContext(Guid accountId, DateTimeOffset? expires = null, string key = ContextKey) =>
+        TenantContextSigner.Sign(Encoding.UTF8.GetBytes(key), accountId, expires ?? DateTimeOffset.UtcNow + TenantContextSigner.Lifetime);
+
+    /// <summary>
+    /// Runs <paramref name="sql"/> as a scalar inside one explicit transaction whose first statement is
+    /// <paramref name="setup"/> (for example <c>SELECT gozleme.establish_context('…')</c>), then rolls back.
+    /// RLS leak tests use this with <see cref="AppConnectionString"/> or <see cref="MigratorConnectionString"/>.
+    /// </summary>
+    public static async Task<T?> InTransactionAsync<T>(string connectionString, string? setup, string sql, params object[] parameters)
+    {
+        await using var dataSource = Named(connectionString);
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        if (setup is not null)
+        {
+            await using var first = new NpgsqlCommand(setup, connection, transaction);
+            await first.ExecuteNonQueryAsync();
+        }
+
+        await using var command = new NpgsqlCommand(sql, connection, transaction);
+        foreach (var value in parameters)
+        {
+            command.Parameters.Add(new NpgsqlParameter { Value = value });
+        }
+
+        var result = await command.ExecuteScalarAsync();
+        await transaction.RollbackAsync();
+        return result is null or DBNull ? default : (T)result;
+    }
+
+    /// <summary>Runs <paramref name="body"/> on one open connection from a named data source (no connection string in metric labels).</summary>
+    public static async Task<T> WithConnectionAsync<T>(string connectionString, Func<NpgsqlConnection, Task<T>> body)
+    {
+        await using var dataSource = Named(connectionString);
+        await using var connection = await dataSource.OpenConnectionAsync();
+        return await body(connection);
+    }
+
+    /// <summary>The <c>establish_context</c> setup statement for <see cref="InTransactionAsync{T}"/>.</summary>
+    public static string Establish(string token) => $"SELECT gozleme.establish_context('{token}')";
 
     public Task StopAsync() => _container.StopAsync();
 

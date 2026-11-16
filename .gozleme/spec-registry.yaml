@@ -208,31 +208,62 @@ specs:
   prompt: docs/prompts/spec-0003.md
   dependencies:
   - GOZ-0002
-  status: not-started
-  stage: null
-  branch: null
-  pullRequest: null
+  status: in-progress
+  stage: pr
+  branch: feature/goz-0003-tenant-rls
+  pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/10'
   promptRevision: 4
   gates:
-    specification: pending
-    plan: pending
-    tasks: pending
-    implementation: pending
-    tests: pending
-    demo: pending
-    convergence: pending
-    impactAnalysis: pending
-    roadmapSync: pending
+    specification: passed
+    plan: passed
+    tasks: passed
+    implementation: passed
+    tests: passed
+    demo: passed
+    convergence: passed
+    impactAnalysis: passed
+    roadmapSync: passed
     humanReview: pending
     merge: pending
   blockers: []
-  impactFindings: []
+  impactFindings:
+  - GOZ-0003-IF-01
+  - GOZ-0003-IF-02
+  - GOZ-0003-IF-03
+  - GOZ-0003-IF-04
+  - GOZ-0003-IF-05
+  - GOZ-0003-IF-06
+  - GOZ-0003-IF-07
+  - GOZ-0003-IF-08
+  - GOZ-0003-IF-09
+  - GOZ-0003-IF-10
+  - GOZ-0003-IF-11
+  - GOZ-0003-IF-12
+  - GOZ-0003-IF-13
+  - GOZ-0003-IF-14
+  - GOZ-0003-IF-15
+  - GOZ-0003-IF-16
+  - GOZ-0003-IF-17
+  - GOZ-0003-IF-18
+  - GOZ-0003-IF-19
+  pendingHumanDecisions:
+  - {finding: GOZ-0003-IF-03, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: A, decideBefore: 'GOZ-0004 plan', topic: 'data migrations and cross-tenant backfills under FORCE RLS; whether a reviewed migration may disable a guard trigger (IF-19)'}
+  - {finding: GOZ-0003-IF-04, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: A, decideBefore: 'GOZ-0015 (first consumer) at the latest', topic: 'tenant context for non-account principals'}
+  - {finding: GOZ-0003-IF-08, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: B, decideBefore: 'GOZ-0005 clarification', topic: 'class for instance-wide non-identity tables before GOZ-0012 (conditional)'}
+  - {finding: GOZ-0003-IF-11, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: A, decideBefore: 'GOZ-0039 clarification', topic: 'backup/restore under FORCE RLS, signing key in dumps, key-rotation overlap'}
+  - {finding: GOZ-0003-IF-15, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: A, decideBefore: 'maintainer routing', topic: 'routing of GOZ-0003-OBS-01 (pre-existing GOZ-0001 re-sign-in session defect)'}
   evidence:
-    tests: []
-    demos: []
-    screenshots: []
-    reviews: []
-  nextAction: Prerequisite GOZ-0002 merged; start on feature/goz-0003-tenant-rls
+    tests:
+    - docs/specs/003-tenant-rls/progress.yaml
+    demos:
+    - docs/specs/003-tenant-rls/evidence/demo-run.json
+    - docs/specs/003-tenant-rls/evidence/rls-evidence.json
+    screenshots:
+    - docs/specs/003-tenant-rls/evidence/screenshots/
+    reviews:
+    - docs/specs/003-tenant-rls/reviews/impact-analysis.md
+    - docs/specs/003-tenant-rls/reviews/impact-findings.json
+  nextAction: 'PR #10 ready for human merge (all gates green at head; maintainer decided IF-03/04/08/11/15 on 2026-11-16). Human maintainer merges (agents never merge); mark complete only after verified merge.'
 - id: GOZ-0004
   number: 4
   title: Scoped RBAC permission foundation
@@ -245,7 +276,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -278,7 +309,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -311,7 +342,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -344,7 +375,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -377,7 +408,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -410,7 +441,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -443,7 +474,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -476,7 +507,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -510,7 +541,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -543,7 +574,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -576,7 +607,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -610,7 +641,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -643,7 +674,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -677,7 +708,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -711,7 +742,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -745,7 +776,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -779,7 +810,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -813,7 +844,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -847,7 +878,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -882,7 +913,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -916,7 +947,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -950,7 +981,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -984,7 +1015,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1018,7 +1049,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1052,7 +1083,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1086,7 +1117,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1120,7 +1151,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1154,7 +1185,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1187,7 +1218,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1221,7 +1252,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1255,7 +1286,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1288,7 +1319,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1322,7 +1353,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1356,7 +1387,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1390,7 +1421,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1426,7 +1457,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 4
+  promptRevision: 5
   gates:
     specification: pending
     plan: pending
@@ -1460,7 +1491,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending
@@ -1473,7 +1504,8 @@ specs:
     roadmapSync: pending
     humanReview: pending
     merge: pending
-  blockers: []
+  blockers:
+  - 'Entry condition (maintainer decision GOZ-0003-IF-15, 2026-11-16): the bugfix/goz-0001-resign-in-session fix for GOZ-0003-OBS-01 must be merged before GOZ-0040 starts'
   impactFindings: []
   evidence:
     tests: []
@@ -1494,7 +1526,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 2
+  promptRevision: 3
   gates:
     specification: pending
     plan: pending

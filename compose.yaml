@@ -4,6 +4,11 @@ x-otel-grpc: &otel-grpc
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
   OTEL_EXPORTER_OTLP_PROTOCOL: grpc
 
+# Tenant context key (GOZ-0003): the migrator provisions it into the database where gozleme_app cannot
+# read it; the API and seed sign each transaction's account context with it. Throwaway local default.
+x-context-key: &context-key
+  Gozleme__Rls__ContextKey: ${GOZLEME_CONTEXT_KEY:-local-dev-context-key-not-a-secret-0001}
+
 x-db-passwords: &db-passwords
   GOZLEME_MIGRATOR_PASSWORD: ${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
   GOZLEME_APP_PASSWORD: ${GOZLEME_APP_PASSWORD:-local-dev-app}
@@ -37,7 +42,7 @@ services:
         GOZLEME_BUILD: ${GOZLEME_BUILD:-0.1.0-local}
     command: ["migrate"]
     environment:
-      <<: *otel-grpc
+      <<: [*otel-grpc, *context-key]
       Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
       ConnectionStrings__GozlemeMigrator: Host=postgres;Database=gozleme;Username=gozleme_migrator;Password=${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
     depends_on:
@@ -48,7 +53,7 @@ services:
   api:
     image: gozleme-api:local
     environment:
-      <<: *otel-grpc
+      <<: [*otel-grpc, *context-key]
       ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
       Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
       # Local identity (GOZ-0001). Plain-HTTP local stack: cookies cannot be Secure here.
@@ -99,7 +104,7 @@ services:
     profiles: [demo]
     command: ["seed"]
     environment:
-      <<: *otel-grpc
+      <<: [*otel-grpc, *context-key]
       ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
       GOZLEME_DEMO_PASSWORD: ${GOZLEME_DEMO_PASSWORD:-local-dev-demo-pass}
     depends_on:
