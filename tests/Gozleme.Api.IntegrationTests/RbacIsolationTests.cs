@@ -75,6 +75,10 @@ public sealed class RbacIsolationTests(PgvectorDatabaseFixture fixture) : IAsync
         Assert.Equal(Refused, await Fails(_carolId, $"UPDATE gozleme.memberships SET joined_via = 'creator' {own}"));
         Assert.Equal(Refused, await Fails(_carolId, $"UPDATE gozleme.memberships SET joined_at = now() - interval '1 year' {own}"));
         Assert.Equal(Refused, await Fails(_carolId, $"UPDATE gozleme.memberships SET invitation_id = gen_random_uuid() {own}"));
+        // GOZ-0004-IF-14: the provenance link changes only through the FK cascade, never by a write, even to NULL.
+        Assert.Equal(Refused, await Fails(_carolId, $"UPDATE gozleme.memberships SET invitation_id = NULL {own}"));
+        Assert.Equal(Refused, await Fails(_carolId, $"UPDATE gozleme.memberships SET invitation_id = NULL WHERE organization_id = '{_orgA}' AND user_id = '{_daveId}'"));
+        Assert.Equal(Refused, await Fails(_aliceId, $"UPDATE gozleme.memberships SET invitation_id = NULL WHERE organization_id = '{_orgA}' AND user_id = '{_daveId}'"));
     }
 
     [Fact]

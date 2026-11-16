@@ -12,7 +12,7 @@ unchanged.
 | `user_id` | uuid | **immutable** (guard) |
 | `joined_at` | timestamptz | **immutable** (guard; GOZ-0003-IF-19) |
 | `joined_via` | varchar(16) | **immutable** (guard; GOZ-0003-IF-19) |
-| `invitation_id` | uuid null | may only become NULL (the `ON DELETE SET NULL` cascade) |
+| `invitation_id` | uuid null | changes only through the `ON DELETE SET NULL` cascade; a direct write, even to NULL, is refused (GOZ-0004-IF-14) |
 | `selected_at` | timestamptz null | changed only on the caller's own row |
 | **`roles`** (new) | `text[] NOT NULL` | default `'{member}'` (existing rows read `'{admin,member}'`, R2); `ck_memberships_roles`: subset of `{admin, approver, member, publisher, reviewer}`, contains `member`, no NULL element; stored distinct and sorted by the guard |
 

@@ -1,16 +1,16 @@
 {
   "specId": "GOZ-0004",
-  "commit": "498facd7ca6b1805f0420524764dba4f523d18e4",
+  "commit": "717997789136842c2d2d7fa43fea8ee712501580",
   "branch": "feature/goz-0004-scoped-rbac",
-  "workingTreeCleanAtStart": true,
+  "workingTreeCleanAtStart": false,
   "environment": {
     "os": "Darwin 25.5.0 arm64",
     "docker": "29.8.2",
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-16T21:11:48Z",
-  "finishedAt": "2026-11-16T21:16:16Z",
+  "startedAt": "2026-11-16T21:27:58Z",
+  "finishedAt": "2026-11-16T21:32:26Z",
   "stackStartupSeconds": 20,
   "commands": [
     "docker compose up -d --build --wait",
@@ -192,8 +192,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 224 ms",
-    "sign-in\u2192dashboard 169 ms"
+    "register\u2192dashboard 208 ms",
+    "sign-in\u2192dashboard 167 ms"
   ],
   "evidence": [
     "docs/specs/004-scoped-rbac/evidence/screenshots/01-member-sees-no-admin-controls.png",

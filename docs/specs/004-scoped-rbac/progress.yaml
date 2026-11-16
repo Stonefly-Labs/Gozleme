@@ -23,15 +23,16 @@ stages:
   implement: {status: done, at: '2026-11-16', tasks: '37/37', note: 'make test 316 .NET + 139 web passing; make lint and make validate clean. T017 deviation (403 kept without refresh) resolved by convergence T038: a 403 re-renders the page with a persistent notice. TwoTenants fixture makes carol admin in A (she creates the fixture invitation).'}
   demo: {status: done, at: '2026-11-16', result: passed, record: docs/specs/004-scoped-rbac/evidence/demo-run.json, playwright: '41 passed (goz-0000..goz-0004)', screenshots: 39, repairs: ['exact Invitations heading match', 'demo evidence SQL sent statement by statement so a refused statement is logged without the signed context (test-only; the API never logged a context)'], note: 'run 4 failed only on a stale API pool after recreating postgres to clear pre-fix log lines; run 5 clean'}
   converge: {status: done, at: '2026-11-16', result: converged, pass1: 'tasks_appended T038-T040 (1 contradicts MEDIUM: 403 must refresh controls and keep the message; 2 partial LOW: FR-016 pure decision function, removal-vs-role-change race test)', pass2: 'converged after implementing T038-T040; make test 318 .NET + 139 web, lint, validate clean; make demo 41 passed'}
-  impactAnalysis: {status: pending}
+  impactAnalysis: {status: done, at: '2026-11-16', revision: 7179977, report: docs/specs/004-scoped-rbac/reviews/impact-analysis.md, findings: docs/specs/004-scoped-rbac/reviews/impact-findings.json, summary: 'IF-01..IF-14; 11 applied to 37 living prompts; IF-14 (member could null invitation_id) fixed on branch; IF-02 and IF-13 need maintainer decision'}
   roadmapSync: {status: pending}
   merge: {status: pending}
 attempts:
+- {at: '2026-11-16', stage: impactAnalysis, failure: 'GOZ-0004-IF-14: memberships_guard allowed a direct invitation_id change to NULL', repair: 'refuse any direct invitation_id change; RbacIsolationTests cases; make reset; make test 318/318; make demo 41 passed', result: fixed}
 - {at: '2026-11-16', stage: demo, failure: 'rbac-demo strict-mode heading match', repair: 'exact: true', result: fixed}
 - {at: '2026-11-16', stage: demo, failure: 'signed context in postgres STATEMENT log from demo psql -c evidence calls', repair: 'psql -f - (per-statement)', result: fixed}
 blockers: []
 pullRequest: null
-nextAction: 'Run the mandatory spec-impact-analyst, then review-roadmap.'
+nextAction: 'Maintainer decisions GOZ-0004-IF-02 and IF-13, then review-roadmap registry sync and the PR.'
 evidence:
   tests: ['make test: 318 .NET (unit + Testcontainers) and 139 Vitest passing', 'make lint: clean', 'make validate: clean']
   demos: [docs/specs/004-scoped-rbac/evidence/demo-run.json, docs/specs/004-scoped-rbac/evidence/rbac-evidence.json]

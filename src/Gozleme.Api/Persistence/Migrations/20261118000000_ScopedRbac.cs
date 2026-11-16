@@ -93,7 +93,7 @@ internal sealed partial class ScopedRbac : Migration
               END IF;
               IF TG_OP = 'UPDATE' AND (NEW.organization_id IS DISTINCT FROM OLD.organization_id OR NEW.user_id IS DISTINCT FROM OLD.user_id
                    OR NEW.joined_at IS DISTINCT FROM OLD.joined_at OR NEW.joined_via IS DISTINCT FROM OLD.joined_via
-                   OR (NEW.invitation_id IS DISTINCT FROM OLD.invitation_id AND NEW.invitation_id IS NOT NULL)
+                   OR NEW.invitation_id IS DISTINCT FROM OLD.invitation_id -- only the FK SET NULL cascade, which passed above
                    OR (NEW.selected_at IS DISTINCT FROM OLD.selected_at AND target IS DISTINCT FROM account)) THEN
                 RAISE EXCEPTION 'membership change refused' USING ERRCODE = 'insufficient_privilege';
               END IF;
