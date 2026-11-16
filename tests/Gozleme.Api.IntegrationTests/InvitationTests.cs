@@ -87,7 +87,7 @@ public sealed class InvitationTests(PgvectorDatabaseFixture fixture) : IAsyncLif
         }
 
         var (expiredId, expired) = await OrgClient.InviteAsync(alice, org);
-        await GozlemeDatabase.ExecuteAsync($"UPDATE gozleme.invitations SET expires_at = now() - interval '1 minute' WHERE id = '{expiredId}'", Db.MigratorConnectionString);
+        await GozlemeDatabase.ExecuteAsync($"UPDATE gozleme.invitations SET expires_at = now() - interval '1 minute' WHERE id = '{expiredId}'", Db.SuperuserConnectionString); // the owner login is bound by forced RLS (GOZ-0003)
 
         var outcomes = new List<(HttpStatusCode, string)>();
         foreach (var code in new[] { used, revoked, expired, "ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZ", "not a code", string.Empty, new string('A', 500) })

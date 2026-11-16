@@ -2,8 +2,10 @@ using System.Diagnostics;
 using Gozleme.Api.Organizations;
 using Gozleme.Api.Persistence;
 using Gozleme.Api.Telemetry;
+using Gozleme.Api.Tenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Gozleme.Api.Identity;
 
@@ -11,6 +13,8 @@ namespace Gozleme.Api.Identity;
 /// Operator-only one-shot modes (FR-026, FR-027, FR-035; GOZ-0002 demo organization), run like <c>migrate</c> and never reachable
 /// over HTTP: <c>seed</c>, <c>reset-password</c> and <c>unlock</c>. They use the ordinary app role
 /// (DML only). Output and audit events carry the opaque account id only, never the email or password.
+/// Only <c>seed</c> touches tenant data, and only as a seeded member of each demo organization
+/// (GOZ-0003); the other commands touch global identity tables and need no tenant context.
 /// </summary>
 internal static class OperatorCommands
 {
@@ -24,11 +28,17 @@ internal static class OperatorCommands
     public const string ServiceName = "gozleme-operator";
 
     /// <summary>Deterministic synthetic demo accounts (reserved <c>.test</c> TLD).</summary>
-    public static readonly string[] DemoAccounts = ["alice@demo.gozleme.test", "bob@demo.gozleme.test", "lockout@demo.gozleme.test", "carol@demo.gozleme.test"];
+    public static readonly string[] DemoAccounts = ["alice@demo.gozleme.test", "bob@demo.gozleme.test", "lockout@demo.gozleme.test", "carol@demo.gozleme.test", "dave@demo.gozleme.test"];
 
     /// <summary>The seeded demo organization (GOZ-0002): fixed id, members alice (creator) and carol.</summary>
     public static readonly Guid DemoOrganizationId = Guid.Parse("0193a000-0000-7000-8000-000000000002");
     public const string DemoOrganizationName = "Seeded Demo Org";
+
+    /// <summary>The second demo tenant (GOZ-0003): fixed id, member dave (creator), disjoint from the first.</summary>
+    public static readonly Guid PartnerOrganizationId = Guid.Parse("0193a000-0000-7000-8000-000000000003");
+    public const string PartnerOrganizationName = "Seeded Partner Org";
+
+    public const string UnrestorableMessage = "Demo organization cannot be restored as a member; run make reset.";
 
     public static bool Handles(string? command) => command is "seed" or "reset-password" or "unlock";
 
@@ -49,6 +59,16 @@ internal static class OperatorCommands
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton(sp => GozlemeApp.CreateDataSource(sp.GetRequiredService<IConfiguration>()));
         builder.AddGozlemeAccounts();
+        if (command == "seed")
+        {
+            if (builder.Configuration.GetSection(TenancyOptions.Section).Get<TenancyOptions>() is not { IsValid: true })
+            {
+                await stderr.WriteLineAsync($"{TenancyOptions.Section}:ContextKey must be set to at least {TenancyOptions.MinKeyLength} characters.");
+                return Failed;
+            }
+
+            builder.AddGozlemeTenancy();
+        }
 
         using var host = builder.Build();
         await host.StartAsync(); // telemetry providers; disposing flushes exporters
@@ -114,39 +134,93 @@ internal static class OperatorCommands
             await stdout.WriteLineAsync($"Seeded demo account {user.Id}");
         }
 
-        await SeedOrganizationAsync(services, stdout);
+        var ids = new Dictionary<string, Guid>(StringComparer.Ordinal);
+        foreach (var email in DemoAccounts)
+        {
+            ids[email] = (await users.FindByEmailAsync(email))!.Id;
+        }
+
+        var seeded = await SeedOrganizationAsync(services, DemoOrganizationId, DemoOrganizationName, [ids[DemoAccounts[0]], ids[DemoAccounts[3]]], stdout, stderr);
+        return seeded != Ok ? seeded : await SeedOrganizationAsync(services, PartnerOrganizationId, PartnerOrganizationName, [ids[DemoAccounts[4]]], stdout, stderr);
+    }
+
+    /// <summary>
+    /// Idempotent: every run restores the organization's name, exactly <paramref name="members"/> (the first is
+    /// the creator) and no invitations. It acts only through the signed context of a seeded member, so it has
+    /// no right that member lacks (GOZ-0003 research R10).
+    /// </summary>
+    private static async Task<int> SeedOrganizationAsync(IServiceProvider services, Guid organizationId, string name, Guid[] members, TextWriter stdout, TextWriter stderr)
+    {
+        var db = services.GetRequiredService<GozlemeDbContext>();
+        var signer = services.GetRequiredService<TenantContextSigner>();
+        var now = services.GetRequiredService<TimeProvider>().GetUtcNow();
+
+        foreach (var actor in members)
+        {
+            db.ChangeTracker.Clear();
+            await using var transaction = await db.Database.BeginTransactionAsync();
+            await TenantContext.EstablishAsync(db, signer.Sign(actor), CancellationToken.None);
+            if (!await db.Memberships.AnyAsync(m => m.OrganizationId == organizationId && m.UserId == actor))
+            {
+                continue; // not a member: nothing of this organization is visible to this account
+            }
+
+            var organization = await db.Organizations.SingleAsync(o => o.Id == organizationId);
+            organization.DisplayName = name;
+            organization.UpdatedAt = now;
+            await db.Invitations.Where(i => i.OrganizationId == organizationId).ExecuteDeleteAsync();
+            await db.Memberships.Where(m => m.OrganizationId == organizationId && !members.Contains(m.UserId)).ExecuteDeleteAsync();
+            var present = await db.Memberships.Where(m => m.OrganizationId == organizationId).Select(m => m.UserId).ToListAsync();
+            AddMembers(db, organizationId, members, present, now);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+            await stdout.WriteLineAsync($"Seeded demo organization {organizationId}");
+            return Ok;
+        }
+
+        // No seeded member belongs to it: create it as the first seeded member through the creator path,
+        // then add the others as that member (a member may add memberships to its own organization).
+        db.ChangeTracker.Clear();
+        await using (var transaction = await db.Database.BeginTransactionAsync())
+        {
+            await TenantContext.EstablishAsync(db, signer.Sign(members[0]), CancellationToken.None);
+            db.Organizations.Add(new Organization { Id = organizationId, DisplayName = name, CreatedAt = now, CreatedBy = members[0], UpdatedAt = now });
+            db.Memberships.Add(new Membership { OrganizationId = organizationId, UserId = members[0], JoinedAt = now, JoinedVia = Membership.ViaCreator });
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+            {
+                // It exists, but only non-seeded accounts belong to it: a member's rights cannot restore it.
+                await stderr.WriteLineAsync(UnrestorableMessage);
+                return Failed;
+            }
+
+            AddMembers(db, organizationId, members, [members[0]], now);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+
+        await stdout.WriteLineAsync($"Seeded demo organization {organizationId}");
         return Ok;
     }
 
-    /// <summary>Idempotent: every run restores the demo organization's name, exactly alice and carol as members, and no invitations.</summary>
-    private static async Task SeedOrganizationAsync(IServiceProvider services, TextWriter stdout)
+    private static void AddMembers(GozlemeDbContext db, Guid organizationId, Guid[] members, IReadOnlyCollection<Guid> present, DateTimeOffset now)
     {
-        var db = services.GetRequiredService<GozlemeDbContext>();
-        var users = services.GetRequiredService<UserManager<GozlemeUser>>();
-        var alice = (await users.FindByEmailAsync(DemoAccounts[0]))!.Id;
-        var carol = (await users.FindByEmailAsync(DemoAccounts[3]))!.Id;
-        var now = services.GetRequiredService<TimeProvider>().GetUtcNow();
-
-        await using var transaction = await db.Database.BeginTransactionAsync();
-        var organization = await db.Organizations.FirstOrDefaultAsync(o => o.Id == DemoOrganizationId);
-        if (organization is null)
+        for (var i = 0; i < members.Length; i++)
         {
-            db.Organizations.Add(new Organization { Id = DemoOrganizationId, DisplayName = DemoOrganizationName, CreatedAt = now, CreatedBy = alice, UpdatedAt = now });
+            if (!present.Contains(members[i]))
+            {
+                db.Memberships.Add(new Membership
+                {
+                    OrganizationId = organizationId,
+                    UserId = members[i],
+                    JoinedAt = now.AddSeconds(i),
+                    JoinedVia = i == 0 ? Membership.ViaCreator : Membership.ViaInvitation,
+                });
+            }
         }
-        else
-        {
-            organization.DisplayName = DemoOrganizationName;
-            organization.UpdatedAt = now;
-        }
-
-        await db.SaveChangesAsync();
-        await db.Memberships.Where(m => m.OrganizationId == DemoOrganizationId).ExecuteDeleteAsync();
-        await db.Invitations.Where(i => i.OrganizationId == DemoOrganizationId).ExecuteDeleteAsync();
-        db.Memberships.Add(new Membership { OrganizationId = DemoOrganizationId, UserId = alice, JoinedAt = now, JoinedVia = Membership.ViaCreator });
-        db.Memberships.Add(new Membership { OrganizationId = DemoOrganizationId, UserId = carol, JoinedAt = now.AddSeconds(1), JoinedVia = Membership.ViaInvitation });
-        await db.SaveChangesAsync();
-        await transaction.CommitAsync();
-        await stdout.WriteLineAsync($"Seeded demo organization {DemoOrganizationId}");
     }
 
     private static async Task<int> ResetPasswordAsync(IServiceProvider services, string? email, string? password, TextWriter stdout, TextWriter stderr)

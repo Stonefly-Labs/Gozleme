@@ -34,6 +34,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.database.existingSecret }}
                   key: migrator-connection-string
+            - name: Gozleme__Rls__ContextKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret }}
+                  key: rls-context-key
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
 {{- end }}

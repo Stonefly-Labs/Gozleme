@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Text;
 using Gozleme.Api.Telemetry;
+using Gozleme.Api.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -36,9 +38,18 @@ internal static partial class MigrationRunner
         builder.Services.AddSingleton(dataSource);
         builder.Services.AddDbContext<GozlemeDbContext>(options => GozlemeDbContext.Configure(options, dataSource));
 
+        var tenancy = builder.Configuration.GetSection(TenancyOptions.Section).Get<TenancyOptions>() ?? new TenancyOptions();
+
         using var host = builder.Build();
         await host.StartAsync(); // starts telemetry providers; disposing the host flushes exporters
         var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(MigrationRunner));
+        if (!tenancy.IsValid)
+        {
+            LogKeyMissing(logger, TenancyOptions.Section, TenancyOptions.MinKeyLength);
+            await host.StopAsync();
+            return 1;
+        }
+
         var attempts = builder.Configuration.GetValue("Gozleme:Migrate:MaxAttempts", 30);
         var delay = TimeSpan.FromSeconds(builder.Configuration.GetValue("Gozleme:Migrate:RetryDelaySeconds", 2));
 
@@ -54,6 +65,12 @@ internal static partial class MigrationRunner
                 var latest = (await db.Database.GetAppliedMigrationsAsync()).LastOrDefault() ?? "none";
                 LogMigrated(logger, latest);
                 activity?.SetTag("gozleme.migrate.latest", latest);
+                var changed = await db.Database.ExecuteSqlAsync($"""
+                    INSERT INTO gozleme_private.context_keys (id, key) VALUES (1, {Encoding.UTF8.GetBytes(tenancy.ContextKey!)})
+                    ON CONFLICT (id) DO UPDATE SET key = EXCLUDED.key, provisioned_at = now()
+                    WHERE context_keys.key IS DISTINCT FROM EXCLUDED.key
+                    """);
+                LogKeyProvisioned(logger, changed > 0 ? "provisioned" : "unchanged");
                 await host.StopAsync();
                 return 0;
             }
@@ -68,6 +85,12 @@ internal static partial class MigrationRunner
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Database migrated; latest migration {MigrationId}")]
     private static partial void LogMigrated(ILogger logger, string migrationId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "{Section}:ContextKey must be set to at least {MinLength} characters; nothing migrated")]
+    private static partial void LogKeyMissing(ILogger logger, string section, int minLength);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Tenant context key {Outcome}")]
+    private static partial void LogKeyProvisioned(ILogger logger, string outcome);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Database not ready (attempt {Attempt}/{MaxAttempts}, {ExceptionType}); retrying")]
     private static partial void LogRetry(ILogger logger, int attempt, int maxAttempts, string exceptionType);

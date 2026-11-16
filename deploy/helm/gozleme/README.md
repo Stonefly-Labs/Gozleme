@@ -1,4 +1,4 @@
-# Gözleme Helm chart (GOZ-0000 foundation + GOZ-0001 local identity)
+# Gözleme Helm chart (GOZ-0000 foundation + GOZ-0001 local identity + GOZ-0003 tenant RLS)
 
 Structure-level chart for the API, dashboard and migration Job. It is rendered and linted in CI;
 it has **not** yet been validated against a live Kubernetes cluster (tracked for the
@@ -9,13 +9,26 @@ operational-validation spec). PostgreSQL is operator-provided.
 1. PostgreSQL 17+ with roles equivalent to `deploy/postgres/init/01-roles.sh`:
    `gozleme_migrator` (database owner, `NOSUPERUSER NOBYPASSRLS`) and `gozleme_app`
    (`NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE`, `CONNECT`/`TEMPORARY` on the database).
-2. A Secret with the two connection strings (never put credentials in values):
+   The `pgcrypto` contrib extension must be *available* (it ships with standard PostgreSQL
+   packages). The migrator installs it into schema `gozleme_private`, which it may do as database
+   owner because `pgcrypto` is a trusted extension. It must not already be installed in another
+   schema of this database.
+2. A Secret with the two connection strings and the tenant context key (never put credentials in values):
 
    ```bash
    kubectl create secret generic gozleme-database \
      --from-literal=app-connection-string='Host=…;Database=gozleme;Username=gozleme_app;Password=…' \
-     --from-literal=migrator-connection-string='Host=…;Database=gozleme;Username=gozleme_migrator;Password=…'
+     --from-literal=migrator-connection-string='Host=…;Database=gozleme;Username=gozleme_migrator;Password=…' \
+     --from-literal=rls-context-key="$(openssl rand -base64 48)"
    ```
+
+   `rls-context-key` (GOZ-0003) is at least 32 characters. The API signs each transaction's
+   account context with it, and the migration Job copies it into the database, where the
+   application role cannot read it. **Upgrading from a release before GOZ-0003:** add this key to
+   the existing Secret *before* `helm upgrade`. Without it the migration Job and the API refuse
+   to start. **Rotation:** change the key, then run `helm upgrade` (the pre-upgrade Job
+   re-provisions it, then the API pods restart). Until both have run, organization data is
+   unreachable (fail closed), and `gozleme.tenant.denials{reason="invalid"}` rises.
 
 3. Images `gozleme-api` and `gozleme-web` pushed to a registry you control; set `image.*`.
 
@@ -58,9 +71,12 @@ dependency of Gözleme workloads.
   clients behind one web pod share a budget. Account lockout and a global per-instance ceiling
   apply regardless. Rate limits are per API instance, not distributed.
 - **Organizations (GOZ-0002).** `organizations.invitationExpiryHours` (default `168`, 1–720) and
-  `organizations.redeemPerMinute` (default `10` per account, 1–100). Organization isolation is
-  enforced by the application only until GOZ-0003 enables row-level security; do not cut a
-  release before then (maintainer decision on GOZ-0002-IF-01).
+  `organizations.redeemPerMinute` (default `10` per account, 1–100). Organization data is
+  protected by application authorization and by PostgreSQL row-level security, which is forced
+  for the table owner too (GOZ-0003). This closes the interim GOZ-0002-IF-01 exception.
+  Row-level security does not protect against SQL injected into a request, which runs with that
+  request's own account context, nor against compromised owner, superuser or context-key
+  credentials.
 - **Operator recovery (never over HTTP).** There is no email-based reset yet:
 
   ```bash

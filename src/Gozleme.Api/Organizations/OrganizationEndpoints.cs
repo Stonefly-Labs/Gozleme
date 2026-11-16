@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Gozleme.Api.Identity;
 using Gozleme.Api.Persistence;
+using Gozleme.Api.Tenancy;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,8 @@ namespace Gozleme.Api.Organizations;
 /// Every organization-scoped call re-reads the caller's membership (research R3, R9); a malformed id,
 /// an unknown organization and a non-member answer the same empty 404. Interim role-neutral rule
 /// (FR-015): any member may perform every operation here until GOZ-0004 introduces roles.
+/// Since GOZ-0003 every call runs in one <see cref="TenantTransaction"/>, so PostgreSQL row-level
+/// security enforces the same boundary as a second, independent layer.
 /// </summary>
 internal static class OrganizationEndpoints
 {
@@ -22,7 +25,7 @@ internal static class OrganizationEndpoints
     /// <summary>Maps under the <c>/api/v1</c> group, which requires a session and the web-client header by default.</summary>
     public static RouteGroupBuilder MapOrganizationEndpoints(this RouteGroupBuilder api)
     {
-        var orgs = api.MapGroup("/organizations").AddEndpointFilter(NoStore);
+        var orgs = api.MapGroup("/organizations").AddEndpointFilter(NoStore).AddEndpointFilter<TenantTransaction>();
         var body = new RequestSizeLimitAttribute(MaxBodyBytes);
 
         orgs.MapGet("", ListAsync);
@@ -36,7 +39,7 @@ internal static class OrganizationEndpoints
         orgs.MapPost("/{organizationId}/invitations", CreateInvitationAsync);
         orgs.MapDelete("/{organizationId}/invitations/{invitationId}", RevokeInvitationAsync);
 
-        api.MapGroup("/invitations").AddEndpointFilter(NoStore)
+        api.MapGroup("/invitations").AddEndpointFilter(NoStore).AddEndpointFilter<TenantTransaction>()
             .MapPost("/redeem", RedeemAsync)
             .RequireRateLimiting(OrganizationServiceCollectionExtensions.RedeemRateLimit)
             .WithMetadata(body, new RateLimitedOperation(activity => OrganizationTelemetry.Failed(activity, OrgOperation.InviteRedeem, OrgFailure.RateLimited)));
@@ -88,7 +91,7 @@ internal static class OrganizationEndpoints
 
         OrganizationTelemetry.Organization(activity, organization.Id);
         OrganizationTelemetry.Succeeded(activity, OrgOperation.Create);
-        audit.OrganizationCreated(organization.Id, userId);
+        TenantTransaction.AfterCommit(http, () => audit.OrganizationCreated(organization.Id, userId));
         return TypedResults.Created((string?)null, Response(organization));
     }
 
@@ -123,7 +126,7 @@ internal static class OrganizationEndpoints
         organization.UpdatedAt = time.GetUtcNow();
         await db.SaveChangesAsync(ct);
         OrganizationTelemetry.Succeeded(activity, OrgOperation.Rename);
-        audit.OrganizationRenamed(organization.Id, membership.UserId);
+        TenantTransaction.AfterCommit(http, () => audit.OrganizationRenamed(organization.Id, membership.UserId));
         return TypedResults.Ok(Response(organization));
     }
 
@@ -164,8 +167,8 @@ internal static class OrganizationEndpoints
         using var activity = OrganizationTelemetry.Start(operation);
 
         // The organization row lock serializes every membership removal in that organization, so
-        // concurrent removals can never leave it without a member (FR-016, research R6).
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        // concurrent removals can never leave it without a member (FR-016, research R6). The lock is
+        // taken in the request's tenant transaction.
         if (await OrganizationAccess.FindMembershipAsync(db, organizationId, http.User, ct) is not { } membership)
         {
             return NotFound(activity, operation);
@@ -208,20 +211,19 @@ internal static class OrganizationEndpoints
 
         db.Memberships.Remove(target);
         await db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
         OrganizationTelemetry.Succeeded(activity, operation);
         foreach (var invitation in orphaned.Where(i => i.RevokedAt == now))
         {
-            audit.InvitationRevoked(invitation.Id, invitation.OrganizationId, membership.UserId);
+            TenantTransaction.AfterCommit(http, () => audit.InvitationRevoked(invitation.Id, invitation.OrganizationId, membership.UserId));
         }
 
         if (leaving)
         {
-            audit.MemberLeft(membership.OrganizationId, membership.UserId);
+            TenantTransaction.AfterCommit(http, () => audit.MemberLeft(membership.OrganizationId, membership.UserId));
         }
         else
         {
-            audit.MemberRemoved(membership.OrganizationId, targetId, membership.UserId);
+            TenantTransaction.AfterCommit(http, () => audit.MemberRemoved(membership.OrganizationId, targetId, membership.UserId));
         }
 
         return TypedResults.NoContent();
@@ -267,7 +269,7 @@ internal static class OrganizationEndpoints
         db.Invitations.Add(invitation);
         await db.SaveChangesAsync(ct);
         OrganizationTelemetry.Succeeded(activity, OrgOperation.InviteCreate);
-        audit.InvitationCreated(invitation.Id, invitation.OrganizationId, membership.UserId);
+        TenantTransaction.AfterCommit(http, () => audit.InvitationCreated(invitation.Id, invitation.OrganizationId, membership.UserId));
         return TypedResults.Created((string?)null, new CreatedInvitationResponse(invitation.Id, invitation.CreatedAt, invitation.ExpiresAt, invitation.CreatedBy, code));
     }
 
@@ -293,7 +295,7 @@ internal static class OrganizationEndpoints
         invitation.RevokedBy = membership.UserId;
         await db.SaveChangesAsync(ct);
         OrganizationTelemetry.Succeeded(activity, OrgOperation.InviteRevoke);
-        audit.InvitationRevoked(invitation.Id, invitation.OrganizationId, membership.UserId);
+        TenantTransaction.AfterCommit(http, () => audit.InvitationRevoked(invitation.Id, invitation.OrganizationId, membership.UserId));
         return TypedResults.NoContent();
     }
 
@@ -311,15 +313,15 @@ internal static class OrganizationEndpoints
 
         // The invitation row lock makes redemption single-use under concurrency (FR-008, research R6).
         // Lock order is organization, then invitation, as in member removal, which revokes the
-        // departing account's invitations under the organization lock (GOZ-0002-IF-20).
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        var organizationId = await db.Invitations.Where(i => i.CodeHash == hash).Select(i => (Guid?)i.OrganizationId).FirstOrDefaultAsync(ct);
-        if (organizationId is null)
+        // departing account's invitations under the organization lock (GOZ-0002-IF-20). The redeemer
+        // is not yet a member: presenting the code hash is its capability for this one invitation, and
+        // the organization lock is taken by a database helper (GOZ-0003 research R6).
+        await TenantContext.PresentInvitationAsync(db, hash, ct);
+        if (await TenantContext.LockInvitedOrganizationAsync(db, hash, ct) is null)
         {
             return InvalidInvitation(activity, audit, userId);
         }
 
-        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM gozleme.organizations WHERE id = {organizationId} FOR KEY SHARE", ct);
         var invitation = await db.Invitations.FromSql($"SELECT * FROM gozleme.invitations WHERE code_hash = {hash} FOR UPDATE").FirstOrDefaultAsync(ct);
         if (invitation is null || !invitation.IsOpen(now))
         {
@@ -352,14 +354,13 @@ internal static class OrganizationEndpoints
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "pk_memberships" })
         {
             // A concurrent redemption of another code made this account a member first.
-            await transaction.RollbackAsync(ct);
+            await db.Database.RollbackTransactionAsync(ct);
             OrganizationTelemetry.Succeeded(activity, OrgOperation.InviteRedeem);
             return TypedResults.Ok(new RedeemedResponse(invitation.OrganizationId, AlreadyMember: true));
         }
 
-        await transaction.CommitAsync(ct);
         OrganizationTelemetry.Succeeded(activity, OrgOperation.InviteRedeem);
-        audit.InvitationRedeemed(invitation.Id, invitation.OrganizationId, userId);
+        TenantTransaction.AfterCommit(http, () => audit.InvitationRedeemed(invitation.Id, invitation.OrganizationId, userId));
         return TypedResults.Ok(new RedeemedResponse(invitation.OrganizationId, AlreadyMember: false));
     }
 
