@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0004",
-  "commit": "378f2ad64c402ac1d96284d4785737f6492556c7",
+  "commit": "498facd7ca6b1805f0420524764dba4f523d18e4",
   "branch": "feature/goz-0004-scoped-rbac",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-16T21:03:33Z",
-  "finishedAt": "2026-11-16T21:07:44Z",
-  "stackStartupSeconds": 4,
+  "startedAt": "2026-11-16T21:11:48Z",
+  "finishedAt": "2026-11-16T21:16:16Z",
+  "stackStartupSeconds": 20,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -192,7 +192,7 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 222 ms",
+    "register\u2192dashboard 224 ms",
     "sign-in\u2192dashboard 169 ms"
   ],
   "evidence": [
