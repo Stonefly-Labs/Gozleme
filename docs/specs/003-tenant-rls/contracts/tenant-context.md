@@ -19,7 +19,7 @@ names an account only, never an organization or a role.
 
 ## 2. Functions callable by `gozleme_app`
 
-All are owned by `gozleme_migrator`, are `SECURITY DEFINER`, and use `search_path = pg_catalog, pg_temp`.
+All are owned by `gozleme_migrator` and use `search_path = pg_catalog, pg_temp`. `EXECUTE` is revoked from `PUBLIC` on every function in `gozleme` and `gozleme_private` and granted to `gozleme_app` only for these. All are `SECURITY DEFINER` except `invitation_capability` and `rls_internal`, which read only the caller's own settings and session and so need no elevated rights. The pinned definer list is `TableClassification.DefinerHelpers`, which `RlsCatalogTests` enforces.
 
 | Signature | Contract |
 |---|---|
@@ -27,7 +27,7 @@ All are owned by `gozleme_migrator`, are `SECURITY DEFINER`, and use `search_pat
 | `gozleme.current_account_id() RETURNS uuid` | The verified account, or NULL. It re-verifies on every call and never trusts a cached value |
 | `gozleme.account_organizations() RETURNS SETOF uuid` | Organization IDs where the verified account has a membership row |
 | `gozleme.is_new_organization_of_current_account(uuid) RETURNS boolean` | True only for an organization created by the verified account that has no members yet |
-| `gozleme.invitation_capability() RETURNS bytea` | The 32-byte code hash from `gozleme.invitation_capability`, or NULL |
+| `gozleme.invitation_capability() RETURNS bytea` | The 32-byte code hash from `gozleme.invitation_capability`, or NULL. Not a definer function |
 | `gozleme.lock_invited_organization(bytea) RETURNS uuid` | Locks the invited organization `FOR KEY SHARE` and returns its ID, or NULL for an unknown hash |
 | `gozleme.rls_internal() RETURNS boolean` | Policy guard. Not a definer function; it grants nothing to callers |
 

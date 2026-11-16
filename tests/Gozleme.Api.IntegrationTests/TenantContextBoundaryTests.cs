@@ -183,4 +183,27 @@ public sealed class TenantContextBoundaryTests(PgvectorDatabaseFixture fixture) 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Empty(await response.Content.ReadAsStringAsync(ct));
     }
+
+    [Fact]
+    public async Task A_forged_or_tampered_session_cookie_selects_no_account_and_no_tenant_data()
+    {
+        using var client = AuthClient.Create(_factory);
+        var email = AuthClient.NewEmail();
+        using var registered = await AuthClient.RegisterAsync(client, email, AuthClient.Password);
+        var pair = AuthClient.SessionCookiePair(registered);
+        Assert.Equal(HttpStatusCode.OK, await AuthClient.ReplayAsync(_factory, pair, OrgClient.Base));
+
+        var value = pair[(AuthClient.CookieName.Length + 1)..];
+        string[] forged =
+        [
+            $"{AuthClient.CookieName}={value[..^2]}{(value[^2] == 'A' ? 'B' : 'A')}{value[^1]}", // tampered
+            $"{AuthClient.CookieName}={_t.BobId}",                                                 // an account id as the cookie
+            $"{AuthClient.CookieName}={Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{{\"userId\":\"{_t.BobId}\"}}"))}",
+        ];
+        foreach (var cookie in forged)
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, await AuthClient.ReplayAsync(_factory, cookie, OrgClient.Base));
+            Assert.Equal(HttpStatusCode.Unauthorized, await AuthClient.ReplayAsync(_factory, cookie, $"{OrgClient.Base}/{_t.OrgB}"));
+        }
+    }
 }

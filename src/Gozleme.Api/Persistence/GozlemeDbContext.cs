@@ -71,6 +71,7 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
 
         // Tenant-owned (GOZ-0002). Every table carries its tenant key; GOZ-0003 forces RLS on all three
         // (migration TenantRls; TableClassification). No role, owner or admin column exists by design (FR-018).
+        // A new tenant-owned table must follow "Adding a tenant-owned table" in docs/engineering/local-development.md.
         builder.Entity<Organization>(org =>
         {
             org.ToTable("organizations");

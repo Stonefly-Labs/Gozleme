@@ -118,7 +118,7 @@ src/Gozleme.Api/
     ├── MigrationRunner.cs                     # provision gozleme_private.context_keys after migrate
     ├── TableClassification.cs                 # TenantOwned / GlobalIdentity / SharedPublic (empty)
     ├── RlsCatalog.cs                          # ViolationsAsync(connection)
-    └── Migrations/20261117000000_TenantRls.cs (+ Designer; snapshot unchanged)
+    └── Migrations/20261117000000_TenantRls.cs (inline migration attributes, no Designer; snapshot unchanged)
 tests/Gozleme.Api.IntegrationTests/
 ├── Infrastructure/{GozlemeDatabase,GozlemeApiFactory}.cs   # test key; OwnerLogin helper; TenantSql helper
 ├── RlsIsolationTests.cs  TenantContextBoundaryTests.cs  RlsCatalogTests.cs
