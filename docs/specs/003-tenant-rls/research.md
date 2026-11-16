@@ -188,6 +188,16 @@ application's rules (for example, the last-member guard stays in the application
 Foreign-key checks and `ON DELETE CASCADE`/`SET NULL` actions run with row security disabled
 internally in PostgreSQL, so the GOZ-0002 cascades keep working (GOZ-0002-IF-12). Tests verify this.
 
+**Amended 2026-11-16 (second convergence pass, C1)**: the capability branch of `invitations_update`
+originally checked only the code hash and `used_by`. Policies cannot compare old and new rows, so a
+code holder could move the invitation into another organization (and then join it through
+`memberships_insert`), reopen a revoked one, or extend it. The capability branch's `USING` now requires
+an open invitation. A `BEFORE UPDATE` trigger, `gozleme.invitations_guard` (not a definer, `PUBLIC`
+revoked), keeps `id`, `organization_id`, `code_hash` and `created_at` fixed, lets `expires_at` move
+only earlier, and makes `revoked_at` and `used_at` set-once. The `*_by` columns may change only to NULL,
+for the GOZ-0002 `SET NULL` cascades. It applies to every role. The regression test is
+`TenantContextBoundaryTests.An_invitation_code_cannot_move_reopen_or_extend_its_invitation`.
+
 ## R8 — Refused writes and existence hiding
 
 **Decision**: `TenantTransaction` catches `PostgresException` with SQLSTATE `42501` (raised for

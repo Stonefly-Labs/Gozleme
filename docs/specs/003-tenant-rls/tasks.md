@@ -233,7 +233,7 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 - [x] T039 [P] In `docs/engineering/local-development.md`, document `GOZLEME_CONTEXT_KEY`, key rotation, the non-guarantees (contract §4) and that existing volumes need no reset
 - [x] T040 [P] Update the doc comments on `OrganizationAccess.cs` and `OrganizationEndpoints.cs` ("RLS is the second layer since GOZ-0003"), and on `GozlemeDbContext.cs` (tenant-owned tables now RLS-forced)
 - [ ] T041 Run `make lint`, `make test`, `make validate`, `make helm-lint` and `gitleaks git` (as in GOZ-0002). Record counts in `progress.yaml` gates
-- [ ] T042 Run the quickstart validation (`docs/specs/003-tenant-rls/quickstart.md`) end to end, including the manual spot check and the key-rotation steps on the local stack
+- [x] T042 Run the quickstart validation (`docs/specs/003-tenant-rls/quickstart.md`) end to end, including the manual spot check and the key-rotation steps on the local stack
 
 ---
 
@@ -268,3 +268,8 @@ T032 OperatorCommandTests (seed) T033 e2e evidence.ts
 
 - [x] T043 Add the write half of the cross-tenant matrix to `tests/Gozleme.Api.IntegrationTests/RlsIsolationTests.cs`: for each tenant-owned table × insert, update, delete, with no context, a plain forged setting, a tampered token and an expired token, as both the app role and the owner login, assert nothing is written (0 rows affected or 42501) and the superuser truth is unchanged per SC-001 (partial)
 - [x] T044 Measure organization page loads (list and detail, both tenants) in `e2e/tests/tenant-rls-demo.spec.ts` and assert each is under 1 s locally per SC-005 (partial)
+
+## Phase 12: Convergence
+
+- [x] T045 Constrain the invitation-capability write path in `20261117000000_TenantRls.cs`: the `invitations_update` capability branch admits only an open invitation (not revoked, not used, not expired), and a `BEFORE UPDATE` trigger on `gozleme.invitations` keeps `id`, `organization_id`, `code_hash`, `created_at` and `expires_at` immutable and `revoked_at`/`used_at` set-once (the `*_by` columns may only become NULL, for the GOZ-0002 SET NULL cascades); add regression tests that a code holder cannot move an invitation to another organization and then join it, un-revoke, extend, or re-use it, per FR-004, FR-003 and US2/AC4 (contradicts)
+- [x] T046 Add tests that the API refuses to start with a missing or too-short `Gozleme:Rls:ContextKey` and that `migrate` exits 1 in that case, without printing the key, per FR-012 and the key-missing edge case (partial)

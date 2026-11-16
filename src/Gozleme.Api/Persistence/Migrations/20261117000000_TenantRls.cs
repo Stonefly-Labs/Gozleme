@@ -212,22 +212,49 @@ internal sealed class TenantRls : Migration
             CREATE POLICY invitations_insert ON gozleme.invitations FOR INSERT WITH CHECK (CASE
               WHEN gozleme.rls_internal() THEN true
               ELSE organization_id IN (SELECT gozleme.account_organizations()) AND created_by = (SELECT gozleme.current_account_id()) END);
+            -- A code holder may only claim an open invitation; the trigger below keeps it in its organization.
             CREATE POLICY invitations_update ON gozleme.invitations FOR UPDATE
               USING (CASE WHEN gozleme.rls_internal() THEN true
                      WHEN organization_id IN (SELECT gozleme.account_organizations()) THEN true
-                     ELSE code_hash = (SELECT gozleme.invitation_capability()) END)
+                     ELSE code_hash = (SELECT gozleme.invitation_capability())
+                          AND revoked_at IS NULL AND used_at IS NULL AND expires_at > now() END)
               WITH CHECK (CASE WHEN gozleme.rls_internal() THEN true
                      WHEN organization_id IN (SELECT gozleme.account_organizations()) THEN true
                      ELSE code_hash = (SELECT gozleme.invitation_capability()) AND used_by = (SELECT gozleme.current_account_id()) END);
             CREATE POLICY invitations_delete ON gozleme.invitations FOR DELETE USING (CASE
               WHEN gozleme.rls_internal() THEN true
               ELSE organization_id IN (SELECT gozleme.account_organizations()) END);
+
+            -- Policies cannot compare old and new rows, so a trigger keeps an invitation's identity fixed and
+            -- its lifecycle one-way for every role (GOZ-0003 convergence C1): it cannot move to another
+            -- organization, be reopened, re-used or extended. Expiry may only move earlier, and the *_by
+            -- columns may only become NULL (the GOZ-0002 ON DELETE SET NULL cascades).
+            CREATE FUNCTION gozleme.invitations_guard() RETURNS trigger
+              LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $fn$
+            BEGIN
+              IF NEW.id IS DISTINCT FROM OLD.id OR NEW.organization_id IS DISTINCT FROM OLD.organization_id
+                 OR NEW.code_hash IS DISTINCT FROM OLD.code_hash OR NEW.created_at IS DISTINCT FROM OLD.created_at
+                 OR NEW.expires_at > OLD.expires_at
+                 OR (NEW.created_by IS DISTINCT FROM OLD.created_by AND NEW.created_by IS NOT NULL)
+                 OR (OLD.revoked_at IS NOT NULL AND NEW.revoked_at IS DISTINCT FROM OLD.revoked_at)
+                 OR (OLD.revoked_by IS NOT NULL AND NEW.revoked_by IS DISTINCT FROM OLD.revoked_by AND NEW.revoked_by IS NOT NULL)
+                 OR (OLD.used_at IS NOT NULL AND NEW.used_at IS DISTINCT FROM OLD.used_at)
+                 OR (OLD.used_by IS NOT NULL AND NEW.used_by IS DISTINCT FROM OLD.used_by AND NEW.used_by IS NOT NULL) THEN
+                RAISE EXCEPTION 'invitation change refused' USING ERRCODE = 'insufficient_privilege';
+              END IF;
+              RETURN NEW;
+            END $fn$;
+            REVOKE EXECUTE ON FUNCTION gozleme.invitations_guard() FROM PUBLIC;
+            CREATE TRIGGER invitations_guard BEFORE UPDATE ON gozleme.invitations
+              FOR EACH ROW EXECUTE FUNCTION gozleme.invitations_guard();
             """);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.Sql("""
+            DROP TRIGGER IF EXISTS invitations_guard ON gozleme.invitations;
+            DROP FUNCTION IF EXISTS gozleme.invitations_guard();
             DROP POLICY IF EXISTS invitations_delete ON gozleme.invitations;
             DROP POLICY IF EXISTS invitations_update ON gozleme.invitations;
             DROP POLICY IF EXISTS invitations_insert ON gozleme.invitations;

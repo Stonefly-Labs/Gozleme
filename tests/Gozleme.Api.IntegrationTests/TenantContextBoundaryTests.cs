@@ -207,4 +207,51 @@ public sealed class TenantContextBoundaryTests(PgvectorDatabaseFixture fixture) 
             Assert.Equal(HttpStatusCode.Unauthorized, await AuthClient.ReplayAsync(_factory, cookie, $"{OrgClient.Base}/{_t.OrgB}"));
         }
     }
+
+    [Fact]
+    public async Task An_invitation_code_cannot_move_reopen_or_extend_its_invitation()
+    {
+        // eve belongs to no organization and holds org A's invitation code (the capability).
+        var (eveClient, eveEmail) = await AuthClient.SignedInAsync(_factory);
+        eveClient.Dispose();
+        var eve = await Db.ScalarAsync<Guid>($"SELECT id FROM gozleme.users WHERE email = '{eveEmail}'");
+        var invitation = await Db.ScalarAsync<Guid>($"SELECT id FROM gozleme.invitations WHERE organization_id = '{_t.OrgA}' AND used_at IS NULL");
+        var hash = Convert.ToHexStringLower(await Db.ScalarAsync<byte[]>($"SELECT code_hash FROM gozleme.invitations WHERE id = '{invitation}'"));
+        var holder = $"""
+            {GozlemeDatabase.Establish(GozlemeDatabase.SignContext(eve))};
+            SELECT set_config('gozleme.invitation_capability', '{hash}', true)
+            """;
+
+        // Move the invitation into org B, claiming it, then join B through it: both refused.
+        var move = await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(Db.AppConnectionString, holder,
+            $"UPDATE gozleme.invitations SET organization_id = '{_t.OrgB}', used_at = now(), used_by = '{eve}' WHERE id = '{invitation}'"));
+        Assert.True(TwoTenants.IsRefusal(move), move.SqlState);
+        var join = await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(Db.AppConnectionString, holder, $"""
+            UPDATE gozleme.invitations SET organization_id = '{_t.OrgB}', used_at = now(), used_by = '{eve}' WHERE id = '{invitation}';
+            INSERT INTO gozleme.memberships (organization_id, user_id, joined_at, joined_via, invitation_id) VALUES ('{_t.OrgB}', '{eve}', now(), 'invitation', '{invitation}')
+            """));
+        Assert.True(TwoTenants.IsRefusal(join), join.SqlState);
+
+        // Extend it while claiming it: refused.
+        var extend = await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(Db.AppConnectionString, holder,
+            $"UPDATE gozleme.invitations SET expires_at = now() + interval '365 days', used_at = now(), used_by = '{eve}' WHERE id = '{invitation}'"));
+        Assert.True(TwoTenants.IsRefusal(extend), extend.SqlState);
+
+        // Revoked: the holder can neither see nor reopen it.
+        await GozlemeDatabase.ExecuteAsync($"UPDATE gozleme.invitations SET revoked_at = now(), revoked_by = '{_t.CarolId}' WHERE id = '{invitation}'", Db.SuperuserConnectionString);
+        Assert.Equal(0, await GozlemeDatabase.InTransactionAsync<long>(Db.AppConnectionString, holder,
+            $"WITH c AS (UPDATE gozleme.invitations SET revoked_at = NULL, revoked_by = NULL, used_by = '{eve}' WHERE id = '{invitation}' RETURNING 1) SELECT count(*) FROM c"));
+
+        // Even a member of A cannot reopen it or move it: revocation and identity are set once.
+        var alice = GozlemeDatabase.Establish(GozlemeDatabase.SignContext(_t.AliceId));
+        var reopen = await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(Db.AppConnectionString, alice,
+            $"UPDATE gozleme.invitations SET revoked_at = NULL, revoked_by = NULL WHERE id = '{invitation}'"));
+        Assert.True(TwoTenants.IsRefusal(reopen), reopen.SqlState);
+
+        Assert.Equal($"{_t.OrgA}|true|false|0", await Db.ScalarAsync<string>($"""
+            SELECT organization_id || '|' || (revoked_at IS NOT NULL) || '|' || (used_at IS NOT NULL) || '|'
+                   || (SELECT count(*) FROM gozleme.memberships WHERE user_id = '{eve}')
+            FROM gozleme.invitations WHERE id = '{invitation}'
+            """));
+    }
 }
