@@ -1,7 +1,7 @@
 schemaVersion: '1.0'
 specId: GOZ-0004
 stage: pr
-status: in-progress
+status: ready-for-human-merge
 promptRevision: 6
 branch: feature/goz-0004-scoped-rbac
 featureDirectory: docs/specs/004-scoped-rbac
@@ -33,8 +33,8 @@ attempts:
 - {at: '2026-11-16', stage: demo, failure: 'rbac-demo strict-mode heading match', repair: 'exact: true', result: fixed}
 - {at: '2026-11-16', stage: demo, failure: 'signed context in postgres STATEMENT log from demo psql -c evidence calls', repair: 'psql -f - (per-statement)', result: fixed}
 blockers: []
-pullRequest: null
-nextAction: 'PR #17 ready-for-human-merge (all CI checks passed at efad962); human maintainer merges.'
+pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/17
+nextAction: 'Human maintainer reviews and merges PR #17. All 12 CI checks passed on efad962. Do not mark complete until the merge is independently verified.'
 evidence:
   tests: ['make test: 318 .NET (unit + Testcontainers) and 139 Vitest passing', 'make lint: clean', 'make validate: clean']
   demos: [docs/specs/004-scoped-rbac/evidence/demo-run.json, docs/specs/004-scoped-rbac/evidence/rbac-evidence.json]
