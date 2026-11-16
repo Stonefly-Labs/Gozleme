@@ -75,9 +75,15 @@ internal sealed class TenantRls : Migration
               status := 'ok';
             END $fn$;
 
-            -- Policy guard (R4): true only inside an owner-defined definer helper called by another login.
+            -- Policy guard (R4): true only inside an owner-defined definer helper. For another login,
+            -- current_user differs from session_user there. For the owner login itself, the helpers that read
+            -- tenant tables set gozleme.rls_helper while they run; without it their own reads would re-enter
+            -- the policy and recurse whenever the plan evaluates it per row. The flag counts only when
+            -- current_user is the owner, so the serving role gains nothing by setting it, and an owner login
+            -- that sets it by hand gains no more than ALTER TABLE ... NO FORCE (contract §4).
             CREATE FUNCTION gozleme.rls_internal() RETURNS boolean LANGUAGE sql STABLE
-              AS $fn$ SELECT current_user = 'gozleme_migrator' AND session_user <> 'gozleme_migrator' $fn$;
+              AS $fn$ SELECT current_user = 'gozleme_migrator'
+                       AND (session_user <> 'gozleme_migrator' OR current_setting('gozleme.rls_helper', true) = 'on') $fn$;
 
             CREATE FUNCTION gozleme.establish_context(token text) RETURNS text
               LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
@@ -92,15 +98,31 @@ internal sealed class TenantRls : Migration
               LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
               AS $fn$ SELECT (gozleme_private.verify_context(current_setting('gozleme.account_context', true))).account_id $fn$;
 
+            -- Helpers that read tenant tables mark themselves for rls_internal() and restore the previous value.
             CREATE FUNCTION gozleme.account_organizations() RETURNS SETOF uuid
-              LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
-              AS $fn$ SELECT m.organization_id FROM gozleme.memberships m WHERE m.user_id = gozleme.current_account_id() $fn$;
+              LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+            DECLARE
+              previous text := coalesce(current_setting('gozleme.rls_helper', true), '');
+              account uuid := gozleme.current_account_id();
+            BEGIN
+              PERFORM set_config('gozleme.rls_helper', 'on', true);
+              RETURN QUERY SELECT m.organization_id FROM gozleme.memberships m WHERE m.user_id = account;
+              PERFORM set_config('gozleme.rls_helper', previous, true);
+            END $fn$;
 
             CREATE FUNCTION gozleme.is_new_organization_of_current_account(org uuid) RETURNS boolean
-              LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
-              SELECT EXISTS (SELECT 1 FROM gozleme.organizations o WHERE o.id = org AND o.created_by = gozleme.current_account_id())
-                 AND NOT EXISTS (SELECT 1 FROM gozleme.memberships m WHERE m.organization_id = org)
-            $fn$;
+              LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+            DECLARE
+              previous text := coalesce(current_setting('gozleme.rls_helper', true), '');
+              account uuid := gozleme.current_account_id();
+              result boolean;
+            BEGIN
+              PERFORM set_config('gozleme.rls_helper', 'on', true);
+              result := EXISTS (SELECT 1 FROM gozleme.organizations o WHERE o.id = org AND o.created_by = account)
+                AND NOT EXISTS (SELECT 1 FROM gozleme.memberships m WHERE m.organization_id = org);
+              PERFORM set_config('gozleme.rls_helper', previous, true);
+              RETURN result;
+            END $fn$;
 
             -- A bearer capability for one invitation: the hex SHA-256 of a presented code (R6). Not a definer.
             CREATE FUNCTION gozleme.invitation_capability() RETURNS bytea
@@ -111,12 +133,21 @@ internal sealed class TenantRls : Migration
 
             -- Lock order organization, then invitation (GOZ-0002-IF-20); requires a verified account.
             CREATE FUNCTION gozleme.lock_invited_organization(code_hash bytea) RETURNS uuid
-              LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
-              SELECT o.id FROM gozleme.organizations o
-              WHERE gozleme.current_account_id() IS NOT NULL
-                AND o.id = (SELECT i.organization_id FROM gozleme.invitations i WHERE i.code_hash = lock_invited_organization.code_hash)
-              FOR KEY SHARE OF o
-            $fn$;
+              LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $fn$
+            DECLARE
+              previous text := coalesce(current_setting('gozleme.rls_helper', true), '');
+              result uuid;
+            BEGIN
+              IF gozleme.current_account_id() IS NULL THEN
+                RETURN NULL;
+              END IF;
+              PERFORM set_config('gozleme.rls_helper', 'on', true);
+              SELECT o.id INTO result FROM gozleme.organizations o
+              WHERE o.id = (SELECT i.organization_id FROM gozleme.invitations i WHERE i.code_hash = lock_invited_organization.code_hash)
+              FOR KEY SHARE OF o;
+              PERFORM set_config('gozleme.rls_helper', previous, true);
+              RETURN result;
+            END $fn$;
 
             REVOKE EXECUTE ON FUNCTION gozleme_private.verify_context(text) FROM PUBLIC;
             REVOKE EXECUTE ON FUNCTION gozleme.rls_internal(), gozleme.establish_context(text), gozleme.current_account_id(),

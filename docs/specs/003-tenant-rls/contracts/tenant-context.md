@@ -29,7 +29,7 @@ All are owned by `gozleme_migrator` and use `search_path = pg_catalog, pg_temp`.
 | `gozleme.is_new_organization_of_current_account(uuid) RETURNS boolean` | True only for an organization created by the verified account that has no members yet |
 | `gozleme.invitation_capability() RETURNS bytea` | The 32-byte code hash from `gozleme.invitation_capability`, or NULL. Not a definer function |
 | `gozleme.lock_invited_organization(bytea) RETURNS uuid` | Locks the invited organization `FOR KEY SHARE` and returns its ID, or NULL for an unknown hash |
-| `gozleme.rls_internal() RETURNS boolean` | Policy guard. Not a definer function; it grants nothing to callers |
+| `gozleme.rls_internal() RETURNS boolean` | Policy guard: true only while an owner-defined definer helper runs, recognised by `current_user` being the owner and either another login or the helper's transaction-local `gozleme.rls_helper` flag (research R4 amendment). Not a definer function; it grants nothing to callers |
 
 ## 3. Guarantees
 
@@ -44,6 +44,7 @@ All are owned by `gozleme_migrator` and use `search_path = pg_catalog, pg_temp`.
 
 - SQL injected into a request runs with that request's valid context, and so with that account's access.
 - Compromise of the owner or a superuser credential, or of the context key, defeats these rules.
+- The owner login is bound by FORCE as a safeguard against mistakes, not against itself. It can lift its own binding (`ALTER TABLE … NO FORCE`, or the `gozleme.rls_helper` flag).
 - A token that leaks is valid for that account until it expires (at most 10 minutes).
 
 ## 5. Rules for future tenant-owned tables

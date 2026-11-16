@@ -102,6 +102,22 @@ functions, and the catalog check (R11) pins that set.
 - **Recursion and cascade**: the membership helper did not recurse, and `ON DELETE CASCADE` from `users` removed the memberships under forced RLS.
 - **Probe artifact**: `SET ROLE gozleme_migrator` from a superuser leaves `session_user = postgres`, which satisfies the guard. Tests must log in as the owner directly, never `SET ROLE` from a superuser.
 
+**Amended 2026-11-15 (implementation, found by the cumulative demo)**: the owner-login check above
+passed only because the plan used the `memberships.user_id` index. Under a sequential scan the
+policy is evaluated on every row a helper reads, and for the owner login (`session_user` =
+`current_user` = owner) the guard was false inside the helper too, so `account_organizations()`
+recursed until `stack depth limit exceeded`. This failed closed, but it broke the owner-login
+guarantees and signed-context data migrations. The fix: the three helpers that read tenant tables
+(`account_organizations`, `is_new_organization_of_current_account` and `lock_invited_organization`,
+now PL/pgSQL) set the transaction-local `gozleme.rls_helper` flag with `set_config` in their body
+(the rejected function-level `SET` clause is not used) and restore its previous value. The guard
+accepts the flag only when `current_user` is the owner:
+`current_user = 'gozleme_migrator' AND (session_user <> 'gozleme_migrator' OR current_setting('gozleme.rls_helper', true) = 'on')`.
+The serving role gains nothing by setting the flag (`TenantContextBoundaryTests`). An owner login
+that sets it by hand bypasses its own FORCE, which it can already do with `ALTER TABLE … NO FORCE`.
+That falls under the compromised-owner non-guarantee (contract §4). `RlsIsolationTests.Helpers_never_recurse_through_their_own_policy_whatever_the_plan`
+forces sequential scans for both roles.
+
 **Alternatives considered**:
 - *Mirror table of memberships in a private schema, maintained by triggers*: it duplicates data and adds consistency risk.
 - *Organization claim inside the signed token*: removal would not take effect until expiry, and spec FR-006 rules it out.

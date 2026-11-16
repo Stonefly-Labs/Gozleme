@@ -67,7 +67,8 @@ public sealed class TenantContextBoundaryTests(PgvectorDatabaseFixture fixture) 
         var setup = $"""
             {GozlemeDatabase.Establish(GozlemeDatabase.SignContext(_t.AliceId))};
             SELECT set_config('gozleme.tenant_id', '{_t.OrgB}', true), set_config('gozleme.organization_id', '{_t.OrgB}', true),
-                   set_config('app.tenant_id', '{_t.OrgB}', true), set_config('gozleme.rls_internal', 'on', true)
+                   set_config('app.tenant_id', '{_t.OrgB}', true), set_config('gozleme.rls_internal', 'on', true),
+                   set_config('gozleme.rls_helper', 'on', true)
             """;
         Assert.Equal(0, await GozlemeDatabase.InTransactionAsync<long>(Db.AppConnectionString, setup, "SELECT count(*) FROM gozleme.organizations WHERE id = $1", _t.OrgB));
         Assert.Equal(0, await GozlemeDatabase.InTransactionAsync<long>(Db.AppConnectionString, setup, "SELECT count(*) FROM gozleme.memberships WHERE organization_id = $1", _t.OrgB));

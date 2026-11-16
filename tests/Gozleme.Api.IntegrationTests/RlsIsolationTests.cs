@@ -166,6 +166,26 @@ public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncL
         Assert.Equal(0, await Db.ScalarAsync<long>("SELECT count(*) FROM gozleme.organizations WHERE display_name = 'Forged'"));
     }
 
+    [Theory]
+    [MemberData(nameof(Roles))]
+    public async Task Helpers_never_recurse_through_their_own_policy_whatever_the_plan(string role)
+    {
+        // Sequential scans evaluate the policy on every row, including the rows a helper reads itself;
+        // an index scan on memberships.user_id would hide a recursion (found by the cumulative demo).
+        const string seqScan = "SET LOCAL enable_indexscan = off; SET LOCAL enable_bitmapscan = off; SET LOCAL enable_indexonlyscan = off";
+        var connection = Connection(role);
+        var alice = $"{seqScan}; {GozlemeDatabase.Establish(GozlemeDatabase.SignContext(_t.AliceId))}";
+        foreach (var table in new[] { "organizations", "memberships", "invitations" })
+        {
+            Assert.Equal(0, await GozlemeDatabase.InTransactionAsync<long>(connection, seqScan, $"SELECT count(*) FROM gozleme.{table}"));
+            Assert.True(await GozlemeDatabase.InTransactionAsync<long>(connection, alice, $"SELECT count(*) FROM gozleme.{table}") > 0, table);
+            Assert.Equal(0, await GozlemeDatabase.InTransactionAsync<long>(connection, alice, $"SELECT count(*) FROM gozleme.{table} WHERE {(table == "organizations" ? "id" : "organization_id")} = '{_t.OrgB}'"));
+        }
+
+        // A data migration under the owner login with a signed context changes only that account's rows.
+        Assert.Equal(1, await GozlemeDatabase.InTransactionAsync<long>(connection, alice, "WITH c AS (UPDATE gozleme.organizations SET updated_at = updated_at RETURNING 1) SELECT count(*) FROM c"));
+    }
+
     [Fact]
     public async Task The_app_role_cannot_reach_the_key_replace_helpers_or_switch_rls_off()
     {
