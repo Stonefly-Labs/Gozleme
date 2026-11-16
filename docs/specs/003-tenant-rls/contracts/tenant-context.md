@@ -39,7 +39,7 @@ All are owned by `gozleme_migrator` and use `search_path = pg_catalog, pg_temp`.
 4. Settings are transaction-local. No context survives `COMMIT` or `ROLLBACK`, so none survives a return to the pool.
 5. `gozleme_app` cannot read, write or replace the key, and cannot create, replace or alter the helper functions.
 6. An invitation code (the capability) admits only its own *open* invitation. The `invitations_guard` trigger stops every role from moving an invitation to another organization, reopening a revoked or used one, or extending its expiry (convergence C1).
-6. Foreign-key checks and cascades are unaffected.
+7. Foreign-key checks and cascades are unaffected.
 
 ## 4. Non-guarantees (documented limits)
 

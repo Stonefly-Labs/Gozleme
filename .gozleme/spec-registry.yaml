@@ -245,8 +245,9 @@ specs:
   - GOZ-0003-IF-16
   - GOZ-0003-IF-17
   - GOZ-0003-IF-18
+  - GOZ-0003-IF-19
   pendingHumanDecisions:
-  - {finding: GOZ-0003-IF-03, status: pending, decideBefore: 'GOZ-0004 plan', topic: 'data migrations and cross-tenant backfills under FORCE RLS'}
+  - {finding: GOZ-0003-IF-03, status: pending, decideBefore: 'GOZ-0004 plan', topic: 'data migrations and cross-tenant backfills under FORCE RLS; whether a reviewed migration may disable a guard trigger (IF-19)'}
   - {finding: GOZ-0003-IF-04, status: pending, decideBefore: 'GOZ-0015 (first consumer) at the latest', topic: 'tenant context for non-account principals'}
   - {finding: GOZ-0003-IF-08, status: pending, decideBefore: 'GOZ-0005 clarification', topic: 'class for instance-wide non-identity tables before GOZ-0012 (conditional)'}
   - {finding: GOZ-0003-IF-11, status: pending, decideBefore: 'GOZ-0039 clarification', topic: 'backup/restore under FORCE RLS, signing key in dumps, key-rotation overlap'}
