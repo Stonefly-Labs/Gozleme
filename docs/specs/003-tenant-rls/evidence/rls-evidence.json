@@ -1,7 +1,7 @@
 {
   "spec": "GOZ-0003",
-  "capturedAt": "2026-11-16T20:53:11.865Z",
-  "superuserOrganizationCount": 8,
+  "capturedAt": "2026-11-16T20:56:47.156Z",
+  "superuserOrganizationCount": 11,
   "catalog": "invitations:true:true:4,memberships:true:true:4,organizations:true:true:3",
   "contexts": [
     {
@@ -47,8 +47,8 @@
     {
       "role": "gozleme_app",
       "context": "signed for alice",
-      "organizations": 7,
-      "memberships": 8,
+      "organizations": 10,
+      "memberships": 11,
       "partnerVisible": false,
       "demoVisible": true
     },
@@ -103,8 +103,8 @@
     {
       "role": "gozleme_migrator",
       "context": "signed for alice",
-      "organizations": 7,
-      "memberships": 8,
+      "organizations": 10,
+      "memberships": 11,
       "partnerVisible": false,
       "demoVisible": true
     },

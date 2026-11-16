@@ -66,11 +66,16 @@ async function api(page: Page, method: string, path: string, data?: unknown) {
 const setRoles = (page: Page, userId: string, roles: string[]) => api(page, "PUT", `/members/${userId}/roles`, { roles });
 const displayName = async (page: Page) => (await api(page, "GET", "")).json?.displayName;
 
-/** One psql call inside the postgres container as `role`; SQLSTATE in errors (VERBOSITY verbose). */
+/**
+ * One psql session inside the postgres container as `role`; SQLSTATE in errors (VERBOSITY verbose).
+ * The script goes through stdin so each statement is sent on its own: a refused statement is then
+ * logged by PostgreSQL without the separate statement that set the signed context.
+ */
 function psql(role: string, sql: string): { out: string; state?: string } {
   try {
-    const out = execFileSync("docker", ["compose", "exec", "-T", "postgres", "psql", "-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-v", "VERBOSITY=verbose", "-U", role, "-d", "gozleme", "-c", sql], {
+    const out = execFileSync("docker", ["compose", "exec", "-T", "postgres", "psql", "-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-v", "VERBOSITY=verbose", "-U", role, "-d", "gozleme", "-f", "-"], {
       cwd: repoRoot,
+      input: sql,
       stdio: "pipe",
     }).toString();
     return { out: out.trim().split("\n").pop() ?? "" };
@@ -88,7 +93,7 @@ function sign(accountId: string, expires = Math.floor(Date.now() / 1000) + 300) 
 
 /** `statement` as gozleme_app in `account`'s signed context, always rolled back; returns rows affected or the SQLSTATE. */
 function asApp(account: string, statement: string): string {
-  const sql = `BEGIN; DO $$BEGIN PERFORM set_config('gozleme.account_context', '${sign(account)}', true); END$$; WITH c AS (${statement} RETURNING 1) SELECT count(*) FROM c; ROLLBACK;`;
+  const sql = `BEGIN;\nDO $$BEGIN PERFORM set_config('gozleme.account_context', '${sign(account)}', true); END$$;\nWITH c AS (${statement} RETURNING 1) SELECT count(*) FROM c;\nROLLBACK;\n`;
   const { out, state } = psql("gozleme_app", sql);
   return state ?? `${out} row(s)`;
 }
