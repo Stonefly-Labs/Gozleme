@@ -1,0 +1,186 @@
+openapi: 3.1.0
+info:
+  title: Gözleme Organizations API — GOZ-0004 role delta
+  version: "1"
+  description: >
+    Changes to the Organizations API v1 (docs/specs/002-organizations/contracts/organizations-api.openapi.yaml,
+    which stays as the historical GOZ-0002 contract). Everything not listed here is unchanged: session
+    required, Cache-Control no-store, x-gozleme-client on unsafe methods, identical empty 404 for a
+    malformed, unknown or non-member organization, 503 while PostgreSQL is unreachable. The interim
+    role-neutral rule is replaced by the built-in roles in contracts/permissions.md: after the
+    membership check, an operation the caller's roles do not permit answers 403 {"error":"forbidden"}
+    and changes nothing. A non-member never receives 403. Changed operations: rename (PATCH), invitation
+    list/create/revoke and removal of another member are admin-only; leaving stays open to every member.
+servers:
+  - url: http://api:8080
+security:
+  - session: []
+components:
+  securitySchemes:
+    session: { type: apiKey, in: cookie, name: gozleme_session }
+  parameters:
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      schema: { type: string, description: Opaque UUID; anything else is treated as not found }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, description: Opaque account UUID of an existing member; anything else is not found }
+  responses:
+    NotFound: { description: 'Not found, not a member, unknown or malformed target (indistinguishable; empty body)' }
+    Forbidden:
+      description: The caller is a member but its roles do not permit the action; nothing changed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: forbidden }
+    Conflict:
+      description: >
+        last_member: the sole member cannot leave or be removed (GOZ-0002, unchanged).
+        last_admin: the change would leave the organization without an admin.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [validation_failed, invalid_invitation, last_member, last_admin, rate_limited, forbidden, unavailable]
+        fields:
+          type: object
+          additionalProperties: { type: array, items: { type: string } }
+    Role:
+      type: string
+      enum: [admin, approver, member, publisher, reviewer]
+    Action:
+      type: string
+      enum: [organization.read, organization.select, organization.rename, membership.list, membership.leave,
+             membership.remove, membership.roles.change, invitation.list, invitation.create, invitation.revoke]
+    Organization:
+      type: object
+      required: [id, displayName, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string }
+        createdAt: { type: string, format: date-time }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/Role' }
+          description: The caller's roles, sorted. Present on GET /organizations/{organizationId} only.
+        permissions:
+          type: array
+          items: { $ref: '#/components/schemas/Action' }
+          description: The caller's permitted actions, sorted. Present on GET /organizations/{organizationId} only. A UI hint; every operation re-checks.
+    Member:
+      type: object
+      required: [userId, email, joinedAt, joinedVia, isSelf, roles]
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: string }
+        joinedAt: { type: string, format: date-time }
+        joinedVia: { type: string, enum: [creator, invitation] }
+        isSelf: { type: boolean }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/Role' }
+          description: Sorted; always contains member
+    RolesRequest:
+      type: object
+      required: [roles]
+      properties:
+        roles:
+          type: array
+          maxItems: 5
+          items: { type: string }
+          description: >
+            The complete new role set. member is added when omitted; duplicates are ignored; an unknown
+            name answers 400 validation_failed with fields.roles. Unknown request fields are ignored.
+paths:
+  /api/v1/organizations/{organizationId}:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    get:
+      summary: Organization with the caller's roles and permitted actions (organization.read)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Organization' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      summary: Rename (organization.rename; admin only)
+      responses:
+        '200': { description: Renamed }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/organizations/{organizationId}/members:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    get:
+      summary: Members with their roles (membership.list; every member)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [members]
+                properties:
+                  members: { type: array, items: { $ref: '#/components/schemas/Member' } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/organizations/{organizationId}/members/{userId}:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }, { $ref: '#/components/parameters/UserId' }]
+    delete:
+      summary: Leave (membership.leave; every member) or remove another member (membership.remove; admin only)
+      description: >
+        Removing or departing revokes the departing account's open invitations (GOZ-0002-IF-04, unchanged).
+      responses:
+        '204': { description: Removed }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/organizations/{organizationId}/members/{userId}/roles:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }, { $ref: '#/components/parameters/UserId' }]
+    put:
+      summary: Replace a member's role set (membership.roles.change; admin only; new in GOZ-0004)
+      description: >
+        Takes effect on the member's next request; no session is ended. Assigning the current set
+        changes nothing and writes no audit event. When the set loses admin, that account's open
+        invitations are revoked in the same transaction (audit 1104 each). Assignment is only by
+        the opaque userId of an existing member, never by email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RolesRequest' }
+            example: { roles: [admin, member] }
+      responses:
+        '200': { description: Updated member, content: { application/json: { schema: { $ref: '#/components/schemas/Member' } } } }
+        '400': { description: Unknown role, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/organizations/{organizationId}/invitations:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    get:
+      summary: Open invitations (invitation.list; admin only)
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      summary: Create an invitation (invitation.create; admin only)
+      responses:
+        '201': { description: Created; the code is shown once }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/organizations/{organizationId}/invitations/{invitationId}:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    delete:
+      summary: Revoke an invitation (invitation.revoke; admin only)
+      responses:
+        '204': { description: Revoked }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }

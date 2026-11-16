@@ -10,7 +10,7 @@
 | [GOZ-0001](../prompts/spec-0001.md) — Local identity and session security | foundation | complete | merged | GOZ-0000 | Complete — merged to main in cf006f28a959ab8982ff251005f76fd41275e3d2 (PR #6, verified 2026-11-15). |
 | [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | complete | merged | GOZ-0001 | Complete — merged to main in 6f658c2e52aca3542d7ad23d0d437b883279195d (PR #8, verified 2026-11-15). |
 | [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | complete | merged | GOZ-0002 | Complete — merged to main in 0fc67d21f0771a3793248c48a9aff0043038af25 (PR #10, verified 2026-11-16). |
-| [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | in-progress | specify | GOZ-0003 | Specification drafted with maintainer decisions (Q1 B, Q2 A, Q3 B, Q4 A, Q5 B); run /speckit-clarify then /speckit-plan. |
+| [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | in-progress | plan | GOZ-0003 | Plan done (R2-R5 verified on PostgreSQL 17; no new definer helper); run /speckit-tasks. |
 | [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | not-started | — | GOZ-0004 | Await prerequisites and create allowed working branch |
 | [GOZ-0006](../prompts/spec-0006.md) — Typed manifests for capability families | publishing | not-started | — | GOZ-0005 | Await prerequisites and create allowed working branch |
 | [GOZ-0007](../prompts/spec-0007.md) — Immutable revisions and signed attestations | publishing | not-started | — | GOZ-0006 | Await prerequisites and create allowed working branch |

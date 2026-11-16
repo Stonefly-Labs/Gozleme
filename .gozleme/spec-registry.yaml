@@ -273,13 +273,13 @@ specs:
   dependencies:
   - GOZ-0003
   status: in-progress
-  stage: specify
+  stage: plan
   branch: feature/goz-0004-scoped-rbac
   pullRequest: null
   promptRevision: 6
   gates:
     specification: passed
-    plan: pending
+    plan: passed
     tasks: pending
     implementation: pending
     tests: pending
@@ -297,7 +297,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Specification drafted with maintainer decisions (Q1 B, Q2 A, Q3 B, Q4 A, Q5 B); run /speckit-clarify then /speckit-plan.'
+  nextAction: 'Plan done (R2-R5 verified on PostgreSQL 17; no new definer helper); run /speckit-tasks.'
 - id: GOZ-0005
   number: 5
   title: Publisher identities and canonical capability IDs
