@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace Gozleme.Api.Organizations;
 
@@ -308,8 +309,17 @@ internal static class OrganizationEndpoints
         var hash = InvitationCodes.Hash(code);
         var now = time.GetUtcNow();
 
-        // The row lock makes redemption single-use under concurrency (FR-008, research R6).
+        // The invitation row lock makes redemption single-use under concurrency (FR-008, research R6).
+        // Lock order is organization, then invitation, as in member removal, which revokes the
+        // departing account's invitations under the organization lock (GOZ-0002-IF-20).
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var organizationId = await db.Invitations.Where(i => i.CodeHash == hash).Select(i => (Guid?)i.OrganizationId).FirstOrDefaultAsync(ct);
+        if (organizationId is null)
+        {
+            return InvalidInvitation(activity, audit, userId);
+        }
+
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM gozleme.organizations WHERE id = {organizationId} FOR KEY SHARE", ct);
         var invitation = await db.Invitations.FromSql($"SELECT * FROM gozleme.invitations WHERE code_hash = {hash} FOR UPDATE").FirstOrDefaultAsync(ct);
         if (invitation is null || !invitation.IsOpen(now))
         {
@@ -339,7 +349,7 @@ internal static class OrganizationEndpoints
         {
             await db.SaveChangesAsync(ct);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "pk_memberships" })
         {
             // A concurrent redemption of another code made this account a member first.
             await transaction.RollbackAsync(ct);

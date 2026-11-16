@@ -1,6 +1,6 @@
 {
   "sourceSpec": "GOZ-0002",
-  "implementationRevision": "f95be4c (feature/goz-0002-organizations; demo 29/29 recorded assertions passed on a clean tree at 8a9941e; 8a9941e..f95be4c changes only demo evidence, progress.yaml and tasks.md)",
+  "implementationRevision": "cc1e518 (feature/goz-0002-organizations; first analysed at f95be4c, whose code was demonstrated 29/29 at 8a9941e; cc1e518 adds the IF-04, IF-17 and IF-18 corrections; make lint and make test pass at cc1e518 (203 .NET, 131 web) as reported by drive-speckit; the fresh cumulative demo at cc1e518 is being recorded by drive-speckit)",
   "analyzedAt": "2026-11-15",
   "findings": [
     {
@@ -13,7 +13,8 @@
         "docs/architecture/security-invariants.md invariant 1: every tenant-owned row is protected by application authorization AND effective PostgreSQL RLS",
         "docs/specs/002-organizations/plan.md Complexity Tracking records the violation, justified by roadmap order (GOZ-0000-IF-03); spec.md Assumptions: 'This spec does not claim RLS protection'",
         "docs/engineering/local-development.md:69 states isolation is application-layer only until GOZ-0003",
-        "gozleme_app has DML on the tables through the foundation default privileges (data-model.md header)"
+        "gozleme_app has DML on the tables through the foundation default privileges (data-model.md header)",
+        "docs/specs/002-organizations/progress.yaml decision 'GOZ-0002-IF-01 row-level security exception' (maintainer, 2026-11-15): accepted with conditions; deploy/helm/gozleme/README.md Organizations bullet: do not cut a release before GOZ-0003"
       ],
       "affectedSpecs": [
         "GOZ-0003",
@@ -24,7 +25,7 @@
         "GOZ-0014"
       ],
       "recommendation": "Maintainer explicitly acknowledges the interim invariant-1 exception at GOZ-0002 PR review, and confirms that GOZ-0003 runs before any other spec that adds tenant-owned data and that no release or tag is cut while the exception is open. GOZ-0003 enables RLS on all three tables and adds them to its catalog test. GOZ-0039's release gate verifies effective RLS on every tenant-owned table. No spec may claim RLS protection before GOZ-0003 merges.",
-      "disposition": "human-decision: acknowledge the interim invariant-1 exception and its closure conditions; downstream prompt obligations already applied (GOZ-0003, GOZ-0039 and the cross-cutting section in all future prompts)"
+      "disposition": "human-decided 2026-11-15: accepted with conditions. (1) GOZ-0003 is the next spec that adds or touches organization-scoped data; GOZ-0040, which adds only global tables, may precede it. (2) No release or tag until GOZ-0003 lands. (3) The GOZ-0039 release gate verifies RLS on every organization table. The conditions are stated in spec-0003.md, spec-0039.md and spec-0040.md."
     },
     {
       "id": "GOZ-0002-IF-02",
@@ -73,14 +74,15 @@
         "OrganizationEndpoints.cs:296-320 redemption accepts any open code for a non-member, including the account that created it",
         "spec.md FR-017 requires removal to take effect on the next request, which it does; US3-5 allows rejoining with a new valid invitation; no requirement covers the removed member's own outstanding codes",
         "Mitigation today: any remaining member sees open invitations with their creator (FR-012) and can revoke them manually",
-        "No test covers this case (MembershipTests.cs, InvitationTests.cs)"
+        "No test covers this case (MembershipTests.cs, InvitationTests.cs)",
+        "Corrected at cc1e518: OrganizationEndpoints.cs:196-215 revokes the departing account's open invitations FOR UPDATE inside the removal transaction under the organization row lock (revoked_by = acting member) and writes audit 1104 for each after commit; spec.md FR-015 updated; MembershipTests.Removing_or_leaving_revokes_the_departing_accounts_open_invitations covers removal, leaving, an untouched other member's code and the audit record"
       ],
       "affectedSpecs": [
         "GOZ-0002",
         "GOZ-0004"
       ],
       "recommendation": "Preferred: a bounded GOZ-0002 correction. Remove and leave revoke, in the same transaction, the open invitations created by the departing account. Set revoked_by to the actor and emit audit 1104 for each one. Add an integration test showing a removed member cannot rejoin with its own earlier code. Alternative: accept this as an interim residual that GOZ-0004 must close; the GOZ-0004 prompt already carries the obligation either way.",
-      "disposition": "human-decision: fix now in GOZ-0002 (recommended) or defer to GOZ-0004; GOZ-0004 prompt obligation applied"
+      "disposition": "human-decided 2026-11-15: fix in GOZ-0002; corrected at cc1e518 (FR-015, T048, test). The GOZ-0004 prompt now builds on this behaviour. The correction introduced a lock-order issue, tracked as GOZ-0002-IF-20."
     },
     {
       "id": "GOZ-0002-IF-05",
@@ -280,7 +282,7 @@
         "GOZ-0002"
       ],
       "recommendation": "Downstream flows that act on behalf of an organization (publishing, overlays, policy activation, sharing grants) show an unambiguous reference, such as an ID suffix or the GOZ-0005 handle, at confirmation, and never resolve an organization by display name. Optional GOZ-0002 polish: show a short ID suffix in the switcher and list when names collide.",
-      "disposition": "applied-to-future-prompts (optional GOZ-0002 UI polish left to the maintainer)"
+      "disposition": "applied-to-future-prompts; the optional GOZ-0002 UI disambiguation was declined for this slice by drive-speckit (2026-11-15)"
     },
     {
       "id": "GOZ-0002-IF-11",
@@ -388,13 +390,14 @@
         "plan.md:50 says '10 API endpoints'; OrganizationEndpoints.cs maps 11 (10 under /organizations plus /invitations/redeem)",
         "plan.md:120 and tasks.md T013 name tests/Gozleme.Api.Tests/InvitationCodeTests.cs and DisplayNameTests.cs; the tests are in tests/Gozleme.Api.Tests/OrganizationPolicyTests.cs",
         "research.md R11 says gozleme.organization.id is set 'once the caller is known to be a member'; redemption sets it once the code is valid and before joining (OrganizationEndpoints.cs:302), an opaque ID for the organization being joined",
-        "spec.md header still says 'Status: Draft'"
+        "spec.md header still says 'Status: Draft'",
+        "Corrected at cc1e518: plan.md:50 (11 endpoints) and :120 (OrganizationPolicyTests.cs); tasks.md T013 note; research.md R11 redemption wording. spec.md 'Status: Draft' deliberately kept: the merged GOZ-0001 spec keeps the same header (project convention)"
       ],
       "affectedSpecs": [
         "GOZ-0002"
       ],
       "recommendation": "Correct plan.md, tasks.md (T013 path), research.md R11 wording and the spec status in GOZ-0002 before the PR. These are documentation-only changes and need no code change.",
-      "disposition": "code-fix-needed: GOZ-0002 documentation-only correction"
+      "disposition": "corrected in GOZ-0002 at cc1e518 (T050); spec status header kept by project convention"
     },
     {
       "id": "GOZ-0002-IF-18",
@@ -404,14 +407,15 @@
         "spec.md Assumptions: invitation expiry 'is configurable by an operator'",
         "src/Gozleme.Api/Organizations/OrganizationOptions.cs: Gozleme:Organizations:InvitationExpiryHours (1-720) and RedeemPerMinute (1-100)",
         "deploy/helm/gozleme/templates/api.yaml:28-40 sets only BuildVersion, the connection string, Auth and Network variables; values.yaml has no organizations block and no extraEnv",
-        "docs/engineering/local-development.md:64-65 documents the environment variables for Compose and local runs only"
+        "docs/engineering/local-development.md:64-65 documents the environment variables for Compose and local runs only",
+        "Corrected at cc1e518: deploy/helm/gozleme/values.yaml organizations.invitationExpiryHours and redeemPerMinute; templates/api.yaml Gozleme__Organizations__* env; README Organizations bullet (T049)"
       ],
       "affectedSpecs": [
         "GOZ-0002",
         "GOZ-0039"
       ],
       "recommendation": "Bounded GOZ-0002 correction: add organizations.invitationExpiryHours and organizations.redeemPerMinute to Helm values, the api template and the README, and check them with make helm-lint. Otherwise record the gap for the GOZ-0039 portability matrix; that prompt already notes it.",
-      "disposition": "code-fix-needed: GOZ-0002 Helm values, template and README (low; GOZ-0039 prompt notes it if deferred)"
+      "disposition": "corrected in GOZ-0002 at cc1e518 (T049); the GOZ-0039 bullet still asks the portability matrix to check operator configuration parity"
     },
     {
       "id": "GOZ-0002-IF-19",
@@ -426,6 +430,26 @@
       ],
       "recommendation": "GOZ-0023 makes any cached permit, receipt or decision that depends on membership or roles invalidate on removal, leaving, joining and role change, and tests that a removed member's earlier permit cannot authorize. GOZ-0028 lockfile revalidation inherits this through its GOZ-0023 prerequisite.",
       "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-20",
+      "severity": "medium",
+      "title": "The IF-04 correction adds an organization-then-invitation lock order in removal that can deadlock with redemption, and redemption's broad DbUpdateException catch then reports a false 'alreadyMember: true'",
+      "evidence": [
+        "OrganizationEndpoints.cs:173 removal locks the organizations row FOR UPDATE, then :200 locks the departing account's open invitations FOR UPDATE (new at cc1e518)",
+        "OrganizationEndpoints.cs:313 redemption locks the invitation row FOR UPDATE first. Its SaveChanges (:340) inserts a memberships row, whose foreign key check takes FOR KEY SHARE on the same organizations row; PostgreSQL makes FOR KEY SHARE conflict with FOR UPDATE. The two paths take the locks in opposite orders.",
+        "Interleaving: redemption locks invitation X (created by the departing member), removal locks the organization, redemption's insert waits on the organization lock, removal waits on X. PostgreSQL aborts one transaction with 40P01. Before cc1e518 removal never locked invitations, so this cycle could not occur.",
+        "If removal is the victim: DatabaseUnavailable.cs:44-49 maps only connection failures and 57P* to 503, so the 40P01 PostgresException is unhandled. The API returns 500, the web helper shows 503 and the member stays.",
+        "If redemption is the victim: OrganizationEndpoints.cs:342-347 catches every DbUpdateException as 'a concurrent redemption made this account a member' and returns 200 {alreadyMember: true, organizationId} although nothing was committed. The same misreport applies to any other DbUpdateException, not only the unique-key race it was written for.",
+        "Both outcomes fail closed: no membership is created, and the invitation is revoked or stays open. The cost is a misleading response or a 500, not a breach. No test covers concurrent removal and redemption of the departing member's code (MembershipTests.cs, InvitationTests.cs)."
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0003"
+      ],
+      "recommendation": "Bounded GOZ-0002 correction:\n(1) Narrow the redemption catch to a unique violation on the memberships primary key (PostgresException SqlState 23505). Let anything else propagate.\n(2) Give redemption the same lock order as removal. Read the invitation's organization_id by code_hash without a lock. Lock that organization row (for example FOR KEY SHARE or FOR SHARE, which waits for an in-flight removal), then SELECT … FOR UPDATE the invitation and re-check that it is open. Alternatively, removal could take the invitations with SKIP LOCKED, but that leaves the residual of an aborted redemption keeping the code open, so it is not preferred.\n(3) Add a concurrency integration test: remove a member while its code is being redeemed. Assert that no 500 is returned, no false alreadyMember is reported, and the end state is either joined-then-removed-with-code-revoked or revoked-and-refused.\nThen re-run the demo and re-analyse. GOZ-0003's prompt now records the single lock order for its RLS design.",
+      "disposition": "code-fix-needed: GOZ-0002 bounded correction (redemption lock order, narrowed catch, concurrency test); GOZ-0003 prompt note applied"
     }
-  ]
+  ],
+  "reanalyzedAt": "2026-11-15"
 }

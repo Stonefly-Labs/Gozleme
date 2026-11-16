@@ -1,9 +1,12 @@
 # GOZ-0002 post-convergence spec impact analysis
 
 **Source spec:** GOZ-0002, Organizations and membership
-**Implementation revision:** analysed at `f95be4c` on `feature/goz-0002-organizations`. The demo ran on a clean tree at `8a9941e`: 29 of 29 recorded assertions passed, with the GOZ-0000 and GOZ-0001 suites replayed. `git diff 8a9941e f95be4c` touches only `evidence/`, `progress.yaml` and `tasks.md`, so the demo evidence still applies to the code.
+**Implementation revision:** analysed at `f95be4c` and re-analysed at `cc1e518` on `feature/goz-0002-organizations`, after the corrections described in "Re-analysis at `cc1e518`" below.
+- The demo for `f95be4c` ran on a clean tree at `8a9941e`: 29 of 29 recorded assertions passed, with the GOZ-0000 and GOZ-0001 suites replayed.
+- `cc1e518` changes `src/` and `deploy/`, so that result no longer covers the code. drive-speckit is re-running the fresh cumulative demo and will record the result itself.
+- drive-speckit reports `make lint` and `make test` passing at `cc1e518` (203 .NET tests, 131 web tests).
 **Analyst:** Spec Impact Analyst (`analyze-spec-impact`), 2026-11-15
-**Structured findings:** `docs/specs/002-organizations/reviews/impact-findings.json` (19 findings; validates against `.gozleme/schemas/impact-findings.schema.json`)
+**Structured findings:** `docs/specs/002-organizations/reviews/impact-findings.json` (20 findings; validates against `.gozleme/schemas/impact-findings.schema.json`)
 
 ## Scope inspected
 
@@ -44,25 +47,26 @@
 
 | ID | Sev | Finding | Affected specs | Disposition |
 |---|---|---|---|---|
-| GOZ-0002-IF-01 | high | Tenant-owned tables exist without RLS: an interim exception to invariant 1 | 0003, 0039 (all tenant-data specs) | **human-decision** (acknowledge); prompts updated |
+| GOZ-0002-IF-01 | high | Tenant-owned tables exist without RLS: an interim exception to invariant 1 | 0003, 0039, 0040 (all tenant-data specs) | **human-decided 2026-11-15: accepted with conditions**; conditions stated in prompts |
 | GOZ-0002-IF-02 | high | Access paths that cross tenants before any tenant is known (list, membership check, redeem, create, seed) shape the RLS design | 0003 | applied to prompts |
 | GOZ-0002-IF-03 | high | GOZ-0004 must replace the role-neutral rule; the initial-role migration for existing members needs the maintainer | 0004, 0014 | applied to prompts (decision routed to GOZ-0004 clarify) |
-| GOZ-0002-IF-04 | medium | Removing a member does not revoke that member's open invitations; a removed account can rejoin with its own code | 0002, 0004 | **human-decision**: fix now (recommended) or defer |
+| GOZ-0002-IF-04 | medium | Removing a member did not revoke that member's open invitations; a removed account could rejoin with its own code | 0002, 0004 | **human-decided: fixed in GOZ-0002 at `cc1e518`**; GOZ-0004 builds on it |
 | GOZ-0002-IF-05 | medium | Conventions for organization-scoped APIs, pages and existence hiding | 0003–0041 | applied to prompts |
 | GOZ-0002-IF-06 | medium | New fixtures (carol, Seeded Demo Org) and leftover demo state; a second seeded organization is needed for two-tenant demos | 0003–0041, 0012 | applied to prompts |
 | GOZ-0002-IF-07 | medium | Organization ID on spans, per-module audit event ID ranges, membership history only in logs | 0003, 0023, all | applied to prompts |
 | GOZ-0002-IF-08 | medium | A rate-limited endpoint without `RateLimitedOperation` is mislabelled as an auth sign-in rejection | 0009, 0013, 0015, 0038, 0040, 0041, all | applied to prompts |
 | GOZ-0002-IF-09 | low | Narrowed boundary assertions and stale line references | 0004, 0005, 0007, 0012, 0013 | applied to prompts (stale references fixed) |
-| GOZ-0002-IF-10 | medium | Display names are not unique and the UI shows only names | 0005, 0014, 0020, 0034 (0002 polish) | applied to prompts |
+| GOZ-0002-IF-10 | medium | Display names are not unique and the UI shows only names | 0005, 0014, 0020, 0034 | applied to prompts (optional GOZ-0002 polish declined) |
 | GOZ-0002-IF-11 | low | Organization IDs are local and are not federated identities | 0005, 0029, 0034 | applied to prompts |
 | GOZ-0002-IF-12 | low | Foreign-key, retention and backup facts; account-deletion cascade would bypass the last-member guard | 0003, 0014, 0035, 0039 | applied to prompts |
 | GOZ-0002-IF-13 | low | No quotas on organization or invitation creation, and no paging | 0004, 0039 | applied to prompts |
 | GOZ-0002-IF-14 | low | Joining is only by creation or code; email and OIDC must not add join paths without approval | 0003, 0004, 0040, 0041 | applied to prompts |
 | GOZ-0002-IF-15 | low | Role-neutral invitations allow one person to bring several accounts; separation of duties applies between accounts | 0004, 0021 | applied to prompts |
 | GOZ-0002-IF-16 | low | Organizations are flat; the policy subject is a membership with no role | 0018, 0020 | applied to prompts |
-| GOZ-0002-IF-17 | low | Planning documents differ from the code (endpoint count, test file names, R11 wording, spec status) | 0002 | **code-fix-needed** (docs only) |
-| GOZ-0002-IF-18 | low | Helm does not expose `Gozleme:Organizations:*`, although the spec says an operator can configure them | 0002, 0039 | **code-fix-needed** (Helm values, template, README) |
+| GOZ-0002-IF-17 | low | Planning documents differ from the code (endpoint count, test file names, R11 wording, spec status) | 0002 | **corrected at `cc1e518`** (the spec status header is kept by project convention) |
+| GOZ-0002-IF-18 | low | Helm does not expose `Gozleme:Organizations:*`, although the spec says an operator can configure them | 0002, 0039 | **corrected at `cc1e518`** |
 | GOZ-0002-IF-19 | medium | Later caches must invalidate on membership change, because removal relies on no caching | 0023 | applied to prompts |
+| GOZ-0002-IF-20 | medium | **New at `cc1e518`:** removal now locks the organization and then invitations, while redemption locks the invitation and then needs the organization (foreign-key `KEY SHARE`), so the two can deadlock. Redemption's broad `DbUpdateException` catch then answers a false `alreadyMember: true`, and removal answers 500 | 0002, 0003 | **code-fix-needed** (lock order, narrow catch, concurrency test); GOZ-0003 note applied |
 
 The evidence (file:line), recommendation and affected specs for each finding are in `impact-findings.json`.
 
@@ -99,47 +103,70 @@ The evidence (file:line), recommendation and affected specs for each finding are
 
 **In-place corrections:** the stale GOZ-0001-IF-10 line references in `spec-0005.md` (`BootstrapBoundaryTests.cs:24`) and `spec-0012.md` (`:23`, `bootstrap-demo.spec.ts:132,141-142`) are marked "refreshed by GOZ-0002-IF-09".
 
-**Roadmap Steward:** bump `promptRevision` from 3 to 4 for GOZ-0003 to GOZ-0039, and from 1 to 2 for GOZ-0040 and GOZ-0041. Record GOZ-0002-IF-01 to IF-19 on the GOZ-0002 registry entry, along with the `impactAnalysis` gate and the evidence paths. I did not edit the registry.
+**Re-analysis edits at `cc1e518`:**
+- `spec-0003.md`: the IF-01 conditions, plus the lock-order note (IF-20) in the removal path bullet.
+- `spec-0039.md`: the IF-01 conditions in the release-gate bullet.
+- `spec-0040.md`: may precede GOZ-0003 only because it adds no organization-scoped data.
+- `spec-0004.md`: the IF-04 bullet now builds on the GOZ-0002 revocation behaviour.
+
+**Roadmap Steward:** bump `promptRevision` from 3 to 4 for GOZ-0003 to GOZ-0039, and from 1 to 2 for GOZ-0040 and GOZ-0041. Record GOZ-0002-IF-01 to IF-20 on the GOZ-0002 registry entry, along with the `impactAnalysis` gate and the evidence paths. I did not edit the registry.
 
 No outcome, scope, boundary, prerequisite, dependency, invariant or MVP commitment changed, and the DAG is unchanged. The edits were applied by a script and are idempotent: they are skipped if a `GOZ-0002-IF-` marker is already present. `make validate` passes after the edits (42 prompts, DAG, register in sync).
 
-## Items requiring human decision
+## Maintainer decisions (2026-11-15)
 
-1. **GOZ-0002-IF-01: acknowledge the interim invariant-1 exception.** GOZ-0002 creates tenant-owned rows protected only by application authorization. The plan records this under Complexity Tracking, citing the approved roadmap order, but invariant 1 is a confirmed security guarantee, so the exception needs explicit maintainer acknowledgement at PR review. Proposed conditions:
-   - GOZ-0003 is the next spec to add or touch tenant-owned data. GOZ-0040 adds only global identity tables, so it may still go first.
-   - No release or tag is cut while the exception is open.
-   - The GOZ-0039 gate verifies effective RLS on every tenant-owned table.
-2. **GOZ-0002-IF-04: removal and a removed member's own open invitations.** Choose one:
-   - **(a) Bounded GOZ-0002 correction (recommended).** Remove and leave also revoke the departing account's open invitations, in the same transaction, with audit 1104 and a test. Then re-analyse.
-   - **(b) Interim residual.** Accept it for now and let GOZ-0004 close it. Its prompt already requires that.
-3. **Routed, not decided now:**
-   - **GOZ-0002-IF-03:** how existing members get their initial roles when GOZ-0004 lands. The GOZ-0004 prompt requires this to be decided with the maintainer during clarification.
-   - **GOZ-0002-IF-07:** whether membership events join the durable audit record. GOZ-0023 decides, carrying GOZ-0001-IF-11.
+1. **GOZ-0002-IF-01: accepted with conditions.** Recorded in `progress.yaml` and in the Organizations bullet of the Helm README. The conditions:
+   - GOZ-0003 is the next spec that adds or touches organization-scoped data. GOZ-0040 adds only global tables and may come first.
+   - No release or tag is cut until GOZ-0003 lands.
+   - The GOZ-0039 release gate verifies RLS on every organization table.
+
+   `spec-0003.md`, `spec-0039.md` and `spec-0040.md` now state these conditions.
+2. **GOZ-0002-IF-04: fix in GOZ-0002.** Done at `cc1e518` (FR-015, T048). `spec-0004.md` now builds on the behaviour instead of requiring it.
+3. **Still routed to later specs, not decided now:**
+   - **GOZ-0002-IF-03:** the initial-role migration for existing members, decided during GOZ-0004 clarification.
+   - **GOZ-0002-IF-07:** whether membership events join the durable audit record, decided in GOZ-0023.
 
 ## Implementation defects and corrections for drive-speckit
 
-I found no defect that violates a GOZ-0002 requirement or a confirmed architecture decision. I checked:
-- existence-hiding parity, including sub-resource IDs and the absence of a route constraint;
-- the last-member guard under concurrent removal (lock, then re-read);
-- single-use redemption (`FOR UPDATE` plus the PK backstop);
-- the already-member path, which does not consume the code;
-- that no context is kept as a session claim and the stamp is not rotated;
-- middleware order: authentication runs before the rate limiter, so the redeem partition is the account;
-- the cross-site layers on every unsafe route;
-- no names, emails or codes in telemetry, logs or URLs;
-- masking of the invitation code in screenshot 05.
+The first pass at `f95be4c` found no defect against a GOZ-0002 requirement or a confirmed architecture decision. It checked:
+- existence-hiding parity;
+- the last-member guard under concurrency;
+- single-use redemption;
+- the already-member path;
+- that no context is kept as a session claim;
+- middleware order;
+- both cross-site layers;
+- telemetry privacy;
+- screenshot masking.
 
-Bounded corrections to consider before the PR:
-- **IF-04:** a security gap the spec does not cover. This is the maintainer's choice above.
-- **IF-17:** documentation drift in plan.md, tasks.md T013, research.md R11 and the spec status.
-- **IF-18:** Helm values for the organization options.
-- **IF-10 (optional UI polish):** disambiguate organizations whose names collide in the switcher and list.
+### Re-analysis at `cc1e518`
 
-If any code changes, re-run the demo and re-analyse.
+The corrections are verified against the diff:
+- **IF-04:** `RemoveMemberAsync` (`OrganizationEndpoints.cs:158-221`) takes the organization row lock and then selects the departing account's open invitations `FOR UPDATE`. It revokes them with `revoked_by` set to the acting member, in the same transaction as the membership delete, and writes audit 1104 for each one after commit. Another member's codes are untouched. `MembershipTests.Removing_or_leaving_revokes_the_departing_accounts_open_invitations` covers removal, leaving, the refused rejoin and the audit record. FR-015 states the rule.
+- **IF-18:** Helm `organizations.invitationExpiryHours` and `redeemPerMinute` reach `Gozleme__Organizations__*` in `templates/api.yaml` and are documented in the README.
+- **IF-17:** plan.md, research.md R11 and the T013 note are corrected. `Status: Draft` is kept by project convention.
+
+**New finding, GOZ-0002-IF-20 (medium, code-fix-needed).** The IF-04 correction introduces a lock-order cycle:
+- **Removal** locks `organizations` (`FOR UPDATE`, `:173`) and then the departing account's invitations (`FOR UPDATE`, `:200`).
+- **Redemption** locks the invitation (`FOR UPDATE`, `:313`). Its membership insert (`:340`) then needs `FOR KEY SHARE` on the same organization row for the foreign-key check, and PostgreSQL makes that conflict with `FOR UPDATE`.
+
+If a code created by the departing member is redeemed while that member is being removed, PostgreSQL aborts one transaction with `40P01`:
+- **If removal is the victim:** `40P01` is not one of the outage codes mapped to 503 (`DatabaseUnavailable.cs:44-49`), so the API returns a 500.
+- **If redemption is the victim:** the catch-all `catch (DbUpdateException)` (`:342-347`) answers `200 {alreadyMember: true}` although nothing was committed.
+
+Both outcomes fail closed: no unauthorized membership is created. But the response is wrong, and FR-008 and the concurrency edge cases are in this slice's scope.
+
+Recommended bounded correction:
+1. Narrow the catch to a unique violation (`23505`) on the memberships primary key.
+2. In redemption, read `organization_id` by `code_hash` without a lock, lock the organization row (`FOR KEY SHARE`/`FOR SHARE`), then lock the invitation `FOR UPDATE` and re-check that it is open. Both paths then lock the organization before the invitation.
+3. Add a concurrency test of removal racing redemption of the departing member's code.
+
+Then re-run the demo and re-analyse. `spec-0003.md` now records the single organization-then-invitation lock order for its RLS design.
 
 ## Not asserted
 
-- I did not run the test suites or the demo again. Demo results come from `evidence/demo-run.json`, and test results come from the `progress.yaml` gates (202 .NET tests and 131 web Vitest tests).
+- I did not run the test suites or the demo. Demo results come from `evidence/demo-run.json` (`8a9941e`); the `cc1e518` demo is pending and drive-speckit will record it. Gate results at `cc1e518` are as drive-speckit reported them.
+- I did not reproduce the IF-20 deadlock. The finding rests on PostgreSQL's documented row-lock conflict table and on reading the code.
 - I did not review the concurrency tests' timing robustness beyond reading their structure.
 - Helm has never been installed on a live cluster.
 - This analysis did not commit, push, merge, switch branches or edit the registry.

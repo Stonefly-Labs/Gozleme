@@ -151,6 +151,37 @@ public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLif
         Assert.Equal(HttpStatusCode.BadRequest, carolRejoin.StatusCode);
     }
 
+    [Fact]
+    public async Task Removing_a_member_while_their_code_is_redeemed_never_errors()
+    {
+        // Removal and redemption lock organization then invitation, so they serialize instead of
+        // deadlocking (GOZ-0002-IF-20): the code either admits carol first or is revoked first.
+        for (var round = 0; round < 8; round++)
+        {
+            var (alice, _) = await AuthClient.SignedInAsync(_factory);
+            var (bob, _) = await AuthClient.SignedInAsync(_factory);
+            var (carol, _) = await AuthClient.SignedInAsync(_factory);
+            using var _a = alice;
+            using var _b = bob;
+            using var _c = carol;
+            var org = await OrgClient.CreateAsync(alice, "Crossing");
+            await OrgClient.JoinAsync(alice, bob, org);
+            var (_, code) = await OrgClient.InviteAsync(bob, org);
+            var bobId = await OrgClient.UserIdAsync(bob);
+
+            var removal = Status(OrgClient.RemoveAsync(alice, org, bobId));
+            using var redeem = await OrgClient.RedeemAsync(carol, code);
+            Assert.Equal(HttpStatusCode.NoContent, await removal);
+            Assert.Contains(redeem.StatusCode, new[] { HttpStatusCode.OK, HttpStatusCode.BadRequest });
+            var carolJoined = (await OrgClient.IdsAsync(carol)).Contains(org);
+            Assert.Equal(redeem.StatusCode == HttpStatusCode.OK, carolJoined);
+            if (carolJoined)
+            {
+                Assert.False((await AuthClient.JsonAsync(redeem)).GetProperty("alreadyMember").GetBoolean());
+            }
+        }
+    }
+
     private static async Task<string[]> OpenInvitationIdsAsync(HttpClient client, string orgId)
     {
         using var res = await AuthClient.GetAsync(client, $"{OrgClient.Base}/{orgId}/invitations");
