@@ -209,14 +209,14 @@ specs:
   dependencies:
   - GOZ-0002
   status: in-progress
-  stage: plan
+  stage: tasks
   branch: feature/goz-0003-tenant-rls
   pullRequest: null
   promptRevision: 4
   gates:
     specification: passed
     plan: passed
-    tasks: pending
+    tasks: passed
     implementation: pending
     tests: pending
     demo: pending
@@ -233,7 +233,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Run /speckit-tasks for docs/specs/003-tenant-rls
+  nextAction: Implement tasks T001-T042 on feature/goz-0003-tenant-rls
 - id: GOZ-0004
   number: 4
   title: Scoped RBAC permission foundation

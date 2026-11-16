@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0003
-stage: plan
+stage: tasks
 status: in-progress
 promptRevision: 4
 branch: feature/goz-0003-tenant-rls
@@ -13,7 +13,7 @@ decisions:
 stages:
   specify: {status: done, artifact: docs/specs/003-tenant-rls/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/003-tenant-rls/plan.md, at: '2026-11-15', note: 'R4 owner-in-definer guard verified empirically in scratch pg17 (function-level SET of custom GUC rejected for non-superuser; replaced by session_user guard)'}
-  tasks: {status: pending}
+  tasks: {status: done, artifact: docs/specs/003-tenant-rls/tasks.md, count: 42, at: '2026-11-15'}
   implement: {status: pending}
   demo: {status: pending}
   converge: {status: pending}
@@ -23,7 +23,7 @@ stages:
 attempts: []
 blockers: []
 pullRequest: null
-nextAction: Run /speckit-tasks for docs/specs/003-tenant-rls
+nextAction: Run /speckit-implement (T001-T042)
 evidence:
   tests: []
   demos: []
