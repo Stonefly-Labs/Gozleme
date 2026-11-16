@@ -276,7 +276,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 5
+  promptRevision: 6
   gates:
     specification: pending
     plan: pending
