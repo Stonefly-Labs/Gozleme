@@ -1,0 +1,86 @@
+{
+  "spec": "GOZ-0004",
+  "capturedAt": "2026-11-16T21:06:53.675Z",
+  "organization": "0193a000-0000-7000-8000-000000000002",
+  "apiMatrixForCarol": {
+    "member": {
+      "organization.read": "allow (200)",
+      "organization.select": "allow (204)",
+      "organization.rename": "deny (403)",
+      "membership.list": "allow (200)",
+      "membership.roles.change": "deny (403)",
+      "membership.remove": "deny (403)",
+      "invitation.list": "deny (403)",
+      "invitation.create": "deny (403)",
+      "invitation.revoke": "deny (403)",
+      "membership.leave": "allow (covered destructively by RoleAssignmentTests)"
+    },
+    "member+publisher": {
+      "organization.read": "allow (200)",
+      "organization.select": "allow (204)",
+      "organization.rename": "deny (403)",
+      "membership.list": "allow (200)",
+      "membership.roles.change": "deny (403)",
+      "membership.remove": "deny (403)",
+      "invitation.list": "deny (403)",
+      "invitation.create": "deny (403)",
+      "invitation.revoke": "deny (403)",
+      "membership.leave": "allow (covered destructively by RoleAssignmentTests)"
+    },
+    "member+reviewer": {
+      "organization.read": "allow (200)",
+      "organization.select": "allow (204)",
+      "organization.rename": "deny (403)",
+      "membership.list": "allow (200)",
+      "membership.roles.change": "deny (403)",
+      "membership.remove": "deny (403)",
+      "invitation.list": "deny (403)",
+      "invitation.create": "deny (403)",
+      "invitation.revoke": "deny (403)",
+      "membership.leave": "allow (covered destructively by RoleAssignmentTests)"
+    },
+    "member+approver": {
+      "organization.read": "allow (200)",
+      "organization.select": "allow (204)",
+      "organization.rename": "deny (403)",
+      "membership.list": "allow (200)",
+      "membership.roles.change": "deny (403)",
+      "membership.remove": "deny (403)",
+      "invitation.list": "deny (403)",
+      "invitation.create": "deny (403)",
+      "invitation.revoke": "deny (403)",
+      "membership.leave": "allow (covered destructively by RoleAssignmentTests)"
+    },
+    "member+admin": {
+      "organization.read": "allow (200)",
+      "organization.select": "allow (204)",
+      "organization.rename": "allow (200)",
+      "membership.list": "allow (200)",
+      "membership.roles.change": "allow (200)",
+      "membership.remove": "allow (404)",
+      "invitation.list": "allow (200)",
+      "invitation.create": "allow (201)",
+      "invitation.revoke": "allow (204)",
+      "membership.leave": "allow (covered destructively by RoleAssignmentTests)"
+    }
+  },
+  "policyEvaluatorBoundary": {
+    "GET /policies": 404,
+    "POST /policies": 404,
+    "GET /roles": 404,
+    "POST /roles": 404,
+    "GET /permissions": 404,
+    "POST /grants": 404,
+    "POST /members/{userId}/roles": 405,
+    "PUT /members/{userId}/role": 404,
+    "POST /transfer": 404,
+    "PUT /members/{userId}/roles [auditor]": 400
+  },
+  "databaseAsAppRole": {
+    "member raises own roles": "42501",
+    "member renames the organization": "0 row(s)",
+    "member removes the admin": "42501",
+    "admin changes a member's roles": "1 row(s)",
+    "last admin demotes itself": "42501"
+  }
+}

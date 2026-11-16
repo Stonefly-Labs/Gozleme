@@ -227,7 +227,7 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 
 - [X] T031 Add the `goz-0004` Playwright project to `e2e/playwright.config.ts` (depends on `goz-0003`) and the `specDirs` entry `docs/specs/004-scoped-rbac` in `e2e/tests/evidence.ts`
 - [X] T032 Narrow the GOZ-0002 e2e boundary in `e2e/tests/organizations-demo.spec.ts` (R12). Allow the role badges and checkboxes. Still forbid `owner`, `transfer` and `administrator` wording and any second combobox. Keep the route checks, except that `PUT /members/{id}/role` → `/roles` is now the only role route. Adjust the steps where bob (an invitee, now `member`) performed admin-only actions, so that the suite's original intent still passes
-- [ ] T033 Write `e2e/tests/rbac-demo.spec.ts`. Fresh sign-in as alice and as carol on `DEMO_ORG`, then quickstart steps 2–8:
+- [X] T033 Write `e2e/tests/rbac-demo.spec.ts`. Fresh sign-in as alice and as carol on `DEMO_ORG`, then quickstart steps 2–8:
   - carol's page shows no admin controls (screenshot);
   - carol's API rename → 403, name unchanged;
   - alice grants admin in the UI (screenshot);
@@ -238,10 +238,10 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
   - a non-member (dave) → identical 404 for the roles endpoint.
 
   Restore the seeded roles at the end.
-- [ ] T034 In `rbac-demo.spec.ts`, record the API role × action matrix and the policy-evaluator boundary routes. Record database evidence as `gozleme_app` through `compose()` with tokens signed in Node: carol raising her own role → 42501, carol renaming → `UPDATE 0`, alice changing roles → 1 row, all rolled back. Write all of it to `docs/specs/004-scoped-rbac/evidence/rbac-evidence.json` (sanitized: opaque ids, no emails or codes)
-- [ ] T035 In `rbac-demo.spec.ts`, check observability and privacy: `recentSpans('gozleme-api', …, 'gozleme.authz.decision')` shows allow and deny with action and resource type; poll Prometheus up to 90 s for `gozleme_authz_decisions_total`; scan captured spans, logs and screenshots for the seeded emails, display names, codes, `v1.` contexts and the dev key. Also check that audit 1301 and 1302 appear in Loki with opaque ids only
-- [ ] T036 Run the cumulative demo (`make demo`), with earlier suites writing to `evidence/screenshots/regression-goz-000N/`. Record `docs/specs/004-scoped-rbac/evidence/demo-run.json` via the `validate-demo` skill; all suites must pass
-- [ ] T037 [P] Update `docs/specs/004-scoped-rbac/progress.yaml`, `.gozleme/spec-registry.yaml` and the generated register (`scripts/generate_register.py`). Run `make lint`, `make test` and `make validate`, and record the counts
+- [X] T034 In `rbac-demo.spec.ts`, record the API role × action matrix and the policy-evaluator boundary routes. Record database evidence as `gozleme_app` through `compose()` with tokens signed in Node: carol raising her own role → 42501, carol renaming → `UPDATE 0`, alice changing roles → 1 row, all rolled back. Write all of it to `docs/specs/004-scoped-rbac/evidence/rbac-evidence.json` (sanitized: opaque ids, no emails or codes)
+- [X] T035 In `rbac-demo.spec.ts`, check observability and privacy: `recentSpans('gozleme-api', …, 'gozleme.authz.decision')` shows allow and deny with action and resource type; poll Prometheus up to 90 s for `gozleme_authz_decisions_total`; scan captured spans, logs and screenshots for the seeded emails, display names, codes, `v1.` contexts and the dev key. Also check that audit 1301 and 1302 appear in Loki with opaque ids only
+- [X] T036 Run the cumulative demo (`make demo`), with earlier suites writing to `evidence/screenshots/regression-goz-000N/`. Record `docs/specs/004-scoped-rbac/evidence/demo-run.json` via the `validate-demo` skill; all suites must pass
+- [X] T037 [P] Update `docs/specs/004-scoped-rbac/progress.yaml`, `.gozleme/spec-registry.yaml` and the generated register (`scripts/generate_register.py`). Run `make lint`, `make test` and `make validate`, and record the counts
 
 ---
 
