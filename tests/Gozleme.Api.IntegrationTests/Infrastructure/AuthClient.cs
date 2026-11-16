@@ -53,6 +53,10 @@ public static class AuthClient
     public static string? SessionSetCookie(HttpResponseMessage response) =>
         response.Headers.TryGetValues("Set-Cookie", out var values) ? values.FirstOrDefault(v => v.StartsWith(CookieName + "=", StringComparison.Ordinal)) : null;
 
+    /// <summary>Every <c>Set-Cookie</c> header that writes or deletes the session cookie.</summary>
+    public static string[] SessionSetCookies(HttpResponseMessage response) =>
+        response.Headers.TryGetValues("Set-Cookie", out var values) ? [.. values.Where(v => v.StartsWith(CookieName, StringComparison.Ordinal))] : [];
+
     /// <summary>The <c>name=value</c> pair, for replaying a captured cookie from another client.</summary>
     public static string SessionCookiePair(HttpResponseMessage response) =>
         SessionSetCookie(response)?.Split(';')[0] ?? throw new InvalidOperationException("No session cookie was set.");

@@ -58,6 +58,25 @@ public sealed class SessionExpiryTests(PgvectorDatabaseFixture fixture) : IAsync
         Assert.Equal(0, await SessionRowsAsync(email));
     }
 
+    [Fact]
+    public async Task Signing_in_again_when_the_presented_session_is_due_for_sliding_renewal_still_issues_one_live_new_session()
+    {
+        // GOZ-0003-OBS-01: past half the idle window the presented session would also be refreshed at
+        // response time. That refresh must not re-issue the retired key over the new one.
+        using var client = AuthClient.Create(_factory);
+        var email = AuthClient.NewEmail();
+        using var registered = await AuthClient.RegisterAsync(client, email, AuthClient.Password);
+        var previous = AuthClient.SessionCookiePair(registered);
+
+        _time.Advance(TimeSpan.FromMinutes(20));
+        using var signedIn = await AuthClient.SignInAsync(client, email, AuthClient.Password);
+        Assert.Single(AuthClient.SessionSetCookies(signedIn));
+        Assert.Equal(HttpStatusCode.Unauthorized, await AuthClient.ReplayAsync(_factory, previous));
+        Assert.Equal(HttpStatusCode.OK, await AuthClient.ReplayAsync(_factory, AuthClient.SessionCookiePair(signedIn)));
+        Assert.Equal(HttpStatusCode.OK, await SessionStatusAsync(client));
+        Assert.Equal(1, await SessionRowsAsync(email));
+    }
+
     private static async Task<HttpStatusCode> SessionStatusAsync(HttpClient client)
     {
         using var response = await AuthClient.GetAsync(client, "/api/v1/auth/session");

@@ -54,6 +54,7 @@ internal static class IdentityServiceCollectionExtensions
             .AddPasswordValidator<GozlemePasswordValidator>();
 
         services.AddScoped<SessionRevoker>();
+        services.AddScoped<SessionRotation>();
         services.AddSingleton<SecurityAudit>();
         return identity;
     }
