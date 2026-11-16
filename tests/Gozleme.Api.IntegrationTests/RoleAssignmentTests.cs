@@ -252,6 +252,30 @@ public sealed class RoleAssignmentTests(PgvectorDatabaseFixture fixture) : IAsyn
         }
     }
 
+    [Fact]
+    public async Task Removal_and_role_change_of_the_same_member_serialize()
+    {
+        for (var round = 0; round < 10; round++)
+        {
+            var (alice, _) = await AuthClient.SignedInAsync(_factory);
+            var (bob, _) = await AuthClient.SignedInAsync(_factory);
+            var (carol, _) = await AuthClient.SignedInAsync(_factory);
+            using var _a = alice;
+            using var _b = bob;
+            using var _c = carol;
+            var org = await OrgClient.CreateAsync(alice, "Crossing roles");
+            await OrgClient.JoinAsync(alice, bob, org);
+            await OrgClient.JoinAsync(alice, carol, org);
+            var (bobId, carolId) = (await OrgClient.UserIdAsync(bob), await OrgClient.UserIdAsync(carol));
+            await OrgClient.SetRolesAsync(alice, org, bobId, "admin");
+
+            var (removal, change) = (Status(OrgClient.RemoveAsync(alice, org, carolId)), Status(OrgClient.SetRolesRawAsync(bob, org, carolId, "publisher")));
+            Assert.Equal(HttpStatusCode.NoContent, await removal);
+            Assert.Contains(await change, new[] { HttpStatusCode.OK, HttpStatusCode.NotFound }); // role-changed then removed, or removed first
+            Assert.Equal(0, await fixture.Database.ScalarAsync<long>($"SELECT count(*) FROM gozleme.memberships WHERE organization_id = '{org}' AND user_id = '{carolId}'"));
+        }
+    }
+
     private static async Task<System.Text.Json.JsonElement> Detail(HttpClient client, string org)
     {
         using var response = await AuthClient.GetAsync(client, $"{OrgClient.Base}/{org}");

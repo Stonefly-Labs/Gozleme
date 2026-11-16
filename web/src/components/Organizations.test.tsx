@@ -67,21 +67,21 @@ describe("RenameOrganizationForm", () => {
 });
 
 describe("permission refusals", () => {
-  // These forms disappear for a non-admin on the next load, so they keep the message instead of refreshing it away.
-  it("a 403 on rename shows the permission message", async () => {
+  // These forms disappear for a non-admin, so the page re-renders with a notice that outlives them.
+  it("a 403 on rename shows the permission message and reloads the page with a notice", async () => {
     respond(403, { error: "forbidden" });
     render(<RenameOrganizationForm organizationId={ORG} displayName="Demo Org Beta" />);
     fireEvent.click(screen.getByRole("button", { name: "Rename" }));
     expect(await screen.findByText(FORBIDDEN)).toBeInTheDocument();
-    expect(router.refresh).not.toHaveBeenCalled();
+    expect(router.replace).toHaveBeenCalledWith(`/organizations/${ORG}?notice=forbidden`);
   });
 
-  it("a 403 on creating an invitation shows the permission message", async () => {
+  it("a 403 on creating an invitation shows the permission message and reloads the page with a notice", async () => {
     respond(403, { error: "forbidden" });
     render(<InvitationPanel organizationId={ORG} invitations={[]} members={[alice]} />);
     fireEvent.click(screen.getByRole("button", { name: "Create invitation" }));
     expect(await screen.findByText(FORBIDDEN)).toBeInTheDocument();
-    expect(router.refresh).not.toHaveBeenCalled();
+    expect(router.replace).toHaveBeenCalledWith(`/organizations/${ORG}?notice=forbidden`);
   });
 });
 

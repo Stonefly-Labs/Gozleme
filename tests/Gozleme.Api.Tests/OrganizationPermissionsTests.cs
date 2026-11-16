@@ -56,4 +56,13 @@ public sealed class OrganizationPermissionsTests
         var table = OrganizationPermissions.RenderTable();
         Assert.All(OrgAction.All, a => Assert.Contains($"\n{a.Action} ", table));
     }
+
+    [Fact]
+    public void Allows_needs_a_permitting_role_and_the_actions_own_resource_type()
+    {
+        Assert.True(OrganizationPermissions.Allows([OrganizationRole.Admin], OrgAction.OrganizationRename, OrgResource.Organization));
+        Assert.False(OrganizationPermissions.Allows([OrganizationRole.Member], OrgAction.OrganizationRename, OrgResource.Organization));
+        Assert.False(OrganizationPermissions.Allows([OrganizationRole.Admin], OrgAction.OrganizationRename, OrgResource.Membership));
+        Assert.False(OrganizationPermissions.Allows([OrganizationRole.Admin], "organization.delete", OrgResource.Organization));
+    }
 }

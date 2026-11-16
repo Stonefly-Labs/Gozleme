@@ -89,9 +89,12 @@ public sealed class OrganizationBoundaryTests(PgvectorDatabaseFixture fixture) :
             WHERE table_schema IN ('gozleme', 'gozleme_private') AND table_name ~ '(polic|grant|role|permission)'
             """));
 
+        // The decision itself takes (roles, action, resource type) and nothing else.
+        var decision = typeof(OrganizationPermissions).GetMethod(nameof(OrganizationPermissions.Allows))!.GetParameters();
+        Assert.Equal(["roles", "action", "resourceType"], decision.Select(p => p.Name));
+        Assert.Equal([typeof(IEnumerable<string>), typeof(string), typeof(string)], decision.Select(p => p.ParameterType));
         var parameters = typeof(OrganizationAccess).GetMethod(nameof(OrganizationAccess.AuthorizeAsync))!.GetParameters();
         Assert.Equal(["db", "organizationId", "http", "action", "ct"], parameters.Select(p => p.Name));
-        Assert.DoesNotContain(parameters, p => p.ParameterType == typeof(object) || p.ParameterType.Name.Contains("Dictionary", StringComparison.Ordinal));
     }
 
     private static readonly string[] AdminOnly = ["admin"];

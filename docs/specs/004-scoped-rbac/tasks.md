@@ -269,3 +269,9 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 4. Polish: cumulative demo, evidence and records. Then converge, run the post-convergence impact analysis and the roadmap sync per `drive-speckit`.
 
 **Total**: 37 tasks (Setup 2, Foundational 8, US1 9, US2 4, US3 2, US4 2, US5 3, Polish 7).
+
+## Phase 9: Convergence
+
+- [X] T038 On a 403, `RenameOrganizationForm` and `InvitationPanel` must show the permission message in a page-level notice that survives the refresh, then call `router.refresh()` so the stale controls disappear (`web/src/app/organizations/[organizationId]/page.tsx`, the two components, `Organizations.test.tsx`, and `rbac-demo.spec.ts` step 05). Per spec Edge Cases "role changed while the page is open" and FR-020 (contradicts)
+- [X] T039 Add the pure decision function `OrganizationPermissions.Allows(IEnumerable<string> roles, string action, string resourceType)`, make `OrganizationAccess.AuthorizeAsync` decide only through it, and pin its parameter list in `OrganizationBoundaryTests.No_policy_or_custom_role_surface_exists`. Per FR-016 (partial)
+- [X] T040 Add `RoleAssignmentTests.Removal_and_role_change_of_the_same_member_serialize`: an admin's removal of carol races another admin's role change of carol (10 rounds). Never a 500; carol is either removed (and the role change is 404) or role-changed and then removed; no membership row survives the removal. Per spec Edge Cases "member removed concurrently with a role change" (partial)

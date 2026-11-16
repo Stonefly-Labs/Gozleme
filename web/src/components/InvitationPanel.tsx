@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatUtc } from "@/lib/format";
-import { forbiddenText, send, unavailableText } from "@/lib/client";
+import { forbiddenNoticePath, forbiddenText, send, unavailableText } from "@/lib/client";
 import type { Invitation, Member } from "@/lib/organizations";
 import { traced } from "@/telemetry/ui";
 
@@ -29,8 +29,8 @@ export function InvitationPanel({ organizationId, invitations, members }: { orga
       setCode((json as { code: string }).code);
       router.refresh();
     } else {
-      // No refresh on 403: the refreshed page drops this panel, and the message with it.
       setError(status === 403 ? forbiddenText : unavailableText);
+      if (status === 403) router.replace(forbiddenNoticePath(organizationId));
     }
   }
 
@@ -40,7 +40,8 @@ export function InvitationPanel({ organizationId, invitations, members }: { orga
     const { status } = await traced("invite_revoke", () => send("DELETE", `${base}/${encodeURIComponent(id)}`), (r) => r.status === 204);
     setBusy(false);
     if (status !== 204) setError(status === 404 ? "That invitation is no longer open." : status === 403 ? forbiddenText : unavailableText);
-    if (status !== 403) router.refresh();
+    if (status === 403) router.replace(forbiddenNoticePath(organizationId));
+    else router.refresh();
   }
 
   return (

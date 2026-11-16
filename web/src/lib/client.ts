@@ -24,6 +24,12 @@ export const unavailableText = "The service is unavailable. Try again shortly.";
 /** A 403 from an organization action: the caller's roles changed or never permitted it (GOZ-0004). */
 export const forbiddenText = "You no longer have permission to do that.";
 
+/**
+ * Where to go after a 403: the same organization page with a notice. The navigation re-renders the
+ * page with the caller's current permissions, so stale controls disappear while the notice stays.
+ */
+export const forbiddenNoticePath = (organizationId: string) => `/organizations/${encodeURIComponent(organizationId)}?notice=forbidden`;
+
 /** The API's field error for a display name, if any. */
 export function displayNameError(json: unknown): string | null {
   const fields = (json as { fields?: Record<string, string[]> } | null)?.fields;

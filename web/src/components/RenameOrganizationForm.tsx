@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { displayNameError, forbiddenText, send, unavailableText } from "@/lib/client";
+import { displayNameError, forbiddenNoticePath, forbiddenText, send, unavailableText } from "@/lib/client";
 import { traced } from "@/telemetry/ui";
 
 /** Admins may rename (GOZ-0004); the organization's id never changes (FR-003). */
@@ -32,7 +32,7 @@ export function RenameOrganizationForm({ organizationId, displayName }: { organi
     setError(
       status === 400 ? (displayNameError(json) ?? "Enter a name of 1–100 characters.") : status === 404 ? "Organization not found." : status === 403 ? forbiddenText : unavailableText,
     );
-    // No refresh on 403: the refreshed page drops this form, and the message with it.
+    if (status === 403) router.replace(forbiddenNoticePath(organizationId));
   }
 
   return (

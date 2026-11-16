@@ -41,7 +41,7 @@ internal static class OrganizationAccess
             return new Access(null, false);
         }
 
-        var allowed = OrganizationPermissions.For(membership.Roles).Contains(action);
+        var allowed = OrganizationPermissions.Allows(membership.Roles, action, OrgAction.ResourceOf(action));
         AuthorizationTelemetry.Record(action, allowed);
         if (!allowed)
         {

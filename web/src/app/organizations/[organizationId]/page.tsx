@@ -7,6 +7,7 @@ import { OrganizationsUnavailable } from "@/components/OrganizationsUnavailable"
 import { RenameOrganizationForm } from "@/components/RenameOrganizationForm";
 import { SignedInHeader } from "@/components/SignedInHeader";
 import { type Fetched, getOrganization, type Invitation, listInvitations, listMembers } from "@/lib/organizations";
+import { forbiddenText } from "@/lib/client";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -18,8 +19,15 @@ export const metadata: Metadata = { title: "Organization — Gözleme" };
  * non-member, an unknown id and a malformed id all get the same "Organization not found" page (FR-006).
  * Controls follow the caller's permissions from the API (GOZ-0004); the API still decides every request.
  */
-export default async function OrganizationPage({ params }: { params: Promise<{ organizationId: string }> }) {
+export default async function OrganizationPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ organizationId: string }>;
+  searchParams: Promise<{ notice?: string | string[] }>;
+}) {
   const { organizationId } = await params;
+  const { notice } = await searchParams;
   const returnTo = `/login?returnTo=${encodeURIComponent(`/organizations/${encodeURIComponent(organizationId)}`)}`;
   const session = await getSession();
   if (session.state === "anonymous") redirect(returnTo);
@@ -53,6 +61,11 @@ export default async function OrganizationPage({ params }: { params: Promise<{ o
           <OrganizationsUnavailable />
         ) : (
           <div className="stack">
+            {notice === "forbidden" && (
+              <p role="alert" className="form-error card" data-testid="permission-notice">
+                {forbiddenText}
+              </p>
+            )}
             {permissions.includes("organization.rename") && (
               <RenameOrganizationForm key={organization.data.displayName} organizationId={organization.data.id} displayName={organization.data.displayName} />
             )}

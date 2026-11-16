@@ -166,10 +166,13 @@ test("revoking admin takes effect on the next request; a stale page shows the pe
   // carol's page still shows the rename form from before the revocation.
   await carol.getByLabel("Organization name").fill("Denied after revoke");
   await carol.getByRole("button", { name: "Rename" }).click();
-  await expect(carol.getByText(FORBIDDEN)).toBeVisible();
+  // The page re-renders with her current permissions: the notice stays, the stale controls go.
+  await expect(carol.getByTestId("permission-notice")).toHaveText(FORBIDDEN);
+  await expect(carol.getByLabel("Organization name")).toHaveCount(0);
+  await expect(carol.getByRole("heading", { name: "Invitations", exact: true })).toHaveCount(0);
+  await expect(carol.getByRole("list", { name: `Roles of ${DEMO.carol}` }).getByRole("listitem")).toHaveText(["member"]);
+  await expectAccessible(carol);
   await carol.screenshot({ path: `${shots}/05-revoked-member-sees-permission-message.png`, fullPage: true });
-  await carol.reload();
-  await expect(carol.getByLabel("Organization name")).toHaveCount(0); // the next load drops the form
   expect(await displayName(alice)).toBe(DEMO_ORG.name);
   expect((await carol.request.get(`${API_URL}/api/v1/auth/session`)).status()).toBe(200);
 });

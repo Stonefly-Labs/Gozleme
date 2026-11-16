@@ -94,6 +94,13 @@ internal static class OrganizationPermissions
     public static IReadOnlySet<string> For(IEnumerable<string> roles) =>
         roles.SelectMany(r => Table.TryGetValue(r, out var actions) ? actions : FrozenSet<string>.Empty).ToHashSet(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The decision (FR-016): its inputs are exactly the caller's roles, the action and the action's resource
+    /// type, so no condition, attribute or per-user grant can influence it. GOZ-0018 replaces this evaluation.
+    /// </summary>
+    public static bool Allows(IEnumerable<string> roles, string action, string resourceType) =>
+        OrgAction.All.Contains((action, resourceType)) && For(roles).Contains(action);
+
     /// <summary>The role table as published in contracts/permissions.md (pinned by OrganizationPermissionContractTests).</summary>
     public static string RenderTable()
     {

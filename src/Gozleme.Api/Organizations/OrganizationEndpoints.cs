@@ -205,7 +205,7 @@ internal static class OrganizationEndpoints
             return NotFound(activity, operation);
         }
 
-        if (!OrganizationPermissions.For(caller.Roles).Contains(action))
+        if (!OrganizationPermissions.Allows(caller.Roles, action, OrgAction.ResourceOf(action)))
         {
             return Forbidden(activity, operation);
         }
@@ -278,7 +278,7 @@ internal static class OrganizationEndpoints
             return NotFound(activity, OrgOperation.MemberRoles);
         }
 
-        if (!OrganizationPermissions.For(caller.Roles).Contains(OrgAction.MembershipRolesChange))
+        if (!OrganizationPermissions.Allows(caller.Roles, OrgAction.MembershipRolesChange, OrgResource.Membership))
         {
             return Forbidden(activity, OrgOperation.MemberRoles);
         }
