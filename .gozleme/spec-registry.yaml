@@ -1504,8 +1504,7 @@ specs:
     roadmapSync: pending
     humanReview: pending
     merge: pending
-  blockers:
-  - 'Entry condition (maintainer decision GOZ-0003-IF-15, 2026-11-16): the bugfix/goz-0001-resign-in-session fix for GOZ-0003-OBS-01 must be merged before GOZ-0040 starts'
+  blockers: []
   impactFindings: []
   evidence:
     tests: []
