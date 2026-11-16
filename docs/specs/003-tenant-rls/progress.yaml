@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0003
-stage: tasks
+stage: converge
 status: in-progress
 promptRevision: 4
 branch: feature/goz-0003-tenant-rls
@@ -14,18 +14,28 @@ stages:
   specify: {status: done, artifact: docs/specs/003-tenant-rls/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/003-tenant-rls/plan.md, at: '2026-11-15', note: 'R4 owner-in-definer guard verified empirically in scratch pg17 (function-level SET of custom GUC rejected for non-superuser; replaced by session_user guard)'}
   tasks: {status: done, artifact: docs/specs/003-tenant-rls/tasks.md, count: 42, at: '2026-11-15'}
-  implement: {status: pending}
-  demo: {status: pending}
-  converge: {status: pending}
+  implement: {status: done, at: '2026-11-15', commits: [b791ef4, 9581ddd, ba01486, dc2c9c7, 424a15e], tasks: '44/44'}
+  demo: {status: done, at: '2026-11-16', record: docs/specs/003-tenant-rls/evidence/demo-run.json, commit: 424a15e}
+  converge: {status: done, at: '2026-11-16', findings: 3, appended: [T043, T044], note: 'F1 SC-001 write matrix under invalid contexts (HIGH, fixed T043); F2 SC-005 page timing (LOW, fixed T044); F3 owner-login helper recursion under sequential scans found by the cumulative demo (fixed 424a15e, research R4 amended)'}
   impactAnalysis: {status: pending}
   roadmapSync: {status: pending}
   merge: {status: pending}
 attempts: []
 blockers: []
 pullRequest: null
-nextAction: Run /speckit-implement (T001-T042)
+nextAction: Run the mandatory spec-impact-analyst, then review-roadmap, then prepare the PR
 evidence:
-  tests: []
-  demos: []
-  screenshots: []
+  tests:
+    - {suite: dotnet, result: passed, count: 256, commit: 424a15e}
+    - {suite: web-vitest, result: passed, count: 131, commit: 424a15e}
+  demos:
+    - {record: docs/specs/003-tenant-rls/evidence/demo-run.json, commit: 424a15ef, result: passed, tests: '33/33', workingTreeClean: true, freshStack: true, databaseEvidence: docs/specs/003-tenant-rls/evidence/rls-evidence.json, sc005: 'org list and detail pages under 1 s (automated)'}
+  screenshots:
+    - docs/specs/003-tenant-rls/evidence/screenshots/
+    - docs/specs/003-tenant-rls/evidence/screenshots/regression-goz-0000/
+    - docs/specs/003-tenant-rls/evidence/screenshots/regression-goz-0001/
+    - docs/specs/003-tenant-rls/evidence/screenshots/regression-goz-0002/
   reviews: []
+  quickstart: {at: '2026-11-16', spotCheck: 'gozleme_app without context counts 0 organizations', keyRotation: 'api-only change -> self-check 1203 fail closed; migrate re-provisions (hash changed); restart -> self-check ok; rotated back'}
+observations:
+  - {id: GOZ-0003-OBS-01, area: GOZ-0001 sign-in, severity: medium, status: open-for-maintainer, finding: 'Pre-existing on main (verified in an origin/main worktree): when a client that already holds a valid session signs in again, the API answers 200 but the new session is unusable (the client and replays of the new cookie get 401). AuthFlowTests.Every_sign_in_issues_a_new_session_and_retires_the_previous_one passes only incidentally. Not changed in GOZ-0003 (out of scope).'}
