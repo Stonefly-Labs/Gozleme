@@ -29,7 +29,8 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
             .UseNpgsql(dataSource, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public"))
             // These events embed the server address in their message. Outages are reported with a fixed
             // message by DatabaseUnavailable; other failures still surface as unhandled exceptions.
-            .ConfigureWarnings(w => w.Ignore(RelationalEventId.ConnectionError, CoreEventId.QueryIterationFailed, CoreEventId.SaveChangesFailed));
+            .ConfigureWarnings(w => w.Ignore(RelationalEventId.ConnectionError, CoreEventId.QueryIterationFailed, CoreEventId.SaveChangesFailed))
+            .AddInterceptors(RefusedWriteSpanInterceptor.Instance);
 
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
 

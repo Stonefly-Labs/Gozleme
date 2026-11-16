@@ -82,3 +82,4 @@ Data migrations on tenant tables (maintainer decision 2026-11-16, GOZ-0003-IF-03
 | Span | `gozleme.tenant.transaction` | events `gozleme.tenant.context.established` (`gozleme.tenant.context.result`) and `gozleme.tenant.context.cleared` (`gozleme.tenant.transaction.outcome`) |
 | Counter | `gozleme.tenant.denials` | `gozleme.tenant.denial.reason` ∈ {`missing`, `invalid`, `expired`, `refused_write`} |
 | Audit | `Gozleme.Security.Audit` 1201–1203 | opaque account ID or reason only |
+| Span | `gozleme.org.*` (GOZ-0002) | a write refused by row-level security closes the enclosing organization span with `gozleme.org.outcome=failure` and `gozleme.org.failure_category=refused_write` (also counted on `gozleme.org.operations`), before the response becomes "not found". The span gains no organization ID. |

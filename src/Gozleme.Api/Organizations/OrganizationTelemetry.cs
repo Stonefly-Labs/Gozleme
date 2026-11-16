@@ -48,6 +48,7 @@ internal static class OrgFailure
     public const string InvalidInvitation = "invalid_invitation";
     public const string LastMember = "last_member";
     public const string RateLimited = "rate_limited";
+    public const string RefusedWrite = "refused_write";
 }
 
 /// <summary>Bounded operation names (span suffixes and metric label values).</summary>
