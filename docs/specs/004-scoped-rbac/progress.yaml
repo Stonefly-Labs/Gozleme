@@ -1,0 +1,32 @@
+schemaVersion: '1.0'
+specId: GOZ-0004
+stage: specify
+status: in-progress
+promptRevision: 6
+branch: feature/goz-0004-scoped-rbac
+featureDirectory: docs/specs/004-scoped-rbac
+decisions:
+- {at: '2026-11-16', by: maintainer, topic: initial-role-rule, decision: 'Option B (recorded before drafting, PR #16): no data migration; existing memberships get the managing role by schema default, which then changes to the least-privileged role; new creators manage, invitees get least privilege; seed sets fixed demo roles as a seeded member.'}
+- {at: '2026-11-16', by: maintainer, topic: role-set, decision: 'Q1 option B: built-in roles admin, publisher, reviewer, approver, member.'}
+- {at: '2026-11-16', by: maintainer, topic: invitations, decision: 'Q2 option A: only admin may create, list and revoke invitations; a role change removing that permission revokes the account''s open invitations in the same transaction with audit 1104, as removal does.'}
+- {at: '2026-11-16', by: maintainer, topic: rls-role-posture, decision: 'Q3 option B: row-level rules and guards restrict every admin-only write (rename, invitation writes, removal of other members, role changes) to admins of that organization. Any new privileged database helper this needs goes back to the maintainer as a security-review item before implementation.'}
+- {at: '2026-11-16', by: maintainer, topic: inert-roles, decision: 'Q4 option A: publisher, reviewer and approver permit exactly what member permits in this slice; no role implies another (admin does not hold them implicitly).'}
+- {at: '2026-11-16', by: maintainer, topic: role-storage, decision: 'Q5 option B: a set of roles held in the membership row (first answered C, a separate table; corrected to B the same day). The option-B initial-role rule applies unchanged via schema default.'}
+agentChoices:
+- {at: '2026-11-16', topic: member-baseline, choice: 'member is an always-held baseline in every role set (FR-002); disclosed to the maintainer, not objected to.'}
+- {at: '2026-11-16', topic: last-manager-in-database, choice: 'FR-013a extends the last-manager rule to the database layer as a consequence of Q3 option B; disclosed to the maintainer for veto.'}
+stages:
+  specify: {status: done, artifact: docs/specs/004-scoped-rbac/spec.md, at: '2026-11-16', checklist: docs/specs/004-scoped-rbac/checklists/requirements.md}
+  plan: {status: pending}
+  tasks: {status: pending}
+  implement: {status: pending}
+  demo: {status: pending}
+  converge: {status: pending}
+  impactAnalysis: {status: pending}
+  roadmapSync: {status: pending}
+  merge: {status: pending}
+attempts: []
+blockers: []
+pullRequest: null
+nextAction: 'Run /speckit-clarify, then /speckit-plan.'
+evidence: {tests: [], demos: [], screenshots: [], reviews: []}
