@@ -208,13 +208,13 @@ specs:
   prompt: docs/prompts/spec-0003.md
   dependencies:
   - GOZ-0002
-  status: not-started
-  stage: null
-  branch: null
+  status: in-progress
+  stage: specify
+  branch: feature/goz-0003-tenant-rls
   pullRequest: null
   promptRevision: 4
   gates:
-    specification: pending
+    specification: passed
     plan: pending
     tasks: pending
     implementation: pending
@@ -228,11 +228,12 @@ specs:
   blockers: []
   impactFindings: []
   evidence:
-    tests: []
+    tests:
+    - docs/specs/003-tenant-rls/progress.yaml
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Await prerequisites and create allowed working branch
+  nextAction: Run /speckit-plan for docs/specs/003-tenant-rls
 - id: GOZ-0004
   number: 4
   title: Scoped RBAC permission foundation

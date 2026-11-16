@@ -1,0 +1,31 @@
+schemaVersion: '1.0'
+specId: GOZ-0003
+stage: specify
+status: in-progress
+promptRevision: 4
+branch: feature/goz-0003-tenant-rls
+featureDirectory: docs/specs/003-tenant-rls
+decisions:
+- {at: '2026-11-15', by: maintainer, topic: rls-identity-binding, decision: 'DB-verified signed account context: app signs a short-lived per-transaction account context; a security-definer helper verifies it with a key gozleme_app cannot read; policies re-check membership in the DB; forged/stale/tampered/expired context identifies nobody'}
+- {at: '2026-11-15', by: maintainer, topic: force-rls, decision: 'FORCE ROW LEVEL SECURITY on every tenant-owned table; migrations DDL-only, future data migrations set context explicitly; test owner and app roles'}
+- {at: '2026-11-15', by: maintainer, topic: seed-context, decision: 'Operator seed acts as a seeded member account of each demo organization; no new role or privilege'}
+- {at: '2026-11-15', by: maintainer, topic: tenant-id-on-spans, decision: 'Keep GOZ-0002 precedent: gozleme.organization.id on spans only after membership confirmed, never a metric label'}
+stages:
+  specify: {status: done, artifact: docs/specs/003-tenant-rls/spec.md, at: '2026-11-15'}
+  plan: {status: pending}
+  tasks: {status: pending}
+  implement: {status: pending}
+  demo: {status: pending}
+  converge: {status: pending}
+  impactAnalysis: {status: pending}
+  roadmapSync: {status: pending}
+  merge: {status: pending}
+attempts: []
+blockers: []
+pullRequest: null
+nextAction: Run /speckit-plan for docs/specs/003-tenant-rls
+evidence:
+  tests: []
+  demos: []
+  screenshots: []
+  reviews: []
