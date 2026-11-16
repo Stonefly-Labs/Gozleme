@@ -98,6 +98,74 @@ public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncL
         Assert.Equal(1, await TwoTenants.TruthAsync(Db, "invitations", _t.OrgB));
     }
 
+    public static TheoryData<string, string> InvalidContexts
+    {
+        get
+        {
+            var data = new TheoryData<string, string>();
+            foreach (var role in new[] { "app", "owner" })
+            {
+                foreach (var variant in new[] { "none", "forged", "tampered", "expired" })
+                {
+                    data.Add(role, variant);
+                }
+            }
+
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(InvalidContexts))]
+    public async Task Without_a_valid_context_neither_role_can_write_any_tenant_row(string role, string variant)
+    {
+        var valid = GozlemeDatabase.SignContext(_t.AliceId);
+        var token = variant switch
+        {
+            "none" => null,
+            "forged" => _t.AliceId.ToString(),
+            "tampered" => valid.Replace(_t.AliceId.ToString(), _t.BobId.ToString(), StringComparison.Ordinal),
+            _ => GozlemeDatabase.SignContext(_t.AliceId, DateTimeOffset.UtcNow.AddSeconds(-1)),
+        };
+
+        // Set directly, so the policies (not establish_context) judge the value. Targets are alice's own
+        // organization A, which a valid alice context could change.
+        var setup = token is null ? null : $"SELECT set_config('gozleme.account_context', '{token}', true)";
+        var connection = Connection(role);
+        var members = await TwoTenants.TruthAsync(Db, "memberships", _t.OrgA);
+        var invitations = await TwoTenants.TruthAsync(Db, "invitations", _t.OrgA);
+        string[] noRows =
+        [
+            $"UPDATE gozleme.organizations SET display_name = 'pwned' WHERE id = '{_t.OrgA}'",
+            $"UPDATE gozleme.memberships SET joined_via = 'invitation' WHERE organization_id = '{_t.OrgA}'",
+            $"DELETE FROM gozleme.memberships WHERE organization_id = '{_t.OrgA}'",
+            $"UPDATE gozleme.invitations SET revoked_at = now() WHERE organization_id = '{_t.OrgA}'",
+            $"DELETE FROM gozleme.invitations WHERE organization_id = '{_t.OrgA}'",
+            $"DELETE FROM gozleme.organizations WHERE id = '{_t.OrgA}'",
+        ];
+        foreach (var sql in noRows)
+        {
+            Assert.Equal(0, await GozlemeDatabase.InTransactionAsync<long>(connection, setup, $"WITH c AS ({sql} RETURNING 1) SELECT count(*) FROM c"));
+        }
+
+        string[] refused =
+        [
+            $"INSERT INTO gozleme.organizations (id, display_name, created_at, created_by, updated_at) VALUES (gen_random_uuid(), 'Forged', now(), '{_t.AliceId}', now())",
+            $"INSERT INTO gozleme.memberships (organization_id, user_id, joined_at, joined_via) VALUES ('{_t.OrgA}', '{_t.BobId}', now(), 'invitation')",
+            $"INSERT INTO gozleme.invitations (id, organization_id, code_hash, created_by, created_at, expires_at) VALUES (gen_random_uuid(), '{_t.OrgA}', sha256('y'::bytea), '{_t.AliceId}', now(), now() + interval '1 day')",
+        ];
+        foreach (var sql in refused)
+        {
+            var ex = await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(connection, setup, sql));
+            Assert.True(TwoTenants.IsRefusal(ex), $"{role}/{variant}: {ex.SqlState} for: {sql}");
+        }
+
+        Assert.Equal("Tenant A", await Db.ScalarAsync<string>($"SELECT display_name FROM gozleme.organizations WHERE id = '{_t.OrgA}'"));
+        Assert.Equal(members, await TwoTenants.TruthAsync(Db, "memberships", _t.OrgA));
+        Assert.Equal(invitations, await TwoTenants.TruthAsync(Db, "invitations", _t.OrgA));
+        Assert.Equal(0, await Db.ScalarAsync<long>("SELECT count(*) FROM gozleme.organizations WHERE display_name = 'Forged'"));
+    }
+
     [Fact]
     public async Task The_app_role_cannot_reach_the_key_replace_helpers_or_switch_rls_off()
     {

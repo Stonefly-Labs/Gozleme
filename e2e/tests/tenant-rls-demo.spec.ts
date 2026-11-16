@@ -96,6 +96,16 @@ test("two tenants: each account sees only its own organizations", async ({ brows
   expect(await orgIds(alice)).toContain(DEMO_ORG.id);
   expect(await orgIds(alice)).not.toContain(PARTNER_ORG.id);
   expect(await orgIds(dave)).toEqual([PARTNER_ORG.id]);
+
+  // SC-005: organization pages still load in under 1 s each locally with row-level security in place.
+  for (const [page, id, name] of [[alice, DEMO_ORG.id, DEMO_ORG.name], [dave, PARTNER_ORG.id, PARTNER_ORG.name]] as const) {
+    for (const [path, ready] of [["/organizations", page.getByTestId("organization-list")], [`/organizations/${id}`, page.getByTestId("organization-name")]] as const) {
+      const started = Date.now();
+      await page.goto(path);
+      await expect(ready).toContainText(name);
+      expect(Date.now() - started, `SC-005: ${path} under 1 s`).toBeLessThan(1000);
+    }
+  }
 });
 
 test("the other tenant's organization answers exactly like an unknown id, in the UI and the API", async () => {

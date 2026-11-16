@@ -263,3 +263,8 @@ T032 OperatorCommandTests (seed) T033 e2e evidence.ts
 2. **Proof**: US2 and US3 provide the evidence for invariant 1 and the stated boundary.
 3. **Guard**: US4 protects every future table.
 4. **Operability**: US5 and US6, then the demo and polish.
+
+## Phase 11: Convergence
+
+- [x] T043 Add the write half of the cross-tenant matrix to `tests/Gozleme.Api.IntegrationTests/RlsIsolationTests.cs`: for each tenant-owned table × insert, update, delete, with no context, a plain forged setting, a tampered token and an expired token, as both the app role and the owner login, assert nothing is written (0 rows affected or 42501) and the superuser truth is unchanged per SC-001 (partial)
+- [x] T044 Measure organization page loads (list and detail, both tenants) in `e2e/tests/tenant-rls-demo.spec.ts` and assert each is under 1 s locally per SC-005 (partial)
