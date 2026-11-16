@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0002",
-  "commit": "8a9941e3e94f795fc321298153d933bcffe7b841",
+  "commit": "4c73a92183f8f64e3f87ff9b52ad67c54c88715b",
   "branch": "feature/goz-0002-organizations",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-15T21:32:45Z",
-  "finishedAt": "2026-11-15T21:35:23Z",
-  "stackStartupSeconds": 32,
+  "startedAt": "2026-11-16T00:52:12Z",
+  "finishedAt": "2026-11-16T00:55:08Z",
+  "stackStartupSeconds": 54,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -140,8 +140,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 327 ms",
-    "sign-in\u2192dashboard 316 ms"
+    "register\u2192dashboard 330 ms",
+    "sign-in\u2192dashboard 195 ms"
   ],
   "evidence": [
     "docs/specs/002-organizations/evidence/screenshots/01-anonymous-redirected-to-sign-in.png",
