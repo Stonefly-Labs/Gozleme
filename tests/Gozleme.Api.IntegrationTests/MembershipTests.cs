@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Gozleme.Api.IntegrationTests.Infrastructure;
 
 namespace Gozleme.Api.IntegrationTests;
@@ -108,6 +109,54 @@ public sealed class MembershipTests(PgvectorDatabaseFixture fixture) : IAsyncLif
         Assert.Equal(solo, await OrgClient.ActiveAsync(alice));
         using var bobLast = await OrgClient.RemoveAsync(bob, pair, await OrgClient.UserIdAsync(bob));
         Assert.Equal(HttpStatusCode.Conflict, bobLast.StatusCode);
+    }
+
+    [Fact]
+    public async Task Removing_or_leaving_revokes_the_departing_accounts_open_invitations()
+    {
+        var (alice, _) = await AuthClient.SignedInAsync(_factory);
+        var (bob, _) = await AuthClient.SignedInAsync(_factory);
+        var (carol, _) = await AuthClient.SignedInAsync(_factory);
+        using var _a = alice;
+        using var _b = bob;
+        using var _c = carol;
+        var org = await OrgClient.CreateAsync(alice, "Departures");
+        await OrgClient.JoinAsync(alice, bob, org);
+        await OrgClient.JoinAsync(alice, carol, org);
+        var (bobsInvite, bobsCode) = await OrgClient.InviteAsync(bob, org);
+        var (alicesInvite, _) = await OrgClient.InviteAsync(alice, org);
+        var (carolsInvite, carolsCode) = await OrgClient.InviteAsync(carol, org);
+
+        using (var removed = await OrgClient.RemoveAsync(alice, org, await OrgClient.UserIdAsync(bob)))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, removed.StatusCode);
+        }
+
+        // Bob cannot rejoin through the code he created while a member; other members' codes stay open.
+        using (var rejoin = await OrgClient.RedeemAsync(bob, bobsCode))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, rejoin.StatusCode);
+        }
+
+        Assert.Equal(new[] { alicesInvite, carolsInvite }.Order(), (await OpenInvitationIdsAsync(alice, org)).Order());
+        Assert.Contains(_factory.Logs, l => l.Contains($"Invitation revoked {bobsInvite}", StringComparison.Ordinal));
+
+        using (var left = await OrgClient.RemoveAsync(carol, org, await OrgClient.UserIdAsync(carol)))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, left.StatusCode);
+        }
+
+        Assert.Equal([alicesInvite], await OpenInvitationIdsAsync(alice, org));
+        using var carolRejoin = await OrgClient.RedeemAsync(carol, carolsCode);
+        Assert.Equal(HttpStatusCode.BadRequest, carolRejoin.StatusCode);
+    }
+
+    private static async Task<string[]> OpenInvitationIdsAsync(HttpClient client, string orgId)
+    {
+        using var res = await AuthClient.GetAsync(client, $"{OrgClient.Base}/{orgId}/invitations");
+        res.EnsureSuccessStatusCode();
+        using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        return [.. doc.RootElement.GetProperty("invitations").EnumerateArray().Select(i => i.GetProperty("id").GetString()!)];
     }
 
     [Fact]

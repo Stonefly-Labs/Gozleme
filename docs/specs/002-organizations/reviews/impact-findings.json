@@ -1,0 +1,431 @@
+{
+  "sourceSpec": "GOZ-0002",
+  "implementationRevision": "f95be4c (feature/goz-0002-organizations; demo 29/29 recorded assertions passed on a clean tree at 8a9941e; 8a9941e..f95be4c changes only demo evidence, progress.yaml and tasks.md)",
+  "analyzedAt": "2026-11-15",
+  "findings": [
+    {
+      "id": "GOZ-0002-IF-01",
+      "severity": "high",
+      "title": "Tenant-owned tables exist without RLS: an interim, documented exception to security invariant 1 that GOZ-0003 must close",
+      "evidence": [
+        "src/Gozleme.Api/Persistence/Migrations/20261116000000_Organizations.cs creates organizations, invitations and memberships with no ENABLE ROW LEVEL SECURITY and no policy",
+        "src/Gozleme.Api/Persistence/GozlemeDbContext.cs:71-72 comment: tenant keys exist so that GOZ-0003 can enable RLS",
+        "docs/architecture/security-invariants.md invariant 1: every tenant-owned row is protected by application authorization AND effective PostgreSQL RLS",
+        "docs/specs/002-organizations/plan.md Complexity Tracking records the violation, justified by roadmap order (GOZ-0000-IF-03); spec.md Assumptions: 'This spec does not claim RLS protection'",
+        "docs/engineering/local-development.md:69 states isolation is application-layer only until GOZ-0003",
+        "gozleme_app has DML on the tables through the foundation default privileges (data-model.md header)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003",
+        "GOZ-0039",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0012",
+        "GOZ-0014"
+      ],
+      "recommendation": "Maintainer explicitly acknowledges the interim invariant-1 exception at GOZ-0002 PR review, and confirms that GOZ-0003 runs before any other spec that adds tenant-owned data and that no release or tag is cut while the exception is open. GOZ-0003 enables RLS on all three tables and adds them to its catalog test. GOZ-0039's release gate verifies effective RLS on every tenant-owned table. No spec may claim RLS protection before GOZ-0003 merges.",
+      "disposition": "human-decision: acknowledge the interim invariant-1 exception and its closure conditions; downstream prompt obligations already applied (GOZ-0003, GOZ-0039 and the cross-cutting section in all future prompts)"
+    },
+    {
+      "id": "GOZ-0002-IF-02",
+      "severity": "high",
+      "title": "The implementation depends on access paths that cross tenants before any tenant is known; a naive per-tenant RLS policy would break them or tempt trust in caller-set settings",
+      "evidence": [
+        "src/Gozleme.Api/Organizations/OrganizationEndpoints.cs:51-70 ListAsync reads every memberships row of the account and joins organizations",
+        "src/Gozleme.Api/Organizations/OrganizationAccess.cs:17-25 FindMembershipAsync is the check that establishes the tenant; it reads memberships by (organization_id, user_id)",
+        "OrganizationEndpoints.cs:296 redemption finds invitations by code_hash FOR UPDATE before the organization is known, then inserts a membership (:312-320)",
+        "OrganizationEndpoints.cs:72-92 creation inserts the organization and its first membership in one SaveChanges",
+        "OrganizationEndpoints.cs:173 removal locks the organizations row FOR UPDATE",
+        "OrganizationEndpoints.cs:151-155 the member list joins the global users table for emails",
+        "src/Gozleme.Api/Identity/OperatorCommands.cs:122-150 seed resets the Seeded Demo Org as gozleme_app with no HTTP request (R3-19 operator/tenant separation)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003"
+      ],
+      "recommendation": "GOZ-0003 designs RLS that keeps these paths working: an account-scoped visibility rule on memberships as well as the tenant rule; a redemption path where possession of the 160-bit code is the proof; creation inserting a new tenant; and a defined operator context for seed. The account identity used by RLS comes from the authenticated principal, set by the application in the same transaction. Tests prove that a forged or stale setting cannot read another account's memberships or invitations.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-03",
+      "severity": "high",
+      "title": "The interim role-neutral rule must be replaced by GOZ-0004 roles; the initial-role migration for existing organizations needs a maintainer decision during GOZ-0004",
+      "evidence": [
+        "docs/specs/002-organizations/spec.md FR-015, FR-016, FR-018; progress.yaml decision member-powers ('GOZ-0004 restricts with roles')",
+        "OrganizationEndpoints.cs: every organization-scoped handler calls OrganizationAccess.FindMembershipAsync first, and any membership row grants every action",
+        "OrganizationEndpoints.cs:173,190 the last-member guard runs under the organizations row lock",
+        "contracts/organizations-api.openapi.yaml:52 the error enum already includes 'forbidden', which is unused",
+        "OrganizationTelemetry.cs:43-51 failure categories have no 'forbidden'",
+        "tests/Gozleme.Api.IntegrationTests/OrganizationBoundaryTests.cs Extra_privilege_fields_are_ignored_and_the_creator_has_no_special_standing: the creator can be removed, and joined_via and created_by grant nothing"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0014"
+      ],
+      "recommendation": "GOZ-0004 keeps the membership check first, so non-members still get identical 404s. It adds the permission check after it, which may answer 403 forbidden to members. It turns the last-member guard into a guard that always keeps at least one member able to manage membership, under the same row lock, and it adds a bounded 'forbidden' telemetry category. The rule that gives existing members their initial roles is chosen with the maintainer during GOZ-0004 clarification, never inferred.",
+      "disposition": "applied-to-future-prompts (the initial-role migration rule is routed to the maintainer in GOZ-0004 clarification)"
+    },
+    {
+      "id": "GOZ-0002-IF-04",
+      "severity": "medium",
+      "title": "Removing a member does not revoke the open invitations that member created, so a removed account can rejoin with a code it minted earlier",
+      "evidence": [
+        "OrganizationEndpoints.cs:158-210 RemoveMemberAsync deletes only the memberships row and does not touch invitations",
+        "OrganizationEndpoints.cs:296-320 redemption accepts any open code for a non-member, including the account that created it",
+        "spec.md FR-017 requires removal to take effect on the next request, which it does; US3-5 allows rejoining with a new valid invitation; no requirement covers the removed member's own outstanding codes",
+        "Mitigation today: any remaining member sees open invitations with their creator (FR-012) and can revoke them manually",
+        "No test covers this case (MembershipTests.cs, InvitationTests.cs)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0004"
+      ],
+      "recommendation": "Preferred: a bounded GOZ-0002 correction. Remove and leave revoke, in the same transaction, the open invitations created by the departing account. Set revoked_by to the actor and emit audit 1104 for each one. Add an integration test showing a removed member cannot rejoin with its own earlier code. Alternative: accept this as an interim residual that GOZ-0004 must close; the GOZ-0004 prompt already carries the obligation either way.",
+      "disposition": "human-decision: fix now in GOZ-0002 (recommended) or defer to GOZ-0004; GOZ-0004 prompt obligation applied"
+    },
+    {
+      "id": "GOZ-0002-IF-05",
+      "severity": "medium",
+      "title": "Organization-scoped API, page and existence-hiding conventions that every later tenant-data spec must follow",
+      "evidence": [
+        "OrganizationEndpoints.cs:22-43 routes under /api/v1/organizations/{organizationId}; the ID is a string with no route constraint (research R3)",
+        "OrganizationEndpoints.cs:24,45-49 NoStore filter; an empty 404 for malformed, unknown and non-member IDs (OrganizationIsolationTests.Non_member_unknown_and_malformed_ids_get_identical_empty_404s)",
+        "research.md R4: activeOrganizationId is computed from memberships.selected_at and is never authority",
+        "web/src/lib/organizations.ts:44 segment() neutralises dot segments; web/src/app/organizations/[organizationId]/not-found.tsx",
+        "docs/prompts/*: no future prompt stated these conventions"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
+        "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039",
+        "GOZ-0040",
+        "GOZ-0041"
+      ],
+      "recommendation": "Organization-scoped endpoints take the organization ID in the path and never from an implicit active organization. They check membership first, through FindMembershipAsync or its GOZ-0003/GOZ-0004 successor, and answer identical empty 404s with no-store. Pages live under /organizations/[organizationId]/ and use segment(). New tenant-owned tables carry organization_id with a foreign key to organizations(id).",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-06",
+      "severity": "medium",
+      "title": "New seeded fixtures and leftover demo state: carol, Seeded Demo Org, and run-unique organizations that accumulate for alice",
+      "evidence": [
+        "src/Gozleme.Api/Identity/OperatorCommands.cs:27-30 adds carol and the fixed-ID DemoOrganizationId 0193a000-0000-7000-8000-000000000002; :122-150 restores its name, exactly alice and carol, and no invitations",
+        "e2e/tests/evidence.ts adds DEMO.carol, DEMO_ORG and the goz-0002 specDirs entry; e2e/playwright.config.ts adds the goz-0002 project, which depends on goz-0001",
+        "e2e/tests/organizations-demo.spec.ts:20-23 creates run-unique Alpha, Beta and Solo organizations for alice that are never deleted (organization deletion does not exist); bob is removed from Alpha and ends with no organization",
+        "Only one seeded organization exists, but GOZ-0003 and GOZ-0012 demos need two tenants with disjoint members",
+        "The GOZ-0001-IF-09 bullet in every future prompt still lists only alice, bob and lockout"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0006",
+        "GOZ-0007",
+        "GOZ-0008",
+        "GOZ-0009",
+        "GOZ-0010",
+        "GOZ-0011",
+        "GOZ-0012",
+        "GOZ-0013",
+        "GOZ-0014",
+        "GOZ-0015",
+        "GOZ-0016",
+        "GOZ-0017",
+        "GOZ-0018",
+        "GOZ-0019",
+        "GOZ-0020",
+        "GOZ-0021",
+        "GOZ-0022",
+        "GOZ-0023",
+        "GOZ-0024",
+        "GOZ-0025",
+        "GOZ-0026",
+        "GOZ-0027",
+        "GOZ-0028",
+        "GOZ-0029",
+        "GOZ-0030",
+        "GOZ-0031",
+        "GOZ-0032",
+        "GOZ-0033",
+        "GOZ-0034",
+        "GOZ-0035",
+        "GOZ-0036",
+        "GOZ-0037",
+        "GOZ-0038",
+        "GOZ-0039",
+        "GOZ-0040",
+        "GOZ-0041"
+      ],
+      "recommendation": "Later suites use fixed seeded organizations, never assert alice's organization count, and sign in afresh. A spec that needs two tenants adds a second fixed-ID organization to seed. Use recentSpans(service, minutes, operation) for span lookups, and poll metrics for up to 90 s for counters first recorded in a suite.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-07",
+      "severity": "medium",
+      "title": "Telemetry and audit precedent: an opaque organization ID on spans, per-module audit event ID ranges, and membership history only in logs",
+      "evidence": [
+        "src/Gozleme.Api/Organizations/OrganizationTelemetry.cs:17,24 set gozleme.organization.id on spans once membership is confirmed; :38 the counter labels are operation, outcome and failure_category only",
+        "src/Gozleme.Api/Identity/SecurityAudit.cs:13-65 events 1001-1010 (identity) and 1101-1108 (organizations) carry opaque IDs only",
+        "data-model.md: removal and leaving delete the membership row; 'History lives in the security audit log'",
+        "docs/prompts/spec-0003.md asks GOZ-0003 to decide whether an opaque tenant ID may be a span attribute, which GOZ-0002 has in effect already done",
+        "e2e/tests/organizations-demo.spec.ts privacy and observability tests: no emails, names or codes in traces, metrics or logs (demo-run.json, 29/29)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003",
+        "GOZ-0023",
+        "GOZ-0035",
+        "GOZ-0039",
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0012",
+        "GOZ-0014",
+        "GOZ-0018",
+        "GOZ-0021"
+      ],
+      "recommendation": "GOZ-0003 confirms or revises the organization-ID-on-spans precedent, changing both places together if it revises. New modules take their own audit event ID range. GOZ-0023 includes membership and invitation events in its decision on what the durable audit record holds.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-08",
+      "severity": "medium",
+      "title": "A rate-limited endpoint without RateLimitedOperation metadata is mislabelled as an auth sign-in or register rejection",
+      "evidence": [
+        "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:119-129: OnRejected uses RateLimitedOperation metadata if present, otherwise records AuthTelemetry sign-in or register rate_limited; :131 always writes an AuthError body",
+        "IdentityServiceCollectionExtensions.cs:163 record RateLimitedOperation",
+        "src/Gozleme.Api/Organizations/OrganizationEndpoints.cs:38-41 the redeem endpoint attaches it",
+        "src/Gozleme.Api/Organizations/OrganizationServiceCollectionExtensions.cs:21-28 partitions by account ID, held in memory and per instance; GlobalLimiter covers only credential endpoints"
+      ],
+      "affectedSpecs": [
+        "GOZ-0009",
+        "GOZ-0013",
+        "GOZ-0015",
+        "GOZ-0038",
+        "GOZ-0040",
+        "GOZ-0041",
+        "GOZ-0039"
+      ],
+      "recommendation": "Every new rate-limit policy attaches RateLimitedOperation so that rejections are labelled with its own span and metric. Partition by account ID when a session is required. The cross-cutting section in all future prompts states this.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-09",
+      "severity": "low",
+      "title": "Boundary assertions narrowed by GOZ-0002, and stale line references in future prompts",
+      "evidence": [
+        "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:23-29 (catalog :23, capabilities :24, users :25, search :26, publish :28); the exact-table test was renamed Gozleme_schema_holds_exactly_the_identity_and_organization_tables (:40-47)",
+        "e2e/tests/bootstrap-demo.spec.ts:132,141-142 catalog 404s; :145-146 '/' has exactly two links, Organizations and Join",
+        "tests/Gozleme.Api.IntegrationTests/OrganizationBoundaryTests.cs:24-38 the exact column list and the forbidden role|owner|admin|permission|delegat pattern; :41-52 delegation routes",
+        "e2e/tests/organizations-demo.spec.ts:276-277 forbids role, admin and owner wording and allows exactly one combobox on the organization page",
+        "docs/prompts/spec-0005.md:81 and spec-0012.md:82 cited BootstrapBoundaryTests.cs:23 and :22 and bootstrap-demo.spec.ts:130,140 (stale)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0005",
+        "GOZ-0007",
+        "GOZ-0012",
+        "GOZ-0013"
+      ],
+      "recommendation": "Refresh the references. GOZ-0004 deliberately narrows the no-delegation assertions while keeping transfer, deletion and delegated administration absent. GOZ-0012 narrows the two-link assertion when catalog navigation is added. Any spec that adds a column to the organization tables updates the exact column list.",
+      "disposition": "applied-to-future-prompts (stale references in spec-0005 and spec-0012 corrected in place)"
+    },
+    {
+      "id": "GOZ-0002-IF-10",
+      "severity": "medium",
+      "title": "Display names are not unique, and the switcher and organization list show names only, so same-named organizations look identical in the UI",
+      "evidence": [
+        "spec.md FR-002 and maintainer decision org-identity: display names need not be unique; OrganizationTests.Rename_keeps_the_id_and_duplicate_names_are_allowed",
+        "web/src/components/OrganizationSwitcher.tsx:42-46 option text is displayName only",
+        "web/src/app/organizations/page.tsx: list items show displayName and differ only in href",
+        "spec.md US1-6 says the organizations are 'told apart by their identifiers'; the API does this, but the UI does not visibly",
+        "Invitations are role-neutral, so a member can invite a victim into a lookalike organization"
+      ],
+      "affectedSpecs": [
+        "GOZ-0005",
+        "GOZ-0014",
+        "GOZ-0020",
+        "GOZ-0034",
+        "GOZ-0002"
+      ],
+      "recommendation": "Downstream flows that act on behalf of an organization (publishing, overlays, policy activation, sharing grants) show an unambiguous reference, such as an ID suffix or the GOZ-0005 handle, at confirmation, and never resolve an organization by display name. Optional GOZ-0002 polish: show a short ID suffix in the switcher and list when names collide.",
+      "disposition": "applied-to-future-prompts (optional GOZ-0002 UI polish left to the maintainer)"
+    },
+    {
+      "id": "GOZ-0002-IF-11",
+      "severity": "low",
+      "title": "Organization IDs are local UUIDv7 values and are not federated identities",
+      "evidence": [
+        "OrganizationEndpoints.cs:83 Guid.CreateVersion7(now); research.md R2",
+        "No handle or namespace exists; it is deferred to GOZ-0005 (maintainer decision org-identity)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0005",
+        "GOZ-0029",
+        "GOZ-0034"
+      ],
+      "recommendation": "Canonical capability IDs, enrollment records and sharing-grant recipients never use a local organizations.id or display name as cross-registry identity or authority.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-12",
+      "severity": "low",
+      "title": "Data-model facts for foreign-key, retention and backup consumers",
+      "evidence": [
+        "src/Gozleme.Api/Persistence/GozlemeDbContext.cs:88-89 memberships cascade from organizations and from users; :102 invitations cascade from organizations; created_by, used_by and revoked_by are SET NULL",
+        "data-model.md: memberships rows are deleted on removal; invitations are kept after use, revocation or expiry; there is no organization deletion or lifecycle (R3-24 post-MVP)",
+        "Account deletion does not exist; if it did, the user cascade would bypass the last-member guard (OrganizationEndpoints.cs:190)",
+        "invitations.code_hash stores SHA-256 only (InvitationTests.Only_a_32_byte_hash_is_stored)"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003",
+        "GOZ-0014",
+        "GOZ-0035",
+        "GOZ-0039"
+      ],
+      "recommendation": "GOZ-0035 adds memberships, invitations and co-member email exposure to the retention inventory, and defines erasure behaviour for the last member before any account erasure exists. GOZ-0039 round-trips the three tables in backup and restore and documents that a restore brings back removed memberships. GOZ-0014 does not assume organizations can be deleted.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-13",
+      "severity": "low",
+      "title": "No quotas on organization or invitation creation, and no paging on lists",
+      "evidence": [
+        "OrganizationEndpoints.cs:27-36 no rate limit on POST /organizations or POST /{id}/invitations",
+        "plan.md Scale/Scope: 'no paging in this slice'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0039"
+      ],
+      "recommendation": "GOZ-0004 decides whether invitation creation is a permission. GOZ-0039 states these as release residuals.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-14",
+      "severity": "low",
+      "title": "The only ways to join are creating an organization or redeeming a code; email and OIDC must not open new join paths without approval",
+      "evidence": [
+        "spec.md FR-013, FR-024; progress.yaml decision join-method",
+        "docs/prompts/spec-0040.md 'Downstream references' still says 'GOZ-0002: invitations' could consume verified email (pre-implementation)",
+        "docs/prompts/spec-0041.md does not say whether IdP claims may grant membership"
+      ],
+      "affectedSpecs": [
+        "GOZ-0003",
+        "GOZ-0004",
+        "GOZ-0040",
+        "GOZ-0041"
+      ],
+      "recommendation": "GOZ-0040 does not add email-addressed invitations or email delivery of codes without maintainer approval, and its token tables join the GOZ-0003 non-tenant allow-list. GOZ-0041 never maps IdP groups, roles or email domains to membership or roles. GOZ-0004 assigns roles only to existing members selected by opaque userId.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-15",
+      "severity": "low",
+      "title": "Role-neutral invitations let one person bring several of their own accounts into an organization",
+      "evidence": [
+        "spec.md FR-007, FR-015: any member mints invitation codes",
+        "GOZ-0001-IF-05: self-registration is open and emails are unverified"
+      ],
+      "affectedSpecs": [
+        "GOZ-0004",
+        "GOZ-0021"
+      ],
+      "recommendation": "Reviewer, approver and manager capabilities come from explicit GOZ-0004 role grants, never from membership or joined_via. Separation of duties remains between accounts.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-16",
+      "severity": "low",
+      "title": "Organizations are flat, with no parent or hierarchy; the policy subject is a membership row with no role",
+      "evidence": [
+        "src/Gozleme.Api/Organizations/Organization.cs: no parent field",
+        "src/Gozleme.Api/Organizations/Membership.cs: no role field; SelectedAt is a preference"
+      ],
+      "affectedSpecs": [
+        "GOZ-0018",
+        "GOZ-0020"
+      ],
+      "recommendation": "Policy inheritance treats the organization level as flat, with namespaces from GOZ-0005. selected_at is never a policy input.",
+      "disposition": "applied-to-future-prompts"
+    },
+    {
+      "id": "GOZ-0002-IF-17",
+      "severity": "low",
+      "title": "GOZ-0002 planning documents differ slightly from the code",
+      "evidence": [
+        "plan.md:50 says '10 API endpoints'; OrganizationEndpoints.cs maps 11 (10 under /organizations plus /invitations/redeem)",
+        "plan.md:120 and tasks.md T013 name tests/Gozleme.Api.Tests/InvitationCodeTests.cs and DisplayNameTests.cs; the tests are in tests/Gozleme.Api.Tests/OrganizationPolicyTests.cs",
+        "research.md R11 says gozleme.organization.id is set 'once the caller is known to be a member'; redemption sets it once the code is valid and before joining (OrganizationEndpoints.cs:302), an opaque ID for the organization being joined",
+        "spec.md header still says 'Status: Draft'"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002"
+      ],
+      "recommendation": "Correct plan.md, tasks.md (T013 path), research.md R11 wording and the spec status in GOZ-0002 before the PR. These are documentation-only changes and need no code change.",
+      "disposition": "code-fix-needed: GOZ-0002 documentation-only correction"
+    },
+    {
+      "id": "GOZ-0002-IF-18",
+      "severity": "low",
+      "title": "Helm does not expose the organization settings that the spec says an operator can configure",
+      "evidence": [
+        "spec.md Assumptions: invitation expiry 'is configurable by an operator'",
+        "src/Gozleme.Api/Organizations/OrganizationOptions.cs: Gozleme:Organizations:InvitationExpiryHours (1-720) and RedeemPerMinute (1-100)",
+        "deploy/helm/gozleme/templates/api.yaml:28-40 sets only BuildVersion, the connection string, Auth and Network variables; values.yaml has no organizations block and no extraEnv",
+        "docs/engineering/local-development.md:64-65 documents the environment variables for Compose and local runs only"
+      ],
+      "affectedSpecs": [
+        "GOZ-0002",
+        "GOZ-0039"
+      ],
+      "recommendation": "Bounded GOZ-0002 correction: add organizations.invitationExpiryHours and organizations.redeemPerMinute to Helm values, the api template and the README, and check them with make helm-lint. Otherwise record the gap for the GOZ-0039 portability matrix; that prompt already notes it.",
+      "disposition": "code-fix-needed: GOZ-0002 Helm values, template and README (low; GOZ-0039 prompt notes it if deferred)"
+    },
+    {
+      "id": "GOZ-0002-IF-19",
+      "severity": "medium",
+      "title": "Membership removal takes effect only because nothing caches membership; later decision caches must invalidate on membership change",
+      "evidence": [
+        "OrganizationAccess.cs:17-25 reads membership from the database on every request; MembershipTests.Removal_takes_effect_on_the_next_request_without_signing_the_member_out",
+        "research.md R9: no session state is touched and the security stamp is not rotated"
+      ],
+      "affectedSpecs": [
+        "GOZ-0023"
+      ],
+      "recommendation": "GOZ-0023 makes any cached permit, receipt or decision that depends on membership or roles invalidate on removal, leaving, joining and role change, and tests that a removed member's earlier permit cannot authorize. GOZ-0028 lockfile revalidation inherits this through its GOZ-0023 prerequisite.",
+      "disposition": "applied-to-future-prompts"
+    }
+  ]
+}

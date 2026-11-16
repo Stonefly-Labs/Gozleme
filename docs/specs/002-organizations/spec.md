@@ -151,7 +151,7 @@ The maintainer runs the cumulative demo. It drives the GOZ-0000 and GOZ-0001 sce
 **Membership**
 
 - **FR-014**: Any member MUST be able to see the organization's current members, showing each one's email and join date only.
-- **FR-015**: Any member MUST be able to remove any other member, and any member MUST be able to leave. This is an interim role-neutral rule that GOZ-0004 replaces with roles.
+- **FR-015**: Any member MUST be able to remove any other member, and any member MUST be able to leave. This is an interim role-neutral rule that GOZ-0004 replaces with roles. Removing or leaving MUST also revoke the departing account's open invitations for that organization in the same step, so it cannot rejoin through a code it created while a member (maintainer decision on GOZ-0002-IF-04, 2026-11-15).
 - **FR-016**: The system MUST refuse to remove or let leave the last remaining member, including under concurrent requests.
 - **FR-017**: Removal MUST take effect on the removed account's next request in every session, without signing it out and without affecting its other organizations.
 - **FR-018**: Membership MUST be role-neutral: the system MUST NOT store or honour any role, ownership, administrator flag or delegated permission, and the creator MUST have no special standing.

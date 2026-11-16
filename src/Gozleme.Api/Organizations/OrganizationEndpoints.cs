@@ -155,7 +155,7 @@ internal static class OrganizationEndpoints
         return TypedResults.Ok(new MembersResponse(members.Select(m => new MemberResponse(m.UserId, m.Email!, m.JoinedAt, m.JoinedVia, m.UserId == membership.UserId)).ToList()));
     }
 
-    private static async Task<IResult> RemoveMemberAsync(string organizationId, string userId, HttpContext http, GozlemeDbContext db, SecurityAudit audit, CancellationToken ct)
+    private static async Task<IResult> RemoveMemberAsync(string organizationId, string userId, HttpContext http, GozlemeDbContext db, SecurityAudit audit, TimeProvider time, CancellationToken ct)
     {
         var callerId = OrganizationAccess.CurrentUserId(http.User);
         var leaving = Guid.TryParse(userId, out var targetId) && targetId == callerId;
@@ -193,10 +193,27 @@ internal static class OrganizationEndpoints
             return TypedResults.Json(new OrganizationError(OrganizationError.LastMember), statusCode: StatusCodes.Status409Conflict);
         }
 
+        // A departing account's open invitations go with it, so it cannot rejoin through a code it
+        // created while a member (GOZ-0002-IF-04). Locked like redemption, which they serialize with.
+        var now = time.GetUtcNow();
+        var orphaned = await db.Invitations
+            .FromSql($"SELECT * FROM gozleme.invitations WHERE organization_id = {membership.OrganizationId} AND created_by = {targetId} AND used_at IS NULL AND revoked_at IS NULL FOR UPDATE")
+            .ToListAsync(ct);
+        foreach (var invitation in orphaned.Where(i => i.IsOpen(now)))
+        {
+            invitation.RevokedAt = now;
+            invitation.RevokedBy = membership.UserId;
+        }
+
         db.Memberships.Remove(target);
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
         OrganizationTelemetry.Succeeded(activity, operation);
+        foreach (var invitation in orphaned.Where(i => i.RevokedAt == now))
+        {
+            audit.InvitationRevoked(invitation.Id, invitation.OrganizationId, membership.UserId);
+        }
+
         if (leaving)
         {
             audit.MemberLeft(membership.OrganizationId, membership.UserId);

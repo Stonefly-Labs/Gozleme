@@ -38,6 +38,10 @@ spec:
               value: {{ .Values.auth.secureCookies | quote }}
             - name: Gozleme__Network__TrustedProxies
               value: {{ .Values.network.trustedProxies | quote }}
+            - name: Gozleme__Organizations__InvitationExpiryHours
+              value: {{ .Values.organizations.invitationExpiryHours | quote }}
+            - name: Gozleme__Organizations__RedeemPerMinute
+              value: {{ .Values.organizations.redeemPerMinute | quote }}
           livenessProbe:
             httpGet: { path: /health/live, port: http }
             periodSeconds: 10

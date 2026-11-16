@@ -63,7 +63,7 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 - [X] T010 [P] Create `src/Gozleme.Api/Organizations/DisplayNames.cs`: `Validate(string?)` trims the name, requires 1–100 chars and rejects any `char.IsControl`, returning the trimmed value or a field error ("Enter a name of 1–100 characters." / "The name can't contain control characters.")
 - [X] T011 Create `src/Gozleme.Api/Organizations/OrganizationAccess.cs`: `FindMembershipAsync(db, string? organizationId, ClaimsPrincipal, ct)` parses the GUID and loads the membership for `(organizationId, NameIdentifier)`. A null result means not found (malformed, nonexistent or not a member). Add a helper that returns an empty `404` (research R3)
 - [X] T012 [P] Create `src/Gozleme.Api/Organizations/OrganizationContracts.cs` with records matching contracts/organizations-api.openapi.yaml: `DisplayNameRequest`, `OrganizationResponse`, `OrganizationListResponse`, `MemberResponse`/`MembersResponse`, `InvitationResponse`/`InvitationsResponse`, `CreatedInvitationResponse`, `RedeemRequest`, `RedeemedResponse`, and `OrganizationError` codes (`validation_failed`, `invalid_invitation`, `last_member`)
-- [X] T013 [P] Unit tests `tests/Gozleme.Api.Tests/InvitationCodeTests.cs` (format, entropy length, normalization of case, dashes, whitespace and aliases, rejecting bad chars and lengths, stable hash) and `tests/Gozleme.Api.Tests/DisplayNameTests.cs` (bounds, trimming, control characters, markup accepted as text)
+- [X] T013 [P] Unit tests (implemented together in `tests/Gozleme.Api.Tests/OrganizationPolicyTests.cs`, GOZ-0002-IF-17) `tests/Gozleme.Api.Tests/InvitationCodeTests.cs` (format, entropy length, normalization of case, dashes, whitespace and aliases, rejecting bad chars and lengths, stable hash) and `tests/Gozleme.Api.Tests/DisplayNameTests.cs` (bounds, trimming, control characters, markup accepted as text)
 - [X] T014 Create `tests/Gozleme.Api.IntegrationTests/Infrastructure/OrgClient.cs` helpers over `AuthClient`: `CreateAsync`, `ListAsync`, `InviteAsync` (returns the code), `RedeemAsync`, `RemoveAsync`, `SelectAsync` and `RenameAsync`
 
 **Checkpoint**: Foundation ready. The migration applies, and unit tests pass.
@@ -281,3 +281,9 @@ T018 web/src/lib/organizations.ts   T019 web/src/app/api/organizations/**   T020
 ## Phase 9: Convergence
 
 - [X] T047 Show each open invitation's creator (member email resolved from the organization's member list, "Former member" when the creator has left) in `web/src/components/InvitationPanel.tsx`, passing members from `web/src/app/organizations/[organizationId]/page.tsx`, with a component test in `web/src/components/Organizations.test.tsx` per FR-012 (partial)
+
+## Phase 10: Impact-analysis corrections
+
+- [X] T048 Revoke the departing account's open invitations when a member is removed or leaves, in the removal transaction, with audit event 1104 per revoked invitation, in `src/Gozleme.Api/Organizations/OrganizationEndpoints.cs`; integration test in `tests/Gozleme.Api.IntegrationTests/MembershipTests.cs` per FR-015 (GOZ-0002-IF-04, maintainer decision)
+- [X] T049 Expose `organizations.invitationExpiryHours` and `organizations.redeemPerMinute` in `deploy/helm/gozleme/values.yaml`, `templates/api.yaml` and the chart README (GOZ-0002-IF-18)
+- [X] T050 Correct plan, research and T013 documentation drift (GOZ-0002-IF-17)

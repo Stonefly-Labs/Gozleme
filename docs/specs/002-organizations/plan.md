@@ -47,7 +47,7 @@ existing `GozlemeDbContext`.
 
 **Constraints**: Offline; no email or external services. No secrets, emails, display names or codes in telemetry, logs, URLs or screenshots. The API runs as `gozleme_app` (DML only). The migration is additive (the GOZ-0001 release keeps running during pre-upgrade). No RLS yet: isolation in this slice is application-layer only and is labelled as such (GOZ-0003 owns RLS).
 
-**Scale/Scope**: MVP; tens of organizations per account and hundreds of members per organization (no paging in this slice). 10 API endpoints, 3 pages, 1 header component and 8 route handlers.
+**Scale/Scope**: MVP; tens of organizations per account and hundreds of members per organization (no paging in this slice). 11 API endpoints (10 under `/organizations` plus `/invitations/redeem`), 3 pages, 1 header component and 8 route handlers.
 
 ## Constitution Check
 
@@ -117,7 +117,7 @@ tests/Gozleme.Api.IntegrationTests/
 ├── OrganizationBoundaryTests.cs        # no delegation
 ├── OrganizationTelemetryTests.cs
 ├── BootstrapBoundaryTests.cs (narrowed)  DatabaseOutageTests.cs (+ org)  OperatorCommandTests.cs (+ seed)
-tests/Gozleme.Api.Tests/InvitationCodeTests.cs, DisplayNameTests.cs
+tests/Gozleme.Api.Tests/OrganizationPolicyTests.cs (invitation codes and display names; GOZ-0002-IF-17)
 web/src/
 ├── lib/organizations.ts                # server-side fetchers for pages (session-forwarding)
 ├── app/organizations/page.tsx  app/organizations/[organizationId]/page.tsx  app/join/page.tsx

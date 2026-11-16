@@ -10,6 +10,8 @@ decisions:
 - {at: '2026-11-15', by: maintainer, topic: member-powers, decision: 'Interim role-neutral: any member invites and removes any other member; anyone may leave; last member cannot leave or be removed; GOZ-0004 restricts with roles'}
 - {at: '2026-11-15', by: maintainer, topic: org-creation, decision: 'Any signed-in account may create organizations; no operator switch'}
 - {at: '2026-11-15', by: maintainer, topic: org-identity, decision: 'Permanent opaque ID plus editable non-unique display name; unique handles/namespaces left to GOZ-0005'}
+- {at: '2026-11-15', by: maintainer, topic: 'GOZ-0002-IF-01 row-level security exception', decision: 'Accepted with conditions: application-layer isolation only until GOZ-0003; GOZ-0003 is the next spec that adds or touches organization-scoped data (GOZ-0040, global tables only, may precede it); no release or tag until GOZ-0003 lands; GOZ-0039 release gate verifies RLS on every organization table'}
+- {at: '2026-11-15', by: maintainer, topic: 'GOZ-0002-IF-04 departing member invitations', decision: 'Fix in GOZ-0002: removal or leaving revokes the departing account open invitations in the same transaction (audit 1104), then re-run demo and impact analysis'}
 stages:
   specify: {status: done, artifact: docs/specs/002-organizations/spec.md, at: '2026-11-15'}
   plan: {status: done, artifact: docs/specs/002-organizations/plan.md, at: '2026-11-15'}
