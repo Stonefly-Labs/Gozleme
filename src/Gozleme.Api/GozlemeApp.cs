@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 using Gozleme.Api.Identity;
 using Gozleme.Api.Organizations;
 using Gozleme.Api.Status;
-using Gozleme.Api.Tenancy;
 using Gozleme.Api.Telemetry;
+using Gozleme.Api.Tenancy;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Npgsql;
 

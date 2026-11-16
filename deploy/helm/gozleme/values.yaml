@@ -11,8 +11,9 @@ image:
 buildVersion: "0.1.0"
 
 database:
-  # Name of an existing Secret with keys `app-connection-string` (gozleme_app role) and
-  # `migrator-connection-string` (gozleme_migrator role). Credentials are never placed in values.
+  # Name of an existing Secret with keys `app-connection-string` (gozleme_app role),
+  # `migrator-connection-string` (gozleme_migrator role) and `rls-context-key` (GOZ-0003: tenant context
+  # signing key, at least 32 characters, shared by the API and the migrator). Credentials are never placed in values.
   existingSecret: gozleme-database
 
 # Foundational OpenTelemetry (GOZ-0000-IF-11). Point at your collector; empty disables export
