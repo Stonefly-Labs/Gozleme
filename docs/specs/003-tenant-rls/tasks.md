@@ -223,7 +223,7 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
   - an owner login without context.
 
   Write `docs/specs/003-tenant-rls/evidence/rls-evidence.json` with counts and the `establish_context` results only (no names, emails or tokens), and assert the expected values
-- [ ] T037 Run `make demo SPEC=GOZ-0003` on a fresh Compose project. Confirm GOZ-0000…0002 replay green and the evidence scan passes. Record `evidence/demo-run.json` and update `progress.yaml` (demo stage, commit, result). Investigate failures with a maximum of three meaningful repair attempts per distinct failure
+- [x] T037 Run `make demo SPEC=GOZ-0003` on a fresh Compose project. Confirm GOZ-0000…0002 replay green and the evidence scan passes. Record `evidence/demo-run.json` and update `progress.yaml` (demo stage, commit, result). Investigate failures with a maximum of three meaningful repair attempts per distinct failure
 
 ---
 
@@ -232,7 +232,7 @@ API `src/Gozleme.Api/`, API tests `tests/Gozleme.Api.IntegrationTests/` and `tes
 - [x] T038 [P] `deploy/helm/gozleme/README.md`: replace "do not cut a release before then" in the Organizations bullet with the RLS statement (research R13), and add an upgrade note (add `rls-context-key` before upgrading; `pgcrypto` required). Run `make helm-lint`
 - [x] T039 [P] In `docs/engineering/local-development.md`, document `GOZLEME_CONTEXT_KEY`, key rotation, the non-guarantees (contract §4) and that existing volumes need no reset
 - [x] T040 [P] Update the doc comments on `OrganizationAccess.cs` and `OrganizationEndpoints.cs` ("RLS is the second layer since GOZ-0003"), and on `GozlemeDbContext.cs` (tenant-owned tables now RLS-forced)
-- [ ] T041 Run `make lint`, `make test`, `make validate`, `make helm-lint` and `gitleaks git` (as in GOZ-0002). Record counts in `progress.yaml` gates
+- [x] T041 Run `make lint`, `make test`, `make validate`, `make helm-lint` and `gitleaks git` (as in GOZ-0002). Record counts in `progress.yaml` gates
 - [x] T042 Run the quickstart validation (`docs/specs/003-tenant-rls/quickstart.md`) end to end, including the manual spot check and the key-rotation steps on the local stack
 
 ---

@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0003",
-  "commit": "424a15ef834b3f1e430974edf493a7403150fabc",
+  "commit": "a0421c03586ecc3ac31f4163f08fec28eddd37ea",
   "branch": "feature/goz-0003-tenant-rls",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-16T02:28:58Z",
-  "finishedAt": "2026-11-16T02:34:02Z",
-  "stackStartupSeconds": 48,
+  "startedAt": "2026-11-16T14:19:37Z",
+  "finishedAt": "2026-11-16T14:22:53Z",
+  "stackStartupSeconds": 3,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -160,8 +160,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 887 ms",
-    "sign-in\u2192dashboard 465 ms"
+    "register\u2192dashboard 225 ms",
+    "sign-in\u2192dashboard 161 ms"
   ],
   "evidence": [
     "docs/specs/003-tenant-rls/evidence/screenshots/01-alice-sees-only-her-tenants.png",
