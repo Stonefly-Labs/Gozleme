@@ -55,8 +55,16 @@ A new tenant-owned table must:
 2. in its creating migration, `ENABLE` and `FORCE ROW LEVEL SECURITY` and create its policies, using the `CASE WHEN gozleme.rls_internal() THEN true ELSE … END` shape and `organization_id IN (SELECT gozleme.account_organizations())`;
 3. be added to `TableClassification.TenantOwned`.
 
-Global account-level tables go to `TableClassification.GlobalIdentity`. Data migrations on tenant
-tables must sign a context. They never rely on owner rights.
+Global account-level tables go to `TableClassification.GlobalIdentity`.
+
+Data migrations on tenant tables (maintainer decision 2026-11-16, GOZ-0003-IF-03, option A):
+- Without a context, the owner sees no tenant rows under FORCE, so a plain data migration changes zero rows.
+- A reviewed migration may lift the owner binding **only inside its own transaction**, with the
+  transaction-local `gozleme.rls_helper` flag or with `ALTER TABLE … NO FORCE ROW LEVEL SECURITY`
+  and then `FORCE` again before commit.
+- A superuser test must assert the per-row results.
+- A migration may **never** disable a guard trigger. Guarded columns are not backfilled, and a needed
+  change extends the guard in a new migration.
 
 ## 6. Configuration
 

@@ -112,7 +112,7 @@
         "any spec with a data migration on tenant tables"
       ],
       "recommendation": "The maintainer chooses the sanctioned mechanism for cross-tenant data migrations before the GOZ-0004 plan. Options: (A) inside the migration transaction the owner sets the transaction-local gozleme.rls_helper flag, or runs ALTER TABLE ... NO FORCE then FORCE, which is transactional DDL so other sessions never see the window. It is limited to reviewed migrations, with a test that asserts per-row results as the superuser. (B) Only DDL defaults are allowed, so any per-row rule must be expressible as a column default or deferred to an application-level, request-time migration. (C) A pinned, migration-only definer function per backfill, added to DefinerHelpers under security review and dropped afterwards. The decision amends the force-rls decision text, contract section 5 and local-development.md. Until it is decided, migrations stay DDL-only. Whichever option is chosen must also state whether a reviewed migration may disable a guard trigger (IF-19) inside its own transaction. The recommended default is no: guarded columns are not backfilled, and a needed change is a new migration that extends the guard deliberately.",
-      "disposition": "human-decision-required (routed to the maintainer before the GOZ-0004 plan; prompts state the hazard and point here)"
+      "disposition": "human-decided 2026-11-16 by the maintainer: option A. A reviewed migration may lift the owner binding only inside its own transaction (the transaction-local gozleme.rls_helper flag, or ALTER TABLE ... NO FORCE then FORCE), with a superuser test asserting per-row results. A migration may never disable a guard trigger: guarded columns are not backfilled, and a needed change extends the guard in a new migration. Applied to contract section 5, docs/engineering/local-development.md and all downstream prompts. Open for GOZ-0004 clarification: whether populating a new column in the same migration, before its guard is created, counts as backfilling a guarded column"
     },
     {
       "id": "GOZ-0003-IF-04",
@@ -138,7 +138,7 @@
         "GOZ-0036"
       ],
       "recommendation": "The maintainer decides the access model for non-account principals before the plan of the first spec that needs one (GOZ-0015 at the latest, or earlier if any spec from GOZ-0005 to GOZ-0014 adds background work). Options: (A) a second signed token kind naming one organization and a bounded purpose, verified in the database with the same key and admitted by a new policy branch. It extends contract sections 1 and 3, and the catalog check pins the branch. (B) Work is enqueued during a request with the enqueuing account, and the worker acts as that account in a fresh tenant transaction, re-verifying membership. Work whose account has left fails closed. (C) A dedicated worker database role with BYPASSRLS, an explicit exception to invariant 2 confined to a separate process and credential. It needs 01-roles.sh, Helm and make reset. (D) A per-organization service account that is a member of that organization, which then needs a non-human member type in GOZ-0004. Prompts forbid inventing any of these without the decision.",
-      "disposition": "human-decision-required (routed to the maintainer; first consumer GOZ-0015)"
+      "disposition": "human-decided 2026-11-16 by the maintainer: option A. Non-account principals use a second signed token kind naming one organization and a bounded purpose, verified in the database with the same key and admitted by a new policy branch pinned by the catalog check; first consumer GOZ-0015. Applied to all downstream prompts. GOZ-0015 designs the token format, the purpose vocabulary, the signer process and the catalog pin. Anonymous discovery is not covered and stays with GOZ-0012"
     },
     {
       "id": "GOZ-0003-IF-05",
@@ -218,7 +218,7 @@
         "GOZ-0023"
       ],
       "recommendation": "Decide when the first spec needs such a table, at GOZ-0005 clarification at the latest. Options: (A) no new class: every catalog table before GOZ-0012 is tenant-owned by the publishing organization, global uniqueness is enforced by a unique index, and the revealed conflict is accepted per IF-06. (B) A fourth class, for example InstanceReference, holding tables with no organization_id, no tenant content and no DML for gozleme_app except a pinned read path, with its own RlsCatalog rule. (C) Bring GOZ-0012's classification work forward. Prompts tell specs to stop and ask rather than misclassify a table as GlobalIdentity.",
-      "disposition": "human-decision-required (conditional; routed to GOZ-0005 clarification)"
+      "disposition": "human-decided 2026-11-16 by the maintainer: option B. A fourth table class (for example InstanceReference) holds tables with no organization_id and no tenant content, with no DML for gozleme_app except a pinned read path, enforced by its own RlsCatalog rule, and is added by the first spec that needs it. Applied to the GOZ-0005 to GOZ-0011 and GOZ-0023 prompts. The shape of the pinned read path is left to the first consumer. Instance-wide tables written at request time fit no class"
     },
     {
       "id": "GOZ-0003-IF-09",
@@ -271,7 +271,7 @@
         "GOZ-0039"
       ],
       "recommendation": "The maintainer decides at GOZ-0039 clarification which role runs backup and restore. Options: (A) a superuser, documented as an operator procedure. (B) A dedicated operator role with BYPASSRLS (gozleme_backup), not used by any application process, added to 01-roles.sh and the Helm README and needing make reset. This is an explicit, scoped reading of invariant 2. (C) Defer logical backups and use physical, cluster-level backups only. Whichever is chosen, treat backups as secret-bearing, verify FORCE, policies, pgcrypto placement and gozleme_private privileges after restore, and state the rotation downtime as a residual or plan versioned keys (the token's v1 prefix allows this).",
-      "disposition": "human-decision-required (routed to GOZ-0039 clarification; prompt updated with the facts)"
+      "disposition": "human-decided 2026-11-16 by the maintainer (partly): option A. Backup and restore run as a superuser, as a documented operator procedure. Still open for GOZ-0039 clarification: the key-rotation gap (accept as a residual, or plan versioned keys). Applied to the GOZ-0039 prompt"
     },
     {
       "id": "GOZ-0003-IF-12",
@@ -351,7 +351,7 @@
         "GOZ-0041"
       ],
       "recommendation": "The maintainer chooses where the fix lands. (A) Recommended: a bounded bugfix PR (bugfix/goz-0001-resign-in-session) against GOZ-0001 behaviour before GOZ-0040 starts, with a non-incidental regression test that uses both the old and the new cookie after re-sign-in. (B) Fold the fix into GOZ-0040's scope, since it owns session-ending flows. (C) Accept it as a documented residual and have sign-in from a signed-in client first sign out. The GOZ-0040 and GOZ-0041 prompts record the defect and forbid a silent fix.",
-      "disposition": "human-decision-required (prompts for GOZ-0040 and GOZ-0041 record the fact)"
+      "disposition": "human-decided 2026-11-16 by the maintainer: option A. GOZ-0003-OBS-01 is fixed in a bounded bugfix PR (bugfix/goz-0001-resign-in-session) against GOZ-0001 behaviour before GOZ-0040 starts, with a non-incidental regression test that uses both the old and the new cookie after re-sign-in. The GOZ-0040 prompt makes the merged fix an entry condition, and GOZ-0040 and GOZ-0041 may not fix or work around it themselves. The registry's prerequisites list spec IDs only, so the bugfix gate lives in the prompt"
     },
     {
       "id": "GOZ-0003-IF-16",

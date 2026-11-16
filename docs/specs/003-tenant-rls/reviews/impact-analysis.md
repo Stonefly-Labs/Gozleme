@@ -49,25 +49,25 @@
 |---|---|---|---|---|
 | GOZ-0003-IF-01 | high | Rules for new tenant tables and functions (FORCE, CASE shape, classification, isolation matrix, revoking `PUBLIC` execute, no definers) and the migration pins | 0004–0041 | applied to prompts |
 | GOZ-0003-IF-02 | high | The tenant transaction is per route group and spans the whole handler: endpoints must opt in, use the ambient transaction, and keep I/O out | 0004–0039 (notably 0009–0011, 0016, 0031, 0032) | applied to prompts |
-| GOZ-0003-IF-03 | high | Data migrations under FORCE silently change zero rows. "Data migrations sign a context" cannot express a cross-tenant backfill such as GOZ-0004's initial roles | 0004, 0014, 0017, 0035, 0039 | **human decision** (before the GOZ-0004 plan) |
-| GOZ-0003-IF-04 | high | No tenant context for non-account principals (workers, sync appliers, sweeps, federation peers) | 0015–0017, 0029–0036 | **human decision** (by GOZ-0015 at the latest) |
+| GOZ-0003-IF-03 | high | Data migrations under FORCE silently change zero rows. "Data migrations sign a context" cannot express a cross-tenant backfill such as GOZ-0004's initial roles | 0004, 0014, 0017, 0035, 0039 | **human-decided 2026-11-16: option A** |
+| GOZ-0003-IF-04 | high | No tenant context for non-account principals (workers, sync appliers, sweeps, federation peers) | 0015–0017, 0029–0036 | **human-decided 2026-11-16: option A** (first consumer GOZ-0015) |
 | GOZ-0003-IF-05 | high | GOZ-0004 roles collide with the member-level write rules: an UPDATE to another member's row is silently filtered and answers 500 | 0004 | applied to prompts |
 | GOZ-0003-IF-06 | medium | RLS does not hide foreign-key or unique-constraint checks, so they are cross-tenant existence oracles | 0005, 0012, 0014, 0024, 0034 | applied to prompts |
 | GOZ-0003-IF-07 | medium | `SharedPublic` is reserved until GOZ-0012, so catalog tables in GOZ-0005 to GOZ-0011 are tenant-owned. Anonymous requests through the filter count as denials | 0005–0012 | applied to prompts |
-| GOZ-0003-IF-08 | medium | No class exists for instance-wide, non-identity tables before GOZ-0012 | 0005–0011, 0023 | **human decision** (conditional; GOZ-0005 clarification) |
+| GOZ-0003-IF-08 | medium | No class exists for instance-wide, non-identity tables before GOZ-0012 | 0005–0011, 0023 | **human-decided 2026-11-16: option B** |
 | GOZ-0003-IF-09 | medium | Telemetry and audit names; the broad `42501` → 404 mapping also masks grant defects | all | applied to prompts (optional narrowing declined; known limitation in the PR) |
 | GOZ-0003-IF-10 | medium | dave and Seeded Partner Org, seed semantics and key configuration. The GOZ-0012 "only one fixed org" bullet is stale | all, 0012 | applied to prompts |
-| GOZ-0003-IF-11 | medium | Owner-run backup and restore fail under FORCE. Dumps contain the signing key. Rotation has no overlap window | 0039 | **human decision** (GOZ-0039 clarification) |
+| GOZ-0003-IF-11 | medium | Owner-run backup and restore fail under FORCE. Dumps contain the signing key. Rotation has no overlap window | 0039 | **human-decided 2026-11-16: option A**; key rotation still open for GOZ-0039 |
 | GOZ-0003-IF-12 | medium | Catalog coverage gaps: definer functions outside `gozleme`; views, materialized views and foreign tables; policy content | 0003, 0013, 0015, 0017, 0039 | **corrected at `a81e54e`**; prompts refreshed (policy content stays with GOZ-0039) |
 | GOZ-0003-IF-13 | medium | Search, vector and caching under RLS: hashed-subplan filtering, ANN post-filter recall, unprotected external stores | 0013, 0015–0017, 0023 | applied to prompts |
 | GOZ-0003-IF-14 | medium | GOZ-0040 and GOZ-0041 account tables must join `GlobalIdentity` and its exact-set tests | 0040, 0041 | applied to prompts |
-| GOZ-0003-IF-15 | medium | Routing of GOZ-0003-OBS-01, the pre-existing GOZ-0001 re-sign-in session defect | 0001, 0040, 0041 | **human decision** |
+| GOZ-0003-IF-15 | medium | Routing of GOZ-0003-OBS-01, the pre-existing GOZ-0001 re-sign-in session defect | 0001, 0040, 0041 | **human-decided 2026-11-16: option A** (bugfix before GOZ-0040) |
 | GOZ-0003-IF-16 | low | The context key is a high-value secret that sandboxes and secret scans must cover | 0037, 0038, 0039 | applied to prompts |
 | GOZ-0003-IF-17 | low | research.md R5 and R11 differ from the code (`rls_internal` `PUBLIC` execute, verifier error trapping). The registry stage is stale | 0003 | **corrected at `a81e54e`** (research.md); registry sync with the Roadmap Steward |
 | GOZ-0003-IF-19 | medium | Policies cannot compare old and new rows. Guard triggers become the pattern for identity and lifecycle columns (from convergence C1), and `memberships` has no guard | 0004, 0021, 0023, 0033–0035, 0039–0041, all | applied to prompts (re-analysis at `a0421c0`) |
 | GOZ-0003-IF-18 | low | Stale prompt references (`BootstrapBoundaryTests.cs:23`→`:24`, the "until GOZ-0003 merges" bullet, a renamed test) | 0012, all | applied to prompts |
 
-Totals after re-analysis at `a0421c0`: 12 applied to prompts, 5 needing a human decision, and 2 corrected in GOZ-0003 (IF-12 in code, IF-17 in documentation). None is purely informational.
+Totals after the 2026-11-16 decisions: 12 applied to prompts, 5 decided by the maintainer (IF-03, IF-04, IF-08, IF-11 and IF-15; IF-11 leaves the key-rotation question open for GOZ-0039), and 2 corrected in GOZ-0003 (IF-12 in code, IF-17 in documentation). None is pending or purely informational.
 
 ## Prompt edits applied (within authority)
 
@@ -104,7 +104,38 @@ Totals after re-analysis at `a0421c0`: 12 applied to prompts, 5 needing a human 
 
 No outcome, scope, boundary, prerequisite, dependency, invariant or MVP commitment changed, and the DAG is unchanged. Where a finding would change one of them (IF-03, IF-04, IF-08, IF-11, IF-15), the prompts state only the verified fact and point to the pending decision. Earlier provenance bullets are left as written: new sections supersede them explicitly, as in the GOZ-0002 precedent. The edits were applied by a script and are idempotent: they are skipped if a `GOZ-0003-IF-` marker is already present. `make validate` passes after the edits (42 prompts, DAG, register in sync).
 
-## Maintainer decisions needed
+## Maintainer decisions (2026-11-16)
+
+The maintainer's decisions are recorded verbatim in `docs/specs/003-tenant-rls/progress.yaml` under `decisions`.
+
+- **IF-03: option A.** A reviewed migration may lift the owner binding only inside its own transaction, with the `gozleme.rls_helper` flag or `NO FORCE` and then `FORCE`. A superuser test asserts the per-row results. A migration may never disable a guard trigger.
+  - Applied to contract §5, `docs/engineering/local-development.md` and every downstream prompt.
+- **IF-04: option A.** Non-account principals use a second signed token kind that names one organization and a bounded purpose. The database verifies it with the same key, and a new policy branch, pinned by the catalog check, admits it.
+  - GOZ-0015 is the first consumer and designs the details.
+  - The prompts state it as the only sanctioned path: no `BYPASSRLS` role, no definer helper and no member service account.
+- **IF-08: option B.** A fourth table class (for example `InstanceReference`) holds tables with no `organization_id` and no tenant content. `gozleme_app` gets no DML on it except a pinned read path, enforced by its own `RlsCatalog` rule.
+  - The first spec that needs one adds it.
+  - Applied to GOZ-0005 to GOZ-0011 and GOZ-0023.
+- **IF-11: option A.** Backup and restore run as a superuser, as a documented operator procedure.
+  - **The key-rotation gap was not decided.** The GOZ-0039 prompt keeps it open for clarification: accept it as a residual, or plan versioned keys.
+- **IF-15: option A.** GOZ-0003-OBS-01 is fixed in a bounded `bugfix/goz-0001-resign-in-session` PR before GOZ-0040 starts. The PR carries a non-incidental regression test that uses both the old and the new cookie.
+  - The GOZ-0040 prompt makes the merged fix an entry condition.
+  - Neither GOZ-0040 nor GOZ-0041 may fix or work around the defect itself.
+
+Every downstream prompt ends with a `Maintainer decisions applied (… 2026-11-16)` provenance note.
+
+**Points the decision text leaves open for a downstream spec.** I did not decide these; I recorded them in the prompts.
+1. **IF-03 and GOZ-0004.** If GOZ-0004 guards a new role column, it is not stated whether populating that column in the same migration, before the guard is created, counts as "backfilling a guarded column". The prompt asks GOZ-0004 to confirm this with the maintainer during clarification.
+2. **IF-04 coverage.** "Non-account principals" is not stated to include anonymous callers. The token names an organization, which an anonymous caller does not have, so the prompts keep anonymous discovery with GOZ-0012 (GOZ-0001-IF-22). The prompts also note two consequences of the decision as worded:
+   - Work for several organizations needs one token per organization.
+   - "The same key" means every signing worker process holds the context key, which widens the secret's footprint (IF-16).
+   - "Pinned by the catalog check" requires the catalog check to inspect policy content, which it does not do today; GOZ-0015 designs how.
+3. **IF-08 scope.** "No DML except a pinned read path" excludes instance-wide tables that request handlers write, for example a publisher alias or namespace reservation. Such a table fits none of the four classes. The GOZ-0005 prompt says to keep it tenant-owned or ask the maintainer.
+   - The decision also does not say whether the "pinned read path" is a `SELECT`-only grant or a pinned function. A pinned definer function would get the `rls_internal()` bypass. The prompts leave this to the first consumer.
+   - GOZ-0023 epochs the application advances at request time cannot be instance reference data.
+4. **IF-15 sequencing.** The registry's prerequisites list spec IDs only, so the gate "bugfix merged before GOZ-0040" lives in the GOZ-0040 prompt, not in the DAG. The Roadmap Steward may want to record it as a blocker on GOZ-0040.
+
+## Maintainer decisions requested (2026-11-15; now decided, kept for the record)
 
 1. **GOZ-0003-IF-03: mechanism for cross-tenant data migrations.** Decide before the GOZ-0004 plan, whose initial-role rule depends on it. Options:
    - **(A)** A reviewed migration lifts the owner's binding inside its own transaction, using the transaction-local `gozleme.rls_helper` flag or `NO FORCE` and then `FORCE`. Transactional DDL means other sessions never see the window. A superuser test asserts the per-row results.

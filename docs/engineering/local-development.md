@@ -96,7 +96,7 @@ The application role is granted DML on every new `gozleme` table automatically, 
 2. in the **same** migration, `ENABLE` and `FORCE ROW LEVEL SECURITY` and create per-command policies of the form `CASE WHEN gozleme.rls_internal() THEN true ELSE organization_id IN (SELECT gozleme.account_organizations()) END`;
 3. be added to `TableClassification.TenantOwned` (`src/Gozleme.Api/Persistence/TableClassification.cs`).
 
-Global account-level tables go to `TableClassification.GlobalIdentity`. `RlsCatalogTests` fails on any unclassified or unprotected table, any extra `SECURITY DEFINER` function in `gozleme`, and any `PUBLIC` execute grant. Data migrations on tenant tables must sign a context; owner rights are not enough under FORCE.
+Global account-level tables go to `TableClassification.GlobalIdentity`. `RlsCatalogTests` fails on any unclassified or unprotected table, any extra `SECURITY DEFINER` function in `gozleme`, and any `PUBLIC` execute grant. Under FORCE a data migration on tenant tables sees no rows without a context, so it silently changes nothing. Maintainer decision 2026-11-16 (GOZ-0003-IF-03): a reviewed migration may lift the owner binding only inside its own transaction, with the transaction-local `gozleme.rls_helper` flag or `ALTER TABLE … NO FORCE ROW LEVEL SECURITY` and then `FORCE` before commit. A superuser test must assert the per-row results. A migration may never disable a guard trigger such as `invitations_guard`: guarded columns are not backfilled, and a needed change extends the guard in a new migration.
 
 ## Observability (foundational)
 
