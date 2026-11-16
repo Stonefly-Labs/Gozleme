@@ -14,7 +14,7 @@ public sealed class OrganizationTelemetryTests(PgvectorDatabaseFixture fixture) 
     private static readonly string[] Operations =
         ["create", "rename", "select", "invite_create", "invite_revoke", "invite_redeem", "member_remove", "member_leave"];
 
-    private static readonly string[] Categories = ["none", "validation", "not_found", "invalid_invitation", "last_member", "rate_limited"];
+    private static readonly string[] Categories = ["none", "validation", "not_found", "invalid_invitation", "last_member", "rate_limited", "refused_write"];
 
     private static readonly string[] LabelKeys = ["gozleme.org.operation", "gozleme.org.outcome", "gozleme.org.failure_category"];
 

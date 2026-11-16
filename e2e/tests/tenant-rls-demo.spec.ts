@@ -208,6 +208,11 @@ test("fail closed: an API whose key differs from the provisioned one shows no or
     expect(direct.status()).toBe(404);
     await expectAccessible(page);
     await page.screenshot({ path: `${shots}/04-mismatched-key-fails-closed.png`, fullPage: true });
+    // A create passes the application check and is refused by the database: "not found", never created.
+    const refusedCreate = await page.evaluate(
+      async () => (await fetch("/api/organizations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ displayName: "Refused under mismatched key" }) })).status,
+    );
+    expect(refusedCreate).toBe(404);
     await page.context().close();
 
     await expect
@@ -222,7 +227,12 @@ test("fail closed: an API whose key differs from the provisioned one shows no or
       .poll(
         async () => {
           metrics = await (await request.get(METRICS_URL)).text();
-          return metrics.split("\n").some((l) => l.startsWith("gozleme_tenant_denials_total{") && l.includes('gozleme_tenant_denial_reason="invalid"'));
+          const lines = metrics.split("\n");
+          return (
+            lines.some((l) => l.startsWith("gozleme_tenant_denials_total{") && l.includes('gozleme_tenant_denial_reason="invalid"')) &&
+            // The refused create closes its organization span and counter with a bounded category.
+            lines.some((l) => l.startsWith("gozleme_org_operations_total{") && l.includes('gozleme_org_operation="create"') && l.includes('gozleme_org_failure_category="refused_write"'))
+          );
         },
         { timeout: 120_000, intervals: [5000] },
       )

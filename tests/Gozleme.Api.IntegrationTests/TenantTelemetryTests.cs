@@ -106,6 +106,27 @@ public sealed class TenantTelemetryTests(PgvectorDatabaseFixture fixture) : IAsy
     }
 
     [Fact]
+    public async Task A_refused_write_ends_its_organization_span_with_a_bounded_failure_and_counts_it()
+    {
+        // The refusal unwinds through the handler, so the organization span must be closed as a failure
+        // before the filter turns the refusal into "not found" (GOZ-0002 R11 bounded span contract).
+        var ct = TestContext.Current.CancellationToken;
+        await using var mismatched = new GozlemeApiFactory(Db.AppConnectionString, new Dictionary<string, string?> { ["Gozleme:Rls:ContextKey"] = "a-different-key-of-sufficient-length-03" });
+        using var client = AuthClient.Create(mismatched);
+        (await AuthClient.RegisterAsync(client, AuthClient.NewEmail(), AuthClient.Password)).Dispose();
+        using var create = await OrgClient.CreateRawAsync(client, new { displayName = "Refused create" });
+        Assert.Equal(HttpStatusCode.NotFound, create.StatusCode);
+
+        var spans = await WaitForAsync(() => mismatched.SpansSnapshot(), s => s.Any(a => a.DisplayName == "gozleme.org.create"), ct);
+        var span = Assert.Single(spans, s => s.DisplayName == "gozleme.org.create");
+        Assert.Equal("failure", (string?)span.GetTagItem(OrganizationTelemetry.OutcomeTag));
+        Assert.Equal(OrgFailure.RefusedWrite, (string?)span.GetTagItem(OrganizationTelemetry.CategoryTag));
+        Assert.Equal(ActivityStatusCode.Error, span.Status);
+        Assert.Null(span.GetTagItem(OrganizationTelemetry.OrganizationIdTag));
+        Assert.Contains($"{OrganizationTelemetry.CategoryTag}={OrgFailure.RefusedWrite}", Labels(mismatched, "gozleme.org.operations"));
+    }
+
+    [Fact]
     public async Task A_refused_cross_tenant_write_is_answered_as_not_found_and_counted()
     {
         var t = await TwoTenants.CreateAsync(_factory);
@@ -154,7 +175,9 @@ public sealed class TenantTelemetryTests(PgvectorDatabaseFixture fixture) : IAsy
         Assert.Contains("gozleme.tenant.denial.reason=missing", DenialLabels(_factory));
     }
 
-    private static List<string> DenialLabels(GozlemeApiFactory factory)
+    private static List<string> DenialLabels(GozlemeApiFactory factory) => Labels(factory, "gozleme.tenant.denials");
+
+    private static List<string> Labels(GozlemeApiFactory factory, string metricName)
     {
         factory.FlushMetrics();
         Metric[] metrics;
@@ -164,7 +187,7 @@ public sealed class TenantTelemetryTests(PgvectorDatabaseFixture fixture) : IAsy
         }
 
         var labels = new List<string>();
-        foreach (var metric in metrics.Where(m => m.Name == "gozleme.tenant.denials"))
+        foreach (var metric in metrics.Where(m => m.Name == metricName))
         {
             foreach (ref readonly var point in metric.GetMetricPoints())
             {
