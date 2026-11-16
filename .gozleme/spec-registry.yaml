@@ -247,11 +247,11 @@ specs:
   - GOZ-0003-IF-18
   - GOZ-0003-IF-19
   pendingHumanDecisions:
-  - {finding: GOZ-0003-IF-03, status: pending, decideBefore: 'GOZ-0004 plan', topic: 'data migrations and cross-tenant backfills under FORCE RLS; whether a reviewed migration may disable a guard trigger (IF-19)'}
-  - {finding: GOZ-0003-IF-04, status: pending, decideBefore: 'GOZ-0015 (first consumer) at the latest', topic: 'tenant context for non-account principals'}
-  - {finding: GOZ-0003-IF-08, status: pending, decideBefore: 'GOZ-0005 clarification', topic: 'class for instance-wide non-identity tables before GOZ-0012 (conditional)'}
-  - {finding: GOZ-0003-IF-11, status: pending, decideBefore: 'GOZ-0039 clarification', topic: 'backup/restore under FORCE RLS, signing key in dumps, key-rotation overlap'}
-  - {finding: GOZ-0003-IF-15, status: pending, decideBefore: 'maintainer routing', topic: 'routing of GOZ-0003-OBS-01 (pre-existing GOZ-0001 re-sign-in session defect)'}
+  - {finding: GOZ-0003-IF-03, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: A, decideBefore: 'GOZ-0004 plan', topic: 'data migrations and cross-tenant backfills under FORCE RLS; whether a reviewed migration may disable a guard trigger (IF-19)'}
+  - {finding: GOZ-0003-IF-04, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: A, decideBefore: 'GOZ-0015 (first consumer) at the latest', topic: 'tenant context for non-account principals'}
+  - {finding: GOZ-0003-IF-08, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: B, decideBefore: 'GOZ-0005 clarification', topic: 'class for instance-wide non-identity tables before GOZ-0012 (conditional)'}
+  - {finding: GOZ-0003-IF-11, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: A, decideBefore: 'GOZ-0039 clarification', topic: 'backup/restore under FORCE RLS, signing key in dumps, key-rotation overlap'}
+  - {finding: GOZ-0003-IF-15, status: decided, decidedAt: '2026-11-16', decidedBy: maintainer, option: A, decideBefore: 'maintainer routing', topic: 'routing of GOZ-0003-OBS-01 (pre-existing GOZ-0001 re-sign-in session defect)'}
   evidence:
     tests:
     - docs/specs/003-tenant-rls/progress.yaml
@@ -1504,7 +1504,8 @@ specs:
     roadmapSync: pending
     humanReview: pending
     merge: pending
-  blockers: []
+  blockers:
+  - 'Entry condition (maintainer decision GOZ-0003-IF-15, 2026-11-16): the bugfix/goz-0001-resign-in-session fix for GOZ-0003-OBS-01 must be merged before GOZ-0040 starts'
   impactFindings: []
   evidence:
     tests: []
