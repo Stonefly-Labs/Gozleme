@@ -56,8 +56,9 @@ internal static class RlsCatalog
             }
         }
 
-        // Views, materialized views and foreign tables have no classification. A view that is not
-        // security_invoker reads its tables as the owner, which rls_internal() treats as a helper (GOZ-0003-IF-12).
+        // Views, materialized views and foreign tables cannot be classified, so none may exist in gozleme
+        // (GOZ-0003-IF-12). A materialized view stores rows without row-level security, and a foreign table
+        // reaches data outside these policies.
         await using (var relations = new NpgsqlCommand("""
             SELECT c.relname, CASE c.relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' ELSE 'foreign table' END
             FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace

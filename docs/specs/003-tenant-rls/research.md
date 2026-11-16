@@ -235,7 +235,7 @@ queries `pg_class`/`pg_policy` for schema `gozleme` and reports:
 - any table in `SharedPublic`;
 - a `SECURITY DEFINER` function in `gozleme` that is not in the pinned helper list (R5), or lacks a fixed `search_path`. Any such function would get the R4 owner bypass;
 - a migrator-owned `SECURITY DEFINER` function in any other non-system schema (GOZ-0003-IF-12);
-- a view, materialized view or foreign table in `gozleme`, since none can be classified and a non-`security_invoker` view reads as the owner (GOZ-0003-IF-12);
+- a view, materialized view or foreign table in `gozleme`, since none can be classified: a materialized view stores rows without row-level security, and a foreign table reaches data outside these policies (GOZ-0003-IF-12). A probe on 2026-11-16 confirmed that a plain view does not bypass the guard: inside it `current_user` stays the caller, so `rls_internal()` is false and the serving role saw 0 of 5 rows;
 - `EXECUTE` granted to `PUBLIC` on any non-extension function in `gozleme` or `gozleme_private`;
 - any privilege for `gozleme_app` in `gozleme_private`.
 
