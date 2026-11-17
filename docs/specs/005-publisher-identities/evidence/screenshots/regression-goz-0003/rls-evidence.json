@@ -1,0 +1,126 @@
+{
+  "spec": "GOZ-0003",
+  "capturedAt": "2026-11-17T14:38:02.880Z",
+  "superuserOrganizationCount": 14,
+  "catalog": "invitations:true:true:4,memberships:true:true:4,organizations:true:true:3",
+  "contexts": [
+    {
+      "role": "gozleme_app",
+      "context": "no context",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_app",
+      "context": "plain account id (forged)",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_app",
+      "context": "signed with the wrong key",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_app",
+      "context": "tampered (account swapped, MAC kept)",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_app",
+      "context": "expired",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_app",
+      "context": "signed for alice",
+      "organizations": 13,
+      "memberships": 14,
+      "partnerVisible": false,
+      "demoVisible": true
+    },
+    {
+      "role": "gozleme_app",
+      "context": "signed for dave",
+      "organizations": 1,
+      "memberships": 1,
+      "partnerVisible": true,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_migrator",
+      "context": "no context",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_migrator",
+      "context": "plain account id (forged)",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_migrator",
+      "context": "signed with the wrong key",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_migrator",
+      "context": "tampered (account swapped, MAC kept)",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_migrator",
+      "context": "expired",
+      "organizations": 0,
+      "memberships": 0,
+      "partnerVisible": false,
+      "demoVisible": false
+    },
+    {
+      "role": "gozleme_migrator",
+      "context": "signed for alice",
+      "organizations": 13,
+      "memberships": 14,
+      "partnerVisible": false,
+      "demoVisible": true
+    },
+    {
+      "role": "gozleme_migrator",
+      "context": "signed for dave",
+      "organizations": 1,
+      "memberships": 1,
+      "partnerVisible": true,
+      "demoVisible": false
+    }
+  ],
+  "appRoleRefusals": {
+    "readKey": true,
+    "callVerifier": true,
+    "disableRls": true,
+    "bypassSetting": true
+  }
+}

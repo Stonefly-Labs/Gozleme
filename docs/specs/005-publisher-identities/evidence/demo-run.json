@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0005",
-  "commit": "03ead476c89486792f2d6fa773cc4c6b33b1fe3b",
+  "commit": "536faf3f2eb871a5702a6e719f23cc90bb06f516",
   "branch": "feature/goz-0005-publisher-identities",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-17T03:20:45Z",
-  "finishedAt": "2026-11-17T03:26:14Z",
-  "stackStartupSeconds": 6,
+  "startedAt": "2026-11-17T14:35:35Z",
+  "finishedAt": "2026-11-17T14:41:24Z",
+  "stackStartupSeconds": 22,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -212,8 +212,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 209 ms",
-    "sign-in\u2192dashboard 161 ms"
+    "register\u2192dashboard 227 ms",
+    "sign-in\u2192dashboard 187 ms"
   ],
   "evidence": [
     "docs/specs/005-publisher-identities/evidence/screenshots/01-admin-registers-publisher.png",
