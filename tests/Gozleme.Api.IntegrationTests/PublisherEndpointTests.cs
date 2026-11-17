@@ -60,7 +60,8 @@ public sealed partial class PublisherEndpointTests(PgvectorDatabaseFixture fixtu
         var publisherId = publisher.GetProperty("id").GetString()!;
         Assert.Equal(handle, publisher.GetProperty("handle").GetString());
         Assert.Equal(_orgA, publisher.GetProperty("organizationId").GetString()); // FR-009: the opaque organization reference
-        Assert.Equal($"gz://{GozlemeDatabase.Origin}/pub/{publisherId}", publisher.GetProperty("publisherId").GetString());
+        Assert.Equal($"gz://{GozlemeDatabase.Origin}/pub/{publisherId}", publisher.GetProperty("canonicalId").GetString());
+        Assert.False(publisher.TryGetProperty("publisherId", out _)); // one name per meaning (maintainer, 2026-11-17)
         Assert.Matches(UuidV7(), publisherId);
         Assert.Equal("active", publisher.GetProperty("state").GetString());
         Assert.Equal($"/api/v1/organizations/{_orgA}/publishers/{publisherId}", registered.Headers.Location?.OriginalString);
@@ -108,7 +109,7 @@ public sealed partial class PublisherEndpointTests(PgvectorDatabaseFixture fixtu
         {
             Assert.Equal(HttpStatusCode.OK, publisherRenamed.StatusCode);
             var json = await AuthClient.JsonAsync(publisherRenamed);
-            Assert.Equal(publisher.GetProperty("publisherId").GetString(), json.GetProperty("publisherId").GetString());
+            Assert.Equal(publisher.GetProperty("canonicalId").GetString(), json.GetProperty("canonicalId").GetString());
             Assert.Equal(handle, json.GetProperty("handle").GetString());
         }
 

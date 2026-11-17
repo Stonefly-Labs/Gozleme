@@ -135,6 +135,41 @@ public sealed class HandleClaimTests(PgvectorDatabaseFixture fixture) : IAsyncLi
         Assert.Equal(1, await Rows(bobPublisherId, insert("radar")));
     }
 
+    [Fact]
+    public async Task A_publisher_cannot_hold_a_claim_on_a_handle_other_than_its_own()
+    {
+        // bob's organization holds `victim`; alice tries to give a publisher row carrying `victim` a claim on a free
+        // handle, which would let its capabilities reserve `victim/<name>` aliases (converge F1, security finding 1).
+        var victim = OrgClient.NewHandle("vic");
+        await OrgClient.RegisterPublisherAsync(_bob, _orgB.ToString(), victim);
+        var free = OrgClient.NewHandle("free");
+        var publisher = Guid.CreateVersion7();
+        var insertPublisher = $"INSERT INTO gozleme.publishers (id, organization_id, handle, display_name, created_at, created_by, updated_at) VALUES ('{publisher}', '{_orgA}', '{victim}', 'X', now(), '{_aliceId}', now())";
+        var held = $"{insertPublisher}; INSERT INTO gozleme.handle_claims (id, handle, status, organization_id, publisher_id, held_at) VALUES (gen_random_uuid(), '{free}', 'held', '{_orgA}', '{publisher}', now())";
+        Assert.Equal(Refused, await Fails(_aliceId, held));
+        Assert.Equal(Refused, await OwnerAsMemberFails(_aliceId, held));
+
+        var earmarked = OrgClient.NewHandle("mark");
+        await Operator($"INSERT INTO gozleme.handle_claims (id, handle, status, organization_id) VALUES (gen_random_uuid(), '{earmarked}', 'earmarked', '{_orgA}')");
+        var consume = $"{insertPublisher}; UPDATE gozleme.handle_claims SET status = 'held', held_at = now(), publisher_id = '{publisher}' WHERE handle = '{earmarked}' AND status = 'earmarked'";
+        Assert.Equal(Refused, await Fails(_aliceId, consume));
+        Assert.Equal(Refused, await OwnerAsMemberFails(_aliceId, consume));
+
+        // The matching handle is still accepted, and the earmark is untouched by the refused attempts.
+        Assert.Equal("earmarked", await Db.ScalarAsync<string>($"SELECT status FROM gozleme.handle_claims WHERE handle = '{earmarked}'"));
+        await OrgClient.RegisterPublisherAsync(_alice, _orgA.ToString(), earmarked);
+        Assert.Equal("held", await Db.ScalarAsync<string>($"SELECT status FROM gozleme.handle_claims WHERE handle = '{earmarked}'"));
+    }
+
+    [Fact]
+    public async Task Claim_timestamps_come_from_the_database_clock()
+    {
+        var handle = OrgClient.NewHandle("clock");
+        await Operator($"INSERT INTO gozleme.handle_claims (id, handle, status, created_at) VALUES (gen_random_uuid(), '{handle}', 'blocked', now() - interval '10 days')");
+        await Operator($"UPDATE gozleme.handle_claims SET status = 'released', ended_at = now() - interval '10 days' WHERE handle = '{handle}' AND status = 'blocked'");
+        Assert.Equal(0, await Db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.handle_claims WHERE handle = '{handle}' AND (created_at < now() - interval '1 hour' OR ended_at < now() - interval '1 hour')"));
+    }
+
     private static string Context(Guid account) => GozlemeDatabase.Establish(GozlemeDatabase.SignContext(account));
 
     private Task Operator(string sql) => GozlemeDatabase.ExecuteAsync(sql, Db.MigratorConnectionString);

@@ -112,7 +112,7 @@ export function RegisterPublisherForm({ organizationId }: { organizationId: stri
             <code data-testid="confirmed-organization">{registered.organizationId}</code>.
           </p>
           <p>
-            Publisher ID <CanonicalId value={registered.publisherId} label="publisher ID" testId="confirmed-publisher-id" />
+            Publisher ID <CanonicalId value={registered.canonicalId} label="publisher ID" testId="confirmed-publisher-id" />
           </p>
         </div>
       )}

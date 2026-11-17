@@ -1,6 +1,8 @@
 using System.Net;
 using Gozleme.Api.IntegrationTests.Infrastructure;
 using Gozleme.Api.Publishers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 
 namespace Gozleme.Api.IntegrationTests;
@@ -83,7 +85,43 @@ public sealed class RegistryOriginTests : IAsyncLifetime
         using var _a = alice;
         var org = await OrgClient.CreateAsync(alice, "Origin later");
         var publisher = await OrgClient.RegisterPublisherAsync(alice, org);
-        Assert.StartsWith($"gz://{GozlemeDatabase.Origin}/pub/", publisher.GetProperty("publisherId").GetString(), StringComparison.Ordinal);
+        Assert.StartsWith($"gz://{GozlemeDatabase.Origin}/pub/", publisher.GetProperty("canonicalId").GetString(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Registry.Example.com")]
+    [InlineData("https://registry.example.com")]
+    public async Task The_api_refuses_to_start_without_a_valid_origin(string? origin)
+    {
+        Assert.Equal(0, await _db.MigrateAsync());
+        await using var factory = new GozlemeApiFactory(_db.AppConnectionString, new Dictionary<string, string?> { ["Gozleme:Registry:Origin"] = origin });
+        var ex = Record.Exception(() => factory.CreateClient());
+        Assert.NotNull(ex);
+        Assert.Contains("Gozleme:Registry:Origin", ex.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_mismatch_first_seen_after_a_deferred_start_stops_the_api()
+    {
+        Assert.Equal(0, await _db.MigrateAsync());
+        var ct = TestContext.Current.CancellationToken;
+        await _db.StopAsync();
+        await using var factory = new GozlemeApiFactory(_db.AppConnectionString, new Dictionary<string, string?> { ["Gozleme:Registry:Origin"] = "other.test.gozleme.test" });
+        using var anonymous = factory.CreateClient(); // starts: verification deferred
+        Assert.Equal(HttpStatusCode.OK, (await anonymous.GetAsync("/health/live", ct)).StatusCode);
+        var stopping = factory.Services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping;
+        var reader = factory.Services.GetRequiredService<RegistryOriginReader>();
+
+        // Every publisher endpoint asks the one read path first; call it directly, because the in-memory test host
+        // disposes its services under the in-flight request that triggers the stop.
+        await _db.StartAgainAsync();
+        Assert.False(stopping.IsCancellationRequested);
+        Assert.Null(await reader.GetVerifiedOriginAsync(ct));
+        Assert.True(stopping.IsCancellationRequested);
+        Assert.Contains(factory.Logs, l => l.StartsWith("Critical", StringComparison.Ordinal) && l.Contains("differs from the recorded origin; stopping", StringComparison.Ordinal));
+        Assert.Equal(0, await _db.ScalarAsync<long>("SELECT count(*) FROM gozleme.publishers"));
     }
 
     [Fact]

@@ -16,7 +16,7 @@ const CAP = "0193a000-0000-7000-8000-000000000009";
 const ORIGIN = "registry.demo.gozleme.test";
 const publisher: Publisher = {
   id: PUB,
-  publisherId: `gz://${ORIGIN}/pub/${PUB}`,
+  canonicalId: `gz://${ORIGIN}/pub/${PUB}`,
   origin: ORIGIN,
   organizationId: ORG,
   handle: "acme-tools",
@@ -66,7 +66,7 @@ describe("RegisterPublisherForm", () => {
     fireEvent.change(screen.getByLabelText("Handle"), { target: { value: "acme-tools" } });
     fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Acme Tools" } });
     fireEvent.click(screen.getByRole("button", { name: "Register publisher" }));
-    expect(await screen.findByTestId("confirmed-publisher-id")).toHaveTextContent(publisher.publisherId);
+    expect(await screen.findByTestId("confirmed-publisher-id")).toHaveTextContent(publisher.canonicalId);
     expect(screen.getByTestId("confirmed-organization")).toHaveTextContent(ORG);
     expect(screen.getByTestId("confirmed-handle")).toHaveTextContent("acme-tools");
     expect(sent(spy)).toEqual({ url: `/api/organizations/${ORG}/publishers`, method: "POST", body: { handle: "acme-tools", displayName: "Acme Tools" } });
@@ -107,10 +107,10 @@ describe("RegisterPublisherForm", () => {
 
 describe("PublisherList", () => {
   it("lists handles, display names, publisher ids and states with links by opaque id", () => {
-    render(<PublisherList organizationId={ORG} publishers={[publisher, { ...publisher, id: "p2", publisherId: `gz://${ORIGIN}/pub/p2`, handle: "squatter", state: "suspended" }]} />);
+    render(<PublisherList organizationId={ORG} publishers={[publisher, { ...publisher, id: "p2", canonicalId: `gz://${ORIGIN}/pub/p2`, handle: "squatter", state: "suspended" }]} />);
     expect(screen.getAllByTestId("publisher-row")).toHaveLength(2);
     expect(screen.getByRole("link", { name: "acme-tools" })).toHaveAttribute("href", `/organizations/${ORG}/publishers/${PUB}`);
-    expect(screen.getByText(publisher.publisherId)).toBeInTheDocument();
+    expect(screen.getByText(publisher.canonicalId)).toBeInTheDocument();
     expect(screen.getByTestId("suspended-badge")).toHaveTextContent("Suspended");
   });
 

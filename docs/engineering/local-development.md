@@ -108,7 +108,7 @@ emits the span `gozleme.authz.decision` and the counter `gozleme.authz.decisions
 
 - **Upgrading existing data**: the `ScopedRbac` migration changes only the schema. Every member that exists before it becomes `{admin,member}`, so nobody loses the ability to manage their organization; admins can then remove `admin` from members in the UI. There is no data migration.
 - **Out-of-band SQL**: because the guard binds superusers, a manual repair of memberships needs `SET session_replication_role = replica` in its own session (tests use this for drift).
-- **Demo seed**: `seed` acts as a seeded admin. It restores alice `{admin,member}` and carol `{member}` in Seeded Demo Org and dave `{admin,member}` in Seeded Partner Org. If no seeded member of an organization holds `admin`, it stops with "run make reset".
+- **Demo seed**: `seed` acts as a seeded admin. It restores alice `{admin,member}` and carol `{member,publisher}` (GOZ-0005) in Seeded Demo Org and dave `{admin,member}` in Seeded Partner Org. If no seeded member of an organization holds `admin`, it stops with "run make reset".
 
 ### Adding a tenant-owned table
 
@@ -118,7 +118,12 @@ The application role is granted DML on every new `gozleme` table automatically, 
 2. in the **same** migration, `ENABLE` and `FORCE ROW LEVEL SECURITY` and create per-command policies of the form `CASE WHEN gozleme.rls_internal() THEN true ELSE organization_id IN (SELECT gozleme.account_organizations()) END`;
 3. be added to `TableClassification.TenantOwned` (`src/Gozleme.Api/Persistence/TableClassification.cs`).
 
-Global account-level tables go to `TableClassification.GlobalIdentity`. `RlsCatalogTests` fails on any unclassified or unprotected table, any extra `SECURITY DEFINER` function in `gozleme`, and any `PUBLIC` execute grant. Under FORCE a data migration on tenant tables sees no rows without a context, so it silently changes nothing. Maintainer decision 2026-11-16 (GOZ-0003-IF-03): a reviewed migration may lift the owner binding only inside its own transaction, with the transaction-local `gozleme.rls_helper` flag or `ALTER TABLE … NO FORCE ROW LEVEL SECURITY` and then `FORCE` before commit. A superuser test must assert the per-row results. A migration may never disable a guard trigger such as `invitations_guard`: guarded columns are not backfilled, and a needed change extends the guard in a new migration.
+Global account-level tables go to `TableClassification.GlobalIdentity`. GOZ-0005 adds two installation classes, each with a privilege set pinned per table in `TableClassification`:
+
+- **`InstanceReference`** (`registry_origin`): written only by migrations; no `organization_id`, `gozleme_app` holds exactly its pinned privileges with no column-level grant, and no view depends on it, so it has one read path.
+- **`InstanceClaims`** (`handle_claims`, `alias_reservations`): written by request handlers; RLS enabled but **not** forced, so the owner login is the installation authority (operator handle commands) while `gozleme_app` is bound by at least one policy; never `DELETE` or `TRUNCATE` for `gozleme_app`. Guard triggers bind every login to the allowed one-way transitions.
+
+ `RlsCatalogTests` fails on any unclassified or unprotected table, any extra `SECURITY DEFINER` function in `gozleme`, and any `PUBLIC` execute grant. Under FORCE a data migration on tenant tables sees no rows without a context, so it silently changes nothing. Maintainer decision 2026-11-16 (GOZ-0003-IF-03): a reviewed migration may lift the owner binding only inside its own transaction, with the transaction-local `gozleme.rls_helper` flag or `ALTER TABLE … NO FORCE ROW LEVEL SECURITY` and then `FORCE` before commit. A superuser test must assert the per-row results. A migration may never disable a guard trigger such as `invitations_guard`: guarded columns are not backfilled, and a needed change extends the guard in a new migration.
 
 ## Observability (foundational)
 

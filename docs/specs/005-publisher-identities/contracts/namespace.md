@@ -21,6 +21,9 @@ Changing anything here is a contract change.
 - `<uuid>` is lowercase, hyphenated and 36 characters long.
 - An identifier never embeds an organization ID, a handle, a capability name or a display name.
 - Identifiers are never reassigned or reused. An alias is reserved to its capability forever, including after its handle is reclaimed.
+- The publisher ID form is a maintainer decision (2026-11-17), as permanent as the capability ID form (Q4). In API responses both are named `canonicalId`.
+- A handle resolves to a publisher **only through its held claim** (`handle_claims.status = 'held'`). `publishers.handle` is not unique: after a reclaim, a suspended publisher and the new holder show the same handle. The database requires a held claim's handle to equal its publisher's handle.
+- Alias resolution (alias → canonical ID) is **not offered in v1**. `gozleme_app` may only insert into `alias_reservations`. A later spec that resolves aliases must add a read path, which changes the pinned `InstanceClaims` privileges and needs security review.
 
 ## Handles and capability names
 

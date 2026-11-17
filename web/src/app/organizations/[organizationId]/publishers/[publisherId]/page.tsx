@@ -83,7 +83,7 @@ export default async function PublisherPage({
                 <div className="row">
                   <dt>Publisher ID</dt>
                   <dd>
-                    <CanonicalId value={publisher.data.publisherId} label="publisher ID" testId="publisher-id" />
+                    <CanonicalId value={publisher.data.canonicalId} label="publisher ID" testId="publisher-id" />
                   </dd>
                 </div>
                 <div className="row">

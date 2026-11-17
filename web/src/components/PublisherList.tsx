@@ -30,7 +30,7 @@ export function PublisherList({ organizationId, publishers }: { organizationId: 
                 </td>
                 <td className="cell-wrap">{p.displayName}</td>
                 <td className="cell-wrap">
-                  <CanonicalId value={p.publisherId} label={`publisher ID of ${p.handle}`} />
+                  <CanonicalId value={p.canonicalId} label={`publisher ID of ${p.handle}`} />
                 </td>
                 <td>
                   <StateBadge state={p.state} />

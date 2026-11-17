@@ -169,18 +169,20 @@ internal sealed partial class PublisherIdentities : Migration
                 ELSE gozleme.account_has_role(organization_id, 'publisher')
                  AND EXISTS (SELECT 1 FROM gozleme.handle_claims c WHERE c.publisher_id = capabilities.publisher_id AND c.status = 'held') END);
 
-            -- The application sees only its own organizations' entries; blocked rows have none (research R3).
+            -- The application sees only its own organizations' entries; blocked rows have none (research R3). A held
+            -- claim names a publisher of the same organization carrying the same handle, so a publisher row cannot
+            -- borrow another handle's claim and reserve aliases under a handle it does not hold.
             CREATE POLICY handle_claims_select ON gozleme.handle_claims FOR SELECT USING (
               organization_id IN (SELECT gozleme.account_organizations()));
             CREATE POLICY handle_claims_insert ON gozleme.handle_claims FOR INSERT WITH CHECK (CASE
               WHEN status <> 'held' THEN false
               ELSE gozleme.account_has_role(organization_id, 'admin')
-               AND publisher_id IN (SELECT p.id FROM gozleme.publishers p WHERE p.organization_id = handle_claims.organization_id) END);
+               AND publisher_id IN (SELECT p.id FROM gozleme.publishers p WHERE p.organization_id = handle_claims.organization_id AND p.handle = handle_claims.handle) END);
             CREATE POLICY handle_claims_update ON gozleme.handle_claims FOR UPDATE
               USING (CASE WHEN status <> 'earmarked' THEN false ELSE gozleme.account_has_role(organization_id, 'admin') END)
               WITH CHECK (CASE WHEN status <> 'held' THEN false
                 ELSE gozleme.account_has_role(organization_id, 'admin')
-                 AND publisher_id IN (SELECT p.id FROM gozleme.publishers p WHERE p.organization_id = handle_claims.organization_id) END);
+                 AND publisher_id IN (SELECT p.id FROM gozleme.publishers p WHERE p.organization_id = handle_claims.organization_id AND p.handle = handle_claims.handle) END);
             CREATE POLICY alias_reservations_insert ON gozleme.alias_reservations FOR INSERT WITH CHECK (
               gozleme.account_has_role(organization_id, 'publisher'));
             REVOKE DELETE, TRUNCATE ON gozleme.publishers, gozleme.capabilities, gozleme.handle_claims, gozleme.alias_reservations, gozleme.registry_origin FROM gozleme_app;
@@ -236,6 +238,9 @@ internal sealed partial class PublisherIdentities : Migration
               END IF;
               IF TG_OP = 'INSERT' THEN
                 IF (NEW.status IN ('blocked', 'earmarked') AND operator) OR (NEW.status = 'held' AND member) THEN
+                  -- Audit chronology comes from the database clock, never from the caller.
+                  NEW.created_at := now();
+                  NEW.held_at := CASE WHEN NEW.status = 'held' THEN now() END;
                   RETURN NEW;
                 END IF;
                 RAISE EXCEPTION 'handle claim change refused' USING ERRCODE = 'insufficient_privilege';
@@ -247,6 +252,11 @@ internal sealed partial class PublisherIdentities : Migration
                           AND NEW.publisher_id IS NOT DISTINCT FROM OLD.publisher_id AND NEW.held_at IS NOT DISTINCT FROM OLD.held_at)
                       OR (OLD.status IN ('blocked', 'earmarked') AND NEW.status = 'released' AND operator)) THEN
                 RAISE EXCEPTION 'handle claim change refused' USING ERRCODE = 'insufficient_privilege';
+              END IF;
+              IF NEW.status = 'held' THEN
+                NEW.held_at := now();
+              ELSE
+                NEW.ended_at := now();
               END IF;
               RETURN NEW;
             END $fn$;

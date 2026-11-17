@@ -180,10 +180,10 @@ components:
       properties: { displayName: { type: string, minLength: 1, maxLength: 100 } }
     Publisher:
       type: object
-      required: [id, publisherId, origin, organizationId, handle, displayName, state, createdAt, updatedAt]
+      required: [id, canonicalId, origin, organizationId, handle, displayName, state, createdAt, updatedAt]
       properties:
         id: { type: string, format: uuid }
-        publisherId: { type: string, example: 'gz://registry.demo.gozleme.test/pub/0193a5c2-7d1e-7c3a-9f00-1a2b3c4d5e6f' }
+        canonicalId: { type: string, example: 'gz://registry.demo.gozleme.test/pub/0193a5c2-7d1e-7c3a-9f00-1a2b3c4d5e6f' }
         origin: { type: string, example: registry.demo.gozleme.test }
         organizationId: { type: string, format: uuid, description: 'Unambiguous organization reference for confirmation (FR-009)' }
         handle: { type: string }

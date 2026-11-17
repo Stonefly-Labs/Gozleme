@@ -26,7 +26,7 @@ internal static class HandleOperatorCommands
 
     public static bool Handles(string? command) => command is "handle-reserve" or "handle-release" or "handle-reclaim";
 
-    public static async Task<int> RunAsync(string command, string[] args, TextWriter stdout, TextWriter stderr)
+    public static async Task<int> RunAsync(string command, string[] args, TextWriter stdout, TextWriter stderr, ILoggerProvider? logs = null)
     {
         var usage = command switch
         {
@@ -46,6 +46,11 @@ internal static class HandleOperatorCommands
         builder.Logging.ClearProviders();
         builder.Logging.AddJsonConsole(o => o.UseUtcTimestamp = true);
         builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+        if (logs is not null)
+        {
+            builder.Logging.AddProvider(logs); // tests capture the audit events
+        }
+
         builder.AddGozlemeTelemetry(ServiceName);
         builder.Services.AddSingleton<SecurityAudit>();
         using var host = builder.Build();

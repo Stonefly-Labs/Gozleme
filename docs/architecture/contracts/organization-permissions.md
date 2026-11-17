@@ -12,10 +12,13 @@ this file in their own slice. The broader authorization architecture is `docs/ar
 
 ## Decision procedure
 
+0. **Origin verified (publisher and capability endpoints, GOZ-0005).** Until the API has verified the recorded registry origin, these endpoints answer `503 {"error":"unavailable"}`, the same body as a database outage, before any membership check. It reflects installation state and reveals nothing about a tenant.
 1. **Membership first.** A malformed organization id, an unknown organization and a non-member all get the identical empty `404` with `Cache-Control: no-store`. A non-member never sees `403`.
 2. **Permission.** The caller's roles are read from the database in the request's transaction. The permitted actions are the union of each held role's actions. If the action is not permitted, the answer is `403 {"error":"forbidden"}` and nothing changes.
 3. **Rule checks.** Validation (`400`), last member / last admin (`409`), then the change. Publisher and
    capability endpoints (GOZ-0005) check validation (`400`), then the target (`404`), then suspension (`409`).
+   Publisher registration takes one permit from the caller's hourly budget after the permission check and
+   before validation; an exhausted budget answers `429 {"error":"rate_limited"}`, so a non-member never sees `429`.
 
 Inputs are exactly `(the caller's roles in this organization, action)`. There are no conditions,
 attributes, per-user or per-resource grants, deny rules or policy documents. A role is held only

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using Gozleme.Api.Identity;
@@ -13,6 +14,7 @@ namespace Gozleme.Api.IntegrationTests;
 /// </summary>
 public sealed class OperatorHandleCommandTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
+    private readonly ConcurrentQueue<string> _logs = new();
     private GozlemeApiFactory _factory = null!;
     private HttpClient _alice = null!;
     private HttpClient _bob = null!;
@@ -79,9 +81,43 @@ public sealed class OperatorHandleCommandTests(PgvectorDatabaseFixture fixture) 
         Assert.Equal(HandleOperatorCommands.UnknownTarget, (await RunAsync("handle-reclaim", "--handle", handle)).Code); // nothing held now
         await OrgClient.RegisterPublisherAsync(_alice, _orgA.ToString(), handle);
 
-        var span = Assert.Single(spans, s => s.OperationName == "gozleme.operator.handle_reclaim" && (int?)s.GetTagItem(PublisherTelemetry.ExitCodeTag) == 0);
-        Assert.DoesNotContain(span.TagObjects, t => t.Value?.ToString()?.Contains(handle, StringComparison.Ordinal) == true);
+        // The listener is process-wide and other classes reclaim concurrently, so match rather than count.
+        var reclaims = spans.Where(s => s.OperationName == "gozleme.operator.handle_reclaim").ToList();
+        Assert.Contains(reclaims, s => (int?)s.GetTagItem(PublisherTelemetry.ExitCodeTag) == 0);
+        Assert.All(reclaims, s => Assert.DoesNotContain(s.TagObjects, t => t.Value?.ToString()?.Contains(handle, StringComparison.Ordinal) == true));
         Assert.DoesNotContain(handle, stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Reserve_release_and_reclaim_are_audited_with_opaque_ids_only()
+    {
+        var blocked = OrgClient.NewHandle("aud");
+        var earmark = OrgClient.NewHandle("aud");
+        var held = OrgClient.NewHandle("aud");
+        var publisher = (await OrgClient.RegisterPublisherAsync(_bob, _orgB.ToString(), held)).GetProperty("id").GetString()!;
+        Assert.Equal(HandleOperatorCommands.Ok, (await RunAsync("handle-reserve", "--handle", blocked)).Code);
+        Assert.Equal(HandleOperatorCommands.Ok, (await RunAsync("handle-reserve", "--handle", earmark, "--organization", _orgA.ToString())).Code);
+        Assert.Equal(HandleOperatorCommands.Ok, (await RunAsync("handle-release", "--handle", blocked)).Code);
+        Assert.Equal(HandleOperatorCommands.Ok, (await RunAsync("handle-reclaim", "--handle", held)).Code);
+
+        var claim = (string h) => Db.ScalarAsync<Guid>($"SELECT id FROM gozleme.handle_claims WHERE handle = '{h}' ORDER BY created_at LIMIT 1");
+        var (blockedClaim, earmarkClaim, heldClaim) = (await claim(blocked), await claim(earmark), await claim(held));
+        var audit = _logs.Where(l => l.Contains("Gozleme.Security.Audit", StringComparison.Ordinal)).ToList();
+        foreach (var expected in new[]
+                 {
+                     $"Warning Gozleme.Security.Audit: Operator reserved handle claim {blockedClaim} (blocked) for (null)", // 1406
+                     $"Warning Gozleme.Security.Audit: Operator reserved handle claim {earmarkClaim} (earmarked) for {_orgA}", // 1406
+                     $"Warning Gozleme.Security.Audit: Operator released handle claim {blockedClaim}", // 1407
+                 })
+        {
+            Assert.Contains(audit, l => l.StartsWith(expected, StringComparison.Ordinal));
+        }
+
+        Assert.Contains(audit, l => l.StartsWith($"Warning Gozleme.Security.Audit: Operator reclaimed handle claim {heldClaim}; publisher {publisher} of {_orgB} suspended", StringComparison.Ordinal)); // 1408
+        foreach (var handle in new[] { blocked, earmark, held })
+        {
+            Assert.DoesNotContain(_logs, l => l.Contains(handle, StringComparison.Ordinal));
+        }
     }
 
     [Fact]
@@ -149,13 +185,14 @@ public sealed class OperatorHandleCommandTests(PgvectorDatabaseFixture fixture) 
         }
     }
 
-    private Task<(int Code, string Stdout, string Stderr)> RunAsync(string command, params string[] args) => RunAsync(command, args, Db.MigratorConnectionString);
+    private Task<(int Code, string Stdout, string Stderr)> RunAsync(string command, params string[] args) => RunAsync(command, args, Db.MigratorConnectionString, _logs);
 
-    private static async Task<(int Code, string Stdout, string Stderr)> RunAsync(string command, string[] args, string connectionString)
+    private static async Task<(int Code, string Stdout, string Stderr)> RunAsync(string command, string[] args, string connectionString, ConcurrentQueue<string>? logs = null)
     {
         using var stdout = new StringWriter();
         using var stderr = new StringWriter();
-        var code = await HandleOperatorCommands.RunAsync(command, [.. args, $"--ConnectionStrings:GozlemeMigrator={connectionString}"], stdout, stderr);
+        using var provider = logs is null ? null : new GozlemeApiFactory.CapturingLoggerProvider(logs);
+        var code = await HandleOperatorCommands.RunAsync(command, [.. args, $"--ConnectionStrings:GozlemeMigrator={connectionString}"], stdout, stderr, provider);
         return (code, stdout.ToString(), stderr.ToString());
     }
 

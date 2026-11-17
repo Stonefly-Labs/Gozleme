@@ -165,11 +165,11 @@ test("an admin registers a publisher and a publisher member creates and renames 
   await expectAccessible(alice);
   await alice.screenshot({ path: `${shots}/01-admin-registers-publisher.png`, fullPage: true });
 
-  const listed = (await api(alice, "GET", `${ORG_API}/publishers`)).json!.publishers as { id: string; handle: string; publisherId: string }[];
+  const listed = (await api(alice, "GET", `${ORG_API}/publishers`)).json!.publishers as { id: string; handle: string; canonicalId: string }[];
   const publisher = listed.find((p) => p.handle === HANDLE)!;
   publisherId = publisher.id;
-  expect(publisher.publisherId).toBe(`gz://${ORIGIN}/pub/${publisherId}`);
-  expect(publisher.publisherId).not.toContain(DEMO_ORG.id);
+  expect(publisher.canonicalId).toBe(`gz://${ORIGIN}/pub/${publisherId}`);
+  expect(publisher.canonicalId).not.toContain(DEMO_ORG.id);
 
   // alice is an admin but not a publisher: no capability form.
   await alice.goto(`/organizations/${DEMO_ORG.id}/publishers/${publisherId}`);
@@ -378,7 +378,7 @@ test("an operator earmarks, blocks and reclaims handles; the reclaimed publisher
   await dave.goto(`/organizations/${PARTNER_ORG.id}/publishers/${squatId}`);
   await expect(dave.getByTestId("suspended-notice")).toBeVisible();
   await expect(dave.getByTestId("suspended-badge")).toHaveCount(2); // the publisher and its capability
-  await expect(dave.getByTestId("publisher-id")).toHaveText(String(squat.json!.publisherId));
+  await expect(dave.getByTestId("publisher-id")).toHaveText(String(squat.json!.canonicalId));
   await expect(dave.getByTestId("capability-canonical-id")).toHaveText(String(forecast.json!.canonicalId));
   await expect(dave.getByTestId("capability-alias")).toHaveText(`${SQUATTED}/forecast`);
   await expect(dave.getByRole("form")).toHaveCount(0);
@@ -418,7 +418,7 @@ test("an operator earmarks, blocks and reclaims handles; the reclaimed publisher
     reclaim: {
       handles: { earmarked: EARMARKED, blocked: BLOCKED, squatted: SQUATTED },
       operator,
-      squatterPublisher: { id: squatId, state: "suspended", publisherId: squat.json!.publisherId, capability: forecast.json!.canonicalId },
+      squatterPublisher: { id: squatId, state: "suspended", canonicalId: squat.json!.canonicalId, capability: forecast.json!.canonicalId },
       reRegisteredBy: DEMO_ORG.id,
       retiredAliasRefused: `${retired.status} conflict`,
     },

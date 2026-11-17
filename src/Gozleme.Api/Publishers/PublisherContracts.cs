@@ -7,9 +7,9 @@ internal sealed record RegisterPublisherRequest(string? Handle, string? DisplayN
 
 internal sealed record CreateCapabilityRequest(string? Name, string? DisplayName);
 
-/// <summary><c>Id</c> is the opaque UUID used in URLs; <c>PublisherId</c> is its rendered form <c>gz://&lt;origin&gt;/pub/&lt;id&gt;</c>.</summary>
+/// <summary><c>Id</c> is the opaque UUID used in URLs; <c>CanonicalId</c> is its rendered form <c>gz://&lt;origin&gt;/pub/&lt;id&gt;</c>.</summary>
 internal sealed record PublisherResponse(
-    Guid Id, string PublisherId, string Origin, Guid OrganizationId, string Handle, string DisplayName, string State, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+    Guid Id, string CanonicalId, string Origin, Guid OrganizationId, string Handle, string DisplayName, string State, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
 
 internal sealed record PublisherListResponse(string Origin, IReadOnlyList<PublisherResponse> Publishers);
 

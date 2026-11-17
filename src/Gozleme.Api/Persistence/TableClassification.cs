@@ -16,8 +16,8 @@ internal static class TableClassification
     };
 
     /// <summary>
-    /// Global account-level infrastructure (GOZ-0001): needed before any tenant is known, no tenant RLS. GOZ-0005 adds
-    /// the per-account publisher registration counter, which holds no tenant content.
+    /// Global account-level infrastructure (GOZ-0001): keyed by account, no tenant content, no tenant RLS. GOZ-0005 adds
+    /// the per-account publisher registration counter, which is used after authorization and goes with the account.
     /// </summary>
     public static readonly IReadOnlySet<string> GlobalIdentity = new HashSet<string>(StringComparer.Ordinal)
     {

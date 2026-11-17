@@ -9,7 +9,7 @@ export interface Publisher {
   /** Opaque UUID used in URLs. */
   id: string;
   /** `gz://<origin>/pub/<id>`: permanent. */
-  publisherId: string;
+  canonicalId: string;
   origin: string;
   /** The owning organization's opaque id, shown on confirmation (FR-009). */
   organizationId: string;
