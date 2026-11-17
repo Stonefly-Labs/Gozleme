@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0005",
-  "commit": "2293792b4c3e9344de38abbd60a0c120c7561cef",
+  "commit": "dc2488814c455f2d3d3b29e03d72954c39a5ef98",
   "branch": "feature/goz-0005-publisher-identities",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,8 +9,8 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-17T15:49:09Z",
-  "finishedAt": "2026-11-17T15:54:56Z",
+  "startedAt": "2026-11-17T16:02:06Z",
+  "finishedAt": "2026-11-17T16:07:37Z",
   "stackStartupSeconds": 5,
   "commands": [
     "docker compose up -d --build --wait",
@@ -20,7 +20,7 @@
     "pnpm --filter @gozleme/e2e exec playwright test --project goz-0005",
     "docker compose logs --no-color"
   ],
-  "result": "failed",
+  "result": "passed",
   "assertions": [
     {
       "name": "sign in as the seeded demo account",
@@ -196,15 +196,15 @@
     },
     {
       "name": "evidence: API role \u00d7 action matrix, database refusals for both logins and the origin mismatch",
-      "result": "failed"
+      "result": "passed"
     },
     {
       "name": "an operator earmarks, blocks and reclaims handles; the reclaimed publisher is suspended with unchanged IDs",
-      "result": "failed"
+      "result": "passed"
     },
     {
       "name": "observability: publisher writes and operator commands are traced, counted and audited with opaque IDs only",
-      "result": "failed"
+      "result": "passed"
     },
     {
       "name": "secret scan of compose logs and status evidence",
@@ -212,8 +212,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 327 ms",
-    "sign-in\u2192dashboard 292 ms"
+    "register\u2192dashboard 224 ms",
+    "sign-in\u2192dashboard 168 ms"
   ],
   "evidence": [
     "docs/specs/005-publisher-identities/evidence/screenshots/01-admin-registers-publisher.png",
@@ -221,6 +221,8 @@
     "docs/specs/005-publisher-identities/evidence/screenshots/03-renamed-twice-ids-unchanged.png",
     "docs/specs/005-publisher-identities/evidence/screenshots/04-taken-handle-unavailable.png",
     "docs/specs/005-publisher-identities/evidence/screenshots/05-duplicate-name-conflicts.png",
+    "docs/specs/005-publisher-identities/evidence/screenshots/06-reclaimed-publisher-suspended.png",
+    "docs/specs/005-publisher-identities/evidence/screenshots/07-publisher-register-trace-jaeger.png",
     "docs/specs/005-publisher-identities/evidence/screenshots/regression-goz-0000/01-healthy.png",
     "docs/specs/005-publisher-identities/evidence/screenshots/regression-goz-0000/02-database-down-degraded.png",
     "docs/specs/005-publisher-identities/evidence/screenshots/regression-goz-0000/03-recovered-healthy.png",

@@ -1,18 +1,18 @@
 {
   "spec": "GOZ-0005",
-  "capturedAt": "2026-11-17T14:40:24.887Z",
+  "capturedAt": "2026-11-17T16:06:37.942Z",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": {
-    "id": "01a1e9f3-7582-76ae-b5ef-8923a4f17b73",
-    "handle": "demo-696302"
+    "id": "01a1ea42-66e5-7655-a8c0-5eb8dbe88c08",
+    "handle": "demo-530327"
   },
   "capability": {
-    "id": "01a1e9f3-77e4-788d-aad0-c2d837e3e7fa",
-    "canonicalId": "gz://registry.demo.gozleme.test/cap/01a1e9f3-77e4-788d-aad0-c2d837e3e7fa",
-    "alias": "demo-696302/weather-lookup"
+    "id": "01a1ea42-6932-76d9-937b-39ff6c8fdf16",
+    "canonicalId": "gz://registry.demo.gozleme.test/cap/01a1ea42-6932-76d9-937b-39ff6c8fdf16",
+    "alias": "demo-530327/weather-lookup"
   },
-  "us1ElapsedSeconds": 1.3,
+  "us1ElapsedSeconds": 1.264,
   "handleUnavailableIdenticalForForeignAndOwner": true,
   "apiMatrixForCarol": {
     "member": {
@@ -126,34 +126,35 @@
   "rowsUnchanged": true,
   "originMismatch": {
     "migrator": "exit 1: configured origin differs from the recorded origin",
-    "api": "refused to start (configured origin differs from the recorded origin); restarted 3 time(s) by its restart policy, never served",
+    "api": "refused to start (configured origin differs from the recorded origin); exited 134 (abort under tini), restarted 3 time(s) by its restart policy, never served",
     "restoredIdsUnchanged": true
   },
+  "containerInit": "pid 1 is tini, dotnet its child",
   "reclaim": {
     "handles": {
-      "earmarked": "acme-696302",
-      "blocked": "blocked-696302",
-      "squatted": "squat-696302"
+      "earmarked": "acme-530327",
+      "blocked": "blocked-530327",
+      "squatted": "squat-530327"
     },
     "operator": {
       "reserve earmarked": {
         "exit": 0,
-        "stdout": "Reserved handle claim 01a1e9f3-b548-71e8-a304-efd23d25572c (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
+        "stdout": "Reserved handle claim 01a1ea42-a40c-77ab-8a73-bcb8fa2ab4ce (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
       },
       "reserve blocked": {
         "exit": 0,
-        "stdout": "Reserved handle claim 01a1e9f3-b7a5-7f9c-bff3-5ffe5356610a (blocked)"
+        "stdout": "Reserved handle claim 01a1ea42-a650-72d4-9a9c-1025a076b218 (blocked)"
       },
       "reclaim": {
         "exit": 0,
-        "stdout": "Reclaimed handle claim 01a1e9f3-b910-7f4d-8fc8-05d7f05ca797; publisher 01a1e9f3-b910-7f36-bb9a-b54f13b14c77 of organization 0193a000-0000-7000-8000-000000000003 suspended / Reserved handle claim 01a1e9f3-bac5-7fa1-8ca6-1f8f92390ce2 (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
+        "stdout": "Reclaimed handle claim 01a1ea42-a7bc-7717-a672-42396373074f; publisher 01a1ea42-a7bc-7312-8fc8-8b0e1bbdf183 of organization 0193a000-0000-7000-8000-000000000003 suspended / Reserved handle claim 01a1ea42-a946-75c1-8072-1eae40ceacbd (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
       }
     },
     "squatterPublisher": {
-      "id": "01a1e9f3-b910-7f36-bb9a-b54f13b14c77",
+      "id": "01a1ea42-a7bc-7312-8fc8-8b0e1bbdf183",
       "state": "suspended",
-      "canonicalId": "gz://registry.demo.gozleme.test/pub/01a1e9f3-b910-7f36-bb9a-b54f13b14c77",
-      "capability": "gz://registry.demo.gozleme.test/cap/01a1e9f3-b91c-71d1-b710-cc825fdb2eee"
+      "canonicalId": "gz://registry.demo.gozleme.test/pub/01a1ea42-a7bc-7312-8fc8-8b0e1bbdf183",
+      "capability": "gz://registry.demo.gozleme.test/cap/01a1ea42-a7c8-7a18-a551-1a3f94870d48"
     },
     "reRegisteredBy": "0193a000-0000-7000-8000-000000000002",
     "retiredAliasRefused": "409 conflict"
