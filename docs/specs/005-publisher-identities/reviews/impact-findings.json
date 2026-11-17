@@ -1,0 +1,485 @@
+{
+ "sourceSpec": "GOZ-0005",
+ "implementationRevision": "536faf3 (feature/goz-0005-publisher-identities), after convergence (T053-T060). Demo 46/46 recorded at 03ead47 by drive-speckit; tests not re-run by the analyst.",
+ "analyzedAt": "2026-11-17",
+ "findings": [
+  {
+   "id": "GOZ-0005-IF-01",
+   "severity": "high",
+   "title": "Permanent identifier, alias and mutability facts every publishing spec builds on",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs: publishers/capabilities store only UUIDv7 ids; publishers_guard and capabilities_guard refuse every change but display_name (created_by only to NULL) and every DELETE; *_truncate triggers refuse TRUNCATE for every login",
+    "src/Gozleme.Api/Publishers/RegistryOrigin.cs CanonicalId.Publisher/Capability render gz://<origin>/pub|cap/<uuid> with the verified local origin",
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs: capabilities_reserve_alias (AFTER INSERT) derives <handle>/<name> into alias_reservations; alias_reservations_insert_guard refuses inserts at trigger depth < 2; immutable_row_guard on UPDATE/DELETE/TRUNCATE",
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs: publishers_update/capabilities_insert/capabilities_update WITH CHECK require EXISTS held handle_claims row (derived suspension)",
+    "src/Gozleme.Api/Publishers/PublisherContracts.cs: CanonicalId, Alias, State (active|suspended); PublisherEndpoints answers 409 suspended after permission check",
+    "docs/specs/005-publisher-identities/progress.yaml decisions Q4, Q8, 2026-11-17 publisher-id-field and publisher-id-form"
+   ],
+   "affectedSpecs": [
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039"
+   ],
+   "recommendation": "Reference capabilities by canonical ID or (id, organization_id); never by alias or handle. Treat only display names as mutable and nothing as deletable. Repeat the held-claim check on any new publisher-acting write. Treat any new identifier form as a namespace contract change and maintainer decision.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-02",
+   "severity": "high",
+   "title": "Alias resolution has no read path; any spec that resolves aliases changes pinned InstanceClaims privileges",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs: REVOKE ALL ON alias_reservations FROM gozleme_app; GRANT INSERT only; RLS enabled with only alias_reservations_insert policy",
+    "src/Gozleme.Api/Persistence/TableClassification.cs InstanceClaims[alias_reservations] = {INSERT}; RlsCatalog.InstanceViolationsAsync requires exact privilege set equality (RlsCatalogTests)",
+    "docs/specs/005-publisher-identities/contracts/namespace.md: 'Alias resolution (alias -> canonical ID) is not offered in v1 ... needs security review'",
+    "spec.md assumptions: resolving an alias or canonical ID across organizations belongs to discovery (GOZ-0012) and federation"
+   ],
+   "affectedSpecs": [
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0024",
+    "GOZ-0027",
+    "GOZ-0028"
+   ],
+   "recommendation": "Maintainer decides before the GOZ-0012 plan, after a security review. Option A: grant gozleme_app SELECT on alias_reservations with a policy limited to aliases whose capability the caller can see (needs GOZ-0012 visibility; still leaks reservation existence of private aliases unless the policy joins visibility). Option B: a narrow SECURITY DEFINER helper resolve_alias(alias) returning a canonical ID only when visible, added to DefinerHelpers and pinned. Option C: no alias resolution in MVP; inputs require canonical IDs and aliases stay display-only. Recommended: B or C. Each option changes RlsCatalogTests pins deliberately.",
+   "disposition": "needs-human-decision",
+   "status": "open",
+   "decideBefore": "GOZ-0012 plan",
+   "options": [
+    "A: SELECT grant + visibility-joined policy on alias_reservations",
+    "B: pinned SECURITY DEFINER resolver returning only visible canonical IDs",
+    "C: no alias resolution in MVP; canonical IDs required as input"
+   ]
+  },
+  {
+   "id": "GOZ-0005-IF-03",
+   "severity": "medium",
+   "title": "A handle resolves to a publisher only through its held claim; publishers.handle is not unique after reclaim",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs: no unique index on publishers.handle; ux_handle_claims_live unique on handle WHERE status IN (blocked, earmarked, held); handle_claims_insert/update WITH CHECK require publisher_id IN publishers with the same organization and handle (convergence F1 fix, 536faf3)",
+    "src/Gozleme.Api/Publishers/PublisherStore.cs ActiveAsync/IsActiveAsync read handle_claims status = 'held'",
+    "src/Gozleme.Api/Publishers/PublisherEndpoints.cs:391 alias rendered from publisher.Handle, so a suspended publisher keeps showing its old handle"
+   ],
+   "affectedSpecs": [
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0024",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039"
+   ],
+   "recommendation": "Key references, pins, indexes and URLs by UUID/canonical ID; resolve handle -> publisher only through the held claim; federation key pins on publisher ID.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-04",
+   "severity": "high",
+   "title": "Least-privilege operator role for handle commands instead of the owner login (maintainer-requested tracking)",
+   "evidence": [
+    "src/Gozleme.Api/Identity/HandleOperatorCommands.cs connects with ConnectionStrings:GozlemeMigrator (owner) with no account context",
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs handle_claims_guard: operator = current_user = 'gozleme_migrator' AND session_user = 'gozleme_migrator' AND account IS NULL; claim tables RLS enabled, not forced",
+    "docs/architecture/security-invariants.md invariant 2 amended: owner is installation authority over claim tables; credential restricted and audited",
+    "progress.yaml 2026-11-17 q11-conditions: track a least-privilege operator role as an impact finding (FR-031 forbade it in GOZ-0005)",
+    "deploy/postgres/init/01-roles.sh creates roles out of band (GOZ-0000-IF-15); GOZ-0039 owns real Helm install and restore of roles"
+   ],
+   "affectedSpecs": [
+    "GOZ-0039",
+    "GOZ-0029"
+   ],
+   "recommendation": "Maintainer decides in GOZ-0039 clarification at the latest, or earlier if any spec (for example GOZ-0029) adds another owner-login operator command. Option A: GOZ-0039 adds a gozleme_operator login with only the claim-table grants and a guard change recognising it, created by the init script and Helm, with an upgrade path for existing volumes. Option B: keep the owner login for MVP, document credential handling in the release runbook, and schedule the role post-MVP. Option C: a new dedicated spec.",
+   "disposition": "needs-human-decision",
+   "status": "open",
+   "decideBefore": "GOZ-0039 clarification (earlier if a spec adds another owner-login operator command)",
+   "options": [
+    "A: gozleme_operator role in GOZ-0039",
+    "B: keep owner login for MVP, documented; role post-MVP",
+    "C: new dedicated spec"
+   ]
+  },
+  {
+   "id": "GOZ-0005-IF-05",
+   "severity": "medium",
+   "title": "GOZ-0001/0002 rate limits are in-process while publisher registration is PostgreSQL-backed; no spec owns multi-replica posture",
+   "evidence": [
+    "src/Gozleme.Api/Identity/IdentityServiceCollectionExtensions.cs:136-140 GlobalLimiter and sign-in/register policies use in-memory FixedWindow limiters",
+    "src/Gozleme.Api/Organizations/OrganizationServiceCollectionExtensions.cs:22 redemption limiter in memory",
+    "src/Gozleme.Api/Publishers/PublisherServiceCollectionExtensions.cs PublisherRegistrationLimiter counts in gozleme.publisher_registration_attempts",
+    "deploy/helm/gozleme/values.yaml api.replicas: 1; no downstream prompt mentions multi-replica or HA"
+   ],
+   "affectedSpecs": [
+    "GOZ-0039",
+    "GOZ-0009",
+    "GOZ-0013",
+    "GOZ-0015",
+    "GOZ-0038",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Maintainer decides before GOZ-0039 clarification. Option A: GOZ-0039's release matrix states single-replica as the supported MVP posture and documents per-replica limits. Option B: GOZ-0039 (or a new spec) moves credential and redemption limits to shared PostgreSQL storage and supports replicas > 1. Option C: Redis or another store (new dependency; architecture change). Meanwhile each new limiter states its storage (applied to prompts).",
+   "disposition": "needs-human-decision",
+   "status": "open",
+   "decideBefore": "GOZ-0039 clarification",
+   "options": [
+    "A: single-replica MVP posture, documented",
+    "B: shared PostgreSQL limits, replicas > 1 supported",
+    "C: external store (architecture change)"
+   ]
+  },
+  {
+   "id": "GOZ-0005-IF-06",
+   "severity": "medium",
+   "title": "Required registry origin and PID 1 start-failure exit affect Compose, Helm and deployment acceptance",
+   "evidence": [
+    "src/Gozleme.Api/Program.cs: catch when Environment.ProcessId == 1 -> exit 1 (previously spun in abort())",
+    "RegistryOriginCheck throws on mismatch; publisher endpoints 503 until verified; MigrationRunner records/compares origin",
+    "deploy/helm/gozleme/templates/api.yaml and migrate-job.yaml: required registry.origin; Makefile helm-lint negative render",
+    "compose.yaml: Gozleme__Registry__Origin from GOZLEME_REGISTRY_ORIGIN (default registry.demo.gozleme.test)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Configure origin in every stack (distinct per federated demo instance); prove in GOZ-0039 that mismatch fails the Job and the API exits 1; new blocking start checks throw from StartAsync.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-07",
+   "severity": "low",
+   "title": "Process gaps: make test/lint skip next build; evidence harness rewrote merged evidence",
+   "evidence": [
+    "Makefile: test = dotnet test + pnpm test; lint = dotnet format + pnpm lint + pnpm typecheck; only build runs pnpm build; .github/workflows/ci.yml:66 runs pnpm build",
+    "progress.yaml implement note: server-only publisher reads split from the client module (next build failed); web/src/lib/publishers-server.ts",
+    "e2e/tests/evidence.ts evidenceDir/shotsDir honour GOZLEME_DEMO_SHOTS_<SUITE>; scripts/demo/run-demo.sh:37 redirects earlier suites to regression-goz-NNNN"
+   ],
+   "affectedSpecs": [
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Run make build before declaring a phase done; register each new suite in specDirs. Optionally the maintainer may add pnpm build to make lint or make test (engineering change outside prompt authority; not applied).",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-08",
+   "severity": "medium",
+   "title": "Suspension by reclaim is permanent and cannot be lifted without a schema change",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs: handle_claims_guard makes released and reclaimed terminal; ux_handle_claims_publisher unique on publisher_id for every status, so a reclaimed publisher can never hold a claim again",
+    "contracts/operator-commands.md: handle-reserve, handle-release, handle-reclaim only; no restore",
+    "no downstream prompt covers moderation, appeals or suspension lifting"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0012",
+    "GOZ-0019",
+    "GOZ-0021",
+    "GOZ-0033",
+    "GOZ-0039"
+   ],
+   "recommendation": "Maintainer decides before GOZ-0039 clarification whether MVP needs to lift a suspension. Option A: accept permanent suspension for MVP (the affected organization registers a new handle; capabilities keep canonical IDs). Option B: GOZ-0039 or a new spec adds an operator restore command, changing the guard and the publisher unique index. Option C: post-MVP moderation/appeals spec. Per-spec semantics of suspended publishers are routed to each spec's clarification (applied).",
+   "disposition": "needs-human-decision",
+   "status": "open",
+   "decideBefore": "GOZ-0039 clarification (semantics per spec: GOZ-0007 plan first)",
+   "options": [
+    "A: permanent for MVP",
+    "B: operator restore in GOZ-0039 or a new spec",
+    "C: post-MVP moderation spec"
+   ]
+  },
+  {
+   "id": "GOZ-0005-IF-09",
+   "severity": "medium",
+   "title": "Pins, table classes, audit range, seed and demo data permanence after GOZ-0005",
+   "evidence": [
+    "e2e/tests/bootstrap-demo.spec.ts:29 /_PublisherIdentities$/; MigrationAndRoleTests 6 migrations; StatusEndpointTests schemaVersion; OrganizationPermissionContractTests Assert.Equal(17, ...) and 5 resources",
+    "src/Gozleme.Api/Persistence/TableClassification.cs InstanceReference, InstanceClaims, GlobalIdentity + publisher_registration_attempts",
+    "src/Gozleme.Api/Identity/SecurityAudit.cs 1401-1408; research.md 'Audit range 1401-1410'",
+    "src/Gozleme.Api/Identity/OperatorCommands.cs seed: carol {member,publisher}",
+    "e2e/tests/publisher-demo.spec.ts:151 resets publisher_registration_attempts; unique demo-NNNNNN handles"
+   ],
+   "affectedSpecs": [
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Update the four migration pins and the schema table list; next audit range 1501; follow table classes; demos use unique names because nothing is deletable.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-10",
+   "severity": "medium",
+   "title": "Role table and database enforcement pattern after GOZ-0005",
+   "evidence": [
+    "src/Gozleme.Api/Organizations/OrganizationPermissions.cs: AdminActions explicit list without capability.create/rename; PublisherActions = member + capability.create/rename",
+    "docs/architecture/contracts/organization-permissions.md (living) updated; contracts/permissions-delta.md",
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs: account_has_role non-definer; composite FKs (id, organization_id); account_is_admin unchanged"
+   ],
+   "affectedSpecs": [
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039"
+   ],
+   "recommendation": "Use account_has_role in new write policies; composite tenant keys; admin no longer implies every action; GOZ-0018 may narrow, never widen, the mirrored role component.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-11",
+   "severity": "medium",
+   "title": "Canonical IDs are local-origin only; federation needs origin-qualified storage and a decision on namespace participation",
+   "evidence": [
+    "gozleme.registry_origin holds one row (ck_registry_origin_single); capabilities/publishers have no origin column; CanonicalId renders with the local verified origin",
+    "handle_claims and alias_reservations are instance-wide local namespace tables",
+    "architecture-baseline.md line 11: origin-qualified permanent identities"
+   ],
+   "affectedSpecs": [
+    "GOZ-0024",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0036"
+   ],
+   "recommendation": "Store foreign identities origin-qualified, never in local capabilities with local rendering; distinct origin per demo instance; whether imported publishers use local handles/aliases is GOZ-0030's clarification (recommended no).",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-12",
+   "severity": "medium",
+   "title": "Child capability ID form is a new permanent identifier and a maintainer decision",
+   "evidence": [
+    "contracts/namespace.md: 'Changing anything here is a contract change'; Q4 and 2026-11-17 publisher-id-form were maintainer decisions"
+   ],
+   "affectedSpecs": [
+    "GOZ-0008"
+   ],
+   "recommendation": "Route the child ID form and child aliases to GOZ-0008 clarification as maintainer questions.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-13",
+   "severity": "medium",
+   "title": "Boundary pins for catalog/publish routes and existence leaks through cross-tenant capability references",
+   "evidence": [
+    "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs:23-29 pins GET /api/v1/catalog, /api/v1/capabilities, /api/v1/search and POST /api/v1/publish at 404 (FR-025)",
+    "capabilities only reachable under /organizations/{org}/publishers/{pub}/capabilities/{cap}; composite FK pattern cannot express cross-tenant references"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0012",
+    "GOZ-0014",
+    "GOZ-0034"
+   ],
+   "recommendation": "Narrow only the superseded boundary row; map constraint errors from cross-tenant references to the unknown-ID answer.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0005-IF-14",
+   "severity": "medium",
+   "title": "Nothing in the publisher namespace is deletable; organization deletion and restore must account for it",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261119000000_PublisherIdentities.cs: publishers/capabilities -> organizations ON DELETE RESTRICT; handle_claims -> organizations; guards refuse DELETE/TRUNCATE for every login; registry_origin immutable"
+   ],
+   "affectedSpecs": [
+    "GOZ-0035",
+    "GOZ-0039"
+   ],
+   "recommendation": "Retention works with permanent identities; restore keeps the same origin and handles guard triggers as GOZ-0004-IF-11 describes; verify pinned privileges after restore.",
+   "disposition": "applied-to-future-prompts"
+  }
+ ]
+}
