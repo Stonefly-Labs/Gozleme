@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json",
+  "title": "Gözleme strict overlay over MCP 2026-07-28 primitives and server.json 2025-12-11 shapes (GOZ-0006, research R2)",
+  "description": "Each definition references the unchanged upstream definition and adds unevaluatedProperties: false, so members outside the upstream shape are unknown_field. _meta objects, embedded inputSchema/outputSchema, experimental and extensions capabilities, and completions/logging settings stay open. _meta is also allowed on serverInfo (contracts/native-formats.md).",
+  "$defs": {
+    "Icon": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/Icon",
+      "unevaluatedProperties": false
+    },
+    "Implementation": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/Implementation",
+      "properties": {
+        "icons": {
+          "items": {
+            "$ref": "#/$defs/Icon"
+          }
+        },
+        "_meta": {
+          "type": "object"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "ServerCapabilities": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/ServerCapabilities",
+      "properties": {
+        "prompts": {
+          "unevaluatedProperties": false
+        },
+        "resources": {
+          "unevaluatedProperties": false
+        },
+        "tools": {
+          "unevaluatedProperties": false
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "ToolAnnotations": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/ToolAnnotations",
+      "unevaluatedProperties": false
+    },
+    "Tool": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/Tool",
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/ToolAnnotations"
+        },
+        "icons": {
+          "items": {
+            "$ref": "#/$defs/Icon"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Annotations": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/Annotations",
+      "unevaluatedProperties": false
+    },
+    "Resource": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/Resource",
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/Annotations"
+        },
+        "icons": {
+          "items": {
+            "$ref": "#/$defs/Icon"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "ResourceTemplate": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/ResourceTemplate",
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/Annotations"
+        },
+        "icons": {
+          "items": {
+            "$ref": "#/$defs/Icon"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "PromptArgument": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/PromptArgument",
+      "unevaluatedProperties": false
+    },
+    "Prompt": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/Prompt",
+      "properties": {
+        "arguments": {
+          "items": {
+            "$ref": "#/$defs/PromptArgument"
+          }
+        },
+        "icons": {
+          "items": {
+            "$ref": "#/$defs/Icon"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Input": {
+      "$ref": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/Input",
+      "unevaluatedProperties": false
+    },
+    "KeyValueInput": {
+      "$ref": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/KeyValueInput",
+      "properties": {
+        "variables": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Input"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Argument": {
+      "$ref": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/Argument",
+      "properties": {
+        "variables": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Input"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Remote": {
+      "$ref": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/RemoteTransport",
+      "properties": {
+        "headers": {
+          "items": {
+            "$ref": "#/$defs/KeyValueInput"
+          }
+        },
+        "variables": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Input"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "LocalTransport": {
+      "$ref": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/LocalTransport",
+      "properties": {
+        "headers": {
+          "items": {
+            "$ref": "#/$defs/KeyValueInput"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Package": {
+      "$ref": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/Package",
+      "properties": {
+        "environmentVariables": {
+          "items": {
+            "$ref": "#/$defs/KeyValueInput"
+          }
+        },
+        "packageArguments": {
+          "items": {
+            "$ref": "#/$defs/Argument"
+          }
+        },
+        "runtimeArguments": {
+          "items": {
+            "$ref": "#/$defs/Argument"
+          }
+        },
+        "transport": {
+          "$ref": "#/$defs/LocalTransport"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

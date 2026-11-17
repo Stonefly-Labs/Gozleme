@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gozleme.dev/manifest/agent-skills/2026-11-17.json",
+  "title": "Agent Skills SKILL.md front matter, snapshot 2026-11-17 (GOZ-0006, contracts/native-formats.md)",
+  "description": "Transcribed from the agentskills.io specification as read on 2026-11-17. Closed. The rule that name equals the parent directory name is not enforced: a single document has no directory.",
+  "type": "object",
+  "required": [
+    "name",
+    "description"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "license": {
+      "type": "string"
+    },
+    "compatibility": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "allowed-tools": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

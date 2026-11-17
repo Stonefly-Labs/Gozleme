@@ -1,0 +1,426 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gozleme.dev/manifest/a2a-strict/1.0.1.json",
+  "title": "Gözleme strict overlay over the A2A v1.0.1 Agent Card (GOZ-0006, research R2)",
+  "description": "The generated A2A schemas are closed but omit required. This overlay restates every (google.api.field_behavior) = REQUIRED field reachable from AgentCard in specification/a2a.proto at v1.0.1 (32 fields in 13 messages), accepting the lowerCamel JSON name or the proto field name as proto JSON does.",
+  "$ref": "#/$defs/AgentCard",
+  "$defs": {
+    "AgentCard": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.AgentCard.jsonschema.json",
+      "properties": {
+        "supportedInterfaces": {
+          "items": {
+            "$ref": "#/$defs/AgentInterface"
+          }
+        },
+        "provider": {
+          "$ref": "#/$defs/AgentProvider"
+        },
+        "securitySchemes": {
+          "additionalProperties": {
+            "$ref": "#/$defs/SecurityScheme"
+          }
+        },
+        "skills": {
+          "items": {
+            "$ref": "#/$defs/AgentSkill"
+          }
+        },
+        "signatures": {
+          "items": {
+            "$ref": "#/$defs/AgentCardSignature"
+          }
+        }
+      },
+      "patternProperties": {
+        "^(supported_interfaces)$": {
+          "items": {
+            "$ref": "#/$defs/AgentInterface"
+          }
+        },
+        "^(security_schemes)$": {
+          "additionalProperties": {
+            "$ref": "#/$defs/SecurityScheme"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "description"
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "supportedInterfaces"
+              ]
+            },
+            {
+              "required": [
+                "supported_interfaces"
+              ]
+            }
+          ]
+        },
+        {
+          "required": [
+            "version"
+          ]
+        },
+        {
+          "required": [
+            "capabilities"
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "defaultInputModes"
+              ]
+            },
+            {
+              "required": [
+                "default_input_modes"
+              ]
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "defaultOutputModes"
+              ]
+            },
+            {
+              "required": [
+                "default_output_modes"
+              ]
+            }
+          ]
+        },
+        {
+          "required": [
+            "skills"
+          ]
+        }
+      ]
+    },
+    "AgentInterface": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.AgentInterface.jsonschema.json",
+      "allOf": [
+        {
+          "required": [
+            "url"
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "protocolBinding"
+              ]
+            },
+            {
+              "required": [
+                "protocol_binding"
+              ]
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "protocolVersion"
+              ]
+            },
+            {
+              "required": [
+                "protocol_version"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "AgentProvider": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.AgentProvider.jsonschema.json",
+      "allOf": [
+        {
+          "required": [
+            "url"
+          ]
+        },
+        {
+          "required": [
+            "organization"
+          ]
+        }
+      ]
+    },
+    "AgentSkill": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.AgentSkill.jsonschema.json",
+      "allOf": [
+        {
+          "required": [
+            "id"
+          ]
+        },
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "description"
+          ]
+        },
+        {
+          "required": [
+            "tags"
+          ]
+        }
+      ]
+    },
+    "AgentCardSignature": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.AgentCardSignature.jsonschema.json",
+      "allOf": [
+        {
+          "required": [
+            "protected"
+          ]
+        },
+        {
+          "required": [
+            "signature"
+          ]
+        }
+      ]
+    },
+    "SecurityScheme": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.SecurityScheme.jsonschema.json",
+      "properties": {
+        "apiKeySecurityScheme": {
+          "$ref": "#/$defs/APIKeySecurityScheme"
+        },
+        "httpAuthSecurityScheme": {
+          "$ref": "#/$defs/HTTPAuthSecurityScheme"
+        },
+        "oauth2SecurityScheme": {
+          "$ref": "#/$defs/OAuth2SecurityScheme"
+        },
+        "openIdConnectSecurityScheme": {
+          "$ref": "#/$defs/OpenIdConnectSecurityScheme"
+        }
+      },
+      "patternProperties": {
+        "^(api_key_security_scheme)$": {
+          "$ref": "#/$defs/APIKeySecurityScheme"
+        },
+        "^(http_auth_security_scheme)$": {
+          "$ref": "#/$defs/HTTPAuthSecurityScheme"
+        },
+        "^(oauth2_security_scheme)$": {
+          "$ref": "#/$defs/OAuth2SecurityScheme"
+        },
+        "^(open_id_connect_security_scheme)$": {
+          "$ref": "#/$defs/OpenIdConnectSecurityScheme"
+        }
+      }
+    },
+    "APIKeySecurityScheme": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.APIKeySecurityScheme.jsonschema.json",
+      "allOf": [
+        {
+          "required": [
+            "location"
+          ]
+        },
+        {
+          "required": [
+            "name"
+          ]
+        }
+      ]
+    },
+    "HTTPAuthSecurityScheme": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.HTTPAuthSecurityScheme.jsonschema.json",
+      "allOf": [
+        {
+          "required": [
+            "scheme"
+          ]
+        }
+      ]
+    },
+    "OAuth2SecurityScheme": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.OAuth2SecurityScheme.jsonschema.json",
+      "properties": {
+        "flows": {
+          "$ref": "#/$defs/OAuthFlows"
+        }
+      },
+      "allOf": [
+        {
+          "required": [
+            "flows"
+          ]
+        }
+      ]
+    },
+    "OpenIdConnectSecurityScheme": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.OpenIdConnectSecurityScheme.jsonschema.json",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "required": [
+                "openIdConnectUrl"
+              ]
+            },
+            {
+              "required": [
+                "open_id_connect_url"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "OAuthFlows": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.OAuthFlows.jsonschema.json",
+      "properties": {
+        "authorizationCode": {
+          "$ref": "#/$defs/AuthorizationCodeOAuthFlow"
+        },
+        "clientCredentials": {
+          "$ref": "#/$defs/ClientCredentialsOAuthFlow"
+        },
+        "deviceCode": {
+          "$ref": "#/$defs/DeviceCodeOAuthFlow"
+        }
+      },
+      "patternProperties": {
+        "^(authorization_code)$": {
+          "$ref": "#/$defs/AuthorizationCodeOAuthFlow"
+        },
+        "^(client_credentials)$": {
+          "$ref": "#/$defs/ClientCredentialsOAuthFlow"
+        },
+        "^(device_code)$": {
+          "$ref": "#/$defs/DeviceCodeOAuthFlow"
+        }
+      }
+    },
+    "AuthorizationCodeOAuthFlow": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.AuthorizationCodeOAuthFlow.jsonschema.json",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "required": [
+                "authorizationUrl"
+              ]
+            },
+            {
+              "required": [
+                "authorization_url"
+              ]
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "tokenUrl"
+              ]
+            },
+            {
+              "required": [
+                "token_url"
+              ]
+            }
+          ]
+        },
+        {
+          "required": [
+            "scopes"
+          ]
+        }
+      ]
+    },
+    "ClientCredentialsOAuthFlow": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.ClientCredentialsOAuthFlow.jsonschema.json",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "required": [
+                "tokenUrl"
+              ]
+            },
+            {
+              "required": [
+                "token_url"
+              ]
+            }
+          ]
+        },
+        {
+          "required": [
+            "scopes"
+          ]
+        }
+      ]
+    },
+    "DeviceCodeOAuthFlow": {
+      "$ref": "https://schemas.gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.DeviceCodeOAuthFlow.jsonschema.json",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "required": [
+                "deviceAuthorizationUrl"
+              ]
+            },
+            {
+              "required": [
+                "device_authorization_url"
+              ]
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "tokenUrl"
+              ]
+            },
+            {
+              "required": [
+                "token_url"
+              ]
+            }
+          ]
+        },
+        {
+          "required": [
+            "scopes"
+          ]
+        }
+      ]
+    }
+  }
+}

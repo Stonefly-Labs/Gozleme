@@ -2,47 +2,151 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.gozleme.dev/manifest/mcp-server-manifest/1.json",
   "title": "Gözleme MCP server manifest v1 (GOZ-0006, maintainer decision P4)",
-  "description": "Closed root. Primitive shapes are the official MCP core $defs of the declared protocolRevision (bundled from modelcontextprotocol/modelcontextprotocol tags 2025-11-25 and 2026-07-28); remotes/packages are the registry server.json 2025-12-11 shapes. Upstream objects are closed by Gözleme strict overlays (research R2) except _meta. The upstream $ids below resolve only to bundled copies; nothing is fetched. Exact $defs names are confirmed at vendoring.",
+  "description": "Closed root. Primitive shapes are the official MCP core $defs of the declared protocolRevision (bundled from modelcontextprotocol/modelcontextprotocol tags 2025-11-25 and 2026-07-28); remotes/packages are the registry server.json 2025-12-11 RemoteTransport and Package shapes. Upstream objects are closed by the Gözleme strict overlays mcp-strict/<revision> (research R2) except _meta. Every $id resolves only to a bundled copy; nothing is fetched. $defs names confirmed at vendoring (T005): the registry shape is RemoteTransport, not Remote.",
   "type": "object",
-  "required": ["protocolRevision", "serverInfo", "capabilities"],
+  "required": [
+    "protocolRevision",
+    "serverInfo",
+    "capabilities"
+  ],
   "properties": {
-    "protocolRevision": { "enum": ["2026-07-28", "2025-11-25"] },
+    "protocolRevision": {
+      "enum": [
+        "2026-07-28",
+        "2025-11-25"
+      ]
+    },
     "serverInfo": true,
     "capabilities": true,
-    "instructions": { "type": "string", "maxLength": 8192 },
-    "tools": { "type": "array" },
-    "resources": { "type": "array" },
-    "resourceTemplates": { "type": "array" },
-    "prompts": { "type": "array" },
-    "remotes": { "type": "array", "items": { "$ref": "urn:gozleme:bundled:mcp-registry-2025-12-11#/definitions/Remote" } },
-    "packages": { "type": "array", "items": { "$ref": "urn:gozleme:bundled:mcp-registry-2025-12-11#/definitions/Package" } },
-    "_meta": { "type": "object" }
+    "instructions": {
+      "type": "string",
+      "maxLength": 8192
+    },
+    "tools": {
+      "type": "array"
+    },
+    "resources": {
+      "type": "array"
+    },
+    "resourceTemplates": {
+      "type": "array"
+    },
+    "prompts": {
+      "type": "array"
+    },
+    "remotes": {
+      "type": "array"
+    },
+    "packages": {
+      "type": "array"
+    },
+    "_meta": {
+      "type": "object"
+    }
   },
   "unevaluatedProperties": false,
   "allOf": [
     {
-      "if": { "properties": { "protocolRevision": { "const": "2026-07-28" } } },
+      "if": {
+        "required": [
+          "protocolRevision"
+        ],
+        "properties": {
+          "protocolRevision": {
+            "const": "2026-07-28"
+          }
+        }
+      },
       "then": {
         "properties": {
-          "serverInfo": { "$ref": "urn:gozleme:bundled:mcp-strict-2026-07-28#/$defs/Implementation" },
-          "capabilities": { "$ref": "urn:gozleme:bundled:mcp-strict-2026-07-28#/$defs/ServerCapabilities" },
-          "tools": { "items": { "$ref": "urn:gozleme:bundled:mcp-strict-2026-07-28#/$defs/Tool" } },
-          "resources": { "items": { "$ref": "urn:gozleme:bundled:mcp-strict-2026-07-28#/$defs/Resource" } },
-          "resourceTemplates": { "items": { "$ref": "urn:gozleme:bundled:mcp-strict-2026-07-28#/$defs/ResourceTemplate" } },
-          "prompts": { "items": { "$ref": "urn:gozleme:bundled:mcp-strict-2026-07-28#/$defs/Prompt" } }
+          "serverInfo": {
+            "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json#/$defs/Implementation"
+          },
+          "capabilities": {
+            "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json#/$defs/ServerCapabilities"
+          },
+          "tools": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json#/$defs/Tool"
+            }
+          },
+          "resources": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json#/$defs/Resource"
+            }
+          },
+          "resourceTemplates": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json#/$defs/ResourceTemplate"
+            }
+          },
+          "prompts": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json#/$defs/Prompt"
+            }
+          },
+          "remotes": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json#/$defs/Remote"
+            }
+          },
+          "packages": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2026-07-28.json#/$defs/Package"
+            }
+          }
         }
       }
     },
     {
-      "if": { "properties": { "protocolRevision": { "const": "2025-11-25" } } },
+      "if": {
+        "required": [
+          "protocolRevision"
+        ],
+        "properties": {
+          "protocolRevision": {
+            "const": "2025-11-25"
+          }
+        }
+      },
       "then": {
         "properties": {
-          "serverInfo": { "$ref": "urn:gozleme:bundled:mcp-strict-2025-11-25#/$defs/Implementation" },
-          "capabilities": { "$ref": "urn:gozleme:bundled:mcp-strict-2025-11-25#/$defs/ServerCapabilities" },
-          "tools": { "items": { "$ref": "urn:gozleme:bundled:mcp-strict-2025-11-25#/$defs/Tool" } },
-          "resources": { "items": { "$ref": "urn:gozleme:bundled:mcp-strict-2025-11-25#/$defs/Resource" } },
-          "resourceTemplates": { "items": { "$ref": "urn:gozleme:bundled:mcp-strict-2025-11-25#/$defs/ResourceTemplate" } },
-          "prompts": { "items": { "$ref": "urn:gozleme:bundled:mcp-strict-2025-11-25#/$defs/Prompt" } }
+          "serverInfo": {
+            "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2025-11-25.json#/$defs/Implementation"
+          },
+          "capabilities": {
+            "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2025-11-25.json#/$defs/ServerCapabilities"
+          },
+          "tools": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2025-11-25.json#/$defs/Tool"
+            }
+          },
+          "resources": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2025-11-25.json#/$defs/Resource"
+            }
+          },
+          "resourceTemplates": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2025-11-25.json#/$defs/ResourceTemplate"
+            }
+          },
+          "prompts": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2025-11-25.json#/$defs/Prompt"
+            }
+          },
+          "remotes": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2025-11-25.json#/$defs/Remote"
+            }
+          },
+          "packages": {
+            "items": {
+              "$ref": "https://schemas.gozleme.dev/manifest/mcp-strict/2025-11-25.json#/$defs/Package"
+            }
+          }
         }
       }
     }

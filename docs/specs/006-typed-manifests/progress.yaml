@@ -37,7 +37,7 @@ stages:
   specify: {status: done, artifact: docs/specs/006-typed-manifests/spec.md, at: '2026-11-17', checklist: docs/specs/006-typed-manifests/checklists/requirements.md}
   clarify: {status: done, at: '2026-11-17', questions: 4, checklist: 16/16}
   plan: {status: done, at: '2026-11-17', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [P1, P2, P3, P4], verifyAtVendoring: ['Corvus run-time compile cost and keyword/instance-location output', 'MCP 2025-11-25 schema dialect', 'A2A v1.0.1 JSON Schema generation from proto', 'Utf8JsonReader duplicate-property option']}
-  implement: {status: in-progress, at: '2026-11-17', done: [T001, T002, T003, T004], blocked: []}
+  implement: {status: in-progress, at: '2026-11-17', done: [T001, T002, T003, T004, T005, T006], blocked: []}
   tasks: {status: done, at: '2026-11-17', artifact: docs/specs/006-typed-manifests/tasks.md, count: 72, phases: {setup: 6, foundational: 21, US1: 18, US2: 10, US3: 3, US4: 6, polish: 8}, note: 'research R6 rule name aligned to contract catalogue (reserved.a2a-signatures)'}
 attempts: []
 blockers:
