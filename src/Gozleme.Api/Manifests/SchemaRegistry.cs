@@ -54,10 +54,12 @@ internal sealed class SchemaRegistry
     private readonly FrozenDictionary<string, byte[]> _documents;
     private readonly ConcurrentDictionary<string, Lazy<CorvusSchema>> _compiled = new(StringComparer.Ordinal);
     private readonly CorvusSchema.Options _options;
+    private readonly SchemaDeclarations _declarations;
 
     public SchemaRegistry()
     {
         _documents = Load().ToFrozenDictionary(StringComparer.Ordinal);
+        _declarations = new SchemaDeclarations(_documents);
         JsonSchemaDocumentResolver resolver = (string uri, out ReadOnlyMemory<byte> json) =>
         {
             var found = _documents.TryGetValue(uri, out var bytes);
@@ -66,6 +68,8 @@ internal sealed class SchemaRegistry
         };
         _options = new CorvusSchema.Options([], false, JsonSchemaDialect.Draft202012, false, resolver, JsonSchemaCodeGeneration.Disabled, PatternTimeout);
     }
+
+    internal SchemaDeclarations Declarations => _declarations;
 
     /// <summary>The URI of every bundled document.</summary>
     public IReadOnlyCollection<string> Uris => _documents.Keys;
@@ -113,18 +117,25 @@ internal sealed class SchemaRegistry
             }
         }
 
-        return Reduce(failures, part);
+        var instance = new Lazy<System.Text.Json.Nodes.JsonNode?>(() => System.Text.Json.Nodes.JsonNode.Parse(instanceJson));
+        var problems = Reduce(failures, part, (evaluation, member) =>
+            _declarations.IsDeclared(uri, evaluation, member, branch => MatchesBranch(branch, instance.Value, Parent(member))));
+
+        // Never accept an invalid document: if every failure was judged noise, report the unknown members anyway.
+        return problems.Count > 0 ? problems
+            : Reduce(failures, part, (_, _) => false) is { Count: > 0 } all ? all
+            : [new ManifestProblem(ManifestRules.NativeSchema, ProblemLocation.At(part, string.Empty))];
     }
 
     /// <summary>
     /// Keeps leaf failures only (no other failure lies beneath their evaluation path), then maps them. For
     /// <c>additionalProperties</c>/<c>unevaluatedProperties</c> the object-level summary entry is dropped in favour of
-    /// the member entries. An <c>unevaluatedProperties</c> finding is also dropped when another schema failure lies at
-    /// or beneath the same object: a failed subschema discards its annotations, so its members would otherwise be
-    /// reported as unknown when they are merely invalid (verified at implementation, T013). Such a member is reported
-    /// on the next attempt once the invalid value is fixed.
+    /// the member entries. An <c>unevaluatedProperties</c> member finding is dropped only when the owning schema
+    /// declares that member (<paramref name="declared"/>, <see cref="SchemaDeclarations"/>): a failed subschema discards
+    /// its annotations, so a declared member would otherwise be reported as unknown when only a neighbour is invalid.
+    /// A member no schema declares is always reported (maintainer decision 2026-11-17).
     /// </summary>
-    internal static List<ManifestProblem> Reduce(List<(string Evaluation, string Instance)> failures, string part)
+    internal static List<ManifestProblem> Reduce(List<(string Evaluation, string Instance)> failures, string part, Func<string, string, bool> declared)
     {
         var distinct = failures.Distinct().ToList();
         var leaves = distinct.Where(f => !distinct.Any(o => o.Evaluation.Length > f.Evaluation.Length
@@ -140,18 +151,17 @@ internal sealed class SchemaRegistry
                 continue;
             }
 
-            mapped.Add((keyword, instance));
-        }
-
-        var invalid = mapped.Where(m => !UnknownFieldKeywords.Contains(m.Keyword)).Select(m => m.Instance).ToList();
-        var problems = new List<ManifestProblem>();
-        foreach (var (keyword, instance) in mapped.Distinct())
-        {
-            if (keyword == "unevaluatedProperties" && invalid.Any(i => i == Parent(instance) || IsBeneath(i, Parent(instance))))
+            if (keyword == "unevaluatedProperties" && declared(evaluation, instance))
             {
                 continue;
             }
 
+            mapped.Add((keyword, instance));
+        }
+
+        var problems = new List<ManifestProblem>();
+        foreach (var (keyword, instance) in mapped.Distinct())
+        {
             var rule = UnknownFieldKeywords.Contains(keyword) ? ManifestRules.NativeUnknownField : ManifestRules.NativeSchema;
             problems.Add(new ManifestProblem(rule, ProblemLocation.At(part, instance)));
         }
@@ -176,10 +186,47 @@ internal sealed class SchemaRegistry
         return keyword;
     }
 
-    private static bool IsBeneath(string pointer, string ancestor) =>
-        pointer.Length > ancestor.Length && pointer.StartsWith(ancestor, StringComparison.Ordinal) && pointer[ancestor.Length] == '/';
+    /// <summary>Whether the value at <paramref name="pointer"/> is valid against the bundled schema at <paramref name="branch"/> alone.</summary>
+    private bool MatchesBranch(string branch, System.Text.Json.Nodes.JsonNode? root, string pointer)
+    {
+        var node = root;
+        foreach (var segment in pointer.Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var name = segment.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal);
+            node = node switch
+            {
+                System.Text.Json.Nodes.JsonObject o => o[name],
+                System.Text.Json.Nodes.JsonArray a when int.TryParse(name, System.Globalization.CultureInfo.InvariantCulture, out var i) && i >= 0 && i < a.Count => a[i],
+                _ => null,
+            };
+            if (node is null)
+            {
+                return false;
+            }
+        }
+
+        if (node is null)
+        {
+            return false;
+        }
+
+        var wrapper = _compiled.GetOrAdd("branch " + branch, _ => new Lazy<CorvusSchema>(
+            () => CompileText(System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string> { ["$ref"] = branch }), LocalBase + "branch/" + Uri.EscapeDataString(branch)),
+            LazyThreadSafetyMode.ExecutionAndPublication)).Value;
+        try
+        {
+            return wrapper.Validate(System.Text.Encoding.UTF8.GetBytes(node.ToJsonString()));
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return false;
+        }
+    }
 
     private static string Parent(string pointer) => pointer.LastIndexOf('/') is var i and > 0 ? pointer[..i] : string.Empty;
+
+    private static bool IsBeneath(string pointer, string ancestor) =>
+        pointer.Length > ancestor.Length && pointer.StartsWith(ancestor, StringComparison.Ordinal) && pointer[ancestor.Length] == '/';
 
     private static string Pointer(string location) => location.StartsWith('#') ? location[1..] : location;
 
