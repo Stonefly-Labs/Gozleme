@@ -1,0 +1,23 @@
+schemaVersion: '1.0'
+specId: GOZ-0006
+stage: specify
+status: in-progress
+promptRevision: 7
+branch: feature/goz-0006-typed-manifests
+featureDirectory: docs/specs/006-typed-manifests
+decisions:
+- {at: '2026-11-17', by: maintainer, topic: persistence, decision: 'Q1 option A: validate only; a manifest is validated against a registered capability (identity claim checked) and returns envelope, verbatim native document and a separate normalized projection; nothing is stored; GOZ-0007 adds storage as immutable revisions.'}
+- {at: '2026-11-17', by: maintainer, topic: action-role, decision: 'Q2 option A: new action manifest.validate held by publisher only; suspended publishers answer 409.'}
+- {at: '2026-11-17', by: maintainer, topic: native-formats, decision: 'Q3 option A: MCP Registry server.json; A2A Agent Card (current stable); OpenAPI 3.1 plus 3.0; AsyncAPI 3.0; Agent Skills SKILL.md front matter; Gozleme-defined typed model card; one pinned version per adapter, later versions added as new adapter versions; plan pins exact versions.'}
+- {at: '2026-11-17', by: maintainer, topic: strictness, decision: 'Q4 option A: strict categorized rejection; envelope rejects unknown fields; reserved security claims (signatures, attestations, trust/verified/approved status, delegation and transfer chains, visibility and grants, owner/publisher overrides) rejected; inline secret values rejected, secret references allowed; native unknown fields allowed only under the protocol extension mechanism, preserved verbatim, never projected.'}
+agentChoices:
+- {at: '2026-11-17', topic: action-resource, choice: 'action manifest.validate on the existing capability resource (no new resource type); disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: no-audit, choice: 'validation changes nothing so it writes no new audit event (authz denials keep 1301); range 1501-1510 stays free; disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: lifecycle-claims, choice: 'publisher-asserted lifecycle state (deprecated, revoked) is treated as a reserved claim alongside the Q4 list; disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: rate-limit, choice: 'validation rate-limited per account in memory per API instance (stateless operation, no shared budget); disclosed to the maintainer for veto.'}
+stages:
+  specify: {status: done, artifact: docs/specs/006-typed-manifests/spec.md, at: '2026-11-17', checklist: docs/specs/006-typed-manifests/checklists/requirements.md}
+attempts: []
+blockers: []
+nextAction: 'Run /speckit-clarify (or proceed to /speckit-plan); plan pins exact native format versions and the secret-detection pattern list (security review).'
+evidence: {tests: [], demos: [], screenshots: [], reviews: []}

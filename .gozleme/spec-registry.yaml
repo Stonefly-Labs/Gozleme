@@ -386,13 +386,13 @@ specs:
   prompt: docs/prompts/spec-0006.md
   dependencies:
   - GOZ-0005
-  status: not-started
-  stage: null
-  branch: null
+  status: in-progress
+  stage: specify
+  branch: feature/goz-0006-typed-manifests
   pullRequest: null
   promptRevision: 7
   gates:
-    specification: pending
+    specification: passed
     plan: pending
     tasks: pending
     implementation: pending
@@ -410,7 +410,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Prerequisite GOZ-0005 merged (PR #19); no open impact decision is due before GOZ-0006 (IF-02 before GOZ-0012 plan; IF-04, IF-05, IF-08 before GOZ-0039); prompt revision 7 carries the publisher identity conventions (IF-01, IF-03, IF-06, IF-07, IF-09, IF-10); start on feature/goz-0006-*'
+  nextAction: 'Specified 2026-11-17 (maintainer Q1-Q4 recorded in docs/specs/006-typed-manifests/progress.yaml); next /speckit-clarify then /speckit-plan.'
 - id: GOZ-0007
   number: 7
   title: Immutable revisions and signed attestations
