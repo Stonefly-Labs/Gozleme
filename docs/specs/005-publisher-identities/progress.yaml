@@ -1,0 +1,25 @@
+schemaVersion: '1.0'
+specId: GOZ-0005
+stage: specify
+status: in-progress
+promptRevision: 6
+branch: feature/goz-0005-publisher-identities
+featureDirectory: docs/specs/005-publisher-identities
+decisions:
+- {at: '2026-11-16', by: maintainer, topic: origin, decision: 'Q1 option A: operator-configured origin recorded by the first migration as instance reference data; mismatched or missing configuration refuses migrate and start.'}
+- {at: '2026-11-16', by: maintainer, topic: publisher-ownership, decision: 'Q2 option A: an organization owns many publishers; tenant-owned, private by default, never moved.'}
+- {at: '2026-11-16', by: maintainer, topic: handle-uniqueness, decision: 'Q3 option A: handles unique instance-wide; a taken handle answers 409 unavailable revealing only reservation; registration rate-limited per account; every other constraint error maps to the unknown-ID 404.'}
+- {at: '2026-11-16', by: maintainer, topic: canonical-id, decision: 'Q4 option A: canonical ID = origin + opaque permanent UUIDv7 (gz://<origin>/cap/<id>), never embedding organization ID or display name; friendly alias <handle>/<capability-name> reserved permanently, never reassigned or reused.'}
+- {at: '2026-11-16', by: maintainer, topic: action-roles, decision: 'Q5 option A: publisher.register = admin; capability.create and capability display-name change = publisher; reads member-level.'}
+- {at: '2026-11-16', by: maintainer, topic: initial-role, finding: GOZ-0004-IF-05, decision: 'Q6 option A: no change; creators keep {admin,member}; seed grants publisher to a demo account.'}
+- {at: '2026-11-16', by: maintainer, topic: role-loss, finding: GOZ-0004-IF-05, decision: 'Q7 option A: publishers, IDs and aliases belong to the organization and are unaffected by losing a role or leaving.'}
+- {at: '2026-11-16', by: maintainer, topic: mutability, decision: 'Q8 option A: only display names mutable; no retirement, deletion or alias release. Amended by Q9 for handles.'}
+- {at: '2026-11-16', by: maintainer, topic: handle-squatting, decision: 'Q9 option A (raised after drafting from a squatting risk note): operator command line only can reserve handles (blocked, or earmarked for an organization by opaque ID) and reclaim a registered handle; reclaim suspends the holding publisher, its capabilities keep canonical IDs and their aliases stay retired forever; the handle may be re-registered; audited; no HTTP surface.'}
+agentChoices:
+- {at: '2026-11-16', topic: publisher-rename-role, choice: 'publisher display-name change is admin-only, matching publisher.register; disclosed to the maintainer for veto.'}
+stages:
+  specify: {status: done, artifact: docs/specs/005-publisher-identities/spec.md, at: '2026-11-16', checklist: docs/specs/005-publisher-identities/checklists/requirements.md}
+attempts: []
+blockers: []
+nextAction: 'Run /speckit-clarify (or proceed to /speckit-plan); plan must resolve FR-036 (operator reclaim of a tenant-owned publisher row within GOZ-0003-IF-04) or escalate to the maintainer.'
+evidence: {tests: [], demos: [], screenshots: [], reviews: []}
