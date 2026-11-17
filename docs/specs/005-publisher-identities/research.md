@@ -216,12 +216,22 @@ target read (`404` if it is not visible), then suspension (`409 suspended`), the
 | `23505 ux_handle_claims_live` | `409 {"error":"handle_unavailable"}`, one fixed body (`unavailable` already means the `503` outage answer) |
 | `23505` on `capabilities (publisher_id, name)` or `alias_reservations_pkey` | `409 {"error":"conflict"}` |
 | any other `23505`, `23503`, `42501` | the empty `404` (the `42501` path is `TenantTransaction`'s) |
-| rate limit (registration) | `429`, labelled through `RateLimitedOperation` as `publisher_register` |
+| rate limit (registration) | `429 {"error":"rate_limited"}` with `Retry-After`, only after `AuthorizeAsync` passes (see **Rate limit**) |
 
 A unique violation aborts the request transaction. The handler returns its result and `TenantTransaction` sees no live transaction and does not commit, which is the existing "lost redemption race" path.
 
 **Rate limit**: `Gozleme:Publishers:RegisterPerHour` (default 10, range 1–100), a fixed window
 partitioned by account id (GOZ-0002-IF-08).
+
+The limiter is checked **in the handler, after `AuthorizeAsync` passes** (member holding `admin`),
+before validation. It is not the `RequireRateLimiting` middleware that sign-in and invite redemption
+use (maintainer decision on analysis finding U1, 2026-11-16). The reasons:
+- A non-member or unknown organization always gets the identical empty `404` and never a `429` (FR-023).
+- Refused (`404`, `403`) attempts do not use up the budget.
+- Audit 1405 and the `rate_limited` outcome name only an organization whose membership has been confirmed (FR-026).
+
+The rejection is recorded as the `register` operation with outcome `rate_limited` and audit 1405.
+It is never recorded as a sign-in or account-registration failure (FR-008).
 
 ## R9 — Permission contract delta
 

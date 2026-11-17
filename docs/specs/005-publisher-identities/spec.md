@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-16
 
-**Status**: Draft
+**Status**: Ready for implementation (specify, clarify, plan, tasks and analyze passed 2026-11-16)
 
 **Input**: User description: "GOZ-0005 — Publisher identities and canonical capability IDs. Build Publisher identities and canonical capability IDs as one bounded, runnable, tested vertical slice. User-visible outcome: register publisher; create stable capability ID unaffected by display-name changes. In scope: origin-qualified IDs and publisher namespace rules. Important boundary: preserve permanent origin and friendly alias reservation." (full prompt: `docs/prompts/spec-0005.md`, revision 6, including implementation-alignment bullets GOZ-0000-IF-01/11/16, GOZ-0001-IF-01/02/05/09/10/11/17, GOZ-0002-IF-01/05/06/07/08/09/10/11, GOZ-0003-IF-01/02/06/07/08/09/10/19 and GOZ-0004-IF-01/02/04/05/06/07/08/09/13)
 

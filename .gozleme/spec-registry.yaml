@@ -352,7 +352,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Tasks generated (52, docs/specs/005-publisher-identities/tasks.md); run /speckit-analyze then /speckit-implement from T001.'
+  nextAction: 'Tasks generated (52) and analyzed (10 findings remediated, 0 critical); run /speckit-implement from T001.'
 - id: GOZ-0006
   number: 6
   title: Typed manifests for capability families
