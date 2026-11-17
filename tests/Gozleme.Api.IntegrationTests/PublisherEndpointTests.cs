@@ -3,6 +3,8 @@ using System.Text.RegularExpressions;
 using Gozleme.Api.IntegrationTests.Infrastructure;
 using Gozleme.Api.Organizations;
 using Gozleme.Api.Publishers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Gozleme.Api.IntegrationTests;
 
@@ -30,7 +32,9 @@ public sealed partial class PublisherEndpointTests(PgvectorDatabaseFixture fixtu
 
     public async ValueTask InitializeAsync()
     {
-        _factory = new GozlemeApiFactory(Db.AppConnectionString);
+        // A clock with sub-microsecond ticks on every platform (Linux's resolution), so the byte-identical
+        // response/read assertions also cover PostgreSQL's microsecond timestamps.
+        _factory = new GozlemeApiFactory(Db.AppConnectionString, configureServices: services => services.Replace(ServiceDescriptor.Singleton<TimeProvider>(new SubMicrosecondTimeProvider())));
         (_alice, _) = await AuthClient.SignedInAsync(_factory);
         (_erin, _) = await AuthClient.SignedInAsync(_factory);
         (_bob, _) = await AuthClient.SignedInAsync(_factory);
@@ -503,4 +507,13 @@ public sealed partial class PublisherEndpointTests(PgvectorDatabaseFixture fixtu
 
     [GeneratedRegex("^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")]
     private static partial Regex UuidV7();
+
+    private sealed class SubMicrosecondTimeProvider : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow()
+        {
+            var now = DateTimeOffset.UtcNow;
+            return now.AddTicks(7 - (now.Ticks % TimeSpan.TicksPerMicrosecond));
+        }
+    }
 }

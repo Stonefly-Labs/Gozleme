@@ -67,7 +67,7 @@ internal sealed class PublisherStore(GozlemeDbContext db, TimeProvider time)
     public async Task<(WriteResult Result, Publisher? Publisher, Guid ClaimId)> RegisterAsync(
         Guid organizationId, Guid userId, string handle, string displayName, CancellationToken ct)
     {
-        var now = time.GetUtcNow();
+        var now = Now();
         var publisher = new Publisher
         {
             Id = Guid.CreateVersion7(now),
@@ -109,7 +109,7 @@ internal sealed class PublisherStore(GozlemeDbContext db, TimeProvider time)
     public async Task<(WriteResult Result, Capability? Capability)> CreateCapabilityAsync(
         Publisher publisher, Guid userId, string name, string displayName, CancellationToken ct)
     {
-        var now = time.GetUtcNow();
+        var now = Now();
         var capability = new Capability
         {
             Id = Guid.CreateVersion7(now),
@@ -143,7 +143,7 @@ internal sealed class PublisherStore(GozlemeDbContext db, TimeProvider time)
         }
 
         publisher.DisplayName = displayName;
-        publisher.UpdatedAt = time.GetUtcNow();
+        publisher.UpdatedAt = Now();
         await db.SaveChangesAsync(ct);
         return true;
     }
@@ -156,7 +156,7 @@ internal sealed class PublisherStore(GozlemeDbContext db, TimeProvider time)
         }
 
         capability.DisplayName = displayName;
-        capability.UpdatedAt = time.GetUtcNow();
+        capability.UpdatedAt = Now();
         await db.SaveChangesAsync(ct);
         return true;
     }
@@ -174,4 +174,14 @@ internal sealed class PublisherStore(GozlemeDbContext db, TimeProvider time)
             { SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.ForeignKeyViolation } => WriteResult.NotFound,
             _ => null,
         };
+
+    /// <summary>
+    /// The clock at PostgreSQL's <c>timestamptz</c> precision (microseconds), so a write's response equals every later
+    /// read of the stored row; .NET on Linux ticks in 100 ns.
+    /// </summary>
+    private DateTimeOffset Now()
+    {
+        var now = time.GetUtcNow();
+        return now.AddTicks(-(now.Ticks % TimeSpan.TicksPerMicrosecond));
+    }
 }
