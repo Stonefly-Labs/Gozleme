@@ -1,0 +1,88 @@
+using System.Diagnostics;
+using Corvus.Text.Json;
+using Corvus.Text.Json.RuntimeEvaluator;
+using Corvus.Text.Json.Validator;
+
+var up = args[0];
+var docs = new Dictionary<string, byte[]>
+{
+    ["https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"] = File.ReadAllBytes(Path.Combine(up, "mcp-registry-2025-12-11.json")),
+    ["https://gozleme.invalid/upstream/mcp-2026-07-28.json"] = File.ReadAllBytes(Path.Combine(up, "mcp-2026-07-28.json")),
+};
+JsonSchemaDocumentResolver resolver = (string uri, out ReadOnlyMemory<byte> json) => { var ok = docs.TryGetValue(uri, out var b); json = b; return ok; };
+JsonSchema.Options Offline() => new([], false, JsonSchemaDialect.Draft202012, false, resolver);
+
+void Report(string name, JsonSchema s, string instance)
+{
+    using var c = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed, 0);
+    var ok = s.Validate(instance, c);
+    Console.WriteLine($"  [{name}] valid={ok} results={c.GetResultCount()}");
+    foreach (var r in c.EnumerateResults())
+        if (!r.IsMatch) Console.WriteLine($"    eval={r.GetEvaluationLocationText()} schema={r.GetSchemaEvaluationLocationText()} instance={r.GetDocumentEvaluationLocationText()} msg={r.GetMessageText()}");
+}
+
+JsonSchema Compile(string file, string uri)
+{
+    var sw = Stopwatch.StartNew();
+    var s = JsonSchema.FromText(File.ReadAllText(Path.Combine(up, file)), uri, Offline());
+    Console.WriteLine($"(a) compile {file}: {sw.Elapsed.TotalMilliseconds:F0} ms");
+    return s;
+}
+
+var before = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetName().Name).ToHashSet();
+var oas31 = Compile("oas-3.1-2026-11-05.json", "https://spec.openapis.org/oas/3.1/schema/2026-11-05");
+var oas30 = Compile("oas-3.0-2024-10-18.json", "https://spec.openapis.org/oas/3.0/schema/2024-10-18");
+try
+{
+    var asyncapi = Compile("asyncapi-3.0.0.json", "https://gozleme.invalid/upstream/asyncapi-3.0.0.json");
+    Report("asyncapi valid", asyncapi, """{"asyncapi":"3.0.0","info":{"title":"x","version":"1"}}""");
+    Report("asyncapi unknown root", asyncapi, """{"asyncapi":"3.0.0","info":{"title":"x","version":"1"},"bogus":1}""");
+}
+catch (Exception ex) { Console.WriteLine($"(a) asyncapi FAILED: {ex.GetType().Name}: {ex.Message.Split('\n')[0]}"); }
+var mcp = Compile("mcp-2026-07-28.json", "https://gozleme.invalid/upstream/mcp-2026-07-28.json");
+var mcp25 = Compile("mcp-2025-11-25.json", "https://gozleme.invalid/upstream/mcp-2025-11-25.json");
+var a2a = Compile("a2a-1.0.1.json", "https://gozleme.invalid/upstream/a2a-1.0.1.json");
+var loaded = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetName().Name!).Where(n => !before.Contains(n)).Order();
+Console.WriteLine($"(a) assemblies loaded: {string.Join(", ", loaded)}");
+Console.WriteLine($"(a) roslyn loaded: {loaded.Any(n => n.StartsWith("Microsoft.CodeAnalysis"))}; dynamic: {AppDomain.CurrentDomain.GetAssemblies().Count(a => a.IsDynamic)}");
+var sw2 = Stopwatch.StartNew();
+Report("oas31 ok", oas31, """{"openapi":"3.1.2","info":{"title":"x","version":"1"},"paths":{}}""");
+Console.WriteLine($"(a) first validate: {sw2.Elapsed.TotalMilliseconds:F1} ms");
+
+Console.WriteLine("(b) OAS 3.1 invalid:");
+Report("detailed", oas31, """{"openapi":"3.1.2","info":{"title":5,"version":"1","bogus":true},"paths":{"/a":{"get":{"responses":{"200":{"description":"ok"}},"nope":1}}}}""");
+
+Console.WriteLine("(c) 2020-12 overlay over draft-07 and 2020-12 defs:");
+const string overlay = """
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "remotes": { "type": "array", "items": { "$ref": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/StreamableHttpTransport", "unevaluatedProperties": false } },
+    "serverInfo": { "$ref": "https://gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/Implementation", "unevaluatedProperties": false }
+  },
+  "unevaluatedProperties": false
+}
+""";
+var ov = JsonSchema.FromText(overlay, "https://gozleme.invalid/spike/overlay.json", Offline());
+Report("ok", ov, """{"remotes":[{"type":"streamable-http","url":"https://example.com/mcp"}],"serverInfo":{"name":"x","version":"1.0.0"}}""");
+Report("extra on draft-07 remote", ov, """{"remotes":[{"type":"streamable-http","url":"https://example.com/mcp","extra":1}]}""");
+Report("extra on 2020-12 Implementation", ov, """{"serverInfo":{"name":"x","version":"1.0.0","extra":1}}""");
+Report("wrong type on draft-07 remote", ov, """{"remotes":[{"type":"streamable-http","url":5}]}""");
+
+Console.WriteLine("(d) draft-04 OAS 3.0:");
+Report("ok", oas30, """{"openapi":"3.0.4","info":{"title":"x","version":"1"},"paths":{}}""");
+Report("unknown root", oas30, """{"openapi":"3.0.4","info":{"title":"x","version":"1"},"paths":{},"bogus":1}""");
+
+Console.WriteLine("(f) A2A Agent Card def by title pointer:");
+try {
+var card = JsonSchema.FromText("""{"$schema":"https://json-schema.org/draft/2020-12/schema","$ref":"https://gozleme.invalid/upstream/a2a-1.0.1.json#/definitions/Agent%20Card"}""", "https://gozleme.invalid/spike/card.json", new([], false, JsonSchemaDialect.Draft202012, false, (string u, out ReadOnlyMemory<byte> j) => { if (u == "https://gozleme.invalid/upstream/a2a-1.0.1.json") { j = File.ReadAllBytes(Path.Combine(up, "a2a-1.0.1.json")); return true; } var ok = docs.TryGetValue(u, out var b); j = b; return ok; }));
+Report("card unknown field", card, """{"name":"x","bogus":1}""");
+} catch (Exception ex) { Console.WriteLine($"(f) FAILED: {ex.GetType().Name}: {ex.Message.Split('\n')[0]}"); }
+
+try
+{
+    var s = JsonSchema.FromText("""{"$schema":"https://json-schema.org/draft/2020-12/schema","$ref":"https://example.com/not-bundled.json"}""", "https://gozleme.invalid/spike/unbundled.json", Offline());
+    Report("(e) unbundled compiled", s, "{}");
+}
+catch (Exception ex) { Console.WriteLine($"(e) unbundled $ref refused: {ex.GetType().Name}: {ex.Message.Split('\n')[0]}"); }

@@ -31,7 +31,7 @@ Version consistency rules:
 
 Any other value is `unsupported_format` at `/openapi`, `/asyncapi` or `/protocolRevision`.
 
-**Verified at vendoring (T003/T004, 2026-11-17)**: the six upstream files were fetched from the pinned locations, and their SHA-256 values are listed in `Schemas/SOURCES.md` (T006). The MCP `2025-11-25` core schema is **2020-12**, like `2026-07-28`; neither file has a `$id`, so Gözleme registers them under its own bundled URIs. The registry `server.schema.json` 2025-12-11 is draft-07 (`definitions`). A2A: the published `https://a2a-protocol.org/v1.0.1/spec/a2a.json` is a 2020-12 bundle (`definitions`, 47 entries) produced by A2A's `scripts/proto_to_json_schema.sh` with bufbuild `protoc-gen-jsonschema`, and its `AgentCard`, `AgentCapabilities` and `AgentCardSignature` are closed. Generating Gözleme's own bundle from `a2a.proto` is pending (blocker GOZ-0006-B2).
+**Verified at vendoring (T003/T004, 2026-11-17)**: the six upstream files were fetched from the pinned locations, and their SHA-256 values are listed in `Schemas/SOURCES.md` (T006). The MCP `2025-11-25` core schema is **2020-12**, like `2026-07-28`; neither file has a `$id`, so Gözleme registers them under its own bundled URIs. The registry `server.schema.json` 2025-12-11 is draft-07 (`definitions`). A2A: the published `https://a2a-protocol.org/v1.0.1/spec/a2a.json` is a 2020-12 bundle (`definitions`, 47 entries) produced by A2A's `scripts/proto_to_json_schema.sh` with bufbuild `protoc-gen-jsonschema`, and its `AgentCard`, `AgentCapabilities` and `AgentCardSignature` are closed. Generating from `a2a.proto` (T004, maintainer-approved container run; generator, versions and command are in `Schemas/SOURCES.md`) gives a bundle byte-identical to the published file (SHA-256 `ba4b702b…55d8dd`), so no material difference. Definitions are keyed by title with spaces (`Agent Card`), so overlays reference `#/definitions/Agent Card`.
 
 Later upstream versions each become a new adapter version or format version. They are never edits to an
 existing one: OpenAPI 3.2 (3.2.1, 2026-09-10), AsyncAPI 3.1.0 (2026-01-31, P3), and newer MCP revisions.
@@ -79,6 +79,14 @@ pinning OpenAPI 3.1.0's 2022-10-07 schema (superseded upstream).
 - (c) Holds: a 2020-12 overlay `$ref`s draft-07 `server.json` `definitions` and 2020-12 MCP `$defs`, and its `unevaluatedProperties: false` rejects extra members of both.
 - (d) Holds: the draft-04 OAS 3.0 schema validates and rejects an unknown root member through `additionalProperties`.
 - Offline: an unbundled `$ref`, with file-system and HTTP resolution off, is refused at compile time (`Unable to locate the root document`) and is not fetched.
+
+**V5 spike (maintainer decision on B1, 2026-11-17; evidence `evidence/corvus-v5-spike.txt`)**: `Corvus.Text.Json.Validator` 5.8.11 (Apache-2.0; depends only on `Corvus.Text.Json`, `Corvus.Regex.Ecma262` and NodaTime; about 2.6 MB) evaluates schemas at run time **without code generation or Roslyn**: no `Microsoft.CodeAnalysis` assembly and no dynamic assembly is loaded.
+- (a) Cold compile: OAS 3.1 68 ms, OAS 3.0 4 ms, **AsyncAPI 3.0.0 24 ms (compiles and validates)**, MCP 2026-07-28 5 ms, MCP 2025-11-25 2 ms. The first validation took 1.1 ms.
+- (b) `JsonSchemaResultsLevel.Detailed` gives the evaluation path (the keyword is its last segment), the schema location and the instance location as an RFC 6901 pointer (`/info/bogus`, `/paths/~1a/get/nope`). Parent "expected to match the subschema" entries also appear and must be filtered to their leaf keywords.
+- (c) Holds: a 2020-12 overlay over draft-07 `server.json` and 2020-12 MCP `$defs` rejects extra members of both.
+- (d) Holds: draft-04 OAS 3.0 validates and rejects an unknown root member.
+- (e) Holds: an unbundled `$ref` is refused at compile time (`JsonSchemaCompilationException`) through a `JsonSchemaDocumentResolver` delegate over in-memory bytes, with file-system and HTTP resolution off.
+- **A2A finding (not engine-specific)**: the A2A bundle keeps 33 relative `$ref`s to per-message files (`lf.a2a.v1.AgentCapabilities.jsonschema.json`, `google.protobuf.Struct.jsonschema.json`, …), because its `jq` bundling step deletes each `$id` but does not rewrite references. So it cannot be compiled as one document by any validator.
 
 ## R3 — Parsing into one positioned tree (P2, FR-016)
 

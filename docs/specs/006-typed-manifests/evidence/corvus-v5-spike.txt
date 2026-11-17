@@ -1,0 +1,71 @@
+# Corvus.Text.Json.Validator 5.8.11 (V5) spike, 2026-11-17T19:29:07Z, SDK 10.0.404, macOS arm64, Release
+# Throwaway console project outside the repo (maintainer decision B1: spike V5 before revisiting P1); same checks as T002 plus AsyncAPI, MCP and A2A compiles
+# Dependencies: Corvus.Text.Json 5.8.11 -> Corvus.Regex.Ecma262 1.0.15, NodaTime 3.3.1; Apache-2.0; ~2.6 MB of assemblies; no Roslyn
+
+(a) compile oas-3.1-2026-11-05.json: 68 ms
+(a) compile oas-3.0-2024-10-18.json: 4 ms
+(a) compile asyncapi-3.0.0.json: 26 ms
+  [asyncapi valid] valid=True results=1
+  [asyncapi unknown root] valid=False results=3
+    eval=/additionalProperties schema=/additionalProperties instance=/bogus msg=The value was expected to match the subschema.
+    eval=/additionalProperties schema=/additionalProperties instance=/bogus msg=
+    eval= schema= instance= msg=The value was expected to match the subschema.
+(a) compile mcp-2026-07-28.json: 5 ms
+(a) compile mcp-2025-11-25.json: 2 ms
+(a) compile a2a-1.0.1.json: 1 ms
+(a) assemblies loaded: Corvus.Regex.Ecma262, Microsoft.Win32.Primitives, System.Collections.Concurrent, System.Diagnostics.Tracing, System.IO.Pipelines, System.Memory, System.Net.Http, System.Private.Uri, System.Runtime.InteropServices, System.Runtime.Intrinsics, System.Runtime.Numerics, System.Text.Encoding.Extensions, System.Text.RegularExpressions, System.Threading, System.Threading.Thread
+(a) roslyn loaded: False; dynamic: 0
+  [oas31 ok] valid=True results=1
+(a) first validate: 1.0 ms
+(b) OAS 3.1 invalid:
+  [detailed] valid=False results=13
+    eval=/properties/info/$ref/properties/title schema=/$defs/info/properties/title instance=/info/title msg=The value was expected to match the subschema.
+    eval=/properties/info/$ref/properties/title/type schema=/$defs/info/properties/title/type instance=/info/title msg=The value was expected to be of type 'string'
+    eval=/properties/info/$ref/unevaluatedProperties schema=/$defs/info/unevaluatedProperties instance=/info/bogus msg=The value was expected to match the subschema.
+    eval=/properties/info/$ref/unevaluatedProperties schema=/$defs/info/unevaluatedProperties instance=/info/bogus msg=
+    eval=/properties/info/$ref schema=/$defs/info instance=/info msg=The value was expected to match the subschema.
+    eval=/properties/info/$ref/unevaluatedProperties schema=/$defs/info/unevaluatedProperties instance=/info msg=
+    eval=/properties/paths/$ref/patternProperties/^~1/$ref/properties/get/$ref/unevaluatedProperties schema=/$defs/operation/unevaluatedProperties instance=/paths/~1a/get/nope msg=The value was expected to match the subschema.
+    eval=/properties/paths/$ref/patternProperties/^~1/$ref/properties/get/$ref/unevaluatedProperties schema=/$defs/operation/unevaluatedProperties instance=/paths/~1a/get/nope msg=
+    eval=/properties/paths/$ref/patternProperties/^~1/$ref/properties/get/$ref schema=/$defs/operation instance=/paths/~1a/get msg=The value was expected to match the subschema.
+    eval=/properties/paths/$ref/patternProperties/^~1/$ref/properties/get/$ref/unevaluatedProperties schema=/$defs/operation/unevaluatedProperties instance=/paths/~1a/get msg=
+    eval=/properties/paths/$ref/patternProperties/^~1/$ref schema=/$defs/path-item instance=/paths/~1a msg=The value was expected to match the subschema.
+    eval=/properties/paths/$ref schema=/$defs/paths instance=/paths msg=The value was expected to match the subschema.
+    eval= schema= instance= msg=The value was expected to match the subschema.
+(c) 2020-12 overlay over draft-07 and 2020-12 defs:
+  [ok] valid=True results=1
+  [extra on draft-07 remote] valid=False results=6
+    eval=/properties/remotes/items/unevaluatedProperties schema=/properties/remotes/items/unevaluatedProperties instance=/remotes/0/extra msg=The value was expected to match the subschema.
+    eval=/properties/remotes/items/unevaluatedProperties schema=/properties/remotes/items/unevaluatedProperties instance=/remotes/0/extra msg=
+    eval=/properties/remotes/items schema=/properties/remotes/items instance=/remotes/0 msg=The value was expected to match the subschema.
+    eval=/properties/remotes/items/unevaluatedProperties schema=/properties/remotes/items/unevaluatedProperties instance=/remotes/0 msg=
+    eval=/properties/remotes schema=/properties/remotes instance=/remotes msg=The value was expected to match the subschema.
+    eval= schema= instance= msg=The value was expected to match the subschema.
+  [extra on 2020-12 Implementation] valid=False results=5
+    eval=/properties/serverInfo/unevaluatedProperties schema=/properties/serverInfo/unevaluatedProperties instance=/serverInfo/extra msg=The value was expected to match the subschema.
+    eval=/properties/serverInfo/unevaluatedProperties schema=/properties/serverInfo/unevaluatedProperties instance=/serverInfo/extra msg=
+    eval=/properties/serverInfo schema=/properties/serverInfo instance=/serverInfo msg=The value was expected to match the subschema.
+    eval=/properties/serverInfo/unevaluatedProperties schema=/properties/serverInfo/unevaluatedProperties instance=/serverInfo msg=
+    eval= schema= instance= msg=The value was expected to match the subschema.
+  [wrong type on draft-07 remote] valid=False results=12
+    eval=/properties/remotes/items/$ref/properties/url schema=/definitions/StreamableHttpTransport/properties/url instance=/remotes/0/url msg=The value was expected to match the subschema.
+    eval=/properties/remotes/items/$ref/properties/url/type schema=/definitions/StreamableHttpTransport/properties/url/type instance=/remotes/0/url msg=The value was expected to be of type 'string'
+    eval=/properties/remotes/items/$ref schema=/definitions/StreamableHttpTransport instance=/remotes/0 msg=The value was expected to match the subschema.
+    eval=/properties/remotes/items/unevaluatedProperties schema=/properties/remotes/items/unevaluatedProperties instance=/remotes/0/type msg=The value was expected to match the subschema.
+    eval=/properties/remotes/items/unevaluatedProperties schema=/properties/remotes/items/unevaluatedProperties instance=/remotes/0/type msg=
+    eval=/properties/remotes/items/unevaluatedProperties schema=/properties/remotes/items/unevaluatedProperties instance=/remotes/0/url msg=The value was expected to match the subschema.
+    eval=/properties/remotes/items/unevaluatedProperties schema=/properties/remotes/items/unevaluatedProperties instance=/remotes/0/url msg=
+    eval=/properties/remotes/items schema=/properties/remotes/items instance=/remotes/0 msg=The value was expected to match the subschema.
+    eval=/properties/remotes/items/unevaluatedProperties schema=/properties/remotes/items/unevaluatedProperties instance=/remotes/0 msg=
+    eval=/properties/remotes/items/$ref schema=/properties/remotes/items/$ref instance=/remotes/0 msg=The value did not match all subschema.
+    eval=/properties/remotes schema=/properties/remotes instance=/remotes msg=The value was expected to match the subschema.
+    eval= schema= instance= msg=The value was expected to match the subschema.
+(d) draft-04 OAS 3.0:
+  [ok] valid=True results=1
+  [unknown root] valid=False results=3
+    eval=/additionalProperties schema=/additionalProperties instance=/bogus msg=The value was expected to match the subschema.
+    eval=/additionalProperties schema=/additionalProperties instance=/bogus msg=
+    eval= schema= instance= msg=The value was expected to match the subschema.
+(f) A2A Agent Card def by title pointer:
+(f) FAILED: JsonSchemaCompilationException: Unable to resolve reference 'lf.a2a.v1.AgentCapabilities.jsonschema.json' from 'https://gozleme.invalid/upstream/a2a-1.0.1.json'.
+(e) unbundled $ref refused: JsonSchemaCompilationException: Unable to resolve reference 'https://example.com/not-bundled.json' from 'https://gozleme.invalid/spike/unbundled.json'.

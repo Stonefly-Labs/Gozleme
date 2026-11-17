@@ -18,6 +18,8 @@ decisions:
 - {at: '2026-11-17', by: maintainer, topic: yaml-parser, decision: 'Plan P2: YamlDotNet low-level Parser event stream only; Gozleme rejects anchors, aliases, tags and merge keys and enforces duplicate keys, depth and size while building its own tree.'}
 - {at: '2026-11-17', by: maintainer, topic: asyncapi-pin, decision: 'Plan P3: AsyncAPI 3.0.0 as decided in Q3; 3.1.0 (released 2026-01-31) is added later as a new adapter version.'}
 - {at: '2026-11-17', by: maintainer, topic: mcp-format, decision: 'Plan P4: server.json 2025-12-11 lists no tools/resources/prompts and the maintainer asked for a more modern pin considering stateful and stateless MCP; chose "Revision-typed, both": a Gozleme-versioned MCP server manifest whose serverInfo, capabilities, tools, resources, resource templates and prompts are validated against the official core schema of the declared protocolRevision, 2026-07-28 (stateless, SEP-2575/2567) or 2025-11-25 (stateful, sessions); projection mode derived from the revision; optional remotes/packages use server.json 2025-12-11 shapes; primitive lists publisher-declared and advisory.'}
+- {at: '2026-11-17', by: maintainer, topic: blocker-B1, decision: 'GOZ-0006-B1: spike the Corvus V5 (Corvus.Text.Json) family against T002 checks (a)-(d) plus an AsyncAPI 3.0.0 compile and report back before P1 is revisited; no plan change yet.'}
+- {at: '2026-11-17', by: maintainer, topic: blocker-B2, decision: 'GOZ-0006-B2: generate A2A v1.0.1 JSON Schema with A2A scripts/proto_to_json_schema.sh in a golang:1.25 Docker container (protoc, bufbuild protoc-gen-jsonschema v0.6.0, googleapis pinned) and compare with the published a2a.json.'}
 agentChoices:
 - {at: '2026-11-17', topic: action-resource, choice: 'action manifest.validate on the existing capability resource (no new resource type); disclosed to the maintainer for veto.'}
 - {at: '2026-11-17', topic: no-audit, choice: 'validation changes nothing so it writes no new audit event (authz denials keep 1301); range 1501-1510 stays free; disclosed to the maintainer for veto.'}
@@ -31,7 +33,7 @@ stages:
   specify: {status: done, artifact: docs/specs/006-typed-manifests/spec.md, at: '2026-11-17', checklist: docs/specs/006-typed-manifests/checklists/requirements.md}
   clarify: {status: done, at: '2026-11-17', questions: 4, checklist: 16/16}
   plan: {status: done, at: '2026-11-17', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [P1, P2, P3, P4], verifyAtVendoring: ['Corvus run-time compile cost and keyword/instance-location output', 'MCP 2025-11-25 schema dialect', 'A2A v1.0.1 JSON Schema generation from proto', 'Utf8JsonReader duplicate-property option']}
-  implement: {status: blocked, at: '2026-11-17', done: [T001, T003], blocked: [T002, T004]}
+  implement: {status: blocked, at: '2026-11-17', done: [T001, T003, T004], blocked: [T002]}
   tasks: {status: done, at: '2026-11-17', artifact: docs/specs/006-typed-manifests/tasks.md, count: 72, phases: {setup: 6, foundational: 21, US1: 18, US2: 10, US3: 3, US4: 6, polish: 8}, note: 'research R6 rule name aligned to contract catalogue (reserved.a2a-signatures)'}
 attempts: []
 blockers:
@@ -41,13 +43,15 @@ blockers:
   owner: maintainer
   summary: 'Research R2 (a) differs: Corvus.Json.Validator 5.8.11 generates C# per schema and compiles it at run time with Roslyn (~20 MB new assemblies, ~7 s cold compile for OAS 3.1), and compiling the pinned AsyncAPI 3.0.0 bundle fails with Roslyn syntax errors in generated code. Package README labels 5.8.11 a V4 package and points to the V5 Corvus.Text.Json family. (b), (c), (d) and offline refusal hold.'
   evidence: [docs/specs/006-typed-manifests/evidence/corvus-spike.txt, docs/specs/006-typed-manifests/research.md#r2]
+  spike: 'Corvus V5 (Corvus.Text.Json.Validator 5.8.11) passes (a)-(e) with no Roslyn and compiles AsyncAPI 3.0.0 in 24 ms; evidence/corvus-v5-spike.txt'
   resumeAction: 'Maintainer revisits P1 (schema validation engine) given the AsyncAPI compile failure and run-time Roslyn dependency; record the decision in decisions, update research R2/R17, then resume /speckit-implement at T002.'
 - id: GOZ-0006-B2
   at: '2026-11-17'
   task: T004
   owner: maintainer
-  summary: 'Generating the A2A v1.0.1 JSON Schema from a2a.proto needs protoc, Go and bufbuild protoc-gen-jsonschema; running A2A scripts/proto_to_json_schema.sh in a golang:1.25 Docker container was denied by the session permission classifier. Published a2a.json v1.0.1 fetched for comparison (2020-12, AgentCard/AgentCapabilities/AgentCardSignature closed).'
-  evidence: [docs/specs/006-typed-manifests/research.md#r1]
-  resumeAction: 'Maintainer either allows the container generation (protoc + protoc-gen-jsonschema v0.6.0, googleapis c32bc6b), runs it locally, or decides to vendor the published a2a.json; then resume at T004.'
-nextAction: 'Stopped at vendoring stop points: T001 and T003 done; T002 blocked by GOZ-0006-B1 (maintainer to revisit P1); T004 blocked by GOZ-0006-B2 (A2A generation). Resume /speckit-implement at T002 after maintainer decisions.'
+  status: resolved
+  resolvedAt: '2026-11-17'
+  summary: 'A2A generation needed a container; maintainer approved it. Generated bundle is byte-identical to the published a2a.json v1.0.1; AgentCard/AgentCapabilities/AgentCardSignature closed.'
+  evidence: [src/Gozleme.Api/Manifests/Schemas/SOURCES.md, docs/specs/006-typed-manifests/research.md#r1]
+nextAction: 'T001, T003, T004 done. T002 blocked by GOZ-0006-B1 awaiting maintainer P1 decision after the Corvus V5 spike (passes all checks); A2A bundle has unresolved relative refs to per-message files (vendoring approach needed). Resume /speckit-implement at T002.'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}

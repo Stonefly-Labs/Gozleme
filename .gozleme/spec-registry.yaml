@@ -405,7 +405,6 @@ specs:
     merge: pending
   blockers:
   - 'GOZ-0006-B1: Corvus run-time Roslyn compile; AsyncAPI 3.0.0 schema fails to compile (maintainer to revisit P1)'
-  - 'GOZ-0006-B2: A2A proto to JSON Schema generation needs toolchain permission or a vendoring decision'
   impactFindings: []
   evidence:
     tests: []
