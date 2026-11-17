@@ -46,7 +46,7 @@ export function ManifestResult({ result }: { result: ValidationResult }) {
           <div className="row"><dt>Digest</dt><dd><code className="cell-wrap" data-testid="native-digest">{native.digest}</code></dd></div>
           <div className="row"><dt>Size</dt><dd>{native.byteLength.toLocaleString("en")} bytes ({native.encoding}, unchanged)</dd></div>
         </dl>
-        <pre className="native-document" data-testid="native-document">{native.document}</pre>
+        <pre className="native-document" tabIndex={0} aria-label="Native document text" data-testid="native-document">{native.document}</pre>
       </section>
       <section className="card" aria-labelledby="projection-heading" data-testid="panel-projection">
         <div className="panel-head">

@@ -95,57 +95,57 @@ internal static partial class RestrictedYamlReader
                 parser.MoveNext();
                 return Resolve(scalar, pointer, line, column);
             case SequenceStart:
-            {
-                if (depth + 1 > TreeBounds.MaxDepth)
                 {
-                    throw new ValidationStop(ManifestRules.BoundDepth, null);
-                }
-
-                parser.MoveNext();
-                var items = new List<ManifestNode>();
-                while (!parser.TryConsume<SequenceEnd>(out _))
-                {
-                    items.Add(ReadNode(parser, state, ManifestNode.Child(pointer, items.Count), depth + 1));
-                }
-
-                return ManifestNode.Array(pointer, line, column, items);
-            }
-
-            case MappingStart:
-            {
-                if (depth + 1 > TreeBounds.MaxDepth)
-                {
-                    throw new ValidationStop(ManifestRules.BoundDepth, null);
-                }
-
-                parser.MoveNext();
-                var members = new List<KeyValuePair<string, ManifestNode>>();
-                var names = new HashSet<string>(StringComparer.Ordinal);
-                while (!parser.TryConsume<MappingEnd>(out _))
-                {
-                    var keyEvent = parser.Current!;
-                    if (keyEvent is not Scalar key || !key.Anchor.IsEmpty || !key.Tag.IsEmpty || key.Value == "<<")
+                    if (depth + 1 > TreeBounds.MaxDepth)
                     {
-                        throw state.Feature(keyEvent.Start);
-                    }
-
-                    if (key.Value.Length > TreeBounds.MaxNameLength)
-                    {
-                        throw new ValidationStop(ManifestRules.BoundName, null);
-                    }
-
-                    if (!names.Add(key.Value))
-                    {
-                        var at = state.Position(key.Start);
-                        throw new ValidationStop(ManifestRules.ParseDuplicateKey, ProblemLocation.At(state.Part, at.Line, at.Column));
+                        throw new ValidationStop(ManifestRules.BoundDepth, null);
                     }
 
                     parser.MoveNext();
-                    members.Add(new(key.Value, ReadNode(parser, state, ManifestNode.Child(pointer, key.Value), depth + 1)));
+                    var items = new List<ManifestNode>();
+                    while (!parser.TryConsume<SequenceEnd>(out _))
+                    {
+                        items.Add(ReadNode(parser, state, ManifestNode.Child(pointer, items.Count), depth + 1));
+                    }
+
+                    return ManifestNode.Array(pointer, line, column, items);
                 }
 
-                return ManifestNode.Object(pointer, line, column, members);
-            }
+            case MappingStart:
+                {
+                    if (depth + 1 > TreeBounds.MaxDepth)
+                    {
+                        throw new ValidationStop(ManifestRules.BoundDepth, null);
+                    }
+
+                    parser.MoveNext();
+                    var members = new List<KeyValuePair<string, ManifestNode>>();
+                    var names = new HashSet<string>(StringComparer.Ordinal);
+                    while (!parser.TryConsume<MappingEnd>(out _))
+                    {
+                        var keyEvent = parser.Current!;
+                        if (keyEvent is not Scalar key || !key.Anchor.IsEmpty || !key.Tag.IsEmpty || key.Value == "<<")
+                        {
+                            throw state.Feature(keyEvent.Start);
+                        }
+
+                        if (key.Value.Length > TreeBounds.MaxNameLength)
+                        {
+                            throw new ValidationStop(ManifestRules.BoundName, null);
+                        }
+
+                        if (!names.Add(key.Value))
+                        {
+                            var at = state.Position(key.Start);
+                            throw new ValidationStop(ManifestRules.ParseDuplicateKey, ProblemLocation.At(state.Part, at.Line, at.Column));
+                        }
+
+                        parser.MoveNext();
+                        members.Add(new(key.Value, ReadNode(parser, state, ManifestNode.Child(pointer, key.Value), depth + 1)));
+                    }
+
+                    return ManifestNode.Object(pointer, line, column, members);
+                }
 
             default:
                 throw new YamlException(current.Start, current.End, "Unexpected event.");

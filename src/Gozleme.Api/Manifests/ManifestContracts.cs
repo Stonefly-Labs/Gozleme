@@ -108,15 +108,15 @@ internal sealed class ProblemLocationConverter : JsonConverter<ProblemLocation>
     public override void Write(Utf8JsonWriter writer, ProblemLocation value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
-        writer.WriteString("part", value.Part);
+        writer.WriteString("part"u8, value.Part);
         if (value.Pointer is { } pointer)
         {
-            writer.WriteString("pointer", pointer);
+            writer.WriteString("pointer"u8, pointer);
         }
         else
         {
-            writer.WriteNumber("line", value.Line);
-            writer.WriteNumber("column", value.Column);
+            writer.WriteNumber("line"u8, value.Line);
+            writer.WriteNumber("column"u8, value.Column);
         }
 
         writer.WriteEndObject();

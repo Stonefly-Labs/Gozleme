@@ -35,7 +35,10 @@ public sealed class ReservedClaimTests
     [Fact]
     public void Envelope_names_are_checked() =>
         Assert.Equal(
-            ["reserved_claim reserved.vocabulary envelope /native/x-trusted", "reserved_claim reserved.vocabulary envelope /verified"],
+            [
+                "reserved_claim reserved.vocabulary envelope /native/x-trusted", "reserved_claim reserved.vocabulary envelope /verified",
+                "unknown_field envelope.unknown-field envelope /native/x-trusted", "unknown_field envelope.unknown-field envelope /verified",
+            ],
             Problems(Validate("model", "gozleme-model-card", "1", "json", Model, e =>
             {
                 e["verified"] = true;
@@ -69,8 +72,8 @@ public sealed class ReservedClaimTests
     }
 
     [Fact]
-    public void A_reserved_model_card_root_name_is_reserved_not_unknown() =>
-        Assert.Equal(["reserved_claim reserved.vocabulary native /status"],
+    public void A_reserved_model_card_root_name_is_reserved_and_unknown() =>
+        Assert.Equal(["unknown_field native.unknown-field native /status", "reserved_claim reserved.vocabulary native /status"],
             Problems(Validate("model", "gozleme-model-card", "1", "json", Model.Replace("}}", "},\"status\":\"ga\"}", StringComparison.Ordinal))));
 
     [Fact]

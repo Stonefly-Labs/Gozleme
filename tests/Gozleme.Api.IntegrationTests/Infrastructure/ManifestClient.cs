@@ -58,7 +58,10 @@ public static class ManifestClient
     {
         var envelope = new JsonObject
         {
-            ["envelopeVersion"] = 1, ["family"] = family, ["capability"] = capability, ["version"] = "1.0.0",
+            ["envelopeVersion"] = 1,
+            ["family"] = family,
+            ["capability"] = capability,
+            ["version"] = "1.0.0",
             ["native"] = new JsonObject { ["format"] = format, ["formatVersion"] = formatVersion, ["encoding"] = encoding, ["document"] = document },
         };
         extra?.Invoke(envelope);

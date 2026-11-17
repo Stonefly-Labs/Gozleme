@@ -81,12 +81,16 @@
       "file": "model/invalid-envelope-version.json",
       "expected": {
         "outcome": "rejected",
-        "category": "unsupported_version",
-        "rule": "envelope.version",
-        "location": {
-          "part": "envelope",
-          "pointer": "/envelopeVersion"
-        }
+        "problems": [
+          {
+            "category": "unsupported_version",
+            "rule": "envelope.version",
+            "location": {
+              "part": "envelope",
+              "pointer": "/envelopeVersion"
+            }
+          }
+        ]
       }
     },
     {
@@ -96,12 +100,16 @@
       "file": "model/invalid-family.json",
       "expected": {
         "outcome": "rejected",
-        "category": "unsupported_family",
-        "rule": "envelope.family",
-        "location": {
-          "part": "envelope",
-          "pointer": "/family"
-        }
+        "problems": [
+          {
+            "category": "unsupported_family",
+            "rule": "envelope.family",
+            "location": {
+              "part": "envelope",
+              "pointer": "/family"
+            }
+          }
+        ]
       }
     },
     {
@@ -111,12 +119,16 @@
       "file": "api/invalid-format-version.json",
       "expected": {
         "outcome": "rejected",
-        "category": "unsupported_format",
-        "rule": "envelope.format",
-        "location": {
-          "part": "envelope",
-          "pointer": "/native/formatVersion"
-        }
+        "problems": [
+          {
+            "category": "unsupported_format",
+            "rule": "envelope.format",
+            "location": {
+              "part": "envelope",
+              "pointer": "/native/formatVersion"
+            }
+          }
+        ]
       }
     },
     {
@@ -126,12 +138,24 @@
       "file": "event/invalid-version-mismatch.json",
       "expected": {
         "outcome": "rejected",
-        "category": "unsupported_format",
-        "rule": "native.version-mismatch",
-        "location": {
-          "part": "native",
-          "pointer": "/asyncapi"
-        }
+        "problems": [
+          {
+            "category": "unsupported_format",
+            "rule": "native.version-mismatch",
+            "location": {
+              "part": "native",
+              "pointer": "/asyncapi"
+            }
+          },
+          {
+            "category": "invalid_value",
+            "rule": "native.schema",
+            "location": {
+              "part": "native",
+              "pointer": "/asyncapi"
+            }
+          }
+        ]
       }
     },
     {
@@ -141,12 +165,16 @@
       "file": "a2a/invalid-yaml-for-a2a.json",
       "expected": {
         "outcome": "rejected",
-        "category": "malformed",
-        "rule": "parse.syntax",
-        "location": {
-          "part": "envelope",
-          "pointer": "/native/encoding"
-        }
+        "problems": [
+          {
+            "category": "malformed",
+            "rule": "parse.syntax",
+            "location": {
+              "part": "envelope",
+              "pointer": "/native/encoding"
+            }
+          }
+        ]
       }
     },
     {
@@ -156,13 +184,17 @@
       "file": "api/invalid-yaml-alias.json",
       "expected": {
         "outcome": "rejected",
-        "category": "malformed",
-        "rule": "parse.yaml-feature",
-        "location": {
-          "part": "native",
-          "line": 4,
-          "column": 12
-        }
+        "problems": [
+          {
+            "category": "malformed",
+            "rule": "parse.yaml-feature",
+            "location": {
+              "part": "native",
+              "line": 4,
+              "column": 12
+            }
+          }
+        ]
       }
     },
     {
@@ -172,9 +204,13 @@
       "file": "model/invalid-too-deep.json",
       "expected": {
         "outcome": "rejected",
-        "category": "too_large",
-        "rule": "bound.depth",
-        "location": null
+        "problems": [
+          {
+            "category": "too_large",
+            "rule": "bound.depth",
+            "location": null
+          }
+        ]
       }
     },
     {
@@ -184,12 +220,16 @@
       "file": "mcp/invalid-unknown-field.json",
       "expected": {
         "outcome": "rejected",
-        "category": "unknown_field",
-        "rule": "native.unknown-field",
-        "location": {
-          "part": "native",
-          "pointer": "/tools/0/execution"
-        }
+        "problems": [
+          {
+            "category": "unknown_field",
+            "rule": "native.unknown-field",
+            "location": {
+              "part": "native",
+              "pointer": "/tools/0/execution"
+            }
+          }
+        ]
       }
     },
     {
@@ -199,12 +239,16 @@
       "file": "api/invalid-reserved-openapi.json",
       "expected": {
         "outcome": "rejected",
-        "category": "reserved_claim",
-        "rule": "reserved.vocabulary",
-        "location": {
-          "part": "native",
-          "pointer": "/info/x-verified"
-        }
+        "problems": [
+          {
+            "category": "reserved_claim",
+            "rule": "reserved.vocabulary",
+            "location": {
+              "part": "native",
+              "pointer": "/info/x-verified"
+            }
+          }
+        ]
       }
     },
     {
@@ -214,12 +258,16 @@
       "file": "a2a/invalid-a2a-signatures.json",
       "expected": {
         "outcome": "rejected",
-        "category": "reserved_claim",
-        "rule": "reserved.a2a-signatures",
-        "location": {
-          "part": "native",
-          "pointer": "/signatures"
-        }
+        "problems": [
+          {
+            "category": "reserved_claim",
+            "rule": "reserved.a2a-signatures",
+            "location": {
+              "part": "native",
+              "pointer": "/signatures"
+            }
+          }
+        ]
       }
     },
     {
@@ -229,12 +277,24 @@
       "file": "model/invalid-reserved-envelope.json",
       "expected": {
         "outcome": "rejected",
-        "category": "reserved_claim",
-        "rule": "reserved.vocabulary",
-        "location": {
-          "part": "envelope",
-          "pointer": "/verified"
-        }
+        "problems": [
+          {
+            "category": "unknown_field",
+            "rule": "envelope.unknown-field",
+            "location": {
+              "part": "envelope",
+              "pointer": "/verified"
+            }
+          },
+          {
+            "category": "reserved_claim",
+            "rule": "reserved.vocabulary",
+            "location": {
+              "part": "envelope",
+              "pointer": "/verified"
+            }
+          }
+        ]
       }
     },
     {
@@ -244,12 +304,24 @@
       "file": "mcp/invalid-secret-header.json",
       "expected": {
         "outcome": "rejected",
-        "category": "secret_value",
-        "rule": "secret.field",
-        "location": {
-          "part": "native",
-          "pointer": "/remotes/0/headers/0/value"
-        }
+        "problems": [
+          {
+            "category": "secret_value",
+            "rule": "secret.field",
+            "location": {
+              "part": "native",
+              "pointer": "/remotes/0/headers/0/value"
+            }
+          },
+          {
+            "category": "secret_value",
+            "rule": "secret.pattern",
+            "location": {
+              "part": "native",
+              "pointer": "/remotes/0/headers/0/value"
+            }
+          }
+        ]
       }
     },
     {
@@ -259,12 +331,16 @@
       "file": "model/invalid-secret-pattern.json",
       "expected": {
         "outcome": "rejected",
-        "category": "secret_value",
-        "rule": "secret.pattern",
-        "location": {
-          "part": "native",
-          "pointer": "/limitations"
-        }
+        "problems": [
+          {
+            "category": "secret_value",
+            "rule": "secret.pattern",
+            "location": {
+              "part": "native",
+              "pointer": "/limitations"
+            }
+          }
+        ]
       }
     },
     {
@@ -274,13 +350,17 @@
       "file": "skill/invalid-secret-skill-body.json",
       "expected": {
         "outcome": "rejected",
-        "category": "secret_value",
-        "rule": "secret.pattern",
-        "location": {
-          "part": "native",
-          "line": 12,
-          "column": 1
-        }
+        "problems": [
+          {
+            "category": "secret_value",
+            "rule": "secret.pattern",
+            "location": {
+              "part": "native",
+              "line": 12,
+              "column": 1
+            }
+          }
+        ]
       }
     },
     {
@@ -290,12 +370,24 @@
       "file": "api/invalid-secret-openapi-example.json",
       "expected": {
         "outcome": "rejected",
-        "category": "secret_value",
-        "rule": "secret.field",
-        "location": {
-          "part": "native",
-          "pointer": "/paths/~1forecasts/get/parameters/0/example"
-        }
+        "problems": [
+          {
+            "category": "secret_value",
+            "rule": "secret.field",
+            "location": {
+              "part": "native",
+              "pointer": "/paths/~1forecasts/get/parameters/0/example"
+            }
+          },
+          {
+            "category": "secret_value",
+            "rule": "secret.pattern",
+            "location": {
+              "part": "native",
+              "pointer": "/paths/~1forecasts/get/parameters/0/example"
+            }
+          }
+        ]
       }
     },
     {
@@ -305,12 +397,16 @@
       "file": "event/invalid-identity.json",
       "expected": {
         "outcome": "rejected",
-        "category": "identity_mismatch",
-        "rule": "identity.capability",
-        "location": {
-          "part": "envelope",
-          "pointer": "/capability"
-        }
+        "problems": [
+          {
+            "category": "identity_mismatch",
+            "rule": "identity.capability",
+            "location": {
+              "part": "envelope",
+              "pointer": "/capability"
+            }
+          }
+        ]
       }
     },
     {
@@ -320,12 +416,16 @@
       "file": "event/invalid-external-ref.json",
       "expected": {
         "outcome": "rejected",
-        "category": "external_reference",
-        "rule": "ref.external",
-        "location": {
-          "part": "native",
-          "pointer": "/operations/publishForecast/channel/$ref"
-        }
+        "problems": [
+          {
+            "category": "external_reference",
+            "rule": "ref.external",
+            "location": {
+              "part": "native",
+              "pointer": "/operations/publishForecast/channel/$ref"
+            }
+          }
+        ]
       }
     },
     {
@@ -335,12 +435,16 @@
       "file": "skill/invalid-skill-name.json",
       "expected": {
         "outcome": "rejected",
-        "category": "invalid_value",
-        "rule": "native.schema",
-        "location": {
-          "part": "native",
-          "pointer": "/name"
-        }
+        "problems": [
+          {
+            "category": "invalid_value",
+            "rule": "native.schema",
+            "location": {
+              "part": "native",
+              "pointer": "/name"
+            }
+          }
+        ]
       }
     },
     {
@@ -350,12 +454,16 @@
       "file": "model/invalid-model-modality.json",
       "expected": {
         "outcome": "rejected",
-        "category": "invalid_value",
-        "rule": "native.schema",
-        "location": {
-          "part": "native",
-          "pointer": "/modalities/input/1"
-        }
+        "problems": [
+          {
+            "category": "invalid_value",
+            "rule": "native.schema",
+            "location": {
+              "part": "native",
+              "pointer": "/modalities/input/1"
+            }
+          }
+        ]
       }
     },
     {
@@ -365,12 +473,16 @@
       "file": "mcp/invalid-mcp-consistency.json",
       "expected": {
         "outcome": "rejected",
-        "category": "invalid_value",
-        "rule": "native.consistency",
-        "location": {
-          "part": "native",
-          "pointer": "/prompts"
-        }
+        "problems": [
+          {
+            "category": "invalid_value",
+            "rule": "native.consistency",
+            "location": {
+              "part": "native",
+              "pointer": "/prompts"
+            }
+          }
+        ]
       }
     },
     {
@@ -380,12 +492,16 @@
       "file": "a2a/invalid-a2a-required.json",
       "expected": {
         "outcome": "rejected",
-        "category": "invalid_value",
-        "rule": "native.schema",
-        "location": {
-          "part": "native",
-          "pointer": "/skills"
-        }
+        "problems": [
+          {
+            "category": "invalid_value",
+            "rule": "native.schema",
+            "location": {
+              "part": "native",
+              "pointer": "/skills"
+            }
+          }
+        ]
       }
     }
   ]

@@ -98,16 +98,12 @@ internal sealed class ManifestValidator
     }
 
     /// <summary>
-    /// De-duplicates by (part, location, category, rule), keeps one problem per location (a <c>reserved_claim</c> or
-    /// <c>secret_value</c> wins over anything else, otherwise the first category in contract order), and orders by
-    /// part (envelope first), pointer segment by segment (indices numerically, names ordinally), category, rule.
+    /// De-duplicates by (part, location, category, rule) and keeps every distinct rule at a location (maintainer
+    /// decision 2026-11-17: all problems found are reported). Orders by part (envelope first), pointer segment by
+    /// segment (indices numerically, names ordinally), category, rule.
     /// </summary>
     internal static List<ManifestProblem> Order(IEnumerable<ManifestProblem> problems) =>
-        [.. problems.Distinct()
-            .GroupBy(p => p.Location)
-            .Select(g => g.OrderBy(p => p.Rule.Category is ProblemCategory.ReservedClaim or ProblemCategory.SecretValue ? 0 : 1)
-                .ThenBy(p => p.Rule.Category).ThenBy(p => p.Rule.Id, StringComparer.Ordinal).First())
-            .Order(ProblemComparer.Instance)];
+        [.. problems.Distinct().Order(ProblemComparer.Instance)];
 
     private sealed class ProblemComparer : IComparer<ManifestProblem>
     {

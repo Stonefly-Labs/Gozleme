@@ -32,15 +32,17 @@ internal static class ManifestSamples
 
         public string Document => JsonNode.Parse(System.IO.File.ReadAllText(Path.Combine(Directory, File)))!["native"]!["document"]!.GetValue<string>();
 
-        /// <summary>"category rule part pointer|line:column" of the expected single problem.</summary>
-        public string ExpectedProblem()
-        {
-            var location = Expected["location"] as JsonObject;
-            var where = location is null ? "-"
-                : location["pointer"] is { } pointer ? $"{location["part"]} {pointer.GetValue<string>()}"
-                : $"{location["part"]} {location["line"]}:{location["column"]}";
-            return $"{Expected["category"]} {Expected["rule"]} {where}";
-        }
+        /// <summary>"category rule part pointer|line:column" of each expected problem, in order.</summary>
+        public string[] ExpectedProblems() =>
+        [
+            .. Expected["problems"]!.AsArray().Select(p =>
+            {
+                var where = p!["location"] is not JsonObject location ? "-"
+                    : location["pointer"] is { } pointer ? $"{location["part"]} {pointer.GetValue<string>()}"
+                    : $"{location["part"]} {location["line"]}:{location["column"]}";
+                return $"{p["category"]} {p["rule"]} {where}";
+            }),
+        ];
 
         public override string ToString() => Id;
     }

@@ -88,8 +88,9 @@ The body is not read before step 7, and it is never parsed before step 8.
 5. Native checks, collected: version consistency, schema, reserved claims, secrets, external references, entry cap.
 6. If there are no problems, the projection is built.
 
-Problems are de-duplicated by `(part, pointer, category, rule)`, and at most one is kept per pointer: the
-more specific `reserved_claim` or `secret_value` wins over a schema `unknown_field`. They are ordered by part
+Problems are de-duplicated by `(part, pointer, category, rule)`. Every distinct rule at a pointer is
+reported, so a reserved envelope name is both `unknown_field` and `reserved_claim` (maintainer decision,
+2026-11-17: all problems found are reported, spec edge case "Several problems at once"). They are ordered by part
 (`envelope` first), then by pointer segment by segment (array indices numerically, names ordinally), then by
 category in contract order, then by rule. The first 50 are returned, and `truncated` is `true` when more
 exist.

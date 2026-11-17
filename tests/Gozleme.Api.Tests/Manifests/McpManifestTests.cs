@@ -33,7 +33,7 @@ public sealed class McpManifestTests
     [InlineData("2026-07-29")]
     [InlineData("")]
     public void Another_revision_is_an_unsupported_format(string revision) =>
-        Assert.Equal(["unsupported_format native.version-mismatch native /protocolRevision"], Run(Doc(revision)));
+        Assert.Equal(["unsupported_format native.version-mismatch native /protocolRevision", "invalid_value native.schema native /protocolRevision"], Run(Doc(revision)));
 
     [Theory]
     [InlineData("2026-07-28", "stateless")]

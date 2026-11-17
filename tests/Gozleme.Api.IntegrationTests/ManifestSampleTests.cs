@@ -6,8 +6,8 @@ namespace Gozleme.Api.IntegrationTests;
 
 /// <summary>
 /// GOZ-0006 research R15 (FR-018): every bundled sample, sent through the endpoint for its target, gives exactly the
-/// <c>expected</c> its <c>index.json</c> entry declares: the outcome and, for a rejection, the one problem's category,
-/// rule and location.
+/// <c>expected</c> its <c>index.json</c> entry declares: the outcome and, for a rejection, every problem's category,
+/// rule and location in contract order.
 /// </summary>
 public sealed class ManifestSampleTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
@@ -44,7 +44,7 @@ public sealed class ManifestSampleTests(PgvectorDatabaseFixture fixture) : IAsyn
         Assert.Equal(["a2a", "api", "event", "mcp", "model", "skill"], ManifestClient.Samples.Select(s => s.Family).Distinct().Order(StringComparer.Ordinal));
         Assert.All(ManifestClient.Samples.GroupBy(s => s.Family), g => Assert.Contains(g, s => !s.Valid));
         string[] categories = ["malformed", "too_large", "unsupported_version", "unsupported_family", "unsupported_format", "unknown_field", "reserved_claim", "secret_value", "identity_mismatch", "external_reference", "invalid_value"];
-        Assert.Equal(categories.Order(StringComparer.Ordinal), ManifestClient.Samples.Where(s => !s.Valid).Select(s => s.Expected["category"]!.GetValue<string>()).Distinct().Order(StringComparer.Ordinal));
+        Assert.Equal(categories.Order(StringComparer.Ordinal), ManifestClient.Samples.Where(s => !s.Valid).SelectMany(s => s.Expected["problems"]!.AsArray().Select(p => p!["category"]!.GetValue<string>())).Distinct().Order(StringComparer.Ordinal));
     }
 
     [Theory]
@@ -61,10 +61,12 @@ public sealed class ManifestSampleTests(PgvectorDatabaseFixture fixture) : IAsyn
             return;
         }
 
-        var problem = Assert.Single(json["problems"]!.AsArray())!;
-        Assert.Equal(sample.Expected["category"]!.GetValue<string>(), problem["category"]!.GetValue<string>());
-        Assert.Equal(sample.Expected["rule"]!.GetValue<string>(), problem["rule"]!.GetValue<string>());
-        Assert.True(JsonNode.DeepEquals(sample.Expected["location"], problem["location"]), $"location {problem["location"]?.ToJsonString() ?? "null"}");
+        // Exactly the expected problems in contract order: category, rule and location; the messages are fixed catalogue text.
+        var actual = new JsonArray([.. json["problems"]!.AsArray().Select(p => (JsonNode)new JsonObject
+        {
+            ["category"] = p!["category"]!.DeepClone(), ["rule"] = p["rule"]!.DeepClone(), ["location"] = p["location"]?.DeepClone(),
+        })]);
+        Assert.True(JsonNode.DeepEquals(sample.Expected["problems"], actual), $"problems {actual.ToJsonString()}");
         Assert.False(json["truncated"]!.GetValue<bool>());
     }
 }

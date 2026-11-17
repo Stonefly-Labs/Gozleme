@@ -93,50 +93,50 @@ internal static class JsonTreeReader
         switch (reader.TokenType)
         {
             case JsonTokenType.StartObject:
-            {
-                if (depth + 1 > TreeBounds.MaxDepth)
                 {
-                    throw new ValidationStop(ManifestRules.BoundDepth, null);
-                }
-
-                var members = new List<KeyValuePair<string, ManifestNode>>();
-                var names = new HashSet<string>(StringComparer.Ordinal);
-                while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-                {
-                    var nameAt = state.Cursor.At(state.Start + reader.TokenStartIndex);
-                    var name = GetString(ref reader, state, nameAt);
-                    if (name.Length > TreeBounds.MaxNameLength)
+                    if (depth + 1 > TreeBounds.MaxDepth)
                     {
-                        throw new ValidationStop(ManifestRules.BoundName, null);
+                        throw new ValidationStop(ManifestRules.BoundDepth, null);
                     }
 
-                    if (!names.Add(name))
+                    var members = new List<KeyValuePair<string, ManifestNode>>();
+                    var names = new HashSet<string>(StringComparer.Ordinal);
+                    while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
                     {
-                        throw new ValidationStop(ManifestRules.ParseDuplicateKey, ProblemLocation.At(state.Part, nameAt.Line, nameAt.Column));
+                        var nameAt = state.Cursor.At(state.Start + reader.TokenStartIndex);
+                        var name = GetString(ref reader, state, nameAt);
+                        if (name.Length > TreeBounds.MaxNameLength)
+                        {
+                            throw new ValidationStop(ManifestRules.BoundName, null);
+                        }
+
+                        if (!names.Add(name))
+                        {
+                            throw new ValidationStop(ManifestRules.ParseDuplicateKey, ProblemLocation.At(state.Part, nameAt.Line, nameAt.Column));
+                        }
+
+                        reader.Read();
+                        members.Add(new(name, ReadValue(ref reader, state, ManifestNode.Child(pointer, name), depth + 1)));
                     }
 
-                    reader.Read();
-                    members.Add(new(name, ReadValue(ref reader, state, ManifestNode.Child(pointer, name), depth + 1)));
+                    return ManifestNode.Object(pointer, line, column, members);
                 }
-
-                return ManifestNode.Object(pointer, line, column, members);
-            }
 
             case JsonTokenType.StartArray:
-            {
-                if (depth + 1 > TreeBounds.MaxDepth)
                 {
-                    throw new ValidationStop(ManifestRules.BoundDepth, null);
-                }
+                    if (depth + 1 > TreeBounds.MaxDepth)
+                    {
+                        throw new ValidationStop(ManifestRules.BoundDepth, null);
+                    }
 
-                var items = new List<ManifestNode>();
-                while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-                {
-                    items.Add(ReadValue(ref reader, state, ManifestNode.Child(pointer, items.Count), depth + 1));
-                }
+                    var items = new List<ManifestNode>();
+                    while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                    {
+                        items.Add(ReadValue(ref reader, state, ManifestNode.Child(pointer, items.Count), depth + 1));
+                    }
 
-                return ManifestNode.Array(pointer, line, column, items);
-            }
+                    return ManifestNode.Array(pointer, line, column, items);
+                }
 
             case JsonTokenType.String:
                 if (string.Equals(pointer, state.Measure, StringComparison.Ordinal))

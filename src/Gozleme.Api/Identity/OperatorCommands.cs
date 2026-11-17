@@ -32,20 +32,20 @@ internal static class OperatorCommands
     public static readonly string[] DemoAccounts = ["alice@demo.gozleme.test", "bob@demo.gozleme.test", "lockout@demo.gozleme.test", "carol@demo.gozleme.test", "dave@demo.gozleme.test"];
 
     /// <summary>The seeded demo organization (GOZ-0002): fixed id, members alice (creator) and carol.</summary>
-    public static readonly Guid DemoOrganizationId = Guid.Parse("0193a000-0000-7000-8000-000000000002");
+    public static readonly Guid DemoOrganizationId = Guid.Parse("0193a000-0000-7000-8000-000000000002"u8);
     public const string DemoOrganizationName = "Seeded Demo Org";
 
     /// <summary>The second demo tenant (GOZ-0003): fixed id, member dave (creator), disjoint from the first.</summary>
-    public static readonly Guid PartnerOrganizationId = Guid.Parse("0193a000-0000-7000-8000-000000000003");
+    public static readonly Guid PartnerOrganizationId = Guid.Parse("0193a000-0000-7000-8000-000000000003"u8);
     public const string PartnerOrganizationName = "Seeded Partner Org";
 
     public const string UnrestorableMessage = "Demo organization cannot be restored as a member; run make reset.";
 
     /// <summary>The seeded demo publisher and capability (GOZ-0006 FR-025, research R14): fixed UUIDv7-shaped ids from 2024.</summary>
-    public static readonly Guid DemoPublisherId = Guid.Parse("0193a000-0000-7000-8000-000000000010");
+    public static readonly Guid DemoPublisherId = Guid.Parse("0193a000-0000-7000-8000-000000000010"u8);
     public const string DemoPublisherHandle = "seeded-demo";
     public const string DemoPublisherName = "Seeded Demo Publisher";
-    public static readonly Guid DemoCapabilityId = Guid.Parse("0193a000-0000-7000-8000-000000000011");
+    public static readonly Guid DemoCapabilityId = Guid.Parse("0193a000-0000-7000-8000-000000000011"u8);
     public const string DemoCapabilityName = "manifest-demo";
     public const string DemoCapabilityDisplayName = "Manifest Demo";
     public const string DemoHandleHeldMessage = "The demo publisher handle is held elsewhere or the demo capability name is taken; run make reset.";

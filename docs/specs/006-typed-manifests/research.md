@@ -157,8 +157,8 @@ after membership, permission, target, suspension and the rate limit have passed 
 
 Problems are de-duplicated by `(part, pointer, category, rule)`. They are ordered by part (`envelope` before
 `native`), then by pointer compared segment by segment (array indices numerically, names ordinally), then
-by category in contract order, then by rule. A secret or reserved finding replaces a schema `unknown_field`
-at the same pointer: the more specific category wins, and only one problem is reported per pointer.
+by category in contract order, then by rule. Every distinct rule at a pointer is reported (maintainer decision,
+2026-11-17, replacing "one problem per pointer", which contradicted the spec's "all problems found are reported").
 
 **Rationale**: a stable order makes results deterministic (FR-015) and diffable in tests. Stopping only on
 the stages that make later checks meaningless satisfies the spec's "parsing failures stop processing"
@@ -173,7 +173,7 @@ rule, and still lists every independent problem.
    - every member name inside a format's extension mechanism;
    - each adapter's listed native fields.
 
-   A name matches when its normalized form (lower-case; namespace prefix removed up to the last `/` or `.`; leading `x-` removed; `-`, `_` and `.` removed) is in the vocabulary:
+   A name matches when its normalized form (lower-case; namespace prefix removed up to the last `/` or `.`; leading `x-` removed; `-`, `_` and `.` removed), or the joined form of any trailing run of its `-`/`_`-separated words, is in the vocabulary. The trailing runs are what make `x-gozleme-verified` (words `gozleme`, `verified`) match; they also reserve names such as `x-api-status` in extension positions (maintainer decision, 2026-11-17, resolving the conflict between this algorithm and the rationale below):
 
    `signature, signatures, sig, jws, attestation, attestations, provenance, trust, trusted, trustlevel, verified, verification, approved, approval, certified, delegation, delegations, delegationchain, delegatedby, transfer, transfers, transferchain, transferredfrom, visibility, visible, grant, grants, sharing, sharedwith, acl, owner, ownedby, publisher, publishedby, organization, status, lifecycle, deprecated, revoked, withdrawn, yanked`.
 

@@ -138,9 +138,10 @@ def add(id, family, title, env, expected):
     open(os.path.join(ROOT, file), "w").write(dump(env))
 
 ok = {"outcome": "accepted"}
-def rej(category, rule, part, at):
+def rej(category, rule, part, at, *also):
+    """Every expected problem, in contract order; `also` adds (category, rule) pairs at the same location."""
     loc = None if at is None else ({"part": part, "pointer": at} if isinstance(at, str) else {"part": part, "line": at[0], "column": at[1]})
-    return {"outcome": "rejected", "category": category, "rule": rule, "location": loc}
+    return {"outcome": "rejected", "problems": [{"category": c, "rule": r, "location": loc} for c, r in [(category, rule), *also]]}
 
 # Valid samples (US1)
 add("valid-stateless-2026-07-28", "mcp", "MCP server, stateless (2026-07-28)", envelope("mcp", "mcp-server-manifest", "1", "json", dump(MCP_STATELESS), "Forecasts MCP"), ok)
@@ -167,7 +168,7 @@ add("invalid-family", "model", "Unsupported family",
 add("invalid-format-version", "api", "Unsupported OpenAPI line",
     envelope("api", "openapi", "3.2", "json", dump(OAS30)), rej("unsupported_format", "envelope.format", "envelope", "/native/formatVersion"))
 add("invalid-version-mismatch", "event", "AsyncAPI version differs from the declared format",
-    envelope("event", "asyncapi", "3.0.0", "json", dump(with_(ASYNC, ["asyncapi"], "3.1.0"))), rej("unsupported_format", "native.version-mismatch", "native", "/asyncapi"))
+    envelope("event", "asyncapi", "3.0.0", "json", dump(with_(ASYNC, ["asyncapi"], "3.1.0"))), rej("unsupported_format", "native.version-mismatch", "native", "/asyncapi", ("invalid_value", "native.schema")))
 add("invalid-yaml-for-a2a", "a2a", "YAML declared for an Agent Card",
     envelope("a2a", "a2a-agent-card", "1.0", "yaml", "name: Forecast Agent\n"), rej("malformed", "parse.syntax", "envelope", "/native/encoding"))
 add("invalid-yaml-alias", "api", "YAML alias",
@@ -183,10 +184,10 @@ add("invalid-a2a-signatures", "a2a", "Agent Card signatures",
     envelope("a2a", "a2a-agent-card", "1.0", "json", dump({**A2A, "signatures": [{"protected": "eyJhbGciOiJFUzI1NiJ9", "signature": "SYNTHETIC"}]})),
     rej("reserved_claim", "reserved.a2a-signatures", "native", "/signatures"))
 add("invalid-reserved-envelope", "model", "Reserved claim in the envelope",
-    envelope("model", "gozleme-model-card", "1", "json", dump(MODEL), top={"verified": True}), rej("reserved_claim", "reserved.vocabulary", "envelope", "/verified"))
+    envelope("model", "gozleme-model-card", "1", "json", dump(MODEL), top={"verified": True}), rej("unknown_field", "envelope.unknown-field", "envelope", "/verified", ("reserved_claim", "reserved.vocabulary")))
 add("invalid-secret-header", "mcp", "Inline credential in a secret header",
     envelope("mcp", "mcp-server-manifest", "1", "json", dump(with_(MCP_STATELESS, ["remotes", 0, "headers", 0, "value"], SECRETS["bearer"]))),
-    rej("secret_value", "secret.field", "native", "/remotes/0/headers/0/value"))
+    rej("secret_value", "secret.field", "native", "/remotes/0/headers/0/value", ("secret_value", "secret.pattern")))
 add("invalid-secret-pattern", "model", "Credential-shaped text in a model card",
     envelope("model", "gozleme-model-card", "1", "json", dump(with_(MODEL, ["limitations"], "Rotate " + SECRETS["github"] + " monthly."))),
     rej("secret_value", "secret.pattern", "native", "/limitations"))
@@ -194,7 +195,7 @@ add("invalid-secret-skill-body", "skill", "Private key in a SKILL.md body",
     envelope("skill", "agent-skills", "2026-11-17", "markdown", SKILL + "\n" + SECRETS["pem"] + "\n"), rej("secret_value", "secret.pattern", "native", (12, 1)))
 add("invalid-secret-openapi-example", "api", "Credential example on an Authorization header",
     envelope("api", "openapi", "3.0", "json", dump(with_(OAS30, ["paths", "/forecasts", "get", "parameters", 0], {"name": "Authorization", "in": "header", "schema": {"type": "string"}, "example": SECRETS["aws"]}))),
-    rej("secret_value", "secret.field", "native", "/paths/~1forecasts/get/parameters/0/example"))
+    rej("secret_value", "secret.field", "native", "/paths/~1forecasts/get/parameters/0/example", ("secret_value", "secret.pattern")))
 add("invalid-identity", "event", "Foreign capability claim",
     envelope("event", "asyncapi", "3.0.0", "json", dump(ASYNC), capability=FOREIGN), rej("identity_mismatch", "identity.capability", "envelope", "/capability"))
 add("invalid-external-ref", "event", "External $ref",
