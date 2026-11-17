@@ -387,7 +387,7 @@ specs:
   dependencies:
   - GOZ-0005
   status: in-progress
-  stage: specify
+  stage: clarify
   branch: feature/goz-0006-typed-manifests
   pullRequest: null
   promptRevision: 7
@@ -410,7 +410,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Specified 2026-11-17 (maintainer Q1-Q4 recorded in docs/specs/006-typed-manifests/progress.yaml); next /speckit-clarify then /speckit-plan.'
+  nextAction: 'Clarified 2026-11-17 (4 maintainer answers in docs/specs/006-typed-manifests/progress.yaml); next /speckit-plan.'
 - id: GOZ-0007
   number: 7
   title: Immutable revisions and signed attestations

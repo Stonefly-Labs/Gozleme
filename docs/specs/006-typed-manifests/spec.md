@@ -31,6 +31,13 @@ Maintainer decisions taken before drafting (2026-11-17, recorded in `docs/specs/
   - Inline secret values are rejected; secret references are allowed.
   - Native documents keep unknown fields only through the protocol's own extension mechanism. Such fields are preserved verbatim but never projected.
 
+Clarify session (2026-11-17):
+
+- Q: How is the native document carried inside the request? → A: Always as a string inside the envelope, for every family and format. Its bytes are that string encoded as UTF-8, and the SHA-256 digest covers exactly those bytes. Option A.
+- Q: Are OpenAPI and AsyncAPI native documents accepted in YAML as well as JSON? → A: Yes. OpenAPI and AsyncAPI accept JSON or restricted YAML (FR-016). `server.json`, the A2A Agent Card and the model card are JSON only. The envelope declares the native encoding, and a mismatch is `malformed`. Option A.
+- Q: How does Gözleme decide that a value outside a secret-bearing field is an inline secret? → A: Two deterministic rules, documented as a contract. (1) Any non-empty value in a secret-bearing field is rejected. (2) A fixed pattern list of known credential formats is rejected in any field. There is no randomness (entropy) heuristic. Option A. (The maintainer first chose option B, which added an entropy heuristic, then reversed it the same session.)
+- Q: How is a problem's location written? → A: A part (`envelope` or `native`) plus an RFC 6901 JSON Pointer path. Parse failures (`malformed`) give a line and column in the native string instead. `too_large` has no location. Option A.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Validate a sample manifest for every capability family (Priority: P1)
@@ -112,13 +119,13 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
 ### Edge Cases
 
 - **Empty or whitespace-only input**: rejected with `malformed`.
-- **Not JSON at all**: a JSON-based format given YAML, or a `SKILL.md` without front matter, is rejected with `malformed`.
+- **Wrong encoding**: a native document that does not parse as its declared encoding is rejected with `malformed`. So is YAML declared for a JSON-only format (`server.json`, A2A Agent Card, model card), or a `SKILL.md` without front matter. OpenAPI and AsyncAPI accept either JSON or restricted YAML.
 - **Several problems at once**: all problems found are reported in a stable order, up to a fixed cap (for example 50), and the response states that more problems exist. Parsing failures (`malformed`, `too_large`) stop processing before other checks.
 - **Very large documents and deep nesting**: rejected with `too_large` at a fixed limit, before family parsing. The limit is documented.
 - **Unicode tricks**: invalid UTF-8, a byte-order mark, and control characters in names are handled deterministically: invalid UTF-8 is `malformed`, and a byte-order mark is preserved in the native bytes.
 - **Native names**: a protocol-native identifier (such as an MCP server name or an A2A agent name) does not need to equal the Gözleme capability name or alias. It is projected as the native name and is never treated as a Gözleme identity claim. Only envelope identity claims are checked.
 - **Secret references**: a secret reference names a provider and a key, and is accepted. A placeholder that is clearly not a credential (for example an environment variable name with no value) is accepted.
-- **Ambiguous credential detection**: a value that looks like a credential in a field that is not secret-bearing is rejected with `secret_value`. Recognizable credential forms are rejected anywhere. The documented pattern list is a contract; a false positive is fixed by using a secret reference.
+- **Ambiguous credential detection**: in a field that is not secret-bearing, a value is rejected with `secret_value` only if it matches the documented credential pattern list. Random-looking values (UUIDs, digests, opaque IDs) are not flagged by randomness alone. The pattern list is a contract, applied deterministically. A false positive is fixed by using a secret reference.
 - **Same manifest, different capabilities**: the identity claim matches one capability only. Every other target answers `identity_mismatch`.
 - **Organization role change mid-session**: the role is re-read on every request, so losing `publisher` takes effect on the next validation.
 - **Database outage**: validation still needs the membership, role and capability check, so it fails closed with "unavailable".
@@ -136,7 +143,8 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
   - the claimed capability (canonical ID or friendly alias);
   - the declared capability version;
   - the native format and its version;
-  - the native document;
+  - the native encoding (`json` or `yaml` for OpenAPI and AsyncAPI; `json` for `server.json`, the A2A Agent Card and the model card; `markdown` for `SKILL.md`);
+  - the native document, always as a string (for every family and format); its native bytes are that string encoded as UTF-8;
   - optional publisher-provided descriptive fields that the envelope version defines.
 
   The envelope schema is a published, versioned contract. A breaking change needs a new envelope version.
@@ -160,12 +168,16 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
   - visibility, sharing or grants;
   - ownership or publisher overrides;
   - lifecycle state (for example deprecated or revoked status asserted by the publisher).
-- **FR-010**: Inline secret values MUST be rejected with `secret_value`. This covers any non-empty value in a secret-bearing field (credential, token, password, private key or authorization header value), and recognizable credential forms in any field. The documented detection list is a contract. Secret references (a provider plus a key name) and declarations without values MUST be accepted.
+- **FR-010**: Inline secret values MUST be rejected with `secret_value`. Detection uses two deterministic rules, with no randomness (entropy) heuristic:
+  1. any non-empty value in a secret-bearing field (credential, token, password, private key or authorization header value);
+  2. any value in any field that matches a fixed, documented pattern list of known credential formats (for example private-key PEM blocks, `Bearer`/`Basic` header values, well-known provider key prefixes, JWTs, and URLs with embedded `user:password@`).
+
+  The pattern list is a versioned contract. Secret references (a provider plus a key name) and declarations without values MUST be accepted.
 - **FR-011**: The envelope's claimed capability MUST identify the target capability exactly. Another canonical ID, another alias, a foreign origin, or a capability of another publisher or organization is `identity_mismatch`. The answer MUST NOT reveal whether the claimed capability exists anywhere. A native document's own names are projected as native names and are never identity claims (GOZ-0005-IF-01).
 
 **Results**
 
-- **FR-012**: A rejected manifest MUST answer with a list of problems. Each problem has a category from a closed, documented set (`malformed`, `too_large`, `unsupported_version`, `unsupported_family`, `unsupported_format`, `unknown_field`, `reserved_claim`, `secret_value`, `identity_mismatch`, `external_reference`, `invalid_value`), a location pointing into the submitted document, and a fixed message. Results MUST NOT echo submitted values. Problems appear in a stable order up to a documented cap, with an indicator when more exist. Adding a category is a contract change.
+- **FR-012**: A rejected manifest MUST answer with a list of problems. Each problem has a category from a closed, documented set (`malformed`, `too_large`, `unsupported_version`, `unsupported_family`, `unsupported_format`, `unknown_field`, `reserved_claim`, `secret_value`, `identity_mismatch`, `external_reference`, `invalid_value`), a location, and a fixed message. The location is a part (`envelope` or `native`) plus an RFC 6901 JSON Pointer into that part's parsed structure, which works the same for JSON, YAML and `SKILL.md` front matter. A parse failure (`malformed`) instead gives a line and column in the native string, and `too_large` has no location. Results MUST NOT echo submitted values. Problems appear in a stable order up to a documented cap, with an indicator when more exist. Adding a category is a contract change.
 - **FR-013**: An accepted manifest MUST answer with three distinct parts:
   - the envelope, without the native document;
   - the native document, byte-for-byte as submitted, with a SHA-256 digest of exactly those bytes;
@@ -229,7 +241,7 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
 ## Assumptions
 
 - Validation is synchronous and stateless (Q1). The "declared capability version" exists so that GOZ-0007 can reuse the envelope unchanged when it stores revisions.
-- The envelope and native document are submitted together as one JSON object. For a `SKILL.md` or another text-based native format, the native document is carried as a text string, and its bytes are those of the string in UTF-8.
+- The envelope and native document are submitted together as one JSON object. The native document is always carried as a string, whatever its format (JSON, YAML or `SKILL.md`), and its bytes are those of the string in UTF-8 (clarified 2026-11-17). A native document sent as a nested JSON value instead of a string is `malformed`.
 - Projections list entries (tools, skills, operations, channels) by native name only. Child capability identities and projection generations belong to GOZ-0008, and search indexing to GOZ-0013.
 - Signatures, attestations and digests that make a revision immutable belong to GOZ-0007. The SHA-256 digest here identifies the submitted bytes only and makes no authenticity claim.
 - The model card schema is Gözleme-defined for this slice (Q3) and documented as a versioned contract.
