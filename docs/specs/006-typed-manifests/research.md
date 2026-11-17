@@ -165,7 +165,7 @@ rule, and still lists every independent problem.
 
    A match is `reserved_claim`, rule `reserved.vocabulary`.
 2. **Adapter-listed native fields** (documented per adapter in [contracts/native-formats.md](./contracts/native-formats.md)):
-   - A2A `/signatures` (JWS card signatures) → `reserved_claim`, rule `a2a.signatures`.
+   - A2A `/signatures` (JWS card signatures) → `reserved_claim`, rule `reserved.a2a-signatures`.
    - MCP `_meta` keys under `io.modelcontextprotocol.registry/` other than `publisher-provided` (for example the registry-asserted `official` status) → `reserved_claim`.
    - Model card: no native field is reserved, because the card is closed and defines none. Reserved names are therefore caught by rule 1 before `unknown_field`.
 

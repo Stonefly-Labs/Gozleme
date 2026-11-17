@@ -387,14 +387,14 @@ specs:
   dependencies:
   - GOZ-0005
   status: in-progress
-  stage: plan
+  stage: tasks
   branch: feature/goz-0006-typed-manifests
   pullRequest: null
   promptRevision: 7
   gates:
     specification: passed
     plan: passed
-    tasks: pending
+    tasks: passed
     implementation: pending
     tests: pending
     demo: pending
@@ -410,7 +410,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Planned 2026-11-17 (maintainer P1-P4 in docs/specs/006-typed-manifests/progress.yaml); next /speckit-tasks.'
+  nextAction: 'Tasks generated 2026-11-17 (72 tasks, docs/specs/006-typed-manifests/tasks.md); next /speckit-implement starting with vendoring stop points T001-T004.'
 - id: GOZ-0007
   number: 7
   title: Immutable revisions and signed attestations
