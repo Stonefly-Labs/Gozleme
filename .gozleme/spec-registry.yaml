@@ -387,7 +387,7 @@ specs:
   dependencies:
   - GOZ-0005
   status: in-progress
-  stage: tasks
+  stage: implement
   branch: feature/goz-0006-typed-manifests
   pullRequest: null
   promptRevision: 7
@@ -403,14 +403,16 @@ specs:
     roadmapSync: pending
     humanReview: pending
     merge: pending
-  blockers: []
+  blockers:
+  - 'GOZ-0006-B1: Corvus run-time Roslyn compile; AsyncAPI 3.0.0 schema fails to compile (maintainer to revisit P1)'
+  - 'GOZ-0006-B2: A2A proto to JSON Schema generation needs toolchain permission or a vendoring decision'
   impactFindings: []
   evidence:
     tests: []
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Tasks generated 2026-11-17 (72 tasks, docs/specs/006-typed-manifests/tasks.md); next /speckit-implement starting with vendoring stop points T001-T004.'
+  nextAction: 'Implementation stopped at vendoring stop points (T002 blocker GOZ-0006-B1, T004 blocker GOZ-0006-B2); see docs/specs/006-typed-manifests/progress.yaml; resume /speckit-implement at T002 after maintainer decisions.'
 - id: GOZ-0007
   number: 7
   title: Immutable revisions and signed attestations

@@ -31,6 +31,8 @@ Version consistency rules:
 
 Any other value is `unsupported_format` at `/openapi`, `/asyncapi` or `/protocolRevision`.
 
+**Verified at vendoring (T003/T004, 2026-11-17)**: the six upstream files were fetched from the pinned locations, and their SHA-256 values are listed in `Schemas/SOURCES.md` (T006). The MCP `2025-11-25` core schema is **2020-12**, like `2026-07-28`; neither file has a `$id`, so Gözleme registers them under its own bundled URIs. The registry `server.schema.json` 2025-12-11 is draft-07 (`definitions`). A2A: the published `https://a2a-protocol.org/v1.0.1/spec/a2a.json` is a 2020-12 bundle (`definitions`, 47 entries) produced by A2A's `scripts/proto_to_json_schema.sh` with bufbuild `protoc-gen-jsonschema`, and its `AgentCard`, `AgentCapabilities` and `AgentCardSignature` are closed. Generating Gözleme's own bundle from `a2a.proto` is pending (blocker GOZ-0006-B2).
+
 Later upstream versions each become a new adapter version or format version. They are never edits to an
 existing one: OpenAPI 3.2 (3.2.1, 2026-09-10), AsyncAPI 3.1.0 (2026-01-31, P3), and newer MCP revisions.
 
@@ -70,6 +72,13 @@ pinning OpenAPI 3.1.0's 2022-10-07 schema (superseded upstream).
 **Rationale**: P1. It is the only validator with a permissive licence that covers draft-04 (OpenAPI 3.0) and 2020-12 (OpenAPI 3.1, A2A, MCP). Upstream schemas are the conformance source, so Gözleme does not re-implement OpenAPI or AsyncAPI.
 
 **Alternatives rejected**: JsonSchema.Net 9.7.0 (NuGet licence is the OSMF EULA, which needs licence acceptance and a fee for revenue-generating users, and it has no draft-04); NJsonSchema (centred on draft-04, weak on 2020-12); hand-written validators (P1).
+
+**Verified at vendoring (T002, 2026-11-17; evidence `evidence/corvus-spike.txt`)**:
+- (a) **Differs — blocker GOZ-0006-B1.** Corvus.Json.Validator 5.8.11 generates C# from each schema and compiles it at run time with Roslyn (`Microsoft.CodeAnalysis.CSharp` 5.3.0, loaded into a collectible dynamic assembly). It pulls in about 20 MB of new assemblies (Roslyn, Corvus code generation, `Corvus.Json.CodeGeneration.HttpClientDocumentResolver`, Humanizer) and needs Roslyn transitive pins that also move EF Core Design's Roslyn to 5.3.0. Cold compile of the OAS 3.1 schema took about 7 s. **Compiling the AsyncAPI 3.0.0 bundle fails** after about 12 s ("Unable to compile generated code": the generated `Asyncapi300.AnySchema`/`MultiFormatSchema` code contains `\0` characters and does not parse). The package README also calls 5.8.11 a "V4 package" and points new projects at the V5 `Corvus.Text.Json` family.
+- (b) Holds at `ValidationLevel.Detailed`: each failure gives the evaluation path, whose last segments name the keyword (for example `…/unevaluatedProperties/bogus`, `…/properties/title/type`), and the instance location as a JSON Pointer fragment (`#/info/bogus`). `Flag` gives no results and `Basic` gives no locations.
+- (c) Holds: a 2020-12 overlay `$ref`s draft-07 `server.json` `definitions` and 2020-12 MCP `$defs`, and its `unevaluatedProperties: false` rejects extra members of both.
+- (d) Holds: the draft-04 OAS 3.0 schema validates and rejects an unknown root member through `additionalProperties`.
+- Offline: an unbundled `$ref`, with file-system and HTTP resolution off, is refused at compile time (`Unable to locate the root document`) and is not fetched.
 
 ## R3 — Parsing into one positioned tree (P2, FR-016)
 

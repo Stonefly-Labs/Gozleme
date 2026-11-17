@@ -14,6 +14,8 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="Corvus.Json.Validator" />
+    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Identity/common-passwords.txt" LogicalName="Gozleme.Api.Identity.common-passwords.txt" />
