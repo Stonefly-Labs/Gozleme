@@ -17,7 +17,7 @@ vendoring finds that a fact is different, the task records the difference and st
 | Family | `native.format` | `formatVersion` | Encodings | Pinned upstream material | Dialect | Upstream closed? |
 |---|---|---|---|---|---|---|
 | `mcp` | `mcp-server-manifest` | `1` (Gözleme-defined, P4) | `json` | MCP core `schema/2026-07-28/schema.json` and `schema/2025-11-25/schema.json` (repo `modelcontextprotocol/modelcontextprotocol`, tags `2026-07-28` and `2025-11-25`); registry `server.schema.json` `2025-12-11` for `remotes` and `packages` | 2020-12 (2026-07-28); **verify at vendoring** for 2025-11-25 | the manifest root is closed by Gözleme; upstream objects are open, so Gözleme closes them (R2) |
-| `a2a` | `a2a-agent-card` | `1.0` | `json` | A2A v1.0.1 (2026-05-26). `specification/a2a.proto` is normative; the JSON Schema bundle is generated from the proto at tag `v1.0.1` (**verify at vendoring**: the published `a2a.json` is a non-normative build artifact) | 2020-12 | yes (`additionalProperties:false` on AgentCard, AgentCapabilities, AgentCardSignature) |
+| `a2a` | `a2a-agent-card` | `1.0` | `json` | A2A v1.0.1 (2026-05-26). `specification/a2a.proto` is normative; JSON Schema is generated from the proto at tag `v1.0.1` with A2A's own generator and vendored **unstitched**, as 47 per-message files under `upstream/a2a-1.0.1/`, each with its own `$id` (maintainer decision, 2026-11-17: the stitched `a2a.json` has 33 unresolvable relative `$ref`s). A Gözleme overlay adds the proto's `REQUIRED` fields, which the generator drops | 2020-12 | yes (`additionalProperties:false` on AgentCard, AgentCapabilities, AgentCardSignature) |
 | `api` | `openapi` | `3.1` | `json`, `yaml` | OAS schema `https://spec.openapis.org/oas/3.1/schema/2026-11-05` (latest patch 3.1.2) | 2020-12 | yes (`unevaluatedProperties:false`) |
 | `api` | `openapi` | `3.0` | `json`, `yaml` | OAS schema `https://spec.openapis.org/oas/3.0/schema/2024-10-18` (latest patch 3.0.4) | draft-04 | yes (`additionalProperties:false`) |
 | `event` | `asyncapi` | `3.0.0` | `json`, `yaml` | `asyncapi/spec-json-schemas` `schemas/3.0.0-without-$id.json` (release v6.11.1) | draft-07 | yes (`additionalProperties:false`, root included) |
@@ -53,21 +53,17 @@ pinning OpenAPI 3.1.0's 2022-10-07 schema (superseded upstream).
 
 ## R2 — Schema validation engine (P1)
 
-**Decision**: `Corvus.Json.Validator` 5.8.11 (Apache-2.0).
+**Decision** (P1 as revised by the maintainer on 2026-11-17, after blocker GOZ-0006-B1): `Corvus.Text.Json.Validator` 5.8.11 (Apache-2.0), the V5 runtime evaluator. It needs no code generation or Roslyn, and its results come from a `JsonSchemaResultsCollector` at `Detailed` level. It replaces the originally chosen V4 `Corvus.Json.Validator` 5.8.11, which compiled C# with Roslyn at run time and could not compile the AsyncAPI 3.0.0 schema. Its CTJ* analyzers are removed from compilation in `Directory.Build.targets`, because they would rewrite unrelated code.
 - **Bundled schemas**: every upstream and Gözleme schema is an embedded resource under `src/Gozleme.Api/Manifests/Schemas/`. Its source URL, tag or commit and SHA-256 are listed in `Schemas/SOURCES.md`. `ManifestSchemaPinTests` recomputes the digests, so changing a bundled schema fails a test.
 - **Offline**: schemas are registered by their `$id` in an in-memory document resolver. The resolver refuses every URI that is not bundled, so the validator can never reach the network or the file system (FR-006). A test proves that resolving an unbundled `$ref` fails rather than fetches.
 - **Closing open upstream objects** (MCP core types, `server.json` shapes, Agent Skills): we do not edit upstream files. A small Gözleme *strict overlay* schema per format references the upstream `$defs` and adds `unevaluatedProperties: false` (2020-12) at each object that Gözleme closes. Extension locations stay open (R6).
   - Overlays are Gözleme files with their own digests.
-  - For the draft-07 `server.json` shapes, the overlay is a 2020-12 schema that references the draft-07 `$defs`, so `unevaluatedProperties` applies at the overlay level. **Verify at vendoring** that Corvus evaluates mixed-dialect references; if it does not, the overlay restates those shapes in 2020-12 (they are small) and records this in `SOURCES.md`.
-- **Error mapping**: schema output is reduced to `(keyword, instance location)` pairs.
+  - For the draft-07 `server.json` shapes, the overlay is a 2020-12 schema that references the draft-07 `$defs`, so `unevaluatedProperties` applies at the overlay level. Verified for V5: mixed-dialect references evaluate, and `unevaluatedProperties` at the overlay closes the draft-07 shapes.
+- **Error mapping**: schema output is reduced to `(keyword, instance location)` pairs. The keyword is the last segment of the evaluation path of a leaf failure; parent "expected to match the subschema" entries are dropped.
   - `additionalProperties`/`unevaluatedProperties`/`propertyNames` failures become `unknown_field` at the property's pointer.
   - Every other keyword becomes `invalid_value` at its instance location.
   - Nothing from the schema's message text is returned (FR-012). Message text comes only from the fixed catalogue (R9).
-- **Compile cost**: schemas are compiled once at start-up, by a hosted warm-up that does not block health. **Verify at vendoring**:
-  - whether Corvus compiles dynamically with Roslyn and what that costs in start-up time and image size;
-  - that its result exposes the keyword and instance location for each failure.
-
-  If either fails, record a blocker for maintainer review. Do not fall back silently to another library: P1 is the maintainer's decision.
+- **Compile cost**: schemas are compiled once at start-up, by a hosted warm-up that does not block health. Measured for V5: each pinned schema compiles in 1–68 ms, with no Roslyn or dynamic assembly (evidence `evidence/corvus-v5-spike.txt`).
 
 **Rationale**: P1. It is the only validator with a permissive licence that covers draft-04 (OpenAPI 3.0) and 2020-12 (OpenAPI 3.1, A2A, MCP). Upstream schemas are the conformance source, so Gözleme does not re-implement OpenAPI or AsyncAPI.
 
@@ -86,7 +82,8 @@ pinning OpenAPI 3.1.0's 2022-10-07 schema (superseded upstream).
 - (c) Holds: a 2020-12 overlay over draft-07 `server.json` and 2020-12 MCP `$defs` rejects extra members of both.
 - (d) Holds: draft-04 OAS 3.0 validates and rejects an unknown root member.
 - (e) Holds: an unbundled `$ref` is refused at compile time (`JsonSchemaCompilationException`) through a `JsonSchemaDocumentResolver` delegate over in-memory bytes, with file-system and HTTP resolution off.
-- **A2A finding (not engine-specific)**: the A2A bundle keeps 33 relative `$ref`s to per-message files (`lf.a2a.v1.AgentCapabilities.jsonschema.json`, `google.protobuf.Struct.jsonschema.json`, …), because its `jq` bundling step deletes each `$id` but does not rewrite references. So it cannot be compiled as one document by any validator.
+- **A2A finding (not engine-specific)**: the A2A bundle keeps 33 relative `$ref`s to per-message files (`lf.a2a.v1.AgentCapabilities.jsonschema.json`, `google.protobuf.Struct.jsonschema.json`, …), because its `jq` bundling step deletes each `$id` but does not rewrite references. So it cannot be compiled as one document by any validator. **Resolution (maintainer, 2026-11-17)**: vendor the 47 unstitched generator outputs. Each one's `$id` equals its file name, and all references resolve. V5 compiles `lf.a2a.v1.AgentCard.jsonschema.json` in 4 ms and reports `/bogus` and `/capabilities/bogus` as `additionalProperties` failures.
+- **A2A required fields**: `protoc-gen-jsonschema` v0.6.0 does not emit `required` for the 61 `(google.api.field_behavior) = REQUIRED` fields in `a2a.proto`, and neither does the published `a2a.json`. The Gözleme A2A strict overlay (`gozleme/a2a-strict-1.0.1.json`, T005) restates them as `required` lists taken from the proto annotations, which are normative (agent choice, disclosed for veto).
 
 ## R3 — Parsing into one positioned tree (P2, FR-016)
 
@@ -351,7 +348,7 @@ The fixed IDs are UUIDv7-shaped constants that cannot collide with generated one
 ## R17 — Dependencies and licences
 
 **Decision**:
-- **New packages** in `Directory.Packages.props`: `Corvus.Json.Validator` 5.8.11 (Apache-2.0) and `YamlDotNet` 18.1.0 (MIT). Any transitive packages are pinned there too, because `CentralPackageTransitivePinningEnabled` is on.
+- **New packages** in `Directory.Packages.props`: `Corvus.Text.Json.Validator` 5.8.11 (Apache-2.0; P1 revised) and `YamlDotNet` 18.1.0 (MIT). Transitive packages: `Corvus.Text.Json` 5.8.11, `Corvus.Regex.Ecma262` 1.0.15 and NodaTime 3.3.1 (Apache-2.0), about 2.6 MB in total, with no Roslyn. No extra transitive pins are needed.
 - **Vulnerability check**: run `dotnet list package --vulnerable --include-transitive` at implementation time. GitHub advisories show only CVE-2018-1000210 for YamlDotNet ≤ 4.3.2, which is not applicable.
 - **Bundled upstream schemas**: OpenAPI and AsyncAPI are Apache-2.0, the MCP specification is MIT, and A2A is Apache-2.0. Their notices go in `src/Gozleme.Api/Manifests/Schemas/SOURCES.md` and in the repository's third-party notices.
 - **No web dependency**: the UI is plain React.

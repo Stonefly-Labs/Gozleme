@@ -1,0 +1,44 @@
+{
+  "$id": "lf.a2a.v1.OAuthFlows.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines the configuration for the supported OAuth 2.0 flows.",
+  "patternProperties": {
+    "^(authorization_code)$": {
+      "$ref": "lf.a2a.v1.AuthorizationCodeOAuthFlow.jsonschema.json",
+      "description": "Configuration for the OAuth Authorization Code flow."
+    },
+    "^(client_credentials)$": {
+      "$ref": "lf.a2a.v1.ClientCredentialsOAuthFlow.jsonschema.json",
+      "description": "Configuration for the OAuth Client Credentials flow."
+    },
+    "^(device_code)$": {
+      "$ref": "lf.a2a.v1.DeviceCodeOAuthFlow.jsonschema.json",
+      "description": "Configuration for the OAuth Device Code flow."
+    }
+  },
+  "properties": {
+    "authorizationCode": {
+      "$ref": "lf.a2a.v1.AuthorizationCodeOAuthFlow.jsonschema.json",
+      "description": "Configuration for the OAuth Authorization Code flow."
+    },
+    "clientCredentials": {
+      "$ref": "lf.a2a.v1.ClientCredentialsOAuthFlow.jsonschema.json",
+      "description": "Configuration for the OAuth Client Credentials flow."
+    },
+    "deviceCode": {
+      "$ref": "lf.a2a.v1.DeviceCodeOAuthFlow.jsonschema.json",
+      "description": "Configuration for the OAuth Device Code flow."
+    },
+    "implicit": {
+      "$ref": "lf.a2a.v1.ImplicitOAuthFlow.jsonschema.json",
+      "description": "Deprecated: Use Authorization Code + PKCE instead."
+    },
+    "password": {
+      "$ref": "lf.a2a.v1.PasswordOAuthFlow.jsonschema.json",
+      "description": "Deprecated: Use Authorization Code + PKCE or Device Code."
+    }
+  },
+  "title": "O Auth Flows",
+  "type": "object"
+}

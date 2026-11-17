@@ -403,15 +403,14 @@ specs:
     roadmapSync: pending
     humanReview: pending
     merge: pending
-  blockers:
-  - 'GOZ-0006-B1: Corvus run-time Roslyn compile; AsyncAPI 3.0.0 schema fails to compile (maintainer to revisit P1)'
+  blockers: []
   impactFindings: []
   evidence:
     tests: []
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Implementation stopped at vendoring stop points (T002 blocker GOZ-0006-B1, T004 blocker GOZ-0006-B2); see docs/specs/006-typed-manifests/progress.yaml; resume /speckit-implement at T002 after maintainer decisions.'
+  nextAction: 'Implementing; setup T001-T004 done (P1 revised to Corvus.Text.Json.Validator; A2A vendored unstitched); next T005-T006 then Phase 2 foundational. See docs/specs/006-typed-manifests/progress.yaml.'
 - id: GOZ-0007
   number: 7
   title: Immutable revisions and signed attestations

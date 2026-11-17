@@ -1,0 +1,15 @@
+{
+  "$id": "lf.a2a.v1.GetExtendedAgentCardRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Represents a request for the `GetExtendedAgentCard` method.",
+  "properties": {
+    "tenant": {
+      "default": "",
+      "description": "Optional. Opaque routing identifier. Must match the `tenant` value from\n the selected `AgentInterface` in the Agent Card when that field is set.",
+      "type": "string"
+    }
+  },
+  "title": "Get Extended Agent Card Request",
+  "type": "object"
+}

@@ -1,0 +1,31 @@
+{
+  "$id": "lf.a2a.v1.OAuth2SecurityScheme.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines a security scheme using OAuth 2.0.",
+  "patternProperties": {
+    "^(oauth2_metadata_url)$": {
+      "default": "",
+      "description": "URL to the OAuth2 authorization server metadata [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414).\n TLS is required.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "description": {
+      "default": "",
+      "description": "An optional description for the security scheme.",
+      "type": "string"
+    },
+    "flows": {
+      "$ref": "lf.a2a.v1.OAuthFlows.jsonschema.json",
+      "description": "An object containing configuration information for the supported OAuth 2.0 flows."
+    },
+    "oauth2MetadataUrl": {
+      "default": "",
+      "description": "URL to the OAuth2 authorization server metadata [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414).\n TLS is required.",
+      "type": "string"
+    }
+  },
+  "title": "O Auth2 Security Scheme",
+  "type": "object"
+}

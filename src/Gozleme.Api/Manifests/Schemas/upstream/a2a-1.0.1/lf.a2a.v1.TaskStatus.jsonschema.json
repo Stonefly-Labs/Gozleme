@@ -1,0 +1,47 @@
+{
+  "$id": "lf.a2a.v1.TaskStatus.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A container for the status of a task",
+  "properties": {
+    "message": {
+      "$ref": "lf.a2a.v1.Message.jsonschema.json",
+      "description": "A message associated with the status."
+    },
+    "state": {
+      "anyOf": [
+        {
+          "pattern": "^TASK_STATE_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "TASK_STATE_SUBMITTED",
+            "TASK_STATE_WORKING",
+            "TASK_STATE_COMPLETED",
+            "TASK_STATE_FAILED",
+            "TASK_STATE_CANCELED",
+            "TASK_STATE_INPUT_REQUIRED",
+            "TASK_STATE_REJECTED",
+            "TASK_STATE_AUTH_REQUIRED"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "description": "The current state of this task.",
+      "title": "Task State"
+    },
+    "timestamp": {
+      "$ref": "google.protobuf.Timestamp.jsonschema.json",
+      "description": "ISO 8601 Timestamp when the status was recorded.\n Example: \"2023-10-27T10:00:00Z\""
+    }
+  },
+  "title": "Task Status",
+  "type": "object"
+}

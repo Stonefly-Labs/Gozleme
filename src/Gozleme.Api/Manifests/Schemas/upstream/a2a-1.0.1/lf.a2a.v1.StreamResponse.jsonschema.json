@@ -1,0 +1,36 @@
+{
+  "$id": "lf.a2a.v1.StreamResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A wrapper object used in streaming operations to encapsulate different types of response data.",
+  "patternProperties": {
+    "^(artifact_update)$": {
+      "$ref": "lf.a2a.v1.TaskArtifactUpdateEvent.jsonschema.json",
+      "description": "An event indicating a task artifact update."
+    },
+    "^(status_update)$": {
+      "$ref": "lf.a2a.v1.TaskStatusUpdateEvent.jsonschema.json",
+      "description": "An event indicating a task status update."
+    }
+  },
+  "properties": {
+    "artifactUpdate": {
+      "$ref": "lf.a2a.v1.TaskArtifactUpdateEvent.jsonschema.json",
+      "description": "An event indicating a task artifact update."
+    },
+    "message": {
+      "$ref": "lf.a2a.v1.Message.jsonschema.json",
+      "description": "A Message object containing a message from the agent."
+    },
+    "statusUpdate": {
+      "$ref": "lf.a2a.v1.TaskStatusUpdateEvent.jsonschema.json",
+      "description": "An event indicating a task status update."
+    },
+    "task": {
+      "$ref": "lf.a2a.v1.Task.jsonschema.json",
+      "description": "A Task object containing the current state of the task."
+    }
+  },
+  "title": "Stream Response",
+  "type": "object"
+}

@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    Corvus.Text.Json (GOZ-0006 schema validation) ships analyzers (CTJ*) that ask every caller of an API with a
+    UTF-8 overload, including Guid.Parse and System.Text.Json, to switch to u8 literals. They flow to every project
+    that references the API and are not a project code-style rule, so they are removed here.
+  -->
+  <Target Name="RemoveCorvusTextJsonAnalyzers" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(Filename)' == 'Corvus.Text.Json.Analyzers'" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,4 +1,4 @@
-# dotnet list package --vulnerable --include-transitive (2026-11-17T19:07:28Z, SDK 10.0.404)
+# dotnet list package --vulnerable --include-transitive (2026-11-17T19:41:18Z, SDK 10.0.404); engine switched to Corvus.Text.Json.Validator 5.8.11 (maintainer P1 revision)
   Determining projects to restore...
   All projects are up-to-date for restore.
 
@@ -6,3 +6,16 @@ The following sources were used:
    https://api.nuget.org/v3/index.json
 
 The given project `Gozleme.Api` has no vulnerable packages given the current sources.
+
+# New transitive packages
+   > Corvus.Text.Json.Validator                                   5.8.11      5.8.11  
+   > YamlDotNet                                                   18.1.0      18.1.0  
+   > Corvus.Regex.Ecma262                             1.0.15  
+   > Corvus.Text.Json                                 5.8.11  
+   > Microsoft.CodeAnalysis.Analyzers                 3.11.0  
+   > Microsoft.CodeAnalysis.Common                    5.0.0   
+   > Microsoft.CodeAnalysis.CSharp                    5.0.0   
+   > Microsoft.CodeAnalysis.CSharp.Workspaces         5.0.0   
+   > Microsoft.CodeAnalysis.Workspaces.Common         5.0.0   
+   > Microsoft.CodeAnalysis.Workspaces.MSBuild        5.0.0   
+   > NodaTime                                         3.3.1   

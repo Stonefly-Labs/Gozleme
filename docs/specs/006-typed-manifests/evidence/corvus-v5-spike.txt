@@ -1,9 +1,9 @@
-# Corvus.Text.Json.Validator 5.8.11 (V5) spike, 2026-11-17T19:29:07Z, SDK 10.0.404, macOS arm64, Release
-# Throwaway console project outside the repo (maintainer decision B1: spike V5 before revisiting P1); same checks as T002 plus AsyncAPI, MCP and A2A compiles
-# Dependencies: Corvus.Text.Json 5.8.11 -> Corvus.Regex.Ecma262 1.0.15, NodaTime 3.3.1; Apache-2.0; ~2.6 MB of assemblies; no Roslyn
+# Corvus.Text.Json.Validator 5.8.11 (V5) spike, 2026-11-17T19:43:56Z, SDK 10.0.404, macOS arm64, Release
+# Throwaway console project outside the repo (maintainer decision B1); program in corvus-v5-spike-program.cs.txt
+# Dependencies: Corvus.Text.Json 5.8.11 -> Corvus.Regex.Ecma262 1.0.15, NodaTime 3.3.1; Apache-2.0; ~2.6 MB; no Roslyn
 
-(a) compile oas-3.1-2026-11-05.json: 68 ms
-(a) compile oas-3.0-2024-10-18.json: 4 ms
+(a) compile oas-3.1-2026-11-05.json: 76 ms
+(a) compile oas-3.0-2024-10-18.json: 5 ms
 (a) compile asyncapi-3.0.0.json: 26 ms
   [asyncapi valid] valid=True results=1
   [asyncapi unknown root] valid=False results=3
@@ -12,7 +12,6 @@
     eval= schema= instance= msg=The value was expected to match the subschema.
 (a) compile mcp-2026-07-28.json: 5 ms
 (a) compile mcp-2025-11-25.json: 2 ms
-(a) compile a2a-1.0.1.json: 1 ms
 (a) assemblies loaded: Corvus.Regex.Ecma262, Microsoft.Win32.Primitives, System.Collections.Concurrent, System.Diagnostics.Tracing, System.IO.Pipelines, System.Memory, System.Net.Http, System.Private.Uri, System.Runtime.InteropServices, System.Runtime.Intrinsics, System.Runtime.Numerics, System.Text.Encoding.Extensions, System.Text.RegularExpressions, System.Threading, System.Threading.Thread
 (a) roslyn loaded: False; dynamic: 0
   [oas31 ok] valid=True results=1
@@ -66,6 +65,17 @@
     eval=/additionalProperties schema=/additionalProperties instance=/bogus msg=The value was expected to match the subschema.
     eval=/additionalProperties schema=/additionalProperties instance=/bogus msg=
     eval= schema= instance= msg=The value was expected to match the subschema.
-(f) A2A Agent Card def by title pointer:
-(f) FAILED: JsonSchemaCompilationException: Unable to resolve reference 'lf.a2a.v1.AgentCapabilities.jsonschema.json' from 'https://gozleme.invalid/upstream/a2a-1.0.1.json'.
+(f) A2A Agent Card from unstitched per-message files:
+(f) compile AgentCard: 4 ms
+  [card unknown field + missing required] valid=False results=3
+    eval=/additionalProperties schema=/additionalProperties instance=/bogus msg=The value was expected to match the subschema.
+    eval=/additionalProperties schema=/additionalProperties instance=/bogus msg=
+    eval= schema= instance= msg=The value was expected to match the subschema.
+  [card nested unknown in capabilities] valid=False results=6
+    eval=/properties/capabilities/$ref/additionalProperties schema=/additionalProperties instance=/capabilities/bogus msg=The value was expected to match the subschema.
+    eval=/properties/capabilities/$ref/additionalProperties schema=/additionalProperties instance=/capabilities/bogus msg=
+    eval=/properties/capabilities/$ref schema= instance=/capabilities msg=The value was expected to match the subschema.
+    eval=/properties/capabilities schema=/properties/capabilities instance=/capabilities msg=The value was expected to match the subschema.
+    eval=/properties/capabilities/$ref schema=/properties/capabilities/$ref instance=/capabilities msg=The value did not match all subschema.
+    eval= schema= instance= msg=The value was expected to match the subschema.
 (e) unbundled $ref refused: JsonSchemaCompilationException: Unable to resolve reference 'https://example.com/not-bundled.json' from 'https://gozleme.invalid/spike/unbundled.json'.

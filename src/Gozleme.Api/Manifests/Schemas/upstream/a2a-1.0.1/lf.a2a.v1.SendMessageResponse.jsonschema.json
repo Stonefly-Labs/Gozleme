@@ -1,0 +1,18 @@
+{
+  "$id": "lf.a2a.v1.SendMessageResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Represents the response for the `SendMessage` method.",
+  "properties": {
+    "message": {
+      "$ref": "lf.a2a.v1.Message.jsonschema.json",
+      "description": "A message from the agent."
+    },
+    "task": {
+      "$ref": "lf.a2a.v1.Task.jsonschema.json",
+      "description": "The task created or updated by the message."
+    }
+  },
+  "title": "Send Message Response",
+  "type": "object"
+}

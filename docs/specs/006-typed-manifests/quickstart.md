@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Docker with Compose, .NET 10 SDK and Node 24, the same as GOZ-0005. No new service, configuration or database change.
-- New NuGet packages: `Corvus.Json.Validator` and `YamlDotNet`, pinned in `Directory.Packages.props` (research R17). The bundled schemas need no network at run time.
+- New NuGet packages: `Corvus.Text.Json.Validator` and `YamlDotNet`, pinned in `Directory.Packages.props` (research R17). The bundled schemas need no network at run time.
 - An existing local volume needs no `make reset`. Run `make up`, then the seed (`docker compose --profile demo run --rm seed`), which adds the fixed demo publisher `seeded-demo` and capability `manifest-demo` (research R14).
 
 ## Run the automated checks

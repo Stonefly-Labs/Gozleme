@@ -41,7 +41,6 @@ try
 catch (Exception ex) { Console.WriteLine($"(a) asyncapi FAILED: {ex.GetType().Name}: {ex.Message.Split('\n')[0]}"); }
 var mcp = Compile("mcp-2026-07-28.json", "https://gozleme.invalid/upstream/mcp-2026-07-28.json");
 var mcp25 = Compile("mcp-2025-11-25.json", "https://gozleme.invalid/upstream/mcp-2025-11-25.json");
-var a2a = Compile("a2a-1.0.1.json", "https://gozleme.invalid/upstream/a2a-1.0.1.json");
 var loaded = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetName().Name!).Where(n => !before.Contains(n)).Order();
 Console.WriteLine($"(a) assemblies loaded: {string.Join(", ", loaded)}");
 Console.WriteLine($"(a) roslyn loaded: {loaded.Any(n => n.StartsWith("Microsoft.CodeAnalysis"))}; dynamic: {AppDomain.CurrentDomain.GetAssemblies().Count(a => a.IsDynamic)}");
@@ -74,11 +73,25 @@ Console.WriteLine("(d) draft-04 OAS 3.0:");
 Report("ok", oas30, """{"openapi":"3.0.4","info":{"title":"x","version":"1"},"paths":{}}""");
 Report("unknown root", oas30, """{"openapi":"3.0.4","info":{"title":"x","version":"1"},"paths":{},"bogus":1}""");
 
-Console.WriteLine("(f) A2A Agent Card def by title pointer:");
-try {
-var card = JsonSchema.FromText("""{"$schema":"https://json-schema.org/draft/2020-12/schema","$ref":"https://gozleme.invalid/upstream/a2a-1.0.1.json#/definitions/Agent%20Card"}""", "https://gozleme.invalid/spike/card.json", new([], false, JsonSchemaDialect.Draft202012, false, (string u, out ReadOnlyMemory<byte> j) => { if (u == "https://gozleme.invalid/upstream/a2a-1.0.1.json") { j = File.ReadAllBytes(Path.Combine(up, "a2a-1.0.1.json")); return true; } var ok = docs.TryGetValue(u, out var b); j = b; return ok; }));
-Report("card unknown field", card, """{"name":"x","bogus":1}""");
-} catch (Exception ex) { Console.WriteLine($"(f) FAILED: {ex.GetType().Name}: {ex.Message.Split('\n')[0]}"); }
+Console.WriteLine("(f) A2A Agent Card from unstitched per-message files:");
+var a2aDir = Path.Combine(up, "a2a-1.0.1");
+JsonSchemaDocumentResolver a2aResolver = (string u, out ReadOnlyMemory<byte> j) =>
+{
+    const string Base = "https://gozleme.invalid/upstream/a2a-1.0.1/";
+    var name = u.StartsWith(Base, StringComparison.Ordinal) ? u[Base.Length..] : null;
+    var path = name is null ? null : Path.Combine(a2aDir, name);
+    if (path is not null && File.Exists(path)) { j = File.ReadAllBytes(path); return true; }
+    var ok = docs.TryGetValue(u, out var b); j = b; return ok;
+};
+try
+{
+    var sw3 = Stopwatch.StartNew();
+    var card = JsonSchema.FromText(File.ReadAllText(Path.Combine(a2aDir, "lf.a2a.v1.AgentCard.jsonschema.json")), "https://gozleme.invalid/upstream/a2a-1.0.1/lf.a2a.v1.AgentCard.jsonschema.json", new([], false, JsonSchemaDialect.Draft202012, false, a2aResolver));
+    Console.WriteLine($"(f) compile AgentCard: {sw3.Elapsed.TotalMilliseconds:F0} ms");
+    Report("card unknown field + missing required", card, """{"name":"x","bogus":1}""");
+    Report("card nested unknown in capabilities", card, """{"name":"x","capabilities":{"streaming":true,"bogus":1}}""");
+}
+catch (Exception ex) { Console.WriteLine($"(f) FAILED: {ex.GetType().Name}: {ex.Message.Split('\n')[0]}"); }
 
 try
 {

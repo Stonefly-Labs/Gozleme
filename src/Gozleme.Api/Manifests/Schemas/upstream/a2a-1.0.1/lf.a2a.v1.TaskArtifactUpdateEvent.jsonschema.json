@@ -1,0 +1,55 @@
+{
+  "$id": "lf.a2a.v1.TaskArtifactUpdateEvent.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A task delta where an artifact has been generated.",
+  "patternProperties": {
+    "^(context_id)$": {
+      "default": "",
+      "description": "The ID of the context that this task belongs to.",
+      "type": "string"
+    },
+    "^(last_chunk)$": {
+      "default": false,
+      "description": "If true, this is the final chunk of the artifact.",
+      "type": "boolean"
+    },
+    "^(task_id)$": {
+      "default": "",
+      "description": "The ID of the task for this artifact.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "append": {
+      "default": false,
+      "description": "If true, the content of this artifact should be appended to a previously\n sent artifact with the same ID.",
+      "type": "boolean"
+    },
+    "artifact": {
+      "$ref": "lf.a2a.v1.Artifact.jsonschema.json",
+      "description": "The artifact that was generated or updated."
+    },
+    "contextId": {
+      "default": "",
+      "description": "The ID of the context that this task belongs to.",
+      "type": "string"
+    },
+    "lastChunk": {
+      "default": false,
+      "description": "If true, this is the final chunk of the artifact.",
+      "type": "boolean"
+    },
+    "metadata": {
+      "$ref": "google.protobuf.Struct.jsonschema.json",
+      "description": "Optional. Metadata associated with the artifact update."
+    },
+    "taskId": {
+      "default": "",
+      "description": "The ID of the task for this artifact.",
+      "type": "string"
+    }
+  },
+  "title": "Task Artifact Update Event",
+  "type": "object"
+}

@@ -1,0 +1,52 @@
+{
+  "$id": "lf.a2a.v1.SecurityScheme.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines a security scheme that can be used to secure an agent's endpoints.\n This is a discriminated union type based on the OpenAPI 3.2 Security Scheme Object.\n See: https://spec.openapis.org/oas/v3.2.0.html#security-scheme-object",
+  "patternProperties": {
+    "^(api_key_security_scheme)$": {
+      "$ref": "lf.a2a.v1.APIKeySecurityScheme.jsonschema.json",
+      "description": "API key-based authentication."
+    },
+    "^(http_auth_security_scheme)$": {
+      "$ref": "lf.a2a.v1.HTTPAuthSecurityScheme.jsonschema.json",
+      "description": "HTTP authentication (Basic, Bearer, etc.)."
+    },
+    "^(mtls_security_scheme)$": {
+      "$ref": "lf.a2a.v1.MutualTlsSecurityScheme.jsonschema.json",
+      "description": "Mutual TLS authentication."
+    },
+    "^(oauth2_security_scheme)$": {
+      "$ref": "lf.a2a.v1.OAuth2SecurityScheme.jsonschema.json",
+      "description": "OAuth 2.0 authentication."
+    },
+    "^(open_id_connect_security_scheme)$": {
+      "$ref": "lf.a2a.v1.OpenIdConnectSecurityScheme.jsonschema.json",
+      "description": "OpenID Connect authentication."
+    }
+  },
+  "properties": {
+    "apiKeySecurityScheme": {
+      "$ref": "lf.a2a.v1.APIKeySecurityScheme.jsonschema.json",
+      "description": "API key-based authentication."
+    },
+    "httpAuthSecurityScheme": {
+      "$ref": "lf.a2a.v1.HTTPAuthSecurityScheme.jsonschema.json",
+      "description": "HTTP authentication (Basic, Bearer, etc.)."
+    },
+    "mtlsSecurityScheme": {
+      "$ref": "lf.a2a.v1.MutualTlsSecurityScheme.jsonschema.json",
+      "description": "Mutual TLS authentication."
+    },
+    "oauth2SecurityScheme": {
+      "$ref": "lf.a2a.v1.OAuth2SecurityScheme.jsonschema.json",
+      "description": "OAuth 2.0 authentication."
+    },
+    "openIdConnectSecurityScheme": {
+      "$ref": "lf.a2a.v1.OpenIdConnectSecurityScheme.jsonschema.json",
+      "description": "OpenID Connect authentication."
+    }
+  },
+  "title": "Security Scheme",
+  "type": "object"
+}

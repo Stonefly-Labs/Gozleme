@@ -1,0 +1,15 @@
+{
+  "$id": "lf.a2a.v1.MutualTlsSecurityScheme.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines a security scheme using mTLS authentication.",
+  "properties": {
+    "description": {
+      "default": "",
+      "description": "An optional description for the security scheme.",
+      "type": "string"
+    }
+  },
+  "title": "Mutual Tls Security Scheme",
+  "type": "object"
+}

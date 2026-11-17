@@ -21,14 +21,8 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.21.0" />
     <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.3" />
     <!-- Typed manifests (GOZ-0006, research R2/R3/R17) -->
-    <PackageVersion Include="Corvus.Json.Validator" Version="5.8.11" />
+    <PackageVersion Include="Corvus.Text.Json.Validator" Version="5.8.11" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
-    <!-- Transitive pins: Corvus needs Roslyn 5.3.0; align EF Core Design's Roslyn with it -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="5.3.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.3.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="5.3.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="5.3.0" />
     <!-- Tests -->
     <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="1.21.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.15" />

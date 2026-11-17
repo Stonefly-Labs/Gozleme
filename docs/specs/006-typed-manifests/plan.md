@@ -24,7 +24,7 @@ A rejected manifest returns categorized problems with locations and never echoes
 
   All schemas are bundled, digest-pinned and resolved offline.
 - **Engine** (P1, P2; research R2, R3):
-  - `Corvus.Json.Validator` validates against the official schemas, behind Gözleme strict overlays.
+  - `Corvus.Text.Json.Validator` (V5 runtime evaluator; P1 revised 2026-11-17) validates against the official schemas, behind Gözleme strict overlays.
   - The YamlDotNet *event* parser reads restricted YAML.
   - Everything is parsed into one positioned tree, so locations are RFC 6901 pointers for JSON, YAML and front matter alike.
 - **Strictness** (Q4; research R6–R10): unknown fields, reserved security claims (a vocabulary applied to extension points and to the fields each adapter lists), inline secrets (secret-bearing fields plus pattern list v1, with no entropy heuristic), identity mismatch and external references are all rejected, under a closed set of 11 categories and a fixed rule catalogue.
@@ -38,7 +38,7 @@ A rejected manifest returns categorized problems with locations and never echoes
 
 **Primary Dependencies**:
 - existing: ASP.NET Core 10 minimal APIs, EF Core 10 + Npgsql, OpenTelemetry .NET, Next.js, Vitest, Playwright, xUnit v3 + Testcontainers;
-- **new** (maintainer P1/P2): `Corvus.Json.Validator` 5.8.11 (Apache-2.0) and `YamlDotNet` 18.1.0 (MIT), pinned centrally;
+- **new** (maintainer P1/P2): `Corvus.Text.Json.Validator` 5.8.11 (Apache-2.0; P1 revised 2026-11-17 from V4 `Corvus.Json.Validator`, which compiled with Roslyn at run time and failed on AsyncAPI 3.0.0) and `YamlDotNet` 18.1.0 (MIT), pinned centrally;
 - no web dependency.
 
 **Storage**: none. There is no migration, table, column, function or grant (FR-027, research R13). The slice reads the existing GOZ-0005 rows under existing policies.
@@ -91,7 +91,7 @@ A rejected manifest returns categorized problems with locations and never echoes
 **Post-design re-check (after Phase 1): PASS.**
 - No new table class, definer helper, grant or audit range. `RlsCatalog` is unchanged.
 - **Security-review items for convergence**: secret pattern list v1, the reserved vocabulary and where it applies, the parser restrictions, and the offline resolver.
-- **Vendoring risks**: the Corvus run-time compile behaviour and error output (R2), the 2025-11-25 MCP schema dialect and the A2A bundle generation (R1). Each is a first implementation task with an explicit stop for maintainer review if the fact differs, so P1 is never silently overridden.
+- **Vendoring risks**: the Corvus run-time compile behaviour and error output (R2), the 2025-11-25 MCP schema dialect and the A2A bundle generation (R1). Each is a first implementation task with an explicit stop for maintainer review if the fact differs, so P1 is never silently overridden. Outcome (2026-11-17): the V4 engine failed (blocker GOZ-0006-B1), and the maintainer revised P1 to V5. The A2A stitched bundle had unresolvable references, so the maintainer chose to vendor the unstitched files.
 
 ## Project Structure
 
@@ -135,7 +135,8 @@ src/Gozleme.Api/
 │   ├── Rules/{ManifestRules,ReservedClaims,SecretPatterns,SecretFields,ExternalReferences}.cs
 │   ├── Projection/{Projection,ProjectionBuilder}.cs
 │   ├── Schemas/                                 # embedded resources + SOURCES.md (URL, tag/commit, SHA-256, licence)
-│   │   ├── upstream/{mcp-2026-07-28,mcp-2025-11-25,mcp-registry-2025-12-11,a2a-1.0.1,oas-3.1-2026-11-05,oas-3.0-2024-10-18,asyncapi-3.0.0}.json
+│   │   ├── upstream/{mcp-2026-07-28,mcp-2025-11-25,mcp-registry-2025-12-11,oas-3.1-2026-11-05,oas-3.0-2024-10-18,asyncapi-3.0.0}.json
+│   │   ├── upstream/a2a-1.0.1/*.jsonschema.json   # 47 unstitched files generated from a2a.proto
 │   │   └── gozleme/{envelope-1,mcp-server-manifest-1,mcp-strict-*,agent-skills-2026-11-17,model-card-1,projection-1}.json
 │   ├── SchemaRegistry.cs                        # offline resolver, compile once, warm-up hosted service
 │   ├── ManifestValidationLimiter.cs             # per-account fixed window, Gozleme:Manifests:ValidatePerMinute
@@ -145,7 +146,8 @@ src/Gozleme.Api/
 ├── Identity/OperatorCommands.cs                 # seed: demo publisher (alice) + capability (carol), fixed IDs (R14)
 ├── GozlemeApp.cs                                # module registration, MapManifestEndpoints on the organizations group
 └── Gozleme.Api.csproj                           # + 2 packages, embedded schemas
-Directory.Packages.props                         # Corvus.Json.Validator, YamlDotNet (+ transitive pins)
+Directory.Packages.props                         # Corvus.Text.Json.Validator, YamlDotNet
+Directory.Build.targets                          # removes Corvus CTJ* analyzers from compilation
 web/src/
 ├── app/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/manifest/page.tsx
 ├── app/api/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/manifests/validate/route.ts   # POST, isSameOrigin

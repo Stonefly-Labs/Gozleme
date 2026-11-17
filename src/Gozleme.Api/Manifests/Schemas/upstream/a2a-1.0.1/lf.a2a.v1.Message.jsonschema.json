@@ -1,0 +1,97 @@
+{
+  "$id": "lf.a2a.v1.Message.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "`Message` is one unit of communication between client and server. It can be\n associated with a context and/or a task. For server messages, `context_id` must\n be provided, and `task_id` only if a task was created. For client messages, both\n fields are optional, with the caveat that if both are provided, they have to\n match (the `context_id` has to be the one that is set on the task). If only\n `task_id` is provided, the server will infer `context_id` from it.",
+  "patternProperties": {
+    "^(context_id)$": {
+      "default": "",
+      "description": "Optional. The context id of the message. If set, the message will be associated with the given context.",
+      "type": "string"
+    },
+    "^(message_id)$": {
+      "default": "",
+      "description": "The unique identifier (e.g. UUID) of the message. This is created by the message creator.",
+      "type": "string"
+    },
+    "^(reference_task_ids)$": {
+      "description": "A list of task IDs that this message references for additional context.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "^(task_id)$": {
+      "default": "",
+      "description": "Optional. The task id of the message. If set, the message will be associated with the given task.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "contextId": {
+      "default": "",
+      "description": "Optional. The context id of the message. If set, the message will be associated with the given context.",
+      "type": "string"
+    },
+    "extensions": {
+      "description": "The URIs of extensions that are present or contributed to this Message.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "messageId": {
+      "default": "",
+      "description": "The unique identifier (e.g. UUID) of the message. This is created by the message creator.",
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "google.protobuf.Struct.jsonschema.json",
+      "description": "Optional. Any metadata to provide along with the message."
+    },
+    "parts": {
+      "description": "Parts is the container of the message content.",
+      "items": {
+        "$ref": "lf.a2a.v1.Part.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "referenceTaskIds": {
+      "description": "A list of task IDs that this message references for additional context.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "role": {
+      "anyOf": [
+        {
+          "pattern": "^ROLE_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "ROLE_USER",
+            "ROLE_AGENT"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "description": "Identifies the sender of the message.",
+      "title": "Role"
+    },
+    "taskId": {
+      "default": "",
+      "description": "Optional. The task id of the message. If set, the message will be associated with the given task.",
+      "type": "string"
+    }
+  },
+  "title": "Message",
+  "type": "object"
+}

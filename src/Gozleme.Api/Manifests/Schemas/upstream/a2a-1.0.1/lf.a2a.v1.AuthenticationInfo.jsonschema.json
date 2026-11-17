@@ -1,0 +1,20 @@
+{
+  "$id": "lf.a2a.v1.AuthenticationInfo.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines authentication details, used for push notifications.",
+  "properties": {
+    "credentials": {
+      "default": "",
+      "description": "Push Notification credentials. Format depends on the scheme (e.g., token for Bearer).",
+      "type": "string"
+    },
+    "scheme": {
+      "default": "",
+      "description": "HTTP Authentication Scheme from the [IANA registry](https://www.iana.org/assignments/http-authschemes/).\n Examples: `Bearer`, `Basic`, `Digest`.\n Scheme names are case-insensitive per [RFC 9110 Section 11.1](https://www.rfc-editor.org/rfc/rfc9110#section-11.1).",
+      "type": "string"
+    }
+  },
+  "title": "Authentication Info",
+  "type": "object"
+}
