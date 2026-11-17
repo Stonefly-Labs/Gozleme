@@ -272,8 +272,8 @@ specs:
   prompt: docs/prompts/spec-0004.md
   dependencies:
   - GOZ-0003
-  status: ready-for-human-merge
-  stage: pr
+  status: complete
+  stage: merged
   branch: feature/goz-0004-scoped-rbac
   pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/17
   promptRevision: 6
@@ -287,8 +287,8 @@ specs:
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
-    humanReview: pending
-    merge: pending
+    humanReview: passed
+    merge: passed
   blockers: []
   impactFindings:
   - GOZ-0004-IF-01
@@ -319,7 +319,7 @@ specs:
     reviews:
     - docs/specs/004-scoped-rbac/reviews/impact-analysis.md
     - docs/specs/004-scoped-rbac/reviews/impact-findings.json
-  nextAction: 'PR #17 ready for human review and merge (all CI checks passed at efad962). Human maintainer merges; agents never merge.'
+  nextAction: 'Complete — merged to main in b48a2af2bcadb8073eb076750a17bf435fb83da5 (PR #17, verified 2026-11-16).'
 - id: GOZ-0005
   number: 5
   title: Publisher identities and canonical capability IDs
@@ -352,7 +352,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Await prerequisites and create allowed working branch
+  nextAction: 'Prerequisite GOZ-0004 merged (IF-02 decided A, IF-13 decided B); at clarification decide whether creators also start with publisher (or a backfill) and what losing a role does to in-flight work, then start on feature/goz-0005-*'
 - id: GOZ-0006
   number: 6
   title: Typed manifests for capability families
