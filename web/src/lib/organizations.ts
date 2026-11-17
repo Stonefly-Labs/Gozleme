@@ -54,7 +54,8 @@ export type Fetched<T> =
  */
 export const segment = (id: string) => (/^\.+$/.test(id) ? "not-found" : encodeURIComponent(id));
 
-async function get<T>(path: string, fetchImpl: typeof fetch): Promise<Fetched<T>> {
+/** One server-side read; also used by the publisher pages (GOZ-0005). */
+export async function get<T>(path: string, fetchImpl: typeof fetch): Promise<Fetched<T>> {
   try {
     const res = await fetchImpl(new URL(path, apiBaseUrl()), {
       headers: apiHeaders({ headers: await headers() }, false),

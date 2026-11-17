@@ -10,7 +10,7 @@ namespace Gozleme.Api.IntegrationTests;
 /// </summary>
 public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
-    private static readonly string[] Tables = ["organizations", "memberships", "invitations"];
+    private static readonly string[] Tables = ["organizations", "memberships", "invitations", "publishers", "capabilities"];
 
     private GozlemeApiFactory _factory = null!;
     private TwoTenants _t = null!;
@@ -21,6 +21,14 @@ public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncL
     {
         _factory = new GozlemeApiFactory(Db.AppConnectionString);
         _t = await TwoTenants.CreateAsync(_factory);
+
+        // GOZ-0005: one publisher with one capability in each tenant (research R12).
+        foreach (var (admin, publisher, publisherId, org) in new[] { (_t.Alice, _t.Carol, _t.CarolId, _t.OrgA), (_t.Bob, _t.Bob, _t.BobId, _t.OrgB) })
+        {
+            await OrgClient.SetRolesAsync(admin, org.ToString(), publisherId.ToString(), "admin", "publisher");
+            var registered = await OrgClient.RegisterPublisherAsync(admin, org.ToString());
+            await OrgClient.CreateCapabilityAsync(publisher, org.ToString(), registered.GetProperty("id").GetString()!);
+        }
     }
 
     public async ValueTask DisposeAsync()
@@ -48,7 +56,7 @@ public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncL
     {
         var alice = GozlemeDatabase.Establish(GozlemeDatabase.SignContext(_t.AliceId));
         Assert.Equal($"{_t.OrgA}", await GozlemeDatabase.InTransactionAsync<string>(Connection(role), alice, "SELECT string_agg(id::text, ',') FROM gozleme.organizations"));
-        foreach (var table in new[] { "memberships", "invitations" })
+        foreach (var table in new[] { "memberships", "invitations", "publishers", "capabilities" })
         {
             var visible = await GozlemeDatabase.InTransactionAsync<long>(Connection(role), alice, $"SELECT count(*) FROM gozleme.{table}");
             Assert.Equal(await TwoTenants.TruthAsync(Db, table, _t.OrgA), visible);

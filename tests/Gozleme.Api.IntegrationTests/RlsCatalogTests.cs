@@ -23,8 +23,8 @@ public sealed class RlsCatalogTests(PgvectorDatabaseFixture fixture)
     [Fact]
     public void Identity_tables_are_global_and_tenant_tables_are_disjoint_from_them()
     {
-        Assert.Equal(["auth_sessions", "data_protection_keys", "user_claims", "user_logins", "user_tokens", "users"], TableClassification.GlobalIdentity.Order(StringComparer.Ordinal));
-        Assert.Equal(["invitations", "memberships", "organizations"], TableClassification.TenantOwned.Order(StringComparer.Ordinal));
+        Assert.Equal(["auth_sessions", "data_protection_keys", "publisher_registration_attempts", "user_claims", "user_logins", "user_tokens", "users"], TableClassification.GlobalIdentity.Order(StringComparer.Ordinal));
+        Assert.Equal(["capabilities", "invitations", "memberships", "organizations", "publishers"], TableClassification.TenantOwned.Order(StringComparer.Ordinal));
         Assert.Empty(TableClassification.SharedPublic);
     }
 
@@ -45,6 +45,24 @@ public sealed class RlsCatalogTests(PgvectorDatabaseFixture fixture)
         { "CREATE MATERIALIZED VIEW gozleme.rogue_matview AS SELECT id FROM gozleme.organizations WITH NO DATA", "gozleme.rogue_matview is a materialized view" },
         { "CREATE SCHEMA rogue; CREATE FUNCTION rogue.peek() RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS 'SELECT count(*) FROM gozleme.organizations'", "rogue.peek is SECURITY DEFINER but not a pinned helper" },
         { "CREATE FUNCTION public.peek() RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS 'SELECT count(*) FROM gozleme.organizations'", "public.peek is SECURITY DEFINER but not a pinned helper" },
+
+        // GOZ-0005 instance classes (research R1).
+        { "ALTER TABLE gozleme.registry_origin ADD COLUMN organization_id uuid", "gozleme.registry_origin is instance reference data but has an organization_id column" },
+        { "GRANT INSERT ON gozleme.registry_origin TO gozleme_app", "gozleme.registry_origin is instance reference data but gozleme_app holds INSERT, SELECT instead of exactly SELECT" },
+        { "GRANT UPDATE (origin) ON gozleme.registry_origin TO gozleme_app", "gozleme.registry_origin is instance reference data but gozleme_app has a column-level privilege on it" },
+        { "CREATE VIEW public.origin_peek AS SELECT origin FROM gozleme.registry_origin", "gozleme.registry_origin is instance reference data but a view depends on it" },
+        { "ALTER TABLE gozleme.handle_claims FORCE ROW LEVEL SECURITY", "gozleme.handle_claims holds instance claims but row-level security is forced" },
+        { "ALTER TABLE gozleme.alias_reservations DISABLE ROW LEVEL SECURITY", "gozleme.alias_reservations holds instance claims but row-level security is not enabled" },
+        {
+            "DROP POLICY handle_claims_select ON gozleme.handle_claims; DROP POLICY handle_claims_insert ON gozleme.handle_claims; DROP POLICY handle_claims_update ON gozleme.handle_claims",
+            "gozleme.handle_claims holds instance claims but has no policy"
+        },
+        { "GRANT DELETE ON gozleme.handle_claims TO gozleme_app", "gozleme.handle_claims holds instance claims but gozleme_app may delete or truncate it" },
+        { "GRANT TRUNCATE ON gozleme.alias_reservations TO gozleme_app", "gozleme.alias_reservations holds instance claims but gozleme_app may delete or truncate it" },
+        { "GRANT SELECT ON gozleme.alias_reservations TO gozleme_app", "gozleme.alias_reservations holds instance claims but gozleme_app holds INSERT, SELECT instead of exactly INSERT" },
+        { "GRANT EXECUTE ON FUNCTION gozleme.account_has_role(uuid, text) TO PUBLIC", "gozleme.account_has_role is executable by PUBLIC" },
+        { "ALTER FUNCTION gozleme.account_has_role(uuid, text) SECURITY DEFINER", "gozleme.account_has_role is SECURITY DEFINER but not a pinned helper" },
+        { "ALTER TABLE gozleme.publishers NO FORCE ROW LEVEL SECURITY", "gozleme.publishers is tenant-owned but row-level security is not forced" },
     };
 
     [Theory]

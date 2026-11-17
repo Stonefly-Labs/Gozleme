@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Gozleme.Api.Identity;
 using Gozleme.Api.Organizations;
+using Gozleme.Api.Publishers;
 using Gozleme.Api.Status;
 using Gozleme.Api.Telemetry;
 using Gozleme.Api.Tenancy;
@@ -10,7 +11,7 @@ using Npgsql;
 
 namespace Gozleme.Api;
 
-/// <summary>Composes the Gözleme API host: status (GOZ-0000), local identity (GOZ-0001), organizations (GOZ-0002) and tenant RLS context (GOZ-0003).</summary>
+/// <summary>Composes the Gözleme API host: status (GOZ-0000), local identity (GOZ-0001), organizations (GOZ-0002), tenant RLS context (GOZ-0003), roles (GOZ-0004) and publishers (GOZ-0005).</summary>
 internal static class GozlemeApp
 {
     public const string AppConnectionStringName = "Gozleme";
@@ -42,6 +43,7 @@ internal static class GozlemeApp
         builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database", tags: ["ready"]);
         builder.AddGozlemeIdentity();
         builder.AddGozlemeOrganizations();
+        builder.AddGozlemePublishers();
         builder.AddGozlemeTenancy();
         builder.AddTenantContextSelfCheck();
 
@@ -71,7 +73,7 @@ internal static class GozlemeApp
         }); // FR-021: status data is for signed-in users; probes above stay anonymous
 
         api.MapAuthEndpoints();
-        api.MapOrganizationEndpoints();
+        api.MapOrganizationEndpoints().MapPublisherEndpoints();
 
         return app;
     }

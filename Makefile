@@ -50,8 +50,11 @@ validate: ## Governance: registry/manifest schemas, prompts, register sync, bran
 	scripts/check_branch_name.sh --self-test
 
 helm-lint: ## Lint and render the Helm chart (uses Docker if helm is not installed)
-	scripts/helm.sh lint deploy/helm/gozleme
-	scripts/helm.sh template gozleme deploy/helm/gozleme > /dev/null
+	scripts/helm.sh lint deploy/helm/gozleme --set registry.origin=registry.example.test
+	scripts/helm.sh template gozleme deploy/helm/gozleme --set registry.origin=registry.example.test > /dev/null
+	@# GOZ-0005 FR-029: an empty registry origin must fail the render with the required message.
+	@out=$$(scripts/helm.sh template gozleme deploy/helm/gozleme --set registry.origin= 2>&1) && { echo "helm-lint: render without registry.origin succeeded"; exit 1; }; \
+	  grep -q "registry.origin is required" <<<"$$out" || { echo "$$out"; exit 1; }; echo "helm-lint: empty registry.origin refused (required)"
 
 demo: ## Cumulative autonomous Playwright demo for SPEC (default: latest spec with a demo); writes that spec's evidence/
 	scripts/demo/run-demo.sh $(SPEC)

@@ -42,4 +42,21 @@ describe("traced", () => {
     const attributes = JSON.stringify(exporter.getFinishedSpans().map((s) => s.attributes));
     expect(attributes).not.toContain("Secret Org");
   });
+
+  it("names publisher flows by bounded flow only, never by handles, names or ids", async () => {
+    const created = { status: 201, json: { handle: "acme-secret", canonicalId: "gz://registry.demo.gozleme.test/cap/0193a000-0000-7000-8000-00000000000a" } };
+    await traced("publisher_register", async () => created, (r) => r.status === 201);
+    await traced("capability_create", async () => ({ status: 409 }), (r) => r.status === 201);
+    await traced("publisher_rename", async () => ({ status: 200 }), (r) => r.status === 200);
+    await traced("capability_rename", async () => ({ status: 400 }), (r) => r.status === 200);
+    expect(outcome()).toEqual([
+      ["gozleme.ui.publisher_register", "success"],
+      ["gozleme.ui.capability_create", "failure"],
+      ["gozleme.ui.publisher_rename", "success"],
+      ["gozleme.ui.capability_rename", "failure"],
+    ]);
+    const attributes = JSON.stringify(exporter.getFinishedSpans().map((s) => s.attributes));
+    expect(attributes).not.toContain("acme-secret");
+    expect(attributes).not.toContain("gz://");
+  });
 });

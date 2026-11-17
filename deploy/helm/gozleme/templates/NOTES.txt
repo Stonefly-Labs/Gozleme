@@ -4,3 +4,11 @@ Gözleme {{ .Chart.AppVersion }} (foundation) installed as {{ .Release.Name }}.
   open http://localhost:3000
 
 Requires Secret "{{ .Values.database.existingSecret }}" and pre-created database roles (see chart README).
+
+Registry origin: {{ .Values.registry.origin }} (recorded once; never change it).
+
+Operator handle commands (GOZ-0005) are not chart hooks. Run them by hand as a one-off Job with the
+migrator connection string (key migrator-connection-string of Secret "{{ .Values.database.existingSecret }}")
+as ConnectionStrings__GozlemeMigrator and the args `handle-reserve --handle <handle> [--organization <id>]`,
+`handle-release --handle <handle>` or `handle-reclaim --handle <handle> [--organization <id>]`.
+See docs/specs/005-publisher-identities/contracts/operator-commands.md in the source repository.

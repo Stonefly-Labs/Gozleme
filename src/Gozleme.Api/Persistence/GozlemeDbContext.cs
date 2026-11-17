@@ -1,6 +1,7 @@
 using System.Text;
 using Gozleme.Api.Identity;
 using Gozleme.Api.Organizations;
+using Gozleme.Api.Publishers;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -14,7 +15,8 @@ namespace Gozleme.Api.Persistence;
 /// Owns Gözleme schema migrations. GOZ-0001 adds local identity (user-only Identity store),
 /// server-side sessions and the Data Protection key ring; GOZ-0002 adds organizations, memberships
 /// and invitations; GOZ-0003 forces row-level security on those three tenant tables; GOZ-0004 adds
-/// built-in roles to memberships. All tables live
+/// built-in roles to memberships; GOZ-0005 adds publishers and capabilities (and, outside this model, the
+/// origin and the installation-owned claim tables). All tables live
 /// in schema <c>gozleme</c>; the tenant context key lives in <c>gozleme_private</c>.
 /// </summary>
 internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> options)
@@ -26,6 +28,15 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
     /// <summary><c>ck_memberships_roles</c> (GOZ-0004 research R1).</summary>
     public const string RolesCheck =
         "roles <@ ARRAY['admin', 'approver', 'member', 'publisher', 'reviewer']::text[] AND 'member' = ANY (roles) AND array_position(roles, NULL) IS NULL";
+
+    /// <summary>The namespace rule and reserved handles as a <c>CHECK</c> (GOZ-0005 research R7; pinned to <see cref="NamespaceRules"/> by tests).</summary>
+    public const string HandleCheck =
+        "handle ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' AND length(handle) BETWEEN 2 AND 39 AND handle <> ALL (ARRAY['admin', 'api', 'capabilities', 'capability', "
+        + "'gozleme', 'operator', 'publisher', 'publishers', 'registry', 'root', 'security', 'support', 'system', 'www'])";
+
+    public const string CapabilityNameCheck = "name ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' AND length(name) BETWEEN 2 AND 64";
+
+    public const string DisplayNameCheck = "length(display_name) BETWEEN 1 AND 100";
 
     /// <summary>Shared provider configuration for the API, migrator and operator commands.</summary>
     public static DbContextOptionsBuilder Configure(DbContextOptionsBuilder options, NpgsqlDataSource dataSource) =>
@@ -46,6 +57,10 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
     public DbSet<Membership> Memberships => Set<Membership>();
 
     public DbSet<Invitation> Invitations => Set<Invitation>();
+
+    public DbSet<Publisher> Publishers => Set<Publisher>();
+
+    public DbSet<Capability> Capabilities => Set<Capability>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -119,7 +134,48 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
             invitation.HasOne<GozlemeUser>().WithMany().HasForeignKey(i => i.RevokedBy).OnDelete(DeleteBehavior.SetNull);
         });
 
+        // Tenant-owned (GOZ-0005), RLS forced; ids, handles, names and organizations never change (guards in
+        // migration PublisherIdentities). The claim tables are reached through narrow SQL only (data-model.md).
+        builder.Entity<Publisher>(publisher =>
+        {
+            publisher.ToTable("publishers", t =>
+            {
+                t.HasCheckConstraint("ck_publishers_handle", HandleCheck);
+                t.HasCheckConstraint("ck_publishers_display_name", DisplayNameCheck);
+            });
+            publisher.HasAlternateKey(p => new { p.Id, p.OrganizationId });
+            publisher.HasIndex(p => p.OrganizationId);
+            ReadOnlyAfterInsert(publisher.Property(p => p.Handle).Metadata, publisher.Property(p => p.OrganizationId).Metadata, publisher.Property(p => p.CreatedAt).Metadata);
+            publisher.HasOne<Organization>().WithMany().HasForeignKey(p => p.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            publisher.HasOne<GozlemeUser>().WithMany().HasForeignKey(p => p.CreatedBy).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<Capability>(capability =>
+        {
+            capability.ToTable("capabilities", t =>
+            {
+                t.HasCheckConstraint("ck_capabilities_name", CapabilityNameCheck);
+                t.HasCheckConstraint("ck_capabilities_display_name", DisplayNameCheck);
+            });
+            capability.HasAlternateKey(c => new { c.Id, c.OrganizationId });
+            capability.HasIndex(c => new { c.PublisherId, c.Name }).IsUnique();
+            capability.HasIndex(c => c.OrganizationId);
+            ReadOnlyAfterInsert(capability.Property(c => c.Name).Metadata, capability.Property(c => c.OrganizationId).Metadata, capability.Property(c => c.PublisherId).Metadata, capability.Property(c => c.CreatedAt).Metadata);
+            capability.HasOne<Organization>().WithMany().HasForeignKey(c => c.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            capability.HasOne<Publisher>().WithMany().HasForeignKey(c => new { c.PublisherId, c.OrganizationId })
+                .HasPrincipalKey(p => new { p.Id, p.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+            capability.HasOne<GozlemeUser>().WithMany().HasForeignKey(c => c.CreatedBy).OnDelete(DeleteBehavior.SetNull);
+        });
+
         ApplySnakeCaseNames(builder);
+    }
+
+    private static void ReadOnlyAfterInsert(params Microsoft.EntityFrameworkCore.Metadata.IMutableProperty[] properties)
+    {
+        foreach (var property in properties)
+        {
+            property.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Throw);
+        }
     }
 
     /// <summary>PostgreSQL naming convention: snake_case columns, keys and indexes.</summary>

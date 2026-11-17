@@ -57,7 +57,7 @@ public sealed class TenantSeedTests : IAsyncLifetime
     public async Task Seed_restores_a_drifted_tenant_acting_as_whichever_seeded_admin_remains()
     {
         Assert.Equal(OperatorCommands.Ok, (await SeedAsync()).Code);
-        Assert.Equal("alice@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member", await MemberRoles(OperatorCommands.DemoOrganizationId));
+        Assert.Equal("alice@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member,publisher", await MemberRoles(OperatorCommands.DemoOrganizationId));
         Assert.Equal("dave@demo.gozleme.test:admin,member", await MemberRoles(OperatorCommands.PartnerOrganizationId));
 
         var demo = OperatorCommands.DemoOrganizationId;
@@ -70,7 +70,7 @@ public sealed class TenantSeedTests : IAsyncLifetime
             """);
 
         Assert.Equal(OperatorCommands.Ok, (await SeedAsync()).Code); // only carol is left to act as, and she holds admin
-        Assert.Equal("alice@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member", await MemberRoles(demo));
+        Assert.Equal("alice@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member,publisher", await MemberRoles(demo));
         Assert.Equal(OperatorCommands.DemoOrganizationName, await _db.ScalarAsync<string>($"SELECT display_name FROM gozleme.organizations WHERE id = '{demo}'"));
     }
 
@@ -89,7 +89,7 @@ public sealed class TenantSeedTests : IAsyncLifetime
         var (code, _, stderr) = await SeedAsync();
         Assert.Equal(OperatorCommands.Failed, code);
         Assert.Contains(OperatorCommands.UnrestorableMessage, stderr, StringComparison.Ordinal);
-        Assert.Equal("bob@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member", await MemberRoles(demo));
+        Assert.Equal("bob@demo.gozleme.test:admin,member;carol@demo.gozleme.test:member,publisher", await MemberRoles(demo));
     }
 
     [Fact]

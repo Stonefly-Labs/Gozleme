@@ -101,7 +101,7 @@ function asApp(account: string, statement: string): string {
 test.afterAll(async () => {
   // Restore the seeded roles and name even if a step failed midway.
   if (alice && carolId) {
-    await setRoles(alice, carolId, ["member"]);
+    await setRoles(alice, carolId, ["publisher"]); // seeded {member, publisher} since GOZ-0005
     await api(alice, "PATCH", "", { displayName: DEMO_ORG.name });
   }
   for (const page of [alice, carol, dave]) await page?.context().close();

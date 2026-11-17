@@ -36,6 +36,12 @@ organizations:
   invitationExpiryHours: 168
   redeemPerMinute: 10
 
+# Registry origin (GOZ-0005), required: a lowercase host name such as registry.example.com. The migration
+# Job records it once and every canonical ID embeds it (gz://<origin>/cap/<id>). It can never change: a
+# different value later makes the migration Job and the API refuse to start.
+registry:
+  origin: ""
+
 migrate:
   enabled: true
   backoffLimit: 6

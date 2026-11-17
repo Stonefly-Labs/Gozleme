@@ -89,6 +89,52 @@ public static class OrgClient
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>A run-unique handle (GOZ-0005): handles are permanent, so tests never reuse one.</summary>
+    public static string NewHandle(string prefix = "it") => $"{prefix}-{Guid.NewGuid():N}"[..Math.Min(39, prefix.Length + 33)];
+
+    public static string Publishers(string orgId) => $"{Base}/{orgId}/publishers";
+
+    public static string Publisher(string orgId, string publisherId) => $"{Publishers(orgId)}/{publisherId}";
+
+    public static string Capabilities(string orgId, string publisherId) => $"{Publisher(orgId, publisherId)}/capabilities";
+
+    public static string Capability(string orgId, string publisherId, string capabilityId) => $"{Capabilities(orgId, publisherId)}/{capabilityId}";
+
+    public static Task<HttpResponseMessage> RegisterPublisherRawAsync(HttpClient client, string orgId, string? handle, string? displayName = "IT Publisher") =>
+        client.PostAsJsonAsync(new Uri(Publishers(orgId), UriKind.Relative), new { handle, displayName }, TestContext.Current.CancellationToken);
+
+    /// <summary>Registers a publisher (the caller must hold admin) and returns its JSON.</summary>
+    public static async Task<JsonElement> RegisterPublisherAsync(HttpClient client, string orgId, string? handle = null, string displayName = "IT Publisher")
+    {
+        using var response = await RegisterPublisherRawAsync(client, orgId, handle ?? NewHandle(), displayName);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        return await AuthClient.JsonAsync(response);
+    }
+
+    public static Task<HttpResponseMessage> RenamePublisherAsync(HttpClient client, string orgId, string publisherId, object body) =>
+        client.PatchAsJsonAsync(new Uri(Publisher(orgId, publisherId), UriKind.Relative), body, TestContext.Current.CancellationToken);
+
+    public static Task<HttpResponseMessage> CreateCapabilityRawAsync(HttpClient client, string orgId, string publisherId, string? name, string? displayName = "IT Capability") =>
+        client.PostAsJsonAsync(new Uri(Capabilities(orgId, publisherId), UriKind.Relative), new { name, displayName }, TestContext.Current.CancellationToken);
+
+    /// <summary>Creates a capability (the caller must hold publisher) and returns its JSON.</summary>
+    public static async Task<JsonElement> CreateCapabilityAsync(HttpClient client, string orgId, string publisherId, string name = "weather-lookup", string displayName = "IT Capability")
+    {
+        using var response = await CreateCapabilityRawAsync(client, orgId, publisherId, name, displayName);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        return await AuthClient.JsonAsync(response);
+    }
+
+    public static Task<HttpResponseMessage> RenameCapabilityAsync(HttpClient client, string orgId, string publisherId, string capabilityId, object body) =>
+        client.PatchAsJsonAsync(new Uri(Capability(orgId, publisherId, capabilityId), UriKind.Relative), body, TestContext.Current.CancellationToken);
+
+    public static async Task<JsonElement> GetJsonAsync(HttpClient client, string path)
+    {
+        using var response = await AuthClient.GetAsync(client, path);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return await AuthClient.JsonAsync(response);
+    }
+
     /// <summary>Status and exact body bytes, for existence-parity comparisons.</summary>
     public static async Task<(HttpStatusCode Status, string Body, bool NoStore)> SnapshotAsync(HttpClient client, HttpMethod method, string path, object? body = null)
     {

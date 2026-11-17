@@ -37,6 +37,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.database.existingSecret }}
                   key: rls-context-key
+            - name: Gozleme__Registry__Origin
+              value: {{ required "registry.origin is required: the permanent registry origin host name (GOZ-0005)" .Values.registry.origin | quote }}
             - name: Gozleme__Auth__RegistrationEnabled
               value: {{ .Values.auth.registrationEnabled | quote }}
             - name: Gozleme__Auth__SecureCookies

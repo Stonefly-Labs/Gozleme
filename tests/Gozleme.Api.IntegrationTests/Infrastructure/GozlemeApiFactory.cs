@@ -34,6 +34,8 @@ public sealed class GozlemeApiFactory(
         ["Gozleme:Auth:RateLimit:GlobalPerMinute"] = "100000",
         ["Gozleme:Organizations:RedeemPerMinute"] = "100",
         ["Gozleme:Rls:ContextKey"] = GozlemeDatabase.ContextKey,
+        ["Gozleme:Registry:Origin"] = GozlemeDatabase.Origin,
+        ["Gozleme:Publishers:RegisterPerHour"] = "100",
     };
 
     public ConcurrentQueue<string> Logs { get; } = new();
@@ -110,7 +112,8 @@ public sealed class GozlemeApiFactory(
         }
     }
 
-    private sealed class CapturingLoggerProvider(ConcurrentQueue<string> sink) : ILoggerProvider
+    /// <summary>Records every log line as <c>Level Category: message</c>; also used for the operator commands' host.</summary>
+    public sealed class CapturingLoggerProvider(ConcurrentQueue<string> sink) : ILoggerProvider
     {
         public ILogger CreateLogger(string categoryName) => new CapturingLogger(categoryName, sink);
 

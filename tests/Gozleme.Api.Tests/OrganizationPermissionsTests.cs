@@ -2,23 +2,43 @@ using Gozleme.Api.Organizations;
 
 namespace Gozleme.Api.Tests;
 
-/// <summary>GOZ-0004 FR-001–FR-003 (research R7): built-in roles, union semantics and the role table.</summary>
+/// <summary>
+/// GOZ-0004 FR-001–FR-003 (research R7): built-in roles, union semantics and the role table. GOZ-0005 (research R9):
+/// every role reads publishers and capabilities, admin registers and renames publishers but holds no capability
+/// write, and publisher alone creates and renames capabilities (maintainer Q5).
+/// </summary>
 public sealed class OrganizationPermissionsTests
 {
     private static readonly string[] MemberActions =
-        [OrgAction.OrganizationRead, OrgAction.OrganizationSelect, OrgAction.MembershipList, OrgAction.MembershipLeave];
+    [
+        OrgAction.OrganizationRead, OrgAction.OrganizationSelect, OrgAction.MembershipList, OrgAction.MembershipLeave,
+        OrgAction.PublisherList, OrgAction.PublisherRead, OrgAction.CapabilityList, OrgAction.CapabilityRead,
+    ];
+
+    private static readonly string[] CapabilityWrites = [OrgAction.CapabilityCreate, OrgAction.CapabilityRename];
 
     [Theory]
     [InlineData(OrganizationRole.Member)]
-    [InlineData(OrganizationRole.Publisher)]
     [InlineData(OrganizationRole.Reviewer)]
     [InlineData(OrganizationRole.Approver)]
-    public void Non_admin_roles_hold_exactly_the_member_actions(string role) =>
+    public void Member_reviewer_and_approver_hold_exactly_the_member_actions(string role) =>
         Assert.Equal(MemberActions.Order(), OrganizationPermissions.For([role]).Order());
 
     [Fact]
-    public void Admin_holds_every_action() =>
-        Assert.Equal(OrgAction.All.Select(a => a.Action).Order(), OrganizationPermissions.For([OrganizationRole.Admin]).Order());
+    public void Publisher_holds_the_member_actions_and_the_capability_writes() =>
+        Assert.Equal(MemberActions.Concat(CapabilityWrites).Order(), OrganizationPermissions.For([OrganizationRole.Publisher]).Order());
+
+    [Fact]
+    public void Admin_holds_every_action_except_the_capability_writes()
+    {
+        var admin = OrganizationPermissions.For([OrganizationRole.Admin]);
+        Assert.Equal(OrgAction.All.Select(a => a.Action).Except(CapabilityWrites).Order(), admin.Order());
+        Assert.DoesNotContain(OrgAction.CapabilityCreate, admin);
+        Assert.Contains(OrgAction.PublisherRegister, admin);
+        Assert.Contains(OrgAction.PublisherRename, admin);
+        Assert.False(OrganizationPermissions.Allows([OrganizationRole.Admin], OrgAction.CapabilityCreate, OrgResource.Capability));
+        Assert.True(OrganizationPermissions.Allows([OrganizationRole.Admin, OrganizationRole.Publisher], OrgAction.CapabilityCreate, OrgResource.Capability));
+    }
 
     [Fact]
     public void Permissions_are_the_union_of_the_roles_and_unknown_roles_grant_nothing()
@@ -52,7 +72,7 @@ public sealed class OrganizationPermissionsTests
     [Fact]
     public void Every_action_has_a_resource_type_and_the_table_lists_every_action()
     {
-        Assert.All(OrgAction.All, a => Assert.Contains(a.Resource, new[] { OrgResource.Organization, OrgResource.Membership, OrgResource.Invitation }));
+        Assert.All(OrgAction.All, a => Assert.Contains(a.Resource, new[] { OrgResource.Organization, OrgResource.Membership, OrgResource.Invitation, OrgResource.Publisher, OrgResource.Capability }));
         var table = OrganizationPermissions.RenderTable();
         Assert.All(OrgAction.All, a => Assert.Contains($"\n{a.Action} ", table));
     }

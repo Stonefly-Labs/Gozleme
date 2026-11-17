@@ -9,6 +9,11 @@ x-otel-grpc: &otel-grpc
 x-context-key: &context-key
   Gozleme__Rls__ContextKey: ${GOZLEME_CONTEXT_KEY:-local-dev-context-key-not-a-secret-0001}
 
+# Registry origin (GOZ-0005): recorded once by the migrator and verified by the API; every canonical ID is
+# gz://<origin>/... Changing it after the first migrate makes migrate and api refuse to start. Throwaway default.
+x-registry-origin: &registry-origin
+  Gozleme__Registry__Origin: ${GOZLEME_REGISTRY_ORIGIN:-registry.demo.gozleme.test}
+
 x-db-passwords: &db-passwords
   GOZLEME_MIGRATOR_PASSWORD: ${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
   GOZLEME_APP_PASSWORD: ${GOZLEME_APP_PASSWORD:-local-dev-app}
@@ -42,7 +47,7 @@ services:
         GOZLEME_BUILD: ${GOZLEME_BUILD:-0.1.0-local}
     command: ["migrate"]
     environment:
-      <<: [*otel-grpc, *context-key]
+      <<: [*otel-grpc, *context-key, *registry-origin]
       Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
       ConnectionStrings__GozlemeMigrator: Host=postgres;Database=gozleme;Username=gozleme_migrator;Password=${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
     depends_on:
@@ -53,7 +58,7 @@ services:
   api:
     image: gozleme-api:local
     environment:
-      <<: [*otel-grpc, *context-key]
+      <<: [*otel-grpc, *context-key, *registry-origin]
       ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
       Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
       # Local identity (GOZ-0001). Plain-HTTP local stack: cookies cannot be Secure here.
@@ -104,7 +109,7 @@ services:
     profiles: [demo]
     command: ["seed"]
     environment:
-      <<: [*otel-grpc, *context-key]
+      <<: [*otel-grpc, *context-key, *registry-origin]
       ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
       GOZLEME_DEMO_PASSWORD: ${GOZLEME_DEMO_PASSWORD:-local-dev-demo-pass}
     depends_on:

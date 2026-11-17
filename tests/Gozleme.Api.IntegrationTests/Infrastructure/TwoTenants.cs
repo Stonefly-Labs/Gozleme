@@ -28,6 +28,19 @@ public sealed record TwoTenants(
             bob, Guid.Parse(await OrgClient.UserIdAsync(bob)), Guid.Parse(orgB), codeB);
     }
 
+    /// <summary>
+    /// A fresh account in <paramref name="org"/> holding <c>{member, publisher}</c> (GOZ-0005), added by
+    /// <paramref name="admin"/>: the role that creates and renames capabilities. Returns the client and its id.
+    /// </summary>
+    public static async Task<(HttpClient Client, Guid Id)> AddPublisherMemberAsync(GozlemeApiFactory factory, HttpClient admin, Guid org)
+    {
+        var (client, _) = await AuthClient.SignedInAsync(factory);
+        await OrgClient.JoinAsync(admin, client, org.ToString());
+        var id = await OrgClient.UserIdAsync(client);
+        await OrgClient.SetRolesAsync(admin, org.ToString(), id, "publisher");
+        return (client, Guid.Parse(id));
+    }
+
     /// <summary>Rows of <paramref name="table"/> for <paramref name="org"/> as the superuser sees them (ground truth, bypasses RLS).</summary>
     public static Task<long> TruthAsync(GozlemeDatabase db, string table, Guid org) =>
         db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.{table} WHERE {(table == "organizations" ? "id" : "organization_id")} = '{org}'");

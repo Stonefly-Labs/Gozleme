@@ -252,7 +252,7 @@ namespace Gozleme.Api.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("joined_via");
 
-                    b.Property<string[]>("Roles")
+                    b.PrimitiveCollection<string[]>("Roles")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("text[]")
@@ -315,6 +315,123 @@ namespace Gozleme.Api.Persistence.Migrations
                         .HasDatabaseName("ix_organizations_created_by");
 
                     b.ToTable("organizations", "gozleme");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Publishers.Capability", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid>("PublisherId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("publisher_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_capabilities");
+
+                    b.HasAlternateKey("Id", "OrganizationId")
+                        .HasName("ak_capabilities_id_organization_id");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("ix_capabilities_created_by");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_capabilities_organization_id");
+
+                    b.HasIndex("PublisherId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_capabilities_publisher_id_name");
+
+                    b.HasIndex("PublisherId", "OrganizationId")
+                        .HasDatabaseName("ix_capabilities_publisher_id_organization_id");
+
+                    b.ToTable("capabilities", "gozleme", t =>
+                        {
+                            t.HasCheckConstraint("ck_capabilities_display_name", "length(display_name) BETWEEN 1 AND 100");
+
+                            t.HasCheckConstraint("ck_capabilities_name", "name ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' AND length(name) BETWEEN 2 AND 64");
+                        });
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Publishers.Publisher", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("Handle")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("handle");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_publishers");
+
+                    b.HasAlternateKey("Id", "OrganizationId")
+                        .HasName("ak_publishers_id_organization_id");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("ix_publishers_created_by");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_publishers_organization_id");
+
+                    b.ToTable("publishers", "gozleme", t =>
+                        {
+                            t.HasCheckConstraint("ck_publishers_display_name", "length(display_name) BETWEEN 1 AND 100");
+
+                            t.HasCheckConstraint("ck_publishers_handle", "handle ~ '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' AND length(handle) BETWEEN 2 AND 39 AND handle <> ALL (ARRAY['admin', 'api', 'capabilities', 'capability', 'gozleme', 'operator', 'publisher', 'publishers', 'registry', 'root', 'security', 'support', 'system', 'www'])");
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
@@ -489,6 +606,46 @@ namespace Gozleme.Api.Persistence.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_organizations_users_created_by");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Publishers.Capability", b =>
+                {
+                    b.HasOne("Gozleme.Api.Identity.GozlemeUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_capabilities_users_created_by");
+
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_capabilities_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Publishers.Publisher", null)
+                        .WithMany()
+                        .HasForeignKey("PublisherId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_capabilities_publishers_publisher_id_organization_id");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Publishers.Publisher", b =>
+                {
+                    b.HasOne("Gozleme.Api.Identity.GozlemeUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_publishers_users_created_by");
+
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_publishers_organizations_organization_id");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>

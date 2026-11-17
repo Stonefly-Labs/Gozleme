@@ -62,7 +62,7 @@ public sealed class StatusEndpointTests(PgvectorDatabaseFixture fixture) : IAsyn
         Assert.Equal("database", db.GetProperty("name").GetString());
         Assert.Equal("healthy", db.GetProperty("status").GetString());
         Assert.True(db.GetProperty("required").GetBoolean());
-        Assert.Equal("20261118000000_ScopedRbac", db.GetProperty("schemaVersion").GetString());
+        Assert.Equal("20261119000000_PublisherIdentities", db.GetProperty("schemaVersion").GetString());
         Assert.Equal(JsonValueKind.Null, db.GetProperty("message").ValueKind);
         var vector = db.GetProperty("capabilities").GetProperty("vector");
         Assert.True(vector.GetProperty("available").GetBoolean());

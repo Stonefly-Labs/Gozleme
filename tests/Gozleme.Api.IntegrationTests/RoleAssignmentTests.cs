@@ -188,7 +188,9 @@ public sealed class RoleAssignmentTests(PgvectorDatabaseFixture fixture) : IAsyn
             (OrgAction.MembershipRemove, () => OrgClient.RemoveAsync(carol, org, bobId)),
             (OrgAction.MembershipLeave, () => OrgClient.RemoveAsync(carol, org, carolId)),
         };
-        Assert.Equal(OrgAction.All.Select(a => a.Action).Order(), calls.Select(c => c.Action).Order());
+        // Publisher and capability actions have their own matrix (GOZ-0005, PublisherEndpointTests).
+        string[] organizationResources = [OrgResource.Organization, OrgResource.Membership, OrgResource.Invitation];
+        Assert.Equal(OrgAction.All.Where(a => organizationResources.Contains(a.Resource)).Select(a => a.Action).Order(), calls.Select(c => c.Action).Order());
 
         foreach (var (action, call) in calls)
         {
