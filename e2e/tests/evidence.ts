@@ -33,9 +33,12 @@ export const DEMO_ORG = { id: "0193a000-0000-7000-8000-000000000002", name: "See
 /** The second seeded tenant (GOZ-0003): fixed id, member dave only, disjoint from DEMO_ORG. */
 export const PARTNER_ORG = { id: "0193a000-0000-7000-8000-000000000003", name: "Seeded Partner Org" } as const;
 
-/** Evidence directory of a suite's spec (machine-readable evidence beside the screenshots). */
+/**
+ * Evidence directory of a suite's spec (machine-readable evidence beside the screenshots). In a cumulative run an
+ * earlier suite's evidence goes to its regression folder too, so merged evidence is never rewritten (IF-08).
+ */
 export function evidenceDir(suite: Suite): string {
-  const dir = `${repoRoot}docs/specs/${specDirs[suite]}/evidence`;
+  const dir = process.env[`GOZLEME_DEMO_SHOTS_${suite.toUpperCase().replace("-", "_")}`] ?? `${repoRoot}docs/specs/${specDirs[suite]}/evidence`;
   mkdirSync(dir, { recursive: true });
   return dir;
 }

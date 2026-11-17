@@ -329,7 +329,7 @@ specs:
   dependencies:
   - GOZ-0004
   status: in-progress
-  stage: tasks
+  stage: converge
   branch: feature/goz-0005-publisher-identities
   pullRequest: null
   promptRevision: 6
@@ -337,9 +337,9 @@ specs:
     specification: passed
     plan: passed
     tasks: passed
-    implementation: pending
-    tests: pending
-    demo: pending
+    implementation: passed
+    tests: passed
+    demo: passed
     convergence: pending
     impactAnalysis: pending
     roadmapSync: pending
@@ -348,11 +348,15 @@ specs:
   blockers: []
   impactFindings: []
   evidence:
-    tests: []
-    demos: []
-    screenshots: []
+    tests:
+    - docs/specs/005-publisher-identities/progress.yaml
+    demos:
+    - docs/specs/005-publisher-identities/evidence/demo-run.json
+    - docs/specs/005-publisher-identities/evidence/publisher-evidence.json
+    screenshots:
+    - docs/specs/005-publisher-identities/evidence/screenshots/
     reviews: []
-  nextAction: 'Tasks generated (52) and analyzed (10 findings remediated, 0 critical); run /speckit-implement from T001.'
+  nextAction: 'Implementation T001-T052 done; cumulative demo passed 46/46 at 03ead47. Next: /speckit-converge, review-security (Q11), analyze-spec-impact.'
 - id: GOZ-0006
   number: 6
   title: Typed manifests for capability families

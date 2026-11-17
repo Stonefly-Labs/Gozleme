@@ -1,0 +1,179 @@
+{
+  "spec": "GOZ-0005",
+  "capturedAt": "2026-11-17T03:25:15.615Z",
+  "origin": "registry.demo.gozleme.test",
+  "organization": "0193a000-0000-7000-8000-000000000002",
+  "publisher": {
+    "id": "01a1e789-5833-73ae-bbbc-2ba686360d93",
+    "handle": "demo-707077"
+  },
+  "capability": {
+    "id": "01a1e789-5a3b-7256-be38-7c6f04676a3d",
+    "canonicalId": "gz://registry.demo.gozleme.test/cap/01a1e789-5a3b-7256-be38-7c6f04676a3d",
+    "alias": "demo-707077/weather-lookup"
+  },
+  "us1ElapsedSeconds": 1.202,
+  "handleUnavailableIdenticalForForeignAndOwner": true,
+  "apiMatrixForCarol": {
+    "member": {
+      "publisher.list": "allow (200)",
+      "publisher.read": "allow (200)",
+      "publisher.register": "deny (403)",
+      "publisher.rename": "deny (403)",
+      "capability.list": "allow (200)",
+      "capability.read": "allow (200)",
+      "capability.create": "deny (403)",
+      "capability.rename": "deny (403)"
+    },
+    "member+publisher": {
+      "publisher.list": "allow (200)",
+      "publisher.read": "allow (200)",
+      "publisher.register": "deny (403)",
+      "publisher.rename": "deny (403)",
+      "capability.list": "allow (200)",
+      "capability.read": "allow (200)",
+      "capability.create": "allow (400)",
+      "capability.rename": "allow (200)"
+    },
+    "member+reviewer": {
+      "publisher.list": "allow (200)",
+      "publisher.read": "allow (200)",
+      "publisher.register": "deny (403)",
+      "publisher.rename": "deny (403)",
+      "capability.list": "allow (200)",
+      "capability.read": "allow (200)",
+      "capability.create": "deny (403)",
+      "capability.rename": "deny (403)"
+    },
+    "member+approver": {
+      "publisher.list": "allow (200)",
+      "publisher.read": "allow (200)",
+      "publisher.register": "deny (403)",
+      "publisher.rename": "deny (403)",
+      "capability.list": "allow (200)",
+      "capability.read": "allow (200)",
+      "capability.create": "deny (403)",
+      "capability.rename": "deny (403)"
+    },
+    "member+admin": {
+      "publisher.list": "allow (200)",
+      "publisher.read": "allow (200)",
+      "publisher.register": "allow (400)",
+      "publisher.rename": "allow (200)",
+      "capability.list": "allow (200)",
+      "capability.read": "allow (200)",
+      "capability.create": "deny (403)",
+      "capability.rename": "deny (403)"
+    }
+  },
+  "nonMemberAndUnknownOrganization": "404 (identical, empty, no-store)",
+  "databaseRefusals": {
+    "change a handle": {
+      "gozleme_app as admin": "42501",
+      "gozleme_app as publisher": "0 row(s)",
+      "owner as admin": "42501",
+      "owner without context": "0 row(s)"
+    },
+    "move a publisher to another organization": {
+      "gozleme_app as admin": "42501",
+      "gozleme_app as publisher": "0 row(s)",
+      "owner as admin": "42501",
+      "owner without context": "0 row(s)"
+    },
+    "change a publisher id": {
+      "gozleme_app as admin": "42501",
+      "gozleme_app as publisher": "0 row(s)",
+      "owner as admin": "42501",
+      "owner without context": "0 row(s)"
+    },
+    "change a capability name": {
+      "gozleme_app as admin": "0 row(s)",
+      "gozleme_app as publisher": "42501",
+      "owner as admin": "0 row(s)",
+      "owner without context": "0 row(s)"
+    },
+    "change a capability id": {
+      "gozleme_app as admin": "0 row(s)",
+      "gozleme_app as publisher": "42501",
+      "owner as admin": "0 row(s)",
+      "owner without context": "0 row(s)"
+    },
+    "delete a publisher": {
+      "gozleme_app as admin": "42501",
+      "gozleme_app as publisher": "42501",
+      "owner as admin": "0 row(s)",
+      "owner without context": "0 row(s)"
+    },
+    "delete a capability": {
+      "gozleme_app as admin": "42501",
+      "gozleme_app as publisher": "42501",
+      "owner as admin": "0 row(s)",
+      "owner without context": "0 row(s)"
+    },
+    "delete a handle claim": {
+      "gozleme_app as admin": "42501",
+      "gozleme_app as publisher": "42501",
+      "owner as admin": "42501",
+      "owner without context": "42501"
+    },
+    "change an alias": {
+      "gozleme_app as admin": "42501",
+      "gozleme_app as publisher": "42501",
+      "owner as admin": "42501",
+      "owner without context": "42501"
+    }
+  },
+  "rowsUnchanged": true,
+  "originMismatch": {
+    "migrator": "exit 1: configured origin differs from the recorded origin",
+    "api": "refused to start (configured origin differs from the recorded origin); restarted 3 time(s) by its restart policy, never served",
+    "restoredIdsUnchanged": true
+  },
+  "reclaim": {
+    "handles": {
+      "earmarked": "acme-707077",
+      "blocked": "blocked-707077",
+      "squatted": "squat-707077"
+    },
+    "operator": {
+      "reserve earmarked": {
+        "exit": 0,
+        "stdout": "Reserved handle claim 01a1e789-9598-7df0-b22f-5c0430da5b67 (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
+      },
+      "reserve blocked": {
+        "exit": 0,
+        "stdout": "Reserved handle claim 01a1e789-97ef-7f26-9c4f-225ba28acdf7 (blocked)"
+      },
+      "reclaim": {
+        "exit": 0,
+        "stdout": "Reclaimed handle claim 01a1e789-998b-7f7d-aad8-c3228c52b2c5; publisher 01a1e789-998b-7e23-8fe9-9da6fbe0633b of organization 0193a000-0000-7000-8000-000000000003 suspended / Reserved handle claim 01a1e789-9b10-7620-95f9-6828e5a8b005 (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
+      }
+    },
+    "squatterPublisher": {
+      "id": "01a1e789-998b-7e23-8fe9-9da6fbe0633b",
+      "state": "suspended",
+      "publisherId": "gz://registry.demo.gozleme.test/pub/01a1e789-998b-7e23-8fe9-9da6fbe0633b",
+      "capability": "gz://registry.demo.gozleme.test/cap/01a1e789-9995-7309-93da-160448a8ecd4"
+    },
+    "reRegisteredBy": "0193a000-0000-7000-8000-000000000002",
+    "retiredAliasRefused": "409 conflict"
+  },
+  "boundary": {
+    "GET /api/v1/capabilities": 404,
+    "POST /api/v1/publish": 404,
+    "GET /api/v1/handles": 404,
+    "POST /api/v1/handles/reclaim": 404,
+    "POST /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/{publisherId}/reclaim": 404,
+    "GET /api/v1/reservations": 404,
+    "POST /api/v1/organizations/0193a000-0000-7000-8000-000000000003/publishers/{publisherId}/unsuspend": 404,
+    "POST /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/{publisherId}/transfer": 404
+  },
+  "observability": {
+    "spans": [
+      "gozleme.publisher.register",
+      "gozleme.capability.create"
+    ],
+    "counter": "gozleme_publisher_operations_total",
+    "auditEvents": 12
+  }
+}
