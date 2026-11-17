@@ -2,7 +2,7 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 42 · **Complete on main:** 5 · **Blocked:** 0 · **Ready for human merge:** 0
+**Specs:** 42 · **Complete on main:** 5 · **Blocked:** 0 · **Ready for human merge:** 1
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
@@ -11,7 +11,7 @@
 | [GOZ-0002](../prompts/spec-0002.md) — Organizations and membership | foundation | complete | merged | GOZ-0001 | Complete — merged to main in 6f658c2e52aca3542d7ad23d0d437b883279195d (PR #8, verified 2026-11-15). |
 | [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | complete | merged | GOZ-0002 | Complete — merged to main in 0fc67d21f0771a3793248c48a9aff0043038af25 (PR #10, verified 2026-11-16). |
 | [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | complete | merged | GOZ-0003 | Complete — merged to main in b48a2af2bcadb8073eb076750a17bf435fb83da5 (PR #17, verified 2026-11-16). |
-| [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | in-progress | pr-ready | GOZ-0004 | PR ready for human review and merge; cumulative demo 46/46 at 536faf3; 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates. |
+| [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | ready-for-human-merge | pr-ready | GOZ-0004 | Human review and merge of PR #19 (all CI checks pass at 6f53a49); 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates. |
 | [GOZ-0006](../prompts/spec-0006.md) — Typed manifests for capability families | publishing | not-started | — | GOZ-0005 | Await prerequisites and create allowed working branch |
 | [GOZ-0007](../prompts/spec-0007.md) — Immutable revisions and signed attestations | publishing | not-started | — | GOZ-0006 | Await prerequisites and create allowed working branch |
 | [GOZ-0008](../prompts/spec-0008.md) — Child capability identities and projections | publishing | not-started | — | GOZ-0007 | Await prerequisites and create allowed working branch |

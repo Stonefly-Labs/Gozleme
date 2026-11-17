@@ -328,7 +328,7 @@ specs:
   prompt: docs/prompts/spec-0005.md
   dependencies:
   - GOZ-0004
-  status: in-progress
+  status: ready-for-human-merge
   stage: pr-ready
   branch: feature/goz-0005-publisher-identities
   pullRequest: null
@@ -377,7 +377,7 @@ specs:
     reviews:
     - docs/specs/005-publisher-identities/reviews/impact-analysis.md
     - docs/specs/005-publisher-identities/reviews/impact-findings.json
-  nextAction: 'PR ready for human review and merge; cumulative demo 46/46 at 536faf3; 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates.'
+  nextAction: 'Human review and merge of PR #19 (all CI checks pass at 6f53a49); 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates.'
 - id: GOZ-0006
   number: 6
   title: Typed manifests for capability families

@@ -40,5 +40,5 @@ stages:
   tasks: {status: done, at: '2026-11-16', artifact: docs/specs/005-publisher-identities/tasks.md, count: 52, note: 'Setup 4, Foundational 9, US1 10, US2 6, US3 6, US5 5, US4 3, Polish 9; includes R12 pins (T044), RlsCatalog negatives for InstanceReference/InstanceClaims (T045) and review-security flag for Q11 (T052)'}
 attempts: []
 blockers: []
-nextAction: 'PR ready for human review and merge. Do not mark complete until the merge is verified on main.'
+nextAction: 'Human review and merge of PR #19 (all CI checks pass at 6f53a49). Do not mark complete until the merge is verified on main.'
 evidence: {tests: [docs/specs/005-publisher-identities/progress.yaml], demos: [docs/specs/005-publisher-identities/evidence/demo-run.json, docs/specs/005-publisher-identities/evidence/publisher-evidence.json], screenshots: [docs/specs/005-publisher-identities/evidence/screenshots/], reviews: [docs/specs/005-publisher-identities/reviews/impact-analysis.md, docs/specs/005-publisher-identities/reviews/impact-findings.json]}
