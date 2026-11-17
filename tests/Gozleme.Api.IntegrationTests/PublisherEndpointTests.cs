@@ -490,6 +490,7 @@ public sealed partial class PublisherEndpointTests(PgvectorDatabaseFixture fixtu
         OrgAction.CapabilityRead => (HttpMethod.Get, OrgClient.Capability(_orgA, publisherId, capabilityId), null, HttpStatusCode.OK),
         OrgAction.CapabilityCreate => (HttpMethod.Post, OrgClient.Capabilities(_orgA, publisherId), new { name = $"by-{role}", displayName = role }, HttpStatusCode.Created),
         OrgAction.CapabilityRename => (HttpMethod.Patch, OrgClient.Capability(_orgA, publisherId, capabilityId), new { displayName = role }, HttpStatusCode.OK),
+        OrgAction.ManifestValidate => (HttpMethod.Post, ManifestClient.Validate(_orgA, publisherId, capabilityId), new { }, HttpStatusCode.OK), // GOZ-0006
         _ => throw new InvalidOperationException(action),
     };
 
@@ -503,6 +504,7 @@ public sealed partial class PublisherEndpointTests(PgvectorDatabaseFixture fixtu
         (HttpMethod.Post, OrgClient.Capabilities(org, publisher), new { name = "probe", displayName = "X" }),
         (HttpMethod.Get, OrgClient.Capability(org, publisher, capability), null),
         (HttpMethod.Patch, OrgClient.Capability(org, publisher, capability), new { displayName = "X" }),
+        (HttpMethod.Post, ManifestClient.Validate(org, publisher, capability), new { }), // GOZ-0006
     ];
 
     [GeneratedRegex("^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")]

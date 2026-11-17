@@ -32,9 +32,11 @@ internal static partial class SecretPatterns
     ];
 
     /// <summary>The first pattern that matches and where its match starts, or null. A timeout counts as a match at index 0.</summary>
-    public static (string Id, int Index)? Match(string value)
+    public static (string Id, int Index)? Match(string value) => Match(value, All);
+
+    internal static (string Id, int Index)? Match(string value, IReadOnlyList<(string Id, Regex Pattern)> patterns)
     {
-        foreach (var (id, pattern) in All)
+        foreach (var (id, pattern) in patterns)
         {
             try
             {

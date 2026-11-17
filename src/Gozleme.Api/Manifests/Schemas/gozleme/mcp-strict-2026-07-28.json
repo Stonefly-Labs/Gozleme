@@ -26,12 +26,15 @@
       "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/ServerCapabilities",
       "properties": {
         "prompts": {
+          "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/ServerCapabilities/properties/prompts",
           "unevaluatedProperties": false
         },
         "resources": {
+          "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/ServerCapabilities/properties/resources",
           "unevaluatedProperties": false
         },
         "tools": {
+          "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2026-07-28.json#/$defs/ServerCapabilities/properties/tools",
           "unevaluatedProperties": false
         }
       },

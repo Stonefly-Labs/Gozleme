@@ -17,6 +17,10 @@
     <ProjectReference Include="../../src/Gozleme.Api/Gozleme.Api.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- GOZ-0006 research R15: the web samples are the single source for API, browser and e2e checks -->
+    <None Include="../../web/src/samples/manifests/**" LinkBase="samples/manifests" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

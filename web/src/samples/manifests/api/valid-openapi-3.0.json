@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "api",
+  "capability": "{{capability}}",
+  "version": "1.4.0",
+  "native": {
+    "format": "openapi",
+    "formatVersion": "3.0",
+    "encoding": "json",
+    "document": "{\n  \"openapi\": \"3.0.4\",\n  \"info\": {\n    \"title\": \"Forecasts API (3.0)\",\n    \"version\": \"2.0.0\",\n    \"x-audience\": \"internal\"\n  },\n  \"paths\": {\n    \"/forecasts\": {\n      \"get\": {\n        \"operationId\": \"listForecasts\",\n        \"summary\": \"List forecasts\",\n        \"parameters\": [\n          {\n            \"name\": \"X-Api-Key\",\n            \"in\": \"header\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            },\n            \"example\": \"secretref:vault/forecasts/api-key\"\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Forecasts.\"\n          }\n        }\n      }\n    }\n  }\n}\n"
+  }
+}

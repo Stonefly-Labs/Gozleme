@@ -6,7 +6,7 @@ namespace Gozleme.Api.IntegrationTests;
 /// <summary>
 /// GOZ-0000 boundary (FR-012), narrowed by GOZ-0001 (FR-037, IF-01) and GOZ-0002 (FR-025, IF-10):
 /// catalog, user listing and publishing still do not exist; identity and organizations own exactly
-/// their own tables.
+/// their own tables. GOZ-0006 (FR-021, FR-027) re-asserts them: manifest validation adds no table and no migration.
 /// </summary>
 public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
@@ -35,6 +35,15 @@ public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IA
         using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal(string.Empty, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Manifest_validation_adds_no_table_and_no_migration()
+    {
+        var db = fixture.Database;
+        Assert.Equal(0L, await db.ScalarAsync<long>(
+            "SELECT count(*) FROM pg_tables WHERE tablename ~ '(manifest|revision|projection)'"));
+        Assert.Equal("20261119000000_PublisherIdentities", await db.ScalarAsync<string>("""SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """));
     }
 
     [Fact]

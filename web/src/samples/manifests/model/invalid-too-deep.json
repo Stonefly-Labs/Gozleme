@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "model",
+  "capability": "{{capability}}",
+  "version": "1.4.0",
+  "native": {
+    "format": "gozleme-model-card",
+    "formatVersion": "1",
+    "encoding": "json",
+    "document": "{\"x-deep\":[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}"
+  }
+}

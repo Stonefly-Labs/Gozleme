@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Capability } from "@/lib/publishers";
 import { CanonicalId } from "./CanonicalId";
 import { RenameDisplayNameForm } from "./RenameDisplayNameForm";
@@ -5,18 +6,21 @@ import { StateBadge } from "./StateBadge";
 
 /**
  * A publisher's capabilities with their canonical ids and aliases (FR-013, FR-014). The rename form appears only
- * for callers holding `capability.rename` while the publisher is active; the API still decides every request.
+ * for callers holding `capability.rename` while the publisher is active, and **Validate manifest** for callers holding
+ * `manifest.validate` (GOZ-0006); the API still decides every request.
  */
 export function CapabilityList({
   organizationId,
   publisherId,
   capabilities,
   canRename,
+  canValidate = false,
 }: {
   organizationId: string;
   publisherId: string;
   capabilities: Capability[];
   canRename: boolean;
+  canValidate?: boolean;
 }) {
   return (
     <section className="card" aria-labelledby="capabilities-heading">
@@ -50,6 +54,17 @@ export function CapabilityList({
                   </dd>
                 </div>
               </dl>
+              {canValidate && c.state === "active" && (
+                <p className="form-inline">
+                  <Link
+                    className="button"
+                    href={`/organizations/${encodeURIComponent(organizationId)}/publishers/${encodeURIComponent(publisherId)}/capabilities/${encodeURIComponent(c.id)}/manifest`}
+                    data-testid="validate-manifest-link"
+                  >
+                    Validate manifest
+                  </Link>
+                </p>
+              )}
               {canRename && c.state === "active" && (
                 <RenameDisplayNameForm
                   key={c.displayName}

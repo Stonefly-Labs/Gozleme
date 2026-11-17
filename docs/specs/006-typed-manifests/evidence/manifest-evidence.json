@@ -1,0 +1,13 @@
+{
+  "spec": "GOZ-0006",
+  "performance": {
+    "criterion": "SC-006",
+    "nativeBytes": 524288,
+    "format": "openapi 3.1 json",
+    "runs": 3,
+    "medianMs": 81,
+    "worstMs": 133,
+    "limitMs": 2000,
+    "environment": "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)"
+  }
+}

@@ -65,8 +65,8 @@ repository root.
 | `gozleme/agent-skills-2026-11-17.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `7f9b195adc06fa2f115821496b2939fd258d6199813a9d89846508e43861f5cd` | Gözleme |
 | `gozleme/envelope-1.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `aa91b5b231c0fbc1764ae21de5909db9f80661ddfaf131a175ad01e8ce970887` | Gözleme |
 | `gozleme/mcp-server-manifest-1.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `a323e9534495363baf3e5e803ff42dfee6ddff942e3e27653a3140b5596c4138` | Gözleme |
-| `gozleme/mcp-strict-2025-11-25.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `57bb065e63a55a45b9c3064112f5c71a407efa4ceaf775aeacdc69a76543b766` | Gözleme |
-| `gozleme/mcp-strict-2026-07-28.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `60fae34e0a7df686878a966ff5fb4450389da6c4a1a3ec4047c3ba540b0b7eb1` | Gözleme |
+| `gozleme/mcp-strict-2025-11-25.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `087a285ef9f793cb9cec8baf280cb2c40d7f87dfee70d73def111b06795a30c9` | Gözleme |
+| `gozleme/mcp-strict-2026-07-28.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `70b52e2f614ddb02551a5e489896053c62e413f6fb1272d3803409c1cbbe647b` | Gözleme |
 | `gozleme/model-card-1.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `f71ea4484740dfbe028c153a7fba411f6fe50e8d11a1d0f86e1c6d0baba7a8ff` | Gözleme |
 | `gozleme/projection-1.json` | Gözleme (GOZ-0006, docs/specs/006-typed-manifests/contracts/) | — | `04a445153709e0533bfa7054f2bf0d8b290f51d3aef3fbdbf417b85da032c505` | Gözleme |
 

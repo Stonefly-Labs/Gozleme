@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "model",
+  "capability": "{{capability}}",
+  "version": "1.4.0",
+  "native": {
+    "format": "gozleme-model-card",
+    "formatVersion": "1",
+    "encoding": "json",
+    "document": "{\n  \"name\": \"forecast-small\",\n  \"title\": \"Forecast Small\",\n  \"description\": \"Synthetic demo model card.\",\n  \"modelVersion\": \"2026.11\",\n  \"modalities\": {\n    \"input\": [\n      \"text\"\n    ],\n    \"output\": [\n      \"text\",\n      \"structured\"\n    ]\n  },\n  \"limits\": {\n    \"contextWindowTokens\": 32000,\n    \"maxOutputTokens\": 4000\n  },\n  \"x-benchmark\": \"synthetic\"\n}\n"
+  }
+}

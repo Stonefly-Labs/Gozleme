@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "event",
+  "capability": "gz://registry.other.example.test/cap/0193a000-0000-7000-8000-0000000000ff",
+  "version": "1.4.0",
+  "native": {
+    "format": "asyncapi",
+    "formatVersion": "3.0.0",
+    "encoding": "json",
+    "document": "{\n  \"asyncapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Forecast Events\",\n    \"version\": \"1.0.0\",\n    \"description\": \"Synthetic demo events.\",\n    \"x-audience\": \"internal\"\n  },\n  \"channels\": {\n    \"forecastUpdated\": {\n      \"address\": \"forecasts/{region}\",\n      \"title\": \"Forecast updated\",\n      \"parameters\": {\n        \"region\": {\n          \"description\": \"Region code.\"\n        }\n      },\n      \"messages\": {\n        \"forecast\": {\n          \"payload\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"region\": {\n                \"type\": \"string\"\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"operations\": {\n    \"publishForecast\": {\n      \"action\": \"send\",\n      \"title\": \"Publish forecast\",\n      \"channel\": {\n        \"$ref\": \"#/channels/forecastUpdated\"\n      }\n    }\n  }\n}\n"
+  }
+}

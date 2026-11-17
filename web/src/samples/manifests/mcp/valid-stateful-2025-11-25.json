@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "mcp",
+  "capability": "{{capability}}",
+  "version": "1.4.0",
+  "native": {
+    "format": "mcp-server-manifest",
+    "formatVersion": "1",
+    "encoding": "json",
+    "document": "{\n  \"protocolRevision\": \"2025-11-25\",\n  \"serverInfo\": {\n    \"name\": \"io.example.demo/forecasts-local\",\n    \"version\": \"1.4.0\"\n  },\n  \"capabilities\": {\n    \"tools\": {},\n    \"logging\": {}\n  },\n  \"tools\": [\n    {\n      \"name\": \"get_forecast\",\n      \"inputSchema\": {\n        \"type\": \"object\"\n      },\n      \"execution\": {\n        \"taskSupport\": \"optional\"\n      }\n    }\n  ],\n  \"packages\": [\n    {\n      \"registryType\": \"npm\",\n      \"identifier\": \"@example/forecasts-mcp\",\n      \"version\": \"1.4.0\",\n      \"transport\": {\n        \"type\": \"stdio\"\n      },\n      \"environmentVariables\": [\n        {\n          \"name\": \"FORECAST_API_KEY\",\n          \"isSecret\": true,\n          \"description\": \"Supplied at install time.\"\n        }\n      ]\n    }\n  ],\n  \"_meta\": {\n    \"io.example.demo/build\": \"synthetic\"\n  }\n}\n"
+  }
+}

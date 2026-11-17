@@ -1,0 +1,392 @@
+{
+  "version": 1,
+  "placeholder": "{{capability}}",
+  "samples": [
+    {
+      "id": "valid-stateless-2026-07-28",
+      "family": "mcp",
+      "title": "MCP server, stateless (2026-07-28)",
+      "file": "mcp/valid-stateless-2026-07-28.json",
+      "expected": {
+        "outcome": "accepted"
+      }
+    },
+    {
+      "id": "valid-stateful-2025-11-25",
+      "family": "mcp",
+      "title": "MCP server, stateful (2025-11-25)",
+      "file": "mcp/valid-stateful-2025-11-25.json",
+      "expected": {
+        "outcome": "accepted"
+      }
+    },
+    {
+      "id": "valid-agent-card",
+      "family": "a2a",
+      "title": "A2A Agent Card 1.0",
+      "file": "a2a/valid-agent-card.json",
+      "expected": {
+        "outcome": "accepted"
+      }
+    },
+    {
+      "id": "valid-openapi-3.1",
+      "family": "api",
+      "title": "OpenAPI 3.1 (YAML)",
+      "file": "api/valid-openapi-3.1.json",
+      "expected": {
+        "outcome": "accepted"
+      }
+    },
+    {
+      "id": "valid-openapi-3.0",
+      "family": "api",
+      "title": "OpenAPI 3.0 (JSON)",
+      "file": "api/valid-openapi-3.0.json",
+      "expected": {
+        "outcome": "accepted"
+      }
+    },
+    {
+      "id": "valid-asyncapi-3.0.0",
+      "family": "event",
+      "title": "AsyncAPI 3.0.0",
+      "file": "event/valid-asyncapi-3.0.0.json",
+      "expected": {
+        "outcome": "accepted"
+      }
+    },
+    {
+      "id": "valid-skill",
+      "family": "skill",
+      "title": "Agent Skill (SKILL.md)",
+      "file": "skill/valid-skill.json",
+      "expected": {
+        "outcome": "accepted"
+      }
+    },
+    {
+      "id": "valid-model-card",
+      "family": "model",
+      "title": "Model card v1",
+      "file": "model/valid-model-card.json",
+      "expected": {
+        "outcome": "accepted"
+      }
+    },
+    {
+      "id": "invalid-envelope-version",
+      "family": "model",
+      "title": "Unsupported envelope version",
+      "file": "model/invalid-envelope-version.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "unsupported_version",
+        "rule": "envelope.version",
+        "location": {
+          "part": "envelope",
+          "pointer": "/envelopeVersion"
+        }
+      }
+    },
+    {
+      "id": "invalid-family",
+      "family": "model",
+      "title": "Unsupported family",
+      "file": "model/invalid-family.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "unsupported_family",
+        "rule": "envelope.family",
+        "location": {
+          "part": "envelope",
+          "pointer": "/family"
+        }
+      }
+    },
+    {
+      "id": "invalid-format-version",
+      "family": "api",
+      "title": "Unsupported OpenAPI line",
+      "file": "api/invalid-format-version.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "unsupported_format",
+        "rule": "envelope.format",
+        "location": {
+          "part": "envelope",
+          "pointer": "/native/formatVersion"
+        }
+      }
+    },
+    {
+      "id": "invalid-version-mismatch",
+      "family": "event",
+      "title": "AsyncAPI version differs from the declared format",
+      "file": "event/invalid-version-mismatch.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "unsupported_format",
+        "rule": "native.version-mismatch",
+        "location": {
+          "part": "native",
+          "pointer": "/asyncapi"
+        }
+      }
+    },
+    {
+      "id": "invalid-yaml-for-a2a",
+      "family": "a2a",
+      "title": "YAML declared for an Agent Card",
+      "file": "a2a/invalid-yaml-for-a2a.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "malformed",
+        "rule": "parse.syntax",
+        "location": {
+          "part": "envelope",
+          "pointer": "/native/encoding"
+        }
+      }
+    },
+    {
+      "id": "invalid-yaml-alias",
+      "family": "api",
+      "title": "YAML alias",
+      "file": "api/invalid-yaml-alias.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "malformed",
+        "rule": "parse.yaml-feature",
+        "location": {
+          "part": "native",
+          "line": 4,
+          "column": 12
+        }
+      }
+    },
+    {
+      "id": "invalid-too-deep",
+      "family": "model",
+      "title": "Native document nested too deeply",
+      "file": "model/invalid-too-deep.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "too_large",
+        "rule": "bound.depth",
+        "location": null
+      }
+    },
+    {
+      "id": "invalid-unknown-field",
+      "family": "mcp",
+      "title": "Unknown member on a stateless tool",
+      "file": "mcp/invalid-unknown-field.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "unknown_field",
+        "rule": "native.unknown-field",
+        "location": {
+          "part": "native",
+          "pointer": "/tools/0/execution"
+        }
+      }
+    },
+    {
+      "id": "invalid-reserved-openapi",
+      "family": "api",
+      "title": "Reserved trust claim in an OpenAPI extension",
+      "file": "api/invalid-reserved-openapi.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "reserved_claim",
+        "rule": "reserved.vocabulary",
+        "location": {
+          "part": "native",
+          "pointer": "/info/x-verified"
+        }
+      }
+    },
+    {
+      "id": "invalid-a2a-signatures",
+      "family": "a2a",
+      "title": "Agent Card signatures",
+      "file": "a2a/invalid-a2a-signatures.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "reserved_claim",
+        "rule": "reserved.a2a-signatures",
+        "location": {
+          "part": "native",
+          "pointer": "/signatures"
+        }
+      }
+    },
+    {
+      "id": "invalid-reserved-envelope",
+      "family": "model",
+      "title": "Reserved claim in the envelope",
+      "file": "model/invalid-reserved-envelope.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "reserved_claim",
+        "rule": "reserved.vocabulary",
+        "location": {
+          "part": "envelope",
+          "pointer": "/verified"
+        }
+      }
+    },
+    {
+      "id": "invalid-secret-header",
+      "family": "mcp",
+      "title": "Inline credential in a secret header",
+      "file": "mcp/invalid-secret-header.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "secret_value",
+        "rule": "secret.field",
+        "location": {
+          "part": "native",
+          "pointer": "/remotes/0/headers/0/value"
+        }
+      }
+    },
+    {
+      "id": "invalid-secret-pattern",
+      "family": "model",
+      "title": "Credential-shaped text in a model card",
+      "file": "model/invalid-secret-pattern.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "secret_value",
+        "rule": "secret.pattern",
+        "location": {
+          "part": "native",
+          "pointer": "/limitations"
+        }
+      }
+    },
+    {
+      "id": "invalid-secret-skill-body",
+      "family": "skill",
+      "title": "Private key in a SKILL.md body",
+      "file": "skill/invalid-secret-skill-body.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "secret_value",
+        "rule": "secret.pattern",
+        "location": {
+          "part": "native",
+          "line": 12,
+          "column": 1
+        }
+      }
+    },
+    {
+      "id": "invalid-secret-openapi-example",
+      "family": "api",
+      "title": "Credential example on an Authorization header",
+      "file": "api/invalid-secret-openapi-example.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "secret_value",
+        "rule": "secret.field",
+        "location": {
+          "part": "native",
+          "pointer": "/paths/~1forecasts/get/parameters/0/example"
+        }
+      }
+    },
+    {
+      "id": "invalid-identity",
+      "family": "event",
+      "title": "Foreign capability claim",
+      "file": "event/invalid-identity.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "identity_mismatch",
+        "rule": "identity.capability",
+        "location": {
+          "part": "envelope",
+          "pointer": "/capability"
+        }
+      }
+    },
+    {
+      "id": "invalid-external-ref",
+      "family": "event",
+      "title": "External $ref",
+      "file": "event/invalid-external-ref.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "external_reference",
+        "rule": "ref.external",
+        "location": {
+          "part": "native",
+          "pointer": "/operations/publishForecast/channel/$ref"
+        }
+      }
+    },
+    {
+      "id": "invalid-skill-name",
+      "family": "skill",
+      "title": "Skill name with upper case",
+      "file": "skill/invalid-skill-name.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "invalid_value",
+        "rule": "native.schema",
+        "location": {
+          "part": "native",
+          "pointer": "/name"
+        }
+      }
+    },
+    {
+      "id": "invalid-model-modality",
+      "family": "model",
+      "title": "Unknown model modality",
+      "file": "model/invalid-model-modality.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "invalid_value",
+        "rule": "native.schema",
+        "location": {
+          "part": "native",
+          "pointer": "/modalities/input/1"
+        }
+      }
+    },
+    {
+      "id": "invalid-mcp-consistency",
+      "family": "mcp",
+      "title": "Prompts without the prompts capability",
+      "file": "mcp/invalid-mcp-consistency.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "invalid_value",
+        "rule": "native.consistency",
+        "location": {
+          "part": "native",
+          "pointer": "/prompts"
+        }
+      }
+    },
+    {
+      "id": "invalid-a2a-required",
+      "family": "a2a",
+      "title": "Agent Card without skills",
+      "file": "a2a/invalid-a2a-required.json",
+      "expected": {
+        "outcome": "rejected",
+        "category": "invalid_value",
+        "rule": "native.schema",
+        "location": {
+          "part": "native",
+          "pointer": "/skills"
+        }
+      }
+    }
+  ]
+}

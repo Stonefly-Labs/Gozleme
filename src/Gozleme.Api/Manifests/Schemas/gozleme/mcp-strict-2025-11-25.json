@@ -26,19 +26,25 @@
       "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2025-11-25.json#/$defs/ServerCapabilities",
       "properties": {
         "prompts": {
+          "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2025-11-25.json#/$defs/ServerCapabilities/properties/prompts",
           "unevaluatedProperties": false
         },
         "resources": {
+          "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2025-11-25.json#/$defs/ServerCapabilities/properties/resources",
           "unevaluatedProperties": false
         },
         "tools": {
+          "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2025-11-25.json#/$defs/ServerCapabilities/properties/tools",
           "unevaluatedProperties": false
         },
         "tasks": {
+          "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2025-11-25.json#/$defs/ServerCapabilities/properties/tasks",
           "properties": {
             "requests": {
+              "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2025-11-25.json#/$defs/ServerCapabilities/properties/tasks/properties/requests",
               "properties": {
                 "tools": {
+                  "$ref": "https://schemas.gozleme.invalid/upstream/mcp-2025-11-25.json#/$defs/ServerCapabilities/properties/tasks/properties/requests/properties/tools",
                   "unevaluatedProperties": false
                 }
               },
