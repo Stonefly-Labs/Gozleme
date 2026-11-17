@@ -17,7 +17,7 @@ Maintainer decisions taken before drafting (2026-11-17, recorded in `docs/specs/
 - Q1: Does this slice store manifests, or only validate them? → A: Validate only. A manifest is validated against a registered capability, which lets the system check the manifest's claimed identity. The result is the typed envelope, the native document exactly as submitted, and a separate normalized projection. Nothing is stored. Storage arrives as immutable revisions in GOZ-0007, so there is no mutable draft for it to reconcile.
 - Q2: Who may validate a manifest? → A: A new action, held by the `publisher` role only (the same as creating a capability). A suspended publisher's capabilities cannot be validated.
 - Q3: Which native formats does each family accept? → A: Each family accepts one pinned format, and a later format version is added as a new adapter version:
-  - MCP: the MCP Registry server description (`server.json`);
+  - MCP: ~~the MCP Registry server description (`server.json`)~~ superseded during planning (plan decision P4, 2026-11-17): a Gözleme-versioned MCP server manifest whose server info, capabilities, tools, resources, resource templates and prompts are typed by the official MCP core schema of the declared protocol revision, `2026-07-28` (stateless) or `2025-11-25` (stateful, session-based). Its optional `remotes` and `packages` use the MCP Registry `server.json` 2025-12-11 shapes;
   - A2A: the A2A Agent Card (current stable version);
   - API: OpenAPI 3.1, plus 3.0;
   - Event: AsyncAPI 3.0;
@@ -34,9 +34,16 @@ Maintainer decisions taken before drafting (2026-11-17, recorded in `docs/specs/
 Clarify session (2026-11-17):
 
 - Q: How is the native document carried inside the request? → A: Always as a string inside the envelope, for every family and format. Its bytes are that string encoded as UTF-8, and the SHA-256 digest covers exactly those bytes. Option A.
-- Q: Are OpenAPI and AsyncAPI native documents accepted in YAML as well as JSON? → A: Yes. OpenAPI and AsyncAPI accept JSON or restricted YAML (FR-016). `server.json`, the A2A Agent Card and the model card are JSON only. The envelope declares the native encoding, and a mismatch is `malformed`. Option A.
+- Q: Are OpenAPI and AsyncAPI native documents accepted in YAML as well as JSON? → A: Yes. OpenAPI and AsyncAPI accept JSON or restricted YAML (FR-016). `server.json` (now the MCP server manifest, P4), the A2A Agent Card and the model card are JSON only. The envelope declares the native encoding, and a mismatch is `malformed`. Option A.
 - Q: How does Gözleme decide that a value outside a secret-bearing field is an inline secret? → A: Two deterministic rules, documented as a contract. (1) Any non-empty value in a secret-bearing field is rejected. (2) A fixed pattern list of known credential formats is rejected in any field. There is no randomness (entropy) heuristic. Option A. (The maintainer first chose option B, which added an entropy heuristic, then reversed it the same session.)
 - Q: How is a problem's location written? → A: A part (`envelope` or `native`) plus an RFC 6901 JSON Pointer path. Parse failures (`malformed`) give a line and column in the native string instead. `too_large` has no location. Option A.
+
+Plan session (2026-11-17, recorded in `progress.yaml` as P1–P4):
+
+- P1: How are native documents validated against their official schemas? → A: Corvus.Json.Validator (Apache-2.0), which covers drafts 4, 7 and 2020-12. JsonSchema.Net was rejected because of its OSMF EULA licence and missing draft-04.
+- P2: How is YAML parsed? → A: Only through the YamlDotNet low-level event parser. Gözleme itself rejects anchors, aliases, tags and merge keys, and enforces duplicate keys, depth and size.
+- P3: Which AsyncAPI version? → A: 3.0.0, as decided in Q3. 3.1.0 is added later as a new adapter version.
+- P4: Which MCP native format? → A: The registry `server.json` lists no tools, resources or prompts, so the MCP family uses a Gözleme-versioned MCP server manifest instead (see the Q3 MCP bullet). Its entries are validated against the official core schema of the declared protocol revision. `2026-07-28` is stateless (SEP-2575/SEP-2567) and `2025-11-25` is stateful (sessions). The projection shows the mode derived from the revision. Primitive lists are publisher-declared and advisory, because upstream MCP treats live `server/discover` and list results as authoritative.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -55,7 +62,7 @@ A member who holds `publisher` opens one of their organization's capabilities an
 **Acceptance Scenarios**:
 
 1. **Given** a member holding `publisher` and a capability of an active publisher in their organization, **When** they validate the valid sample manifest of any of the six families, **Then** it is accepted, and the result shows the envelope, the verbatim native document with its digest, and the normalized projection, each labelled with its own version.
-2. **Given** an accepted manifest, **When** its projection is shown, **Then** the projection lists the family's entries: MCP tools, resources and prompts; A2A skills; API operations; event channels and operations; the skill's description; and the model's declared modalities and limits. Entries are listed by their native names only. No child identity is assigned, because that is GOZ-0008.
+2. **Given** an accepted manifest, **When** its projection is shown, **Then** the projection lists the family's entries: MCP tools, resources, resource templates and prompts (with the stateless or stateful mode derived from the protocol revision); A2A skills; API operations; event channels and operations; the skill's description; and the model's declared modalities and limits. Entries are listed by their native names only. No child identity is assigned, because that is GOZ-0008.
 3. **Given** the same manifest validated twice, **When** both results are compared, **Then** the envelope, the native digest and the projection are identical (validation is deterministic).
 4. **Given** any validation, **When** it completes, **Then** nothing is stored: there is no manifest, revision or projection record. Reloading the page shows the capability unchanged.
 
@@ -119,7 +126,7 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
 ### Edge Cases
 
 - **Empty or whitespace-only input**: rejected with `malformed`.
-- **Wrong encoding**: a native document that does not parse as its declared encoding is rejected with `malformed`. So is YAML declared for a JSON-only format (`server.json`, A2A Agent Card, model card), or a `SKILL.md` without front matter. OpenAPI and AsyncAPI accept either JSON or restricted YAML.
+- **Wrong encoding**: a native document that does not parse as its declared encoding is rejected with `malformed`. So is YAML declared for a JSON-only format (the MCP server manifest, A2A Agent Card, model card), or a `SKILL.md` without front matter. OpenAPI and AsyncAPI accept either JSON or restricted YAML.
 - **Several problems at once**: all problems found are reported in a stable order, up to a fixed cap (for example 50), and the response states that more problems exist. Parsing failures (`malformed`, `too_large`) stop processing before other checks.
 - **Very large documents and deep nesting**: rejected with `too_large` at a fixed limit, before family parsing. The limit is documented.
 - **Unicode tricks**: invalid UTF-8, a byte-order mark, and control characters in names are handled deterministically: invalid UTF-8 is `malformed`, and a byte-order mark is preserved in the native bytes.
@@ -143,7 +150,7 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
   - the claimed capability (canonical ID or friendly alias);
   - the declared capability version;
   - the native format and its version;
-  - the native encoding (`json` or `yaml` for OpenAPI and AsyncAPI; `json` for `server.json`, the A2A Agent Card and the model card; `markdown` for `SKILL.md`);
+  - the native encoding (`json` or `yaml` for OpenAPI and AsyncAPI; `json` for the MCP server manifest, the A2A Agent Card and the model card; `markdown` for `SKILL.md`);
   - the native document, always as a string (for every family and format); its native bytes are that string encoded as UTF-8;
   - optional publisher-provided descriptive fields that the envelope version defines.
 
@@ -182,7 +189,7 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
   - the envelope, without the native document;
   - the native document, byte-for-byte as submitted, with a SHA-256 digest of exactly those bytes;
   - the normalized projection.
-- **FR-014**: The normalized projection MUST carry its own projection version, separate from the envelope and native versions. It contains only fields that the projection version defines for the family: family, kind, native name, title, description, declared version and the list of the family's entries by native name. It MUST mark values that the adapter derived or defaulted, rather than read directly. It MUST NOT assign child identities (GOZ-0008), and it MUST NOT write anything back into the native document.
+- **FR-014**: The normalized projection MUST carry its own projection version, separate from the envelope and native versions. It contains only fields that the projection version defines for the family: family, kind, native name, title, description, declared version, the list of the family's entries by native name, and the few family attributes the projection version defines (for MCP, the protocol revision and the stateless or stateful mode derived from it; P4). It MUST mark values that the adapter derived or defaulted, rather than read directly. It MUST NOT assign child identities (GOZ-0008), and it MUST NOT write anything back into the native document.
 - **FR-015**: Validation MUST be deterministic: the same input against the same capability yields an identical result.
 - **FR-016**: Inputs MUST be bounded. There is a documented maximum size for the whole submission and for the native document, a maximum nesting depth, and a cap on entries per family. JSON with duplicate keys, invalid UTF-8, and YAML with aliases, anchors, merge keys or custom tags are `malformed`. Exceeding a bound is `too_large`.
 - **FR-017**: Validation MUST store nothing: no manifest, native document, projection or result is persisted in the database, logs, telemetry, audit records or files.
@@ -219,7 +226,7 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
 
 - **Manifest envelope**: The Gözleme-defined typed wrapper, at envelope version 1, with family, claimed capability, declared version, native format and version, and native document. It is a portable contract.
 - **Capability family**: One of `mcp`, `a2a`, `model`, `skill`, `api`, `event`. It decides which adapter and native formats apply.
-- **Native document**: The protocol's own document (`server.json`, Agent Card, OpenAPI, AsyncAPI, `SKILL.md`, model card). It is kept byte-for-byte as submitted and identified by a SHA-256 digest.
+- **Native document**: The protocol's own document (MCP server manifest, Agent Card, OpenAPI, AsyncAPI, `SKILL.md`, model card). It is kept byte-for-byte as submitted and identified by a SHA-256 digest.
 - **Protocol adapter**: A versioned, I/O-free validator and projector for one family's pinned native format.
 - **Normalized projection**: A Gözleme-defined, separately versioned summary derived from the native document. It contains family entries by native name and marks derived values.
 - **Validation problem**: A category, a location and a fixed message, and never the value.

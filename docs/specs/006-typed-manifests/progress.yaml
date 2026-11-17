@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0006
-stage: clarify
+stage: plan
 status: in-progress
 promptRevision: 7
 branch: feature/goz-0006-typed-manifests
@@ -14,16 +14,24 @@ decisions:
 - {at: '2026-11-17', by: maintainer, topic: native-encoding, decision: 'Clarify Q2 option A: OpenAPI and AsyncAPI accept JSON or restricted YAML; server.json, A2A Agent Card and model card JSON only; envelope declares native encoding; mismatch is malformed.'}
 - {at: '2026-11-17', by: maintainer, topic: secret-detection, decision: 'Clarify Q3 option A (first chose B with entropy heuristic, then reversed same session): non-empty values in secret-bearing fields plus a fixed documented credential pattern list in any field; no entropy heuristic.'}
 - {at: '2026-11-17', by: maintainer, topic: problem-location, decision: 'Clarify Q4 option A: location is part (envelope|native) plus RFC 6901 JSON Pointer; malformed gives line/column in the native string; too_large has no location.'}
+- {at: '2026-11-17', by: maintainer, topic: schema-validator, decision: 'Plan P1: Corvus.Json.Validator (Apache-2.0) validates native documents against bundled official schemas (drafts 4/7/2020-12); JsonSchema.Net rejected (OSMF EULA licence, no draft-04); hand-written validators rejected.'}
+- {at: '2026-11-17', by: maintainer, topic: yaml-parser, decision: 'Plan P2: YamlDotNet low-level Parser event stream only; Gozleme rejects anchors, aliases, tags and merge keys and enforces duplicate keys, depth and size while building its own tree.'}
+- {at: '2026-11-17', by: maintainer, topic: asyncapi-pin, decision: 'Plan P3: AsyncAPI 3.0.0 as decided in Q3; 3.1.0 (released 2026-01-31) is added later as a new adapter version.'}
+- {at: '2026-11-17', by: maintainer, topic: mcp-format, decision: 'Plan P4: server.json 2025-12-11 lists no tools/resources/prompts and the maintainer asked for a more modern pin considering stateful and stateless MCP; chose "Revision-typed, both": a Gozleme-versioned MCP server manifest whose serverInfo, capabilities, tools, resources, resource templates and prompts are validated against the official core schema of the declared protocolRevision, 2026-07-28 (stateless, SEP-2575/2567) or 2025-11-25 (stateful, sessions); projection mode derived from the revision; optional remotes/packages use server.json 2025-12-11 shapes; primitive lists publisher-declared and advisory.'}
 agentChoices:
 - {at: '2026-11-17', topic: action-resource, choice: 'action manifest.validate on the existing capability resource (no new resource type); disclosed to the maintainer for veto.'}
 - {at: '2026-11-17', topic: no-audit, choice: 'validation changes nothing so it writes no new audit event (authz denials keep 1301); range 1501-1510 stays free; disclosed to the maintainer for veto.'}
 - {at: '2026-11-17', topic: lifecycle-claims, choice: 'publisher-asserted lifecycle state (deprecated, revoked) is treated as a reserved claim alongside the Q4 list; disclosed to the maintainer for veto.'}
 - {at: '2026-11-17', topic: encoding-value, choice: 'envelope native encoding value for SKILL.md is markdown; disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: deprecated-not-reserved, choice: 'A1: protocol-native deprecated flags on OpenAPI/AsyncAPI elements are element metadata, not a publisher lifecycle claim, so not reserved; the reserved vocabulary applies only to envelope names, extension-point names and adapter-listed fields (research R6); disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: secret-reference-form, choice: 'A2: manifest secret reference v1 is secretref:<provider>/<key>, plus MCP {NAME} placeholders and empty declarations; a later secrets spec may supersede it with a new version; disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: result-status, choice: 'A3: validation answers 200 for both outcome accepted and outcome rejected; authorization and transport failures keep 403/404/409/413/415/429/503; disclosed to the maintainer for veto.'}
 - {at: '2026-11-17', topic: rate-limit, choice: 'validation rate-limited per account in memory per API instance (stateless operation, no shared budget); disclosed to the maintainer for veto.'}
 stages:
   specify: {status: done, artifact: docs/specs/006-typed-manifests/spec.md, at: '2026-11-17', checklist: docs/specs/006-typed-manifests/checklists/requirements.md}
   clarify: {status: done, at: '2026-11-17', questions: 4, checklist: 16/16}
+  plan: {status: done, at: '2026-11-17', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [P1, P2, P3, P4], verifyAtVendoring: ['Corvus run-time compile cost and keyword/instance-location output', 'MCP 2025-11-25 schema dialect', 'A2A v1.0.1 JSON Schema generation from proto', 'Utf8JsonReader duplicate-property option']}
 attempts: []
 blockers: []
-nextAction: 'Run /speckit-plan; plan pins exact native format versions, the credential pattern list (security review), size/depth/problem caps and the envelope-level malformed location.'
+nextAction: 'Run /speckit-tasks; first tasks vendor and digest-pin the bundled schemas and verify the R1/R2/R3 "verify at vendoring" facts, stopping for maintainer review if any differs.'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}

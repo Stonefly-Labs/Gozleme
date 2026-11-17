@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gozleme.dev/manifest/envelope/1.json",
+  "title": "Gözleme manifest envelope v1 (GOZ-0006)",
+  "description": "Validated by Gözleme's own envelope reader (contracts/manifest-validation.md stages 1–3). Family/format/encoding pairs are constrained by native-formats.md. Unknown members are unknown_field; reserved names are reserved_claim. The $id is an identifier only and is never fetched.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["envelopeVersion", "family", "capability", "version", "native"],
+  "properties": {
+    "envelopeVersion": { "const": 1 },
+    "family": { "enum": ["mcp", "a2a", "model", "skill", "api", "event"] },
+    "capability": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Canonical capability ID gz://<origin>/cap/<uuid> or alias <handle>/<name>; must identify the target exactly (identity_mismatch otherwise)."
+    },
+    "version": {
+      "type": "string",
+      "maxLength": 256,
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "description": "Declared capability version, Semantic Versioning 2.0.0 syntax only (ordering and uniqueness: GOZ-0007)."
+    },
+    "title": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "native": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "formatVersion", "encoding", "document"],
+      "properties": {
+        "format": { "enum": ["mcp-server-manifest", "a2a-agent-card", "openapi", "asyncapi", "agent-skills", "gozleme-model-card"] },
+        "formatVersion": { "type": "string", "maxLength": 32 },
+        "encoding": { "enum": ["json", "yaml", "markdown"] },
+        "document": { "type": "string", "description": "The native document as a string; its UTF-8 bytes are the native bytes (≤ 512 KiB)." }
+      }
+    }
+  }
+}
