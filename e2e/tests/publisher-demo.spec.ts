@@ -323,6 +323,19 @@ test("evidence: API role × action matrix, database refusals for both logins and
   const restored = (await api(carol, "GET", `${ORG_API}/publishers/${publisherId}/capabilities/${capability.id}`)).json!;
   expect({ canonicalId: restored.canonicalId, alias: restored.alias }).toEqual({ canonicalId: capability.canonicalId, alias: capability.alias });
 
+  // A crash after start-up ends the container too: tini is PID 1, so the runtime's abort() (SIGABRT) is delivered
+  // to dotnet instead of being ignored, and the restart policy brings the API back.
+  const apiContainer = execFileSync("docker", ["compose", "ps", "-q", "api"], { cwd: repoRoot }).toString().trim();
+  const inApi = (script: string) => execFileSync("docker", ["exec", apiContainer, "sh", "-c", script]).toString().trim();
+  const restartCount = () => Number(execFileSync("docker", ["inspect", "--format", "{{.RestartCount}}", apiContainer]).toString().trim());
+  expect(inApi("ps -o comm= -p 1")).toBe("tini");
+  const restartsBefore = restartCount();
+  inApi("kill -ABRT $(ps -o pid= --ppid 1)");
+  await expect.poll(restartCount, { timeout: 60_000, intervals: [1000] }).toBeGreaterThan(restartsBefore);
+  composeWithEnv({ GOZLEME_REGISTRY_ORIGIN: ORIGIN }, "up", "-d", "--wait", "--no-deps", "api");
+  expect((await api(carol, "GET", `${ORG_API}/publishers/${publisherId}`)).status).toBe(200);
+  const crashAfterStart = `pid 1 is tini; SIGABRT to the running API ended the container, restarted by policy (${restartCount() - restartsBefore}) and healthy again`;
+
   const record = {
     spec: "GOZ-0005",
     capturedAt: new Date().toISOString(),
@@ -337,6 +350,7 @@ test("evidence: API role × action matrix, database refusals for both logins and
     databaseRefusals: database,
     rowsUnchanged: true,
     originMismatch: { migrator: `exit ${migrator.exit}: ${MISMATCH}`, api: apiOutcome, restoredIdsUnchanged: true },
+    crashAfterStart,
   };
   writeEvidence(record);
 });

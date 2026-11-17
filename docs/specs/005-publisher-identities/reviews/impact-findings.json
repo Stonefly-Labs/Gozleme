@@ -191,9 +191,9 @@
   {
    "id": "GOZ-0005-IF-06",
    "severity": "medium",
-   "title": "Required registry origin and PID 1 start-failure exit affect Compose, Helm and deployment acceptance",
+   "title": "Required registry origin and container crash/start-failure exit (tini as PID 1) affect Compose, Helm and deployment acceptance",
    "evidence": [
-    "src/Gozleme.Api/Program.cs: catch when Environment.ProcessId == 1 -> exit 1 (previously spun in abort())",
+    "src/Gozleme.Api/Dockerfile: tini is PID 1, so dotnet's abort() on a failed start or a later crash ends the container (exit 134) instead of spinning; replaced the PID-1 catch in Program.cs (maintainer-approved, 2026-11-17)",
     "RegistryOriginCheck throws on mismatch; publisher endpoints 503 until verified; MigrationRunner records/compares origin",
     "deploy/helm/gozleme/templates/api.yaml and migrate-job.yaml: required registry.origin; Makefile helm-lint negative render",
     "compose.yaml: Gozleme__Registry__Origin from GOZLEME_REGISTRY_ORIGIN (default registry.demo.gozleme.test)"

@@ -10,6 +10,9 @@ RUN dotnet publish src/Gozleme.Api/Gozleme.Api.csproj -c Release -o /app --no-re
       -p:InformationalVersion="${GOZLEME_BUILD}" -p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+# tini is PID 1 so dotnet is not: Linux ignores a PID 1's own abort(), so a crashed runtime would spin forever
+# instead of exiting for the restart policy (GOZ-0005).
+RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     ASPNETCORE_ENVIRONMENT=Production \
@@ -19,4 +22,4 @@ USER $APP_UID
 EXPOSE 8080
 HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=6 \
   CMD ["dotnet", "Gozleme.Api.dll", "healthcheck"]
-ENTRYPOINT ["dotnet", "Gozleme.Api.dll"]
+ENTRYPOINT ["tini", "--", "dotnet", "Gozleme.Api.dll"]

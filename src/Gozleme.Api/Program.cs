@@ -17,19 +17,9 @@ switch (args.FirstOrDefault())
         return await ContainerHealthCheck.RunAsync(args.ElementAtOrDefault(1) ?? "live");
 }
 
-var app = GozlemeApp.Build(args);
-try
-{
-    await app.RunAsync();
-}
-catch (Exception ex) when (Environment.ProcessId == 1)
-{
-    // The host has logged the cause (e.g. a registry origin mismatch, GOZ-0005 FR-003). As PID 1 in a container
-    // an unhandled exception's abort() is never delivered and the process spins, so exit with a failure code.
-    await Console.Error.WriteLineAsync($"Host failed: {ex.GetType().Name}");
-    return 1;
-}
-
+// In the container image tini is PID 1, so a host that fails (e.g. a registry origin mismatch, GOZ-0005 FR-003)
+// or a later crash ends the process and the restart policy takes over.
+await GozlemeApp.Build(args).RunAsync();
 return 0;
 
 /// <summary>Entry point marker for WebApplicationFactory-based tests.</summary>

@@ -28,7 +28,7 @@
 | Roles | 18 actions over 5 resources. Admin is an explicit list without capability writes, and `publisher` holds `capability.create` and `capability.rename`. `account_has_role` is a non-definer; `account_is_admin` is unchanged. |
 | Classes | `InstanceReference` (`registry_origin`: `SELECT`). `InstanceClaims` (`handle_claims`: `SELECT, INSERT, UPDATE`; `alias_reservations`: `INSERT`), with RLS enabled but not forced. `RlsCatalogTests` pins the exact privilege sets. |
 | Operator | `handle-reserve`, `handle-release` and `handle-reclaim` connect as `gozleme_migrator` with no account context, write audit 1406–1408, and have no HTTP surface. |
-| Start-up | Origin is required in Compose and Helm. A mismatch refuses `migrate` and the API. When the API runs as PID 1 and start fails, it exits 1. |
+| Start-up | Origin is required in Compose and Helm. A mismatch refuses `migrate` and the API. The API image runs `tini` as PID 1, so a failed start or a later crash ends the container for the restart policy (maintainer-approved follow-up, 2026-11-17). |
 
 ## Findings
 
@@ -39,7 +39,7 @@
 | GOZ-0005-IF-03 | medium | A handle resolves only through its held claim; `publishers.handle` is not unique | 0012, 0013, 0024, 0029, 0030, all | applied |
 | GOZ-0005-IF-04 | high | Least-privilege operator role instead of the owner login (maintainer asked for this to be tracked) | 0039 (0029 if it adds an operator command) | **needs human** (decide before the GOZ-0039 clarification, or earlier) |
 | GOZ-0005-IF-05 | medium | Rate limits from GOZ-0001 and GOZ-0002 are in-process, while publisher registration is counted in PostgreSQL. No spec owns the multi-replica posture | 0039; new limiters in 0009, 0013, 0015, 0038 | **needs human** (decide before the GOZ-0039 clarification); storage note applied |
-| GOZ-0005-IF-06 | medium | Required origin, and exit 1 when PID 1 fails to start | all; Helm acceptance in 0039 | applied |
+| GOZ-0005-IF-06 | medium | Required origin, and a crashed or failed API ends its container (tini as PID 1) | all; Helm acceptance in 0039 | applied |
 | GOZ-0005-IF-07 | low | `make test` and `make lint` skip `next build`; demo evidence redirection | all | applied (optional Makefile change left to the maintainer) |
 | GOZ-0005-IF-08 | medium | Suspension is permanent and cannot be lifted without a schema change | 0007, 0012, 0019, 0021, 0033, 0039 | **needs human** (decide before the GOZ-0039 clarification); per-spec semantics routed to clarification |
 | GOZ-0005-IF-09 | medium | Pins, table classes, audit range (next is 1501), seed, permanent demo data | all | applied |
