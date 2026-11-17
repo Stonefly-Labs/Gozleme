@@ -223,6 +223,17 @@ A unique violation aborts the request transaction. The handler returns its resul
 **Rate limit**: `Gozleme:Publishers:RegisterPerHour` (default 10, range 1–100), a fixed window
 partitioned by account id (GOZ-0002-IF-08).
 
+**Storage** (maintainer decision, 2026-11-16): the count lives in PostgreSQL, not process memory, so every API
+replica shares one budget and a restart does not reset it. Redis was considered and not chosen: PostgreSQL stays
+the only stateful dependency (GOZ-0001 research). Table `gozleme.publisher_registration_attempts`
+(`account_id` → `users` `ON DELETE CASCADE`, `window_start` = `date_trunc('hour', now())` from the database clock,
+`attempts`), classified as global account-level infrastructure. One statement increments with
+`ON CONFLICT … DO UPDATE … WHERE attempts < limit`, so concurrent attempts never exceed it, and drops the
+account's expired windows (no background job). It runs on its own connection and commits at once: an attempt
+that later fails validation or rolls back still spends its permit. `Retry-After` is the seconds left in the window.
+The GOZ-0001 sign-in and registration limits and GOZ-0002 redemption limits remain in-process; moving them is
+out of scope here and flagged for the spec impact analysis.
+
 The limiter is checked **in the handler, after `AuthorizeAsync` passes** (member holding `admin`),
 before validation. It is not the `RequireRateLimiting` middleware that sign-in and invite redemption
 use (maintainer decision on analysis finding U1, 2026-11-16). The reasons:

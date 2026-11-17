@@ -140,17 +140,20 @@ internal static class OperatorCommands
             ids[email] = (await users.FindByEmailAsync(email))!.Id;
         }
 
-        var seeded = await SeedOrganizationAsync(services, DemoOrganizationId, DemoOrganizationName, [ids[DemoAccounts[0]], ids[DemoAccounts[3]]], stdout, stderr);
-        return seeded != Ok ? seeded : await SeedOrganizationAsync(services, PartnerOrganizationId, PartnerOrganizationName, [ids[DemoAccounts[4]]], stdout, stderr);
+        // GOZ-0005 research R11: carol holds publisher, so the demo shows capability writes; alice (admin) does not.
+        var roles = new Dictionary<Guid, string[]> { [ids[DemoAccounts[3]]] = [OrganizationRole.Member, OrganizationRole.Publisher] };
+        var seeded = await SeedOrganizationAsync(services, DemoOrganizationId, DemoOrganizationName, [ids[DemoAccounts[0]], ids[DemoAccounts[3]]], roles, stdout, stderr);
+        return seeded != Ok ? seeded : await SeedOrganizationAsync(services, PartnerOrganizationId, PartnerOrganizationName, [ids[DemoAccounts[4]]], roles, stdout, stderr);
     }
 
     /// <summary>
     /// Idempotent: every run restores the organization's name, exactly <paramref name="members"/> (the first is
-    /// the creator and holds admin; the others hold member only) and no invitations. It acts only through the
+    /// the creator and holds admin; the others hold member, plus any <paramref name="roles"/> listed for them) and no invitations. It acts only through the
     /// signed context of a seeded member holding admin, so it has no right that admin lacks (GOZ-0003 research
     /// R10, GOZ-0004 research R11).
     /// </summary>
-    private static async Task<int> SeedOrganizationAsync(IServiceProvider services, Guid organizationId, string name, Guid[] members, TextWriter stdout, TextWriter stderr)
+    private static async Task<int> SeedOrganizationAsync(
+        IServiceProvider services, Guid organizationId, string name, Guid[] members, IReadOnlyDictionary<Guid, string[]> roles, TextWriter stdout, TextWriter stderr)
     {
         var db = services.GetRequiredService<GozlemeDbContext>();
         var signer = services.GetRequiredService<TenantContextSigner>();
@@ -173,7 +176,7 @@ internal static class OperatorCommands
             await db.Invitations.Where(i => i.OrganizationId == organizationId).ExecuteDeleteAsync();
             await db.Memberships.Where(m => m.OrganizationId == organizationId && !members.Contains(m.UserId)).ExecuteDeleteAsync();
             var present = await db.Memberships.Where(m => m.OrganizationId == organizationId).ToListAsync();
-            AddMembers(db, organizationId, members, [.. present.Select(m => m.UserId)], now);
+            AddMembers(db, organizationId, members, [.. present.Select(m => m.UserId)], roles, now);
 
             // The creator regains admin before anyone is demoted, so the actor never removes the last admin.
             if (present.SingleOrDefault(m => m.UserId == members[0]) is { } creator)
@@ -184,7 +187,7 @@ internal static class OperatorCommands
             await db.SaveChangesAsync();
             foreach (var membership in present.Where(m => m.UserId != members[0]))
             {
-                membership.Roles = [OrganizationRole.Member];
+                membership.Roles = RolesOf(roles, membership.UserId);
             }
 
             await db.SaveChangesAsync();
@@ -219,7 +222,7 @@ internal static class OperatorCommands
                 return Failed;
             }
 
-            AddMembers(db, organizationId, members, [members[0]], now);
+            AddMembers(db, organizationId, members, [members[0]], roles, now);
             await db.SaveChangesAsync();
             await transaction.CommitAsync();
         }
@@ -228,7 +231,8 @@ internal static class OperatorCommands
         return Ok;
     }
 
-    private static void AddMembers(GozlemeDbContext db, Guid organizationId, Guid[] members, IReadOnlyCollection<Guid> present, DateTimeOffset now)
+    private static void AddMembers(
+        GozlemeDbContext db, Guid organizationId, Guid[] members, IReadOnlyCollection<Guid> present, IReadOnlyDictionary<Guid, string[]> roles, DateTimeOffset now)
     {
         for (var i = 0; i < members.Length; i++)
         {
@@ -240,11 +244,14 @@ internal static class OperatorCommands
                     UserId = members[i],
                     JoinedAt = now.AddSeconds(i),
                     JoinedVia = i == 0 ? Membership.ViaCreator : Membership.ViaInvitation,
-                    Roles = i == 0 ? [OrganizationRole.Admin, OrganizationRole.Member] : [OrganizationRole.Member],
+                    Roles = i == 0 ? [OrganizationRole.Admin, OrganizationRole.Member] : RolesOf(roles, members[i]),
                 });
             }
         }
     }
+
+    private static string[] RolesOf(IReadOnlyDictionary<Guid, string[]> roles, Guid member) =>
+        roles.TryGetValue(member, out var held) ? held : [OrganizationRole.Member];
 
     private static async Task<int> ResetPasswordAsync(IServiceProvider services, string? email, string? password, TextWriter stdout, TextWriter stderr)
     {

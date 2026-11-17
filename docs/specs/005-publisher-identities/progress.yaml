@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0005
-stage: tasks
+stage: implement
 status: in-progress
 promptRevision: 6
 branch: feature/goz-0005-publisher-identities
@@ -18,15 +18,19 @@ decisions:
 - {at: '2026-11-16', by: maintainer, topic: operator-reclaim-mechanism, finding: GOZ-0003-IF-04, decision: 'Q10 option A (clarify): handle claims, operator reservations and alias reservations are installation-owned claim tables whose unique constraints enforce instance-wide uniqueness; the app login may insert but not list other organizations entries; reclaim changes only the claim row and suspension is derived from claim loss, so no tenant row is touched from outside its tenant (FR-037).'}
 - {at: '2026-11-16', by: maintainer, topic: operator-login, finding: GOZ-0003-IF-04, decision: 'Q11 option A (plan): operator handle commands (reserve, release, reclaim) connect as the owner login gozleme_migrator, which the operator already holds for migrate; the claim tables enable but do not force row security, so the owner is the installation authority over them while gozleme_app stays bound by policies; guard triggers bind the owner to the allowed one-way transitions. Rejected: a new gozleme_operator login (new secret, manual role creation on existing volumes) and dropping reclaim (reverses Q9).'}
 - {at: '2026-11-16', by: maintainer, topic: registration-rate-limit-order, finding: analyze-U1, decision: 'publisher registration rate limit is acquired in the handler after AuthorizeAsync passes (member + admin), before validation; not RequireRateLimiting middleware. Non-members never get 429, refused attempts do not consume budget, audit 1405 names only a confirmed organization (research R8).'}
+- {at: '2026-11-16', by: maintainer, topic: registration-rate-limit-storage, decision: 'publisher registration rate-limit count stored in PostgreSQL (gozleme.publisher_registration_attempts, GlobalIdentity class) so replicas share one budget and restarts do not reset it; Redis not chosen; GOZ-0001/0002 limiters stay in-process and are flagged for impact analysis (research R8 Storage). Confirmed by maintainer 2026-11-16.'}
 agentChoices:
 - {at: '2026-11-16', topic: publisher-rename-role, choice: 'publisher display-name change is admin-only, matching publisher.register; disclosed to the maintainer for veto.', disposition: 'maintainer did not veto (2026-11-16)'}
+- {at: '2026-11-16', topic: browser-span-names, choice: 'browser spans use the existing gozleme.ui.<flow> convention (publisher_register, publisher_rename, capability_create, capability_rename) instead of gozleme.web.publisher.register / gozleme.web.capability.create named in T022; disclosed to the maintainer for veto.', disposition: pending}
+- {at: '2026-11-16', topic: publisher-list-placement, choice: 'publisher list and registration form are on the organization page; only the publisher detail page is a separate route (T023 named a publishers index page); disclosed to the maintainer for veto.', disposition: pending}
 stages:
   specify: {status: done, artifact: docs/specs/005-publisher-identities/spec.md, at: '2026-11-16', checklist: docs/specs/005-publisher-identities/checklists/requirements.md}
   clarify: {status: done, at: '2026-11-16', questions: 1, note: 'Q10 resolved FR-036 (operator reclaim mechanism) as option A; FR-037 added'}
   plan: {status: done, at: '2026-11-16', artifact: docs/specs/005-publisher-identities/plan.md, artifacts: [research.md, data-model.md, quickstart.md, contracts/publishers-api.openapi.yaml, contracts/namespace.md, contracts/operator-commands.md, contracts/permissions-delta.md], note: 'Q11 decided (operator login = owner); claim-table design verified on scratch postgres:17 (research R2-R5)'}
   analyze: {status: done, at: '2026-11-16', findings: 10, critical: 0, high: 0, note: 'C1 rate-limit tests (T014), U1 limiter after auth (T019, R8; maintainer decision), A1 origin 253/254 boundary (T041), C2 Helm required-origin negative render (T004), C3 single read path pin (T007, T011, T045), C4 no suggested handle (T016), C5 SC-001 timing (T048), C6 role-lost-mid-request test (T031), F1 spec status; F2 FR numbering left stable by design'}
+  implement: {status: in-progress, at: '2026-11-16', note: 'T001-T046 done; integration 338/338 (port-collision flakes from foreign CI containers rerun green), unit 142, web 171, lint clean, helm-lint incl. negative render. Fixed: migration Down drops the four interdependent tables in one statement; isolation snapshot scoped to its organizations. Remaining T047-T052 (e2e demo, evidence, registry).'}
   tasks: {status: done, at: '2026-11-16', artifact: docs/specs/005-publisher-identities/tasks.md, count: 52, note: 'Setup 4, Foundational 9, US1 10, US2 6, US3 6, US5 5, US4 3, Polish 9; includes R12 pins (T044), RlsCatalog negatives for InstanceReference/InstanceClaims (T045) and review-security flag for Q11 (T052)'}
 attempts: []
 blockers: []
-nextAction: 'Run /speckit-implement starting at T001 (MVP = Setup + Foundational + US1).'
+nextAction: 'Continue /speckit-implement at T047 (goz-0005 Playwright project and publisher demo).'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}

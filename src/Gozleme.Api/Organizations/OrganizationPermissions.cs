@@ -38,6 +38,8 @@ internal static class OrgResource
     public const string Organization = "organization";
     public const string Membership = "membership";
     public const string Invitation = "invitation";
+    public const string Publisher = "publisher";
+    public const string Capability = "capability";
 }
 
 /// <summary>Organization actions (docs/architecture/contracts/organization-permissions.md). Bounded: span attributes and metric label values.</summary>
@@ -53,6 +55,14 @@ internal static class OrgAction
     public const string InvitationList = "invitation.list";
     public const string InvitationCreate = "invitation.create";
     public const string InvitationRevoke = "invitation.revoke";
+    public const string PublisherList = "publisher.list";
+    public const string PublisherRead = "publisher.read";
+    public const string PublisherRegister = "publisher.register";
+    public const string PublisherRename = "publisher.rename";
+    public const string CapabilityList = "capability.list";
+    public const string CapabilityRead = "capability.read";
+    public const string CapabilityCreate = "capability.create";
+    public const string CapabilityRename = "capability.rename";
 
     /// <summary>Every action with its resource type, in contract order.</summary>
     public static readonly IReadOnlyList<(string Action, string Resource)> All =
@@ -67,6 +77,14 @@ internal static class OrgAction
         (InvitationList, OrgResource.Invitation),
         (InvitationCreate, OrgResource.Invitation),
         (InvitationRevoke, OrgResource.Invitation),
+        (PublisherList, OrgResource.Publisher),
+        (PublisherRead, OrgResource.Publisher),
+        (PublisherRegister, OrgResource.Publisher),
+        (PublisherRename, OrgResource.Publisher),
+        (CapabilityList, OrgResource.Capability),
+        (CapabilityRead, OrgResource.Capability),
+        (CapabilityCreate, OrgResource.Capability),
+        (CapabilityRename, OrgResource.Capability),
     ];
 
     public static string ResourceOf(string action) => All.Single(a => a.Action == action).Resource;
@@ -79,14 +97,31 @@ internal static class OrgAction
 internal static class OrganizationPermissions
 {
     private static readonly string[] MemberActions =
-        [OrgAction.OrganizationRead, OrgAction.OrganizationSelect, OrgAction.MembershipList, OrgAction.MembershipLeave];
+    [
+        OrgAction.OrganizationRead, OrgAction.OrganizationSelect, OrgAction.MembershipList, OrgAction.MembershipLeave,
+        OrgAction.PublisherList, OrgAction.PublisherRead, OrgAction.CapabilityList, OrgAction.CapabilityRead,
+    ];
+
+    /// <summary>
+    /// An explicit list since GOZ-0005 (research R9): admin manages the organization and its publishers, but
+    /// capability writes belong to <see cref="OrganizationRole.Publisher"/> alone (maintainer Q5).
+    /// </summary>
+    private static readonly string[] AdminActions =
+    [
+        .. MemberActions,
+        OrgAction.OrganizationRename, OrgAction.MembershipRemove, OrgAction.MembershipRolesChange,
+        OrgAction.InvitationList, OrgAction.InvitationCreate, OrgAction.InvitationRevoke,
+        OrgAction.PublisherRegister, OrgAction.PublisherRename,
+    ];
+
+    private static readonly string[] PublisherActions = [.. MemberActions, OrgAction.CapabilityCreate, OrgAction.CapabilityRename];
 
     private static readonly FrozenDictionary<string, FrozenSet<string>> Table = new Dictionary<string, FrozenSet<string>>(StringComparer.Ordinal)
     {
-        [OrganizationRole.Admin] = OrgAction.All.Select(a => a.Action).ToFrozenSet(StringComparer.Ordinal),
+        [OrganizationRole.Admin] = AdminActions.ToFrozenSet(StringComparer.Ordinal),
         [OrganizationRole.Approver] = MemberActions.ToFrozenSet(StringComparer.Ordinal),
         [OrganizationRole.Member] = MemberActions.ToFrozenSet(StringComparer.Ordinal),
-        [OrganizationRole.Publisher] = MemberActions.ToFrozenSet(StringComparer.Ordinal),
+        [OrganizationRole.Publisher] = PublisherActions.ToFrozenSet(StringComparer.Ordinal),
         [OrganizationRole.Reviewer] = MemberActions.ToFrozenSet(StringComparer.Ordinal),
     }.ToFrozenDictionary(StringComparer.Ordinal);
 

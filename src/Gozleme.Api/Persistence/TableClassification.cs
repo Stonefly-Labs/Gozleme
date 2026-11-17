@@ -12,13 +12,38 @@ internal static class TableClassification
     /// <summary>Protected by application authorization and forced row-level security.</summary>
     public static readonly IReadOnlySet<string> TenantOwned = new HashSet<string>(StringComparer.Ordinal)
     {
-        "organizations", "memberships", "invitations",
+        "organizations", "memberships", "invitations", "publishers", "capabilities",
     };
 
-    /// <summary>Global account-level infrastructure (GOZ-0001): needed before any tenant is known, no tenant RLS.</summary>
+    /// <summary>
+    /// Global account-level infrastructure (GOZ-0001): needed before any tenant is known, no tenant RLS. GOZ-0005 adds
+    /// the per-account publisher registration counter, which holds no tenant content.
+    /// </summary>
     public static readonly IReadOnlySet<string> GlobalIdentity = new HashSet<string>(StringComparer.Ordinal)
     {
-        "users", "user_claims", "user_logins", "user_tokens", "auth_sessions", "data_protection_keys",
+        "users", "user_claims", "user_logins", "user_tokens", "auth_sessions", "data_protection_keys", "publisher_registration_attempts",
+    };
+
+    /// <summary>
+    /// Installation reference data that only migrations write (GOZ-0003-IF-08 option B, GOZ-0005 research R1): no
+    /// <c>organization_id</c>, no tenant content, and <c>gozleme_app</c> holds exactly the pinned privileges here,
+    /// with no column grant and no dependent view, so <c>RegistryOriginReader</c> is its one read path.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlySet<string>> InstanceReference = new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal)
+    {
+        ["registry_origin"] = Privileges("SELECT"),
+    };
+
+    /// <summary>
+    /// Installation-owned namespace entries that request handlers write (GOZ-0005 maintainer Q10, research R1–R4):
+    /// row-level security enabled but not forced, so the owner is the installation authority while
+    /// <c>gozleme_app</c> is bound by at least one policy and holds exactly the pinned privileges (never
+    /// <c>DELETE</c> or <c>TRUNCATE</c>).
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlySet<string>> InstanceClaims = new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal)
+    {
+        ["handle_claims"] = Privileges("SELECT", "INSERT", "UPDATE"),
+        ["alias_reservations"] = Privileges("INSERT"),
     };
 
     /// <summary>
@@ -35,4 +60,6 @@ internal static class TableClassification
     {
         "establish_context", "current_account_id", "account_organizations", "is_new_organization_of_current_account", "lock_invited_organization",
     };
+
+    private static HashSet<string> Privileges(params string[] privileges) => new(privileges, StringComparer.Ordinal);
 }

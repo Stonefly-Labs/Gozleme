@@ -1,7 +1,7 @@
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { BROWSER_SERVICE_NAME } from "./browser";
 
-/** Bounded UI flows: identity (GOZ-0001), organizations (GOZ-0002) and roles (GOZ-0004). */
+/** Bounded UI flows: identity (GOZ-0001), organizations (GOZ-0002), roles (GOZ-0004) and publishers (GOZ-0005). */
 export type UiFlow =
   | "sign_in"
   | "register"
@@ -15,7 +15,11 @@ export type UiFlow =
   | "invite_redeem"
   | "member_remove"
   | "member_leave"
-  | "member_roles";
+  | "member_roles"
+  | "publisher_register"
+  | "publisher_rename"
+  | "capability_create"
+  | "capability_rename";
 
 /**
  * Browser span around a UI flow (`gozleme.ui.<flow>`), so its fetch joins one trace from

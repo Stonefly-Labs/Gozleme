@@ -4,10 +4,13 @@ import { AccountBar } from "@/components/AccountBar";
 import { InvitationPanel } from "@/components/InvitationPanel";
 import { MemberList } from "@/components/MemberList";
 import { OrganizationsUnavailable } from "@/components/OrganizationsUnavailable";
+import { PublisherList } from "@/components/PublisherList";
+import { RegisterPublisherForm } from "@/components/RegisterPublisherForm";
 import { RenameOrganizationForm } from "@/components/RenameOrganizationForm";
 import { SignedInHeader } from "@/components/SignedInHeader";
 import { type Fetched, getOrganization, type Invitation, listInvitations, listMembers } from "@/lib/organizations";
 import { forbiddenText } from "@/lib/client";
+import { listPublishers } from "@/lib/publishers";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +21,7 @@ export const metadata: Metadata = { title: "Organization — Gözleme" };
  * One organization (FR-003, FR-012, FR-014). Membership is re-checked by the API on every load, so a
  * non-member, an unknown id and a malformed id all get the same "Organization not found" page (FR-006).
  * Controls follow the caller's permissions from the API (GOZ-0004); the API still decides every request.
+ * Every member sees the organization's publishers; admins also see the registration form (GOZ-0005).
  */
 export default async function OrganizationPage({
   params,
@@ -32,12 +36,12 @@ export default async function OrganizationPage({
   const session = await getSession();
   if (session.state === "anonymous") redirect(returnTo);
 
-  const [organization, members] =
+  const [organization, members, publishers] =
     session.state === "authenticated"
-      ? await Promise.all([getOrganization(organizationId), listMembers(organizationId)])
-      : [{ state: "unavailable" } as const, { state: "unavailable" } as const];
+      ? await Promise.all([getOrganization(organizationId), listMembers(organizationId), listPublishers(organizationId)])
+      : [{ state: "unavailable" } as const, { state: "unavailable" } as const, { state: "unavailable" } as const];
   if (organization.state === "anonymous") redirect(returnTo);
-  if (organization.state === "not_found" || members.state === "not_found") notFound();
+  if (organization.state === "not_found" || members.state === "not_found" || publishers.state === "not_found") notFound();
 
   const permissions = organization.state === "ok" ? organization.data.permissions : [];
   const canInvite = permissions.includes("invitation.list");
@@ -45,7 +49,7 @@ export default async function OrganizationPage({
   const invitations: Fetched<{ invitations: Invitation[] }> = canInvite ? await listInvitations(organizationId) : { state: "ok", data: { invitations: [] } };
   if (invitations.state === "not_found") notFound();
 
-  const ready = organization.state === "ok" && members.state === "ok" && invitations.state === "ok";
+  const ready = organization.state === "ok" && members.state === "ok" && invitations.state === "ok" && publishers.state === "ok";
   return (
     <>
       {session.state === "authenticated" && <SignedInHeader />}
@@ -69,6 +73,8 @@ export default async function OrganizationPage({
             {permissions.includes("organization.rename") && (
               <RenameOrganizationForm key={organization.data.displayName} organizationId={organization.data.id} displayName={organization.data.displayName} />
             )}
+            <PublisherList organizationId={organization.data.id} publishers={publishers.data.publishers} />
+            {permissions.includes("publisher.register") && <RegisterPublisherForm organizationId={organization.data.id} />}
             <MemberList organizationId={organization.data.id} members={members.data.members} permissions={permissions} />
             {canInvite && <InvitationPanel organizationId={organization.data.id} invitations={invitations.data.invitations} members={members.data.members} />}
           </div>

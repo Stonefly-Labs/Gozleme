@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Gozleme.Api.Persistence;
+using Gozleme.Api.Publishers;
 using Gozleme.Api.Tenancy;
 using Npgsql;
 using Testcontainers.PostgreSql;
@@ -23,6 +24,9 @@ public sealed class GozlemeDatabase : IAsyncDisposable
     /// <summary>Throwaway tenant context key (GOZ-0003), provisioned by the migrator and given to every test API.</summary>
     public const string ContextKey = "it-context-key-0003-not-a-secret-Hx52";
 
+    /// <summary>The registry origin (GOZ-0005) recorded by the first migrate and configured for every test API.</summary>
+    public const string Origin = "registry.test.gozleme.test";
+
     private readonly PostgreSqlContainer _container;
     private readonly int _hostPort;
 
@@ -32,7 +36,8 @@ public sealed class GozlemeDatabase : IAsyncDisposable
         _hostPort = hostPort;
     }
 
-    public static async Task<GozlemeDatabase> StartAsync(string image = PgvectorImage)
+    /// <summary>Starts a dedicated container; <paramref name="migrate"/> false leaves it unmigrated (GOZ-0005 origin tests).</summary>
+    public static async Task<GozlemeDatabase> StartAsync(string image = PgvectorImage, bool migrate = true)
     {
         // A fixed host port keeps connection strings valid across stop/start in outage tests.
         var hostPort = FreeTcpPort();
@@ -48,6 +53,11 @@ public sealed class GozlemeDatabase : IAsyncDisposable
         await container.StartAsync();
 
         var db = new GozlemeDatabase(container, hostPort);
+        if (!migrate)
+        {
+            return db;
+        }
+
         var exitCode = await db.MigrateAsync();
         if (exitCode != 0)
         {
@@ -64,8 +74,11 @@ public sealed class GozlemeDatabase : IAsyncDisposable
 
     public string AppConnectionString => Build("gozleme_app", AppPassword);
 
-    public Task<int> MigrateAsync() =>
-        MigrationRunner.RunAsync([$"--ConnectionStrings:{MigrationRunner.MigratorConnectionStringName}={MigratorConnectionString}", $"--{TenancyOptions.Section}:ContextKey={ContextKey}"]);
+    /// <summary>Runs the one-shot migrator; <paramref name="origin"/> null leaves the registry origin unset.</summary>
+    public Task<int> MigrateAsync(string? origin = Origin) =>
+        MigrationRunner.RunAsync([
+            $"--ConnectionStrings:{MigrationRunner.MigratorConnectionStringName}={MigratorConnectionString}", $"--{TenancyOptions.Section}:ContextKey={ContextKey}",
+            .. origin is null ? Array.Empty<string>() : [$"--{RegistryOriginOptions.Section}:Origin={origin}"]]);
 
     /// <summary>A token signed with the test key; defaults to a 5-minute lifetime.</summary>
     public static string SignContext(Guid accountId, DateTimeOffset? expires = null, string key = ContextKey) =>
@@ -105,6 +118,12 @@ public sealed class GozlemeDatabase : IAsyncDisposable
         await using var connection = await dataSource.OpenConnectionAsync();
         return await body(connection);
     }
+
+    /// <summary>
+    /// Runs <paramref name="sql"/> as the owner's own login with no account context, as the operator commands do
+    /// (GOZ-0005 maintainer Q11), in one transaction that is rolled back.
+    /// </summary>
+    public Task<T?> AsOwnerAsync<T>(string sql, params object[] parameters) => InTransactionAsync<T>(MigratorConnectionString, null, sql, parameters);
 
     /// <summary>The <c>establish_context</c> setup statement for <see cref="InTransactionAsync{T}"/>.</summary>
     public static string Establish(string token) => $"SELECT gozleme.establish_context('{token}')";

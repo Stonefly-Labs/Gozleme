@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Gozleme.Api.Publishers;
 using Gozleme.Api.Telemetry;
 using Gozleme.Api.Tenancy;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,9 @@ namespace Gozleme.Api.Persistence;
 /// <summary>
 /// One-shot migration mode (<c>Gozleme.Api migrate</c>). Runs as the owner role
 /// (<c>ConnectionStrings:GozlemeMigrator</c>) so the serving process never holds DDL rights.
+/// Since GOZ-0005 it also records the registry origin once (research R6): validate the configured value,
+/// compare it with any recorded value <b>before</b> migrating, migrate, record, then verify. A recorded
+/// origin is never overwritten.
 /// </summary>
 internal static partial class MigrationRunner
 {
@@ -39,6 +43,7 @@ internal static partial class MigrationRunner
         builder.Services.AddDbContext<GozlemeDbContext>(options => GozlemeDbContext.Configure(options, dataSource));
 
         var tenancy = builder.Configuration.GetSection(TenancyOptions.Section).Get<TenancyOptions>() ?? new TenancyOptions();
+        var origin = builder.Configuration.GetSection(RegistryOriginOptions.Section).Get<RegistryOriginOptions>()?.Origin;
 
         using var host = builder.Build();
         await host.StartAsync(); // starts telemetry providers; disposing the host flushes exporters
@@ -46,6 +51,13 @@ internal static partial class MigrationRunner
         if (!tenancy.IsValid)
         {
             LogKeyMissing(logger, TenancyOptions.Section, TenancyOptions.MinKeyLength);
+            await host.StopAsync();
+            return 1;
+        }
+
+        if (!RegistryOrigin.IsValid(origin))
+        {
+            LogOriginInvalid(logger, RegistryOrigin.InvalidMessage);
             await host.StopAsync();
             return 1;
         }
@@ -61,6 +73,14 @@ internal static partial class MigrationRunner
             {
                 await using var scope = host.Services.CreateAsyncScope();
                 var db = scope.ServiceProvider.GetRequiredService<GozlemeDbContext>();
+                if (await RecordedOriginAsync(db) is { } before && !string.Equals(before, origin, StringComparison.Ordinal))
+                {
+                    LogOriginMismatch(logger, RegistryOrigin.MismatchMessage);
+                    activity?.SetStatus(ActivityStatusCode.Error, "origin_mismatch");
+                    await host.StopAsync();
+                    return 1; // before MigrateAsync: a mismatched run applies nothing
+                }
+
                 await db.Database.MigrateAsync();
                 var latest = (await db.Database.GetAppliedMigrationsAsync()).LastOrDefault() ?? "none";
                 LogMigrated(logger, latest);
@@ -71,6 +91,17 @@ internal static partial class MigrationRunner
                     WHERE context_keys.key IS DISTINCT FROM EXCLUDED.key
                     """);
                 LogKeyProvisioned(logger, changed > 0 ? "provisioned" : "unchanged");
+
+                var recorded = await db.Database.ExecuteSqlAsync($"INSERT INTO gozleme.registry_origin (id, origin) VALUES (1, {origin}) ON CONFLICT (id) DO NOTHING");
+                if (!string.Equals(await RecordedOriginAsync(db), origin, StringComparison.Ordinal))
+                {
+                    LogOriginMismatch(logger, RegistryOrigin.MismatchMessage);
+                    activity?.SetStatus(ActivityStatusCode.Error, "origin_mismatch");
+                    await host.StopAsync();
+                    return 1;
+                }
+
+                LogOriginRecorded(logger, recorded > 0 ? "recorded" : "verified");
                 await host.StopAsync();
                 return 0;
             }
@@ -82,6 +113,24 @@ internal static partial class MigrationRunner
             }
         }
     }
+
+    /// <summary>The recorded origin, or null before the table exists or the first record.</summary>
+    private static async Task<string?> RecordedOriginAsync(GozlemeDbContext db)
+    {
+        var exists = await db.Database.SqlQuery<bool>($"SELECT to_regclass('gozleme.registry_origin') IS NOT NULL AS \"Value\"").SingleAsync();
+        return exists
+            ? await db.Database.SqlQuery<string>($"SELECT origin AS \"Value\" FROM gozleme.registry_origin").SingleOrDefaultAsync()
+            : null;
+    }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "{Message} Nothing migrated")]
+    private static partial void LogOriginInvalid(ILogger logger, string message);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "{Message}")]
+    private static partial void LogOriginMismatch(ILogger logger, string message);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Registry origin {Outcome}")]
+    private static partial void LogOriginRecorded(ILogger logger, string outcome);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Database migrated; latest migration {MigrationId}")]
     private static partial void LogMigrated(ILogger logger, string migrationId);

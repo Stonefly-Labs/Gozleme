@@ -1,7 +1,7 @@
 namespace Gozleme.Api.Identity;
 
 /// <summary>
-/// Security audit events (GOZ-0001 FR-029; organization events GOZ-0002 FR-023; role events GOZ-0004 FR-019): category <c>Gozleme.Security.Audit</c>, opaque account id only —
+/// Security audit events (GOZ-0001 FR-029; organization events GOZ-0002 FR-023; role events GOZ-0004 FR-019; publisher events GOZ-0005 FR-026): category <c>Gozleme.Security.Audit</c>, opaque account id only —
 /// never an email, password, cookie or session key. Exported through the normal log pipeline.
 /// </summary>
 internal sealed partial class SecurityAudit(ILoggerFactory loggers)
@@ -80,4 +80,30 @@ internal sealed partial class SecurityAudit(ILoggerFactory loggers)
 
     [LoggerMessage(EventId = 1302, EventName = "gozleme.audit.org_member_roles_changed", Level = LogLevel.Information, Message = "Member {TargetUserId} roles changed from {Before} to {After} in {OrganizationId} by {UserId}")]
     public partial void MemberRolesChanged(Guid organizationId, Guid targetUserId, string before, string after, Guid userId);
+
+    // Publishers (GOZ-0005): 1401–1408. Opaque ids and fixed vocabularies only: never a handle, capability
+    // name, alias or display name, which are the caller's input.
+    [LoggerMessage(EventId = 1401, EventName = "gozleme.audit.publisher_registered", Level = LogLevel.Information, Message = "Publisher registered {PublisherId} in {OrganizationId} by {UserId} with claim {ClaimId}")]
+    public partial void PublisherRegistered(Guid publisherId, Guid organizationId, Guid userId, Guid claimId);
+
+    [LoggerMessage(EventId = 1402, EventName = "gozleme.audit.publisher_renamed", Level = LogLevel.Information, Message = "Publisher renamed {PublisherId} in {OrganizationId} by {UserId}")]
+    public partial void PublisherRenamed(Guid publisherId, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1403, EventName = "gozleme.audit.capability_created", Level = LogLevel.Information, Message = "Capability created {CapabilityId} under {PublisherId} in {OrganizationId} by {UserId}")]
+    public partial void CapabilityCreated(Guid capabilityId, Guid publisherId, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1404, EventName = "gozleme.audit.capability_renamed", Level = LogLevel.Information, Message = "Capability renamed {CapabilityId} under {PublisherId} in {OrganizationId} by {UserId}")]
+    public partial void CapabilityRenamed(Guid capabilityId, Guid publisherId, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1405, EventName = "gozleme.audit.publisher_registration_refused", Level = LogLevel.Warning, Message = "Publisher registration refused ({Category}) in {OrganizationId} {UserId}")]
+    public partial void PublisherRegistrationRefused(string category, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1406, EventName = "gozleme.audit.handle_reserved", Level = LogLevel.Warning, Message = "Operator reserved handle claim {ClaimId} ({Kind}) for {EarmarkedOrganizationId}")]
+    public partial void HandleReserved(Guid claimId, string kind, Guid? earmarkedOrganizationId);
+
+    [LoggerMessage(EventId = 1407, EventName = "gozleme.audit.handle_reservation_released", Level = LogLevel.Warning, Message = "Operator released handle claim {ClaimId}")]
+    public partial void HandleReservationReleased(Guid claimId);
+
+    [LoggerMessage(EventId = 1408, EventName = "gozleme.audit.handle_reclaimed", Level = LogLevel.Warning, Message = "Operator reclaimed handle claim {ClaimId}; publisher {PublisherId} of {OrganizationId} suspended; earmark {EarmarkClaimId}")]
+    public partial void HandleReclaimed(Guid claimId, Guid publisherId, Guid organizationId, Guid? earmarkClaimId);
 }
