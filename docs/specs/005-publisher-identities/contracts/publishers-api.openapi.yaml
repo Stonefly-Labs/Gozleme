@@ -1,0 +1,219 @@
+openapi: 3.1.0
+info:
+  title: Gözleme Publishers API — GOZ-0005
+  version: "1"
+  description: >
+    Publisher and capability identity endpoints, organization-scoped under the Organizations API v1.
+    Inherited from GOZ-0002/0003/0004: session required, Cache-Control no-store, x-gozleme-client on
+    unsafe methods, the identical empty 404 for a malformed, unknown or non-member organization, 503
+    {"error":"unavailable"} while PostgreSQL is unreachable or the registry origin is not yet verified,
+    and 403 {"error":"forbidden"} when the caller is a member whose roles do not permit the action
+    (docs/architecture/contracts/organization-permissions.md). Order: membership → permission →
+    validation → target → suspension → write. A publisher or capability id that is malformed, unknown,
+    of another organization, or a capability under the wrong publisher, is the same empty 404.
+    Handles, capability names and display names never appear in URLs. GET /api/v1/capabilities and
+    POST /api/v1/publish still answer 404 (FR-025). No HTTP route reserves, releases, reclaims,
+    unsuspends or transfers a handle (FR-032).
+servers:
+  - url: http://api:8080
+security:
+  - session: []
+paths:
+  /api/v1/organizations/{organizationId}/publishers:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }]
+    get:
+      operationId: listPublishers
+      x-gozleme-action: publisher.list
+      responses:
+        '200':
+          content: { application/json: { schema: { $ref: '#/components/schemas/PublisherList' } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      operationId: registerPublisher
+      x-gozleme-action: publisher.register
+      description: >
+        Admin only. Rate-limited per account (Gozleme:Publishers:RegisterPerHour). Consumes an operator
+        earmark for this organization if one exists; a taken, blocked or other-organization earmarked
+        handle answers 409 handle_unavailable, identically for every caller and owner.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/RegisterPublisherRequest' } } }
+      responses:
+        '201':
+          headers: { Location: { schema: { type: string } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/Publisher' } } }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: The handle cannot be registered. Reveals nothing about any holder.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: handle_unavailable }
+        '429': { description: Too many registration attempts for this account }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }, { $ref: '#/components/parameters/PublisherId' }]
+    get:
+      operationId: getPublisher
+      x-gozleme-action: publisher.read
+      responses:
+        '200':
+          content: { application/json: { schema: { $ref: '#/components/schemas/Publisher' } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      operationId: renamePublisher
+      x-gozleme-action: publisher.rename
+      description: Admin only. Changes the display name only; the same value succeeds with no audit event.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/DisplayNameRequest' } } }
+      responses:
+        '200':
+          content: { application/json: { schema: { $ref: '#/components/schemas/Publisher' } } }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Suspended' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities:
+    parameters: [{ $ref: '#/components/parameters/OrganizationId' }, { $ref: '#/components/parameters/PublisherId' }]
+    get:
+      operationId: listCapabilities
+      x-gozleme-action: capability.list
+      responses:
+        '200':
+          content: { application/json: { schema: { $ref: '#/components/schemas/CapabilityList' } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      operationId: createCapability
+      x-gozleme-action: capability.create
+      description: Publisher role only. Allocates the canonical id and reserves the alias in one statement.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateCapabilityRequest' } } }
+      responses:
+        '201':
+          headers: { Location: { schema: { type: string } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/Capability' } } }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: >
+            conflict: the name is used under this publisher, or its alias is already reserved (including an
+            alias retired by a reclaim). suspended: the publisher's handle was reclaimed.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}:
+    parameters:
+      - { $ref: '#/components/parameters/OrganizationId' }
+      - { $ref: '#/components/parameters/PublisherId' }
+      - { $ref: '#/components/parameters/CapabilityId' }
+    get:
+      operationId: getCapability
+      x-gozleme-action: capability.read
+      responses:
+        '200':
+          content: { application/json: { schema: { $ref: '#/components/schemas/Capability' } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      operationId: renameCapability
+      x-gozleme-action: capability.rename
+      description: Publisher role only. Changes the display name only; canonical id, name and alias never change.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/DisplayNameRequest' } } }
+      responses:
+        '200':
+          content: { application/json: { schema: { $ref: '#/components/schemas/Capability' } } }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Suspended' }
+components:
+  securitySchemes:
+    session: { type: apiKey, in: cookie, name: gozleme_session }
+  parameters:
+    OrganizationId:
+      { name: organizationId, in: path, required: true, schema: { type: string, description: Opaque UUID } }
+    PublisherId:
+      { name: publisherId, in: path, required: true, schema: { type: string, description: 'Opaque UUID (the id part of gz://<origin>/pub/<id>)' } }
+    CapabilityId:
+      { name: capabilityId, in: path, required: true, schema: { type: string, description: 'Opaque UUID (the id part of gz://<origin>/cap/<id>)' } }
+  responses:
+    NotFound: { description: 'Not a member, or an unknown, malformed or other-organization id (indistinguishable; empty body)' }
+    Forbidden:
+      description: The caller is a member but its roles do not permit the action; nothing changed
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: forbidden } } }
+    ValidationFailed:
+      description: A field breaks its rule; nothing changed. Input is never normalized.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: validation_failed
+            fields: { handle: ['Use 2–39 lowercase letters, digits and single hyphens, starting with a letter and not ending with a hyphen.'] }
+    Suspended:
+      description: The publisher's handle was reclaimed by the operator; its names are frozen
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: suspended } } }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, enum: [validation_failed, forbidden, handle_unavailable, conflict, suspended, rate_limited, unavailable] }
+        fields: { type: object, additionalProperties: { type: array, items: { type: string } } }
+    RegisterPublisherRequest:
+      type: object
+      required: [handle, displayName]
+      properties:
+        handle: { type: string, pattern: '^[a-z][a-z0-9]*(-[a-z0-9]+)*$', minLength: 2, maxLength: 39 }
+        displayName: { type: string, minLength: 1, maxLength: 100 }
+    CreateCapabilityRequest:
+      type: object
+      required: [name, displayName]
+      properties:
+        name: { type: string, pattern: '^[a-z][a-z0-9]*(-[a-z0-9]+)*$', minLength: 2, maxLength: 64 }
+        displayName: { type: string, minLength: 1, maxLength: 100 }
+    DisplayNameRequest:
+      type: object
+      required: [displayName]
+      properties: { displayName: { type: string, minLength: 1, maxLength: 100 } }
+    Publisher:
+      type: object
+      required: [id, publisherId, origin, organizationId, handle, displayName, state, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        publisherId: { type: string, example: 'gz://registry.demo.gozleme.test/pub/0193a5c2-7d1e-7c3a-9f00-1a2b3c4d5e6f' }
+        origin: { type: string, example: registry.demo.gozleme.test }
+        organizationId: { type: string, format: uuid, description: 'Unambiguous organization reference for confirmation (FR-009)' }
+        handle: { type: string }
+        displayName: { type: string }
+        state: { type: string, enum: [active, suspended], description: Derived from the installation-owned handle claim }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    PublisherList:
+      type: object
+      required: [origin, publishers]
+      properties:
+        origin: { type: string }
+        publishers: { type: array, items: { $ref: '#/components/schemas/Publisher' } }
+    Capability:
+      type: object
+      required: [id, canonicalId, origin, publisherId, alias, name, displayName, state, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        canonicalId: { type: string, example: 'gz://registry.demo.gozleme.test/cap/0193a5c3-0a11-7b22-8c33-4d5e6f708192' }
+        origin: { type: string }
+        publisherId: { type: string, format: uuid }
+        alias: { type: string, example: acme-tools/weather-lookup }
+        name: { type: string }
+        displayName: { type: string }
+        state: { type: string, enum: [active, suspended], description: The owning publisher's state }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CapabilityList:
+      type: object
+      required: [origin, capabilities]
+      properties:
+        origin: { type: string }
+        capabilities: { type: array, items: { $ref: '#/components/schemas/Capability' } }

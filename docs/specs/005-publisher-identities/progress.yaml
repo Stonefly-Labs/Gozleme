@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0005
-stage: specify
+stage: plan
 status: in-progress
 promptRevision: 6
 branch: feature/goz-0005-publisher-identities
@@ -15,11 +15,15 @@ decisions:
 - {at: '2026-11-16', by: maintainer, topic: role-loss, finding: GOZ-0004-IF-05, decision: 'Q7 option A: publishers, IDs and aliases belong to the organization and are unaffected by losing a role or leaving.'}
 - {at: '2026-11-16', by: maintainer, topic: mutability, decision: 'Q8 option A: only display names mutable; no retirement, deletion or alias release. Amended by Q9 for handles.'}
 - {at: '2026-11-16', by: maintainer, topic: handle-squatting, decision: 'Q9 option A (raised after drafting from a squatting risk note): operator command line only can reserve handles (blocked, or earmarked for an organization by opaque ID) and reclaim a registered handle; reclaim suspends the holding publisher, its capabilities keep canonical IDs and their aliases stay retired forever; the handle may be re-registered; audited; no HTTP surface.'}
+- {at: '2026-11-16', by: maintainer, topic: operator-reclaim-mechanism, finding: GOZ-0003-IF-04, decision: 'Q10 option A (clarify): handle claims, operator reservations and alias reservations are installation-owned claim tables whose unique constraints enforce instance-wide uniqueness; the app login may insert but not list other organizations entries; reclaim changes only the claim row and suspension is derived from claim loss, so no tenant row is touched from outside its tenant (FR-037).'}
+- {at: '2026-11-16', by: maintainer, topic: operator-login, finding: GOZ-0003-IF-04, decision: 'Q11 option A (plan): operator handle commands (reserve, release, reclaim) connect as the owner login gozleme_migrator, which the operator already holds for migrate; the claim tables enable but do not force row security, so the owner is the installation authority over them while gozleme_app stays bound by policies; guard triggers bind the owner to the allowed one-way transitions. Rejected: a new gozleme_operator login (new secret, manual role creation on existing volumes) and dropping reclaim (reverses Q9).'}
 agentChoices:
-- {at: '2026-11-16', topic: publisher-rename-role, choice: 'publisher display-name change is admin-only, matching publisher.register; disclosed to the maintainer for veto.'}
+- {at: '2026-11-16', topic: publisher-rename-role, choice: 'publisher display-name change is admin-only, matching publisher.register; disclosed to the maintainer for veto.', disposition: 'maintainer did not veto (2026-11-16)'}
 stages:
   specify: {status: done, artifact: docs/specs/005-publisher-identities/spec.md, at: '2026-11-16', checklist: docs/specs/005-publisher-identities/checklists/requirements.md}
+  clarify: {status: done, at: '2026-11-16', questions: 1, note: 'Q10 resolved FR-036 (operator reclaim mechanism) as option A; FR-037 added'}
+  plan: {status: done, at: '2026-11-16', artifact: docs/specs/005-publisher-identities/plan.md, artifacts: [research.md, data-model.md, quickstart.md, contracts/publishers-api.openapi.yaml, contracts/namespace.md, contracts/operator-commands.md, contracts/permissions-delta.md], note: 'Q11 decided (operator login = owner); claim-table design verified on scratch postgres:17 (research R2-R5)'}
 attempts: []
 blockers: []
-nextAction: 'Run /speckit-clarify (or proceed to /speckit-plan); plan must resolve FR-036 (operator reclaim of a tenant-owned publisher row within GOZ-0003-IF-04) or escalate to the maintainer.'
+nextAction: 'Run /speckit-tasks from plan.md; tasks must include the research R12 pin updates, the RlsCatalog negative tests for InstanceReference and InstanceClaims, and review-security on the Q11 owner-login design at convergence.'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}
