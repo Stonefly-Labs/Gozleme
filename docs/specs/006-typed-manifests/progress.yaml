@@ -32,12 +32,17 @@ agentChoices:
 - {at: '2026-11-17', topic: result-status, choice: 'A3: validation answers 200 for both outcome accepted and outcome rejected; authorization and transport failures keep 403/404/409/413/415/429/503; disclosed to the maintainer for veto.'}
 - {at: '2026-11-17', topic: a2a-required, choice: 'protoc-gen-jsonschema drops the 61 field_behavior REQUIRED annotations in a2a.proto; the Gozleme A2A strict overlay restates them as required lists from the proto (normative source); disclosed to the maintainer for veto.'}
 - {at: '2026-11-17', topic: corvus-analyzers, choice: 'Corvus.Text.Json CTJ* analyzers removed from compilation repo-wide in Directory.Build.targets because they flag unrelated code (Guid.Parse, System.Text.Json) as errors; disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: yaml-non-finite, choice: 'YAML core-schema .inf and .nan have no JSON form, so the restricted YAML reader keeps them as strings; other core-schema numbers are normalized to JSON (0x1F -> 31, .5 -> 0.5); disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: unevaluated-noise, choice: 'schema failures are reduced to leaf keywords; an unevaluatedProperties finding is dropped when another schema failure lies at or beneath the same object, because a failed subschema discards its annotations (members would be reported unknown when merely invalid); the member is reported on the next attempt; disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: one-problem-per-location, choice: 'one problem is kept per location: reserved_claim or secret_value first, otherwise the first category in contract order; problems whose pointer has a credential-shaped segment are dropped because the secret.name problem at the parent reports them; disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: unavailable-outcome, choice: 'the 503 exit records telemetry outcome unavailable, beyond the eight outcomes listed in research R16, so every exit sets the span outcome (T020); disclosed to the maintainer for veto.'}
+- {at: '2026-11-17', topic: mcp-meta-serverinfo, choice: 'upstream MCP Implementation has no _meta; the strict overlay allows _meta on serverInfo because contracts/native-formats.md lists it as an extension point; disclosed to the maintainer for veto.'}
 - {at: '2026-11-17', topic: rate-limit, choice: 'validation rate-limited per account in memory per API instance (stateless operation, no shared budget); disclosed to the maintainer for veto.'}
 stages:
   specify: {status: done, artifact: docs/specs/006-typed-manifests/spec.md, at: '2026-11-17', checklist: docs/specs/006-typed-manifests/checklists/requirements.md}
   clarify: {status: done, at: '2026-11-17', questions: 4, checklist: 16/16}
   plan: {status: done, at: '2026-11-17', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [P1, P2, P3, P4], verifyAtVendoring: ['Corvus run-time compile cost and keyword/instance-location output', 'MCP 2025-11-25 schema dialect', 'A2A v1.0.1 JSON Schema generation from proto', 'Utf8JsonReader duplicate-property option']}
-  implement: {status: in-progress, at: '2026-11-17', done: [T001, T002, T003, T004, T005, T006], blocked: []}
+  implement: {status: in-progress, at: '2026-11-17', done: [T001, T002, T003, T004, T005, T006, T007, T008, T009, T010, T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024, T025, T026, T027], blocked: []}
   tasks: {status: done, at: '2026-11-17', artifact: docs/specs/006-typed-manifests/tasks.md, count: 72, phases: {setup: 6, foundational: 21, US1: 18, US2: 10, US3: 3, US4: 6, polish: 8}, note: 'research R6 rule name aligned to contract catalogue (reserved.a2a-signatures)'}
 attempts: []
 blockers:

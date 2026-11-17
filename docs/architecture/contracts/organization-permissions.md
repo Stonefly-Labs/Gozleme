@@ -19,6 +19,9 @@ this file in their own slice. The broader authorization architecture is `docs/ar
    capability endpoints (GOZ-0005) check validation (`400`), then the target (`404`), then suspension (`409`).
    Publisher registration takes one permit from the caller's hourly budget after the permission check and
    before validation; an exhausted budget answers `429 {"error":"rate_limited"}`, so a non-member never sees `429`.
+   For `manifest.validate` (GOZ-0006) the steps after permission are: target (`404`), suspension (`409`), the
+   account's in-memory validation budget (`429 {"error":"rate_limited"}`), media type and size (`415`/`413`), then
+   validation (`200` with an `accepted` or `rejected` outcome). A non-member never sees `403`, `409` or `429`.
 
 Inputs are exactly `(the caller's roles in this organization, action)`. There are no conditions,
 attributes, per-user or per-resource grants, deny rules or policy documents. A role is held only
@@ -51,10 +54,15 @@ capability.list          capability    allow  allow     allow   allow      allow
 capability.read          capability    allow  allow     allow   allow      allow
 capability.create        capability    deny   deny      deny    allow      deny
 capability.rename        capability    deny   deny      deny    allow      deny
+manifest.validate        capability    deny   deny      deny    allow      deny
 ```
 
 GOZ-0005 (contracts/permissions-delta.md): resources `publisher` and `capability`. `admin` no longer holds
 every action. `publisher` is the first role that permits more than `member` (maintainer Q5).
+
+GOZ-0006 (contracts/permissions-delta.md): `manifest.validate` on the existing `capability` resource, held by
+`publisher` only (maintainer Q2). Validation stores nothing, so it adds no database enforcement row. 19 actions
+over 5 resources; 18 scoped endpoints.
 
 Account-level operations, outside this table and open to every signed-in account: create an
 organization (the creator holds `admin` and `member`) and redeem an invitation (the redeemer holds
@@ -82,6 +90,7 @@ organization (the creator holds `admin` and `member`) and redeem an invitation (
 | `POST …/publishers/{publisherId}/capabilities` | `capability.create` |
 | `GET …/publishers/{publisherId}/capabilities/{capabilityId}` | `capability.read` |
 | `PATCH …/publishers/{publisherId}/capabilities/{capabilityId}` | `capability.rename` |
+| `POST …/publishers/{publisherId}/capabilities/{capabilityId}/manifests/validate` | `manifest.validate` |
 
 The `DELETE …/members/{userId}` endpoint declares both actions and picks one from the target.
 

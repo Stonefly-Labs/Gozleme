@@ -63,6 +63,7 @@ internal static class OrgAction
     public const string CapabilityRead = "capability.read";
     public const string CapabilityCreate = "capability.create";
     public const string CapabilityRename = "capability.rename";
+    public const string ManifestValidate = "manifest.validate";
 
     /// <summary>Every action with its resource type, in contract order.</summary>
     public static readonly IReadOnlyList<(string Action, string Resource)> All =
@@ -85,6 +86,7 @@ internal static class OrgAction
         (CapabilityRead, OrgResource.Capability),
         (CapabilityCreate, OrgResource.Capability),
         (CapabilityRename, OrgResource.Capability),
+        (ManifestValidate, OrgResource.Capability),
     ];
 
     public static string ResourceOf(string action) => All.Single(a => a.Action == action).Resource;
@@ -114,7 +116,8 @@ internal static class OrganizationPermissions
         OrgAction.PublisherRegister, OrgAction.PublisherRename,
     ];
 
-    private static readonly string[] PublisherActions = [.. MemberActions, OrgAction.CapabilityCreate, OrgAction.CapabilityRename];
+    /// <summary>Since GOZ-0006, <see cref="OrgAction.ManifestValidate"/> too (maintainer Q2): publisher only, admin does not hold it.</summary>
+    private static readonly string[] PublisherActions = [.. MemberActions, OrgAction.CapabilityCreate, OrgAction.CapabilityRename, OrgAction.ManifestValidate];
 
     private static readonly FrozenDictionary<string, FrozenSet<string>> Table = new Dictionary<string, FrozenSet<string>>(StringComparer.Ordinal)
     {

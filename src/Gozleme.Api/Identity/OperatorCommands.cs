@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Gozleme.Api.Organizations;
 using Gozleme.Api.Persistence;
+using Gozleme.Api.Publishers;
 using Gozleme.Api.Telemetry;
 using Gozleme.Api.Tenancy;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +40,15 @@ internal static class OperatorCommands
     public const string PartnerOrganizationName = "Seeded Partner Org";
 
     public const string UnrestorableMessage = "Demo organization cannot be restored as a member; run make reset.";
+
+    /// <summary>The seeded demo publisher and capability (GOZ-0006 FR-025, research R14): fixed UUIDv7-shaped ids from 2024.</summary>
+    public static readonly Guid DemoPublisherId = Guid.Parse("0193a000-0000-7000-8000-000000000010");
+    public const string DemoPublisherHandle = "seeded-demo";
+    public const string DemoPublisherName = "Seeded Demo Publisher";
+    public static readonly Guid DemoCapabilityId = Guid.Parse("0193a000-0000-7000-8000-000000000011");
+    public const string DemoCapabilityName = "manifest-demo";
+    public const string DemoCapabilityDisplayName = "Manifest Demo";
+    public const string DemoHandleHeldMessage = "The demo publisher handle is held elsewhere or the demo capability name is taken; run make reset.";
 
     public static bool Handles(string? command) => command is "seed" or "reset-password" or "unlock";
 
@@ -143,7 +153,59 @@ internal static class OperatorCommands
         // GOZ-0005 research R11: carol holds publisher, so the demo shows capability writes; alice (admin) does not.
         var roles = new Dictionary<Guid, string[]> { [ids[DemoAccounts[3]]] = [OrganizationRole.Member, OrganizationRole.Publisher] };
         var seeded = await SeedOrganizationAsync(services, DemoOrganizationId, DemoOrganizationName, [ids[DemoAccounts[0]], ids[DemoAccounts[3]]], roles, stdout, stderr);
-        return seeded != Ok ? seeded : await SeedOrganizationAsync(services, PartnerOrganizationId, PartnerOrganizationName, [ids[DemoAccounts[4]]], roles, stdout, stderr);
+        seeded = seeded != Ok ? seeded : await SeedOrganizationAsync(services, PartnerOrganizationId, PartnerOrganizationName, [ids[DemoAccounts[4]]], roles, stdout, stderr);
+        return seeded != Ok ? seeded : await SeedCapabilityAsync(services, ids[DemoAccounts[0]], ids[DemoAccounts[3]], stdout, stderr);
+    }
+
+    /// <summary>
+    /// Idempotent (GOZ-0006 research R14): alice (admin) registers the demo publisher and carol (publisher) creates the
+    /// demo capability, each through its own signed tenant context, so the step has no right its actor lacks. Existing
+    /// rows are left as they are (handles and names are immutable). A handle held by another organization, or the name
+    /// taken by another capability, fails with a clear message rather than inventing a new one.
+    /// </summary>
+    private static async Task<int> SeedCapabilityAsync(IServiceProvider services, Guid admin, Guid publisherMember, TextWriter stdout, TextWriter stderr)
+    {
+        var db = services.GetRequiredService<GozlemeDbContext>();
+        var signer = services.GetRequiredService<TenantContextSigner>();
+        var store = new PublisherStore(db, services.GetRequiredService<TimeProvider>());
+
+        db.ChangeTracker.Clear();
+        await using (var transaction = await db.Database.BeginTransactionAsync())
+        {
+            await TenantContext.EstablishAsync(db, signer.Sign(admin), CancellationToken.None);
+            if (await store.FindAsync(DemoOrganizationId, DemoPublisherId.ToString(), CancellationToken.None) is null)
+            {
+                var (result, _, _) = await store.RegisterAsync(DemoOrganizationId, admin, DemoPublisherHandle, DemoPublisherName, CancellationToken.None, DemoPublisherId);
+                if (result != WriteResult.Ok)
+                {
+                    await stderr.WriteLineAsync(DemoHandleHeldMessage);
+                    return Failed;
+                }
+            }
+
+            await transaction.CommitAsync();
+        }
+
+        db.ChangeTracker.Clear();
+        await using (var transaction = await db.Database.BeginTransactionAsync())
+        {
+            await TenantContext.EstablishAsync(db, signer.Sign(publisherMember), CancellationToken.None);
+            var publisher = (await store.FindAsync(DemoOrganizationId, DemoPublisherId.ToString(), CancellationToken.None))!;
+            if (await store.FindCapabilityAsync(publisher, DemoCapabilityId.ToString(), CancellationToken.None) is null)
+            {
+                var (result, _) = await store.CreateCapabilityAsync(publisher, publisherMember, DemoCapabilityName, DemoCapabilityDisplayName, CancellationToken.None, DemoCapabilityId);
+                if (result != WriteResult.Ok)
+                {
+                    await stderr.WriteLineAsync(DemoHandleHeldMessage);
+                    return Failed;
+                }
+            }
+
+            await transaction.CommitAsync();
+        }
+
+        await stdout.WriteLineAsync($"Seeded demo capability {DemoCapabilityId}");
+        return Ok;
     }
 
     /// <summary>

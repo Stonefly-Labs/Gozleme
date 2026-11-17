@@ -5,7 +5,8 @@ namespace Gozleme.Api.Tests;
 /// <summary>
 /// GOZ-0004 FR-001–FR-003 (research R7): built-in roles, union semantics and the role table. GOZ-0005 (research R9):
 /// every role reads publishers and capabilities, admin registers and renames publishers but holds no capability
-/// write, and publisher alone creates and renames capabilities (maintainer Q5).
+/// write, and publisher alone creates and renames capabilities (maintainer Q5). GOZ-0006: publisher alone validates
+/// manifests; admin does not (maintainer Q2).
 /// </summary>
 public sealed class OrganizationPermissionsTests
 {
@@ -15,7 +16,7 @@ public sealed class OrganizationPermissionsTests
         OrgAction.PublisherList, OrgAction.PublisherRead, OrgAction.CapabilityList, OrgAction.CapabilityRead,
     ];
 
-    private static readonly string[] CapabilityWrites = [OrgAction.CapabilityCreate, OrgAction.CapabilityRename];
+    private static readonly string[] CapabilityWrites = [OrgAction.CapabilityCreate, OrgAction.CapabilityRename, OrgAction.ManifestValidate];
 
     [Theory]
     [InlineData(OrganizationRole.Member)]
@@ -38,6 +39,17 @@ public sealed class OrganizationPermissionsTests
         Assert.Contains(OrgAction.PublisherRename, admin);
         Assert.False(OrganizationPermissions.Allows([OrganizationRole.Admin], OrgAction.CapabilityCreate, OrgResource.Capability));
         Assert.True(OrganizationPermissions.Allows([OrganizationRole.Admin, OrganizationRole.Publisher], OrgAction.CapabilityCreate, OrgResource.Capability));
+    }
+
+    [Fact]
+    public void Manifest_validate_is_allowed_for_publisher_only()
+    {
+        foreach (var role in OrganizationRole.All)
+        {
+            Assert.Equal(role == OrganizationRole.Publisher, OrganizationPermissions.Allows([role], OrgAction.ManifestValidate, OrgResource.Capability));
+        }
+
+        Assert.False(OrganizationPermissions.Allows([OrganizationRole.Publisher], OrgAction.ManifestValidate, OrgResource.Publisher));
     }
 
     [Fact]
