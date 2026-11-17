@@ -1,7 +1,7 @@
 schemaVersion: '1.0'
 specId: GOZ-0005
-stage: pr-ready
-status: in-progress
+stage: merged
+status: complete
 promptRevision: 6
 branch: feature/goz-0005-publisher-identities
 featureDirectory: docs/specs/005-publisher-identities
@@ -38,8 +38,10 @@ stages:
   analyze: {status: done, at: '2026-11-16', findings: 10, critical: 0, high: 0, note: 'C1 rate-limit tests (T014), U1 limiter after auth (T019, R8; maintainer decision), A1 origin 253/254 boundary (T041), C2 Helm required-origin negative render (T004), C3 single read path pin (T007, T011, T045), C4 no suggested handle (T016), C5 SC-001 timing (T048), C6 role-lost-mid-request test (T031), F1 spec status; F2 FR numbering left stable by design'}
   implement: {status: done, at: '2026-11-16', note: 'T001-T052 done. Backend unit 142, integration 351 (port-collision flakes from foreign CI containers on this Docker host rerun green), web Vitest 171, lint/typecheck clean, helm-lint incl. negative render, next build. Fixed during implement: migration Down drops the four interdependent tables in one statement; isolation snapshot scoped to its organizations; server-only publisher reads split from the client module (next build failed); API as PID 1 exits 1 on a startup failure instead of spinning in abort() (latent since GOZ-0000, first exercised by FR-003); demo resets the persistent registration budget of its accounts.'}
   demo: {status: passed, at: '2026-11-17', run: docs/specs/005-publisher-identities/evidence/demo-run.json, commit: 536faf3f2eb871a5702a6e719f23cc90bb06f516, tests: '46/46 (goz-0000..goz-0005)', us1ElapsedSeconds: 'see publisher-evidence.json'}
+  merge: {status: verified, pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/19', mergeCommit: 2f63e016d5676734ff88ca6cf9b0917db4528d60, head: 8e29f310cbd248212c0c3d9c6b12cd1193311aa4, mergedBy: christopherhouse, mergedAt: '2026-11-17T16:24:03Z', verifiedBy: 'gh pr view + git merge-base --is-ancestor', ci: 'all checks passed at 8815690; head 8e29f31 (docs-only) had 5/6 checks passed with the demo job still running at merge', at: '2026-11-17'}
   tasks: {status: done, at: '2026-11-16', artifact: docs/specs/005-publisher-identities/tasks.md, count: 52, note: 'Setup 4, Foundational 9, US1 10, US2 6, US3 6, US5 5, US4 3, Polish 9; includes R12 pins (T044), RlsCatalog negatives for InstanceReference/InstanceClaims (T045) and review-security flag for Q11 (T052)'}
 attempts: []
 blockers: []
-nextAction: 'Human review and merge of PR #19 (demo 46/46 at dc24888; all CI checks pass at 8815690). Do not mark complete until the merge is verified on main.'
+pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/19
+nextAction: 'Complete — merged in 2f63e01 (PR #19). Open impact decisions IF-02 (before GOZ-0012 plan), IF-04, IF-05, IF-08 (before GOZ-0039) carry forward. Residual follow-up: OrganizationEndpoints echoes 7-digit timestamps that PostgreSQL stores at microseconds (see ciFix).'
 evidence: {tests: [docs/specs/005-publisher-identities/progress.yaml], demos: [docs/specs/005-publisher-identities/evidence/demo-run.json, docs/specs/005-publisher-identities/evidence/publisher-evidence.json], screenshots: [docs/specs/005-publisher-identities/evidence/screenshots/], reviews: [docs/specs/005-publisher-identities/reviews/impact-analysis.md, docs/specs/005-publisher-identities/reviews/impact-findings.json]}
