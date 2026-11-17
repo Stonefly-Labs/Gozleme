@@ -18,7 +18,18 @@ switch (args.FirstOrDefault())
 }
 
 var app = GozlemeApp.Build(args);
-await app.RunAsync();
+try
+{
+    await app.RunAsync();
+}
+catch (Exception ex) when (Environment.ProcessId == 1)
+{
+    // The host has logged the cause (e.g. a registry origin mismatch, GOZ-0005 FR-003). As PID 1 in a container
+    // an unhandled exception's abort() is never delivered and the process spins, so exit with a failure code.
+    await Console.Error.WriteLineAsync($"Host failed: {ex.GetType().Name}");
+    return 1;
+}
+
 return 0;
 
 /// <summary>Entry point marker for WebApplicationFactory-based tests.</summary>

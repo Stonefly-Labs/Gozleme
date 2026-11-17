@@ -1,7 +1,7 @@
 import { forwardToApi } from "@/lib/api";
 import { segment } from "@/lib/organizations";
 import { crossSiteForbidden, isSameOrigin } from "@/lib/origin";
-import { capabilitiesPath } from "@/lib/publishers";
+import { capabilitiesPath } from "@/lib/publishers-server";
 
 export const dynamic = "force-dynamic";
 

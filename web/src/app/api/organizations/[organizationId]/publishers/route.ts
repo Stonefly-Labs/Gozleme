@@ -1,6 +1,6 @@
 import { forwardToApi } from "@/lib/api";
 import { crossSiteForbidden, isSameOrigin } from "@/lib/origin";
-import { publishersPath } from "@/lib/publishers";
+import { publishersPath } from "@/lib/publishers-server";
 
 export const dynamic = "force-dynamic";
 

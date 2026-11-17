@@ -11,7 +11,8 @@ import { SignedInHeader } from "@/components/SignedInHeader";
 import { StateBadge } from "@/components/StateBadge";
 import { forbiddenText } from "@/lib/client";
 import { getOrganization } from "@/lib/organizations";
-import { getPublisher, listCapabilities, SUSPENDED } from "@/lib/publishers";
+import { SUSPENDED } from "@/lib/publishers";
+import { getPublisher, listCapabilities } from "@/lib/publishers-server";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";

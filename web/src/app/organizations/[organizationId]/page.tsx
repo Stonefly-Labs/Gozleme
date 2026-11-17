@@ -10,7 +10,7 @@ import { RenameOrganizationForm } from "@/components/RenameOrganizationForm";
 import { SignedInHeader } from "@/components/SignedInHeader";
 import { type Fetched, getOrganization, type Invitation, listInvitations, listMembers } from "@/lib/organizations";
 import { forbiddenText } from "@/lib/client";
-import { listPublishers } from "@/lib/publishers";
+import { listPublishers } from "@/lib/publishers-server";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";

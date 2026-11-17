@@ -1,6 +1,8 @@
-import { type Fetched, get, segment } from "@/lib/organizations";
-
-/** Publishers API v1 shapes (docs/specs/005-publisher-identities/contracts/publishers-api.openapi.yaml). */
+/**
+ * Publishers API v1 shapes (docs/specs/005-publisher-identities/contracts/publishers-api.openapi.yaml) and
+ * client-safe messages. Server-side reads live in `publishers-server.ts`, so client components never pull in
+ * `next/headers`.
+ */
 export type PublisherState = "active" | "suspended";
 
 export interface Publisher {
@@ -50,20 +52,3 @@ export function fieldError(json: unknown, field: string): string | null {
 
 /** The `error` code of a JSON error body, if any. */
 export const errorCode = (json: unknown) => (json as { error?: string } | null)?.error ?? null;
-
-export const publishersPath = (organizationId: string) => `/api/v1/organizations/${segment(organizationId)}/publishers`;
-export const publisherPath = (organizationId: string, publisherId: string) => `${publishersPath(organizationId)}/${segment(publisherId)}`;
-export const capabilitiesPath = (organizationId: string, publisherId: string) => `${publisherPath(organizationId, publisherId)}/capabilities`;
-
-/** Server-side reads for pages, forwarding the session cookie like `getSession()`. */
-export const listPublishers = (organizationId: string, fetchImpl: typeof fetch = fetch): Promise<Fetched<{ origin: string; publishers: Publisher[] }>> =>
-  get(publishersPath(organizationId), fetchImpl);
-
-export const getPublisher = (organizationId: string, publisherId: string, fetchImpl: typeof fetch = fetch): Promise<Fetched<Publisher>> =>
-  get(publisherPath(organizationId, publisherId), fetchImpl);
-
-export const listCapabilities = (
-  organizationId: string,
-  publisherId: string,
-  fetchImpl: typeof fetch = fetch,
-): Promise<Fetched<{ origin: string; capabilities: Capability[] }>> => get(capabilitiesPath(organizationId, publisherId), fetchImpl);
