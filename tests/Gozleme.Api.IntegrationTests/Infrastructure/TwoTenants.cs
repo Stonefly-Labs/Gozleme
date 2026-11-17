@@ -4,7 +4,8 @@ namespace Gozleme.Api.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Two organizations with disjoint members, built through the real API (GOZ-0003): A = alice and carol
-/// with one open invitation created by carol; B = bob with one open invitation. Fresh accounts every
+/// (both admins since GOZ-0004, so carol may invite) with one open invitation created by carol; B = bob
+/// (admin) with one open invitation. Fresh accounts every
 /// time, so tests on the shared database never see each other's rows.
 /// </summary>
 public sealed record TwoTenants(
@@ -18,6 +19,7 @@ public sealed record TwoTenants(
         var (bob, _) = await AuthClient.SignedInAsync(factory);
         var orgA = await OrgClient.CreateAsync(alice, "Tenant A");
         await OrgClient.JoinAsync(alice, carol, orgA);
+        await OrgClient.SetRolesAsync(alice, orgA, await OrgClient.UserIdAsync(carol), "admin");
         var (_, codeA) = await OrgClient.InviteAsync(carol, orgA);
         var orgB = await OrgClient.CreateAsync(bob, "Tenant B");
         var (_, codeB) = await OrgClient.InviteAsync(bob, orgB);

@@ -6,9 +6,10 @@ models, APIs and AsyncAPI/event capabilities. It is a registry, **not** a produc
 gateway or AI request broker.
 
 > **Status:** foundation. The running stack is a status dashboard over a .NET 10 API and
-> PostgreSQL (GOZ-0000), with local accounts (GOZ-0001) and organizations with role-neutral
-> membership and single-use invitations (GOZ-0002). Database row-level security, roles, the
-> catalog and every other product feature arrive through the specs in
+> PostgreSQL (GOZ-0000), with local accounts (GOZ-0001), organizations with single-use
+> invitations (GOZ-0002), database row-level security (GOZ-0003) and built-in organization roles
+> enforced by the API and the database (GOZ-0004). The catalog and every other product feature
+> arrive through the specs in
 > [`docs/roadmap/spec-register.md`](docs/roadmap/spec-register.md).
 
 ## Quick start

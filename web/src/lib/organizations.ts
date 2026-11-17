@@ -1,11 +1,21 @@
 import { headers } from "next/headers";
 import { apiBaseUrl, apiHeaders } from "@/lib/api";
 
-/** Organizations API v1 shapes (contracts/organizations-api.openapi.yaml). */
+/** Organizations API v1 shapes (contracts/organizations-api.openapi.yaml; roles from GOZ-0004 rbac-api.openapi.yaml). */
 export interface Organization {
   id: string;
   displayName: string;
   createdAt: string;
+}
+
+/** Built-in roles (GOZ-0004 docs/architecture/contracts/organization-permissions.md). Every member holds `member`. */
+export const ROLES = ["admin", "approver", "member", "publisher", "reviewer"] as const;
+export type Role = (typeof ROLES)[number];
+
+/** `GET /organizations/{id}`: the caller's own roles and the actions they permit. */
+export interface OrganizationDetail extends Organization {
+  roles: Role[];
+  permissions: string[];
 }
 
 export interface OrganizationList {
@@ -19,6 +29,7 @@ export interface Member {
   joinedAt: string;
   joinedVia: "creator" | "invitation";
   isSelf: boolean;
+  roles: Role[];
 }
 
 export interface Invitation {
@@ -62,10 +73,11 @@ async function get<T>(path: string, fetchImpl: typeof fetch): Promise<Fetched<T>
 /** Server-side reads for pages, forwarding the session cookie like `getSession()`. */
 export const listOrganizations = (fetchImpl: typeof fetch = fetch) => get<OrganizationList>("/api/v1/organizations", fetchImpl);
 
-export const getOrganization = (id: string, fetchImpl: typeof fetch = fetch) => get<Organization>(`/api/v1/organizations/${segment(id)}`, fetchImpl);
+export const getOrganization = (id: string, fetchImpl: typeof fetch = fetch) => get<OrganizationDetail>(`/api/v1/organizations/${segment(id)}`, fetchImpl);
 
 export const listMembers = (id: string, fetchImpl: typeof fetch = fetch) =>
   get<{ members: Member[] }>(`/api/v1/organizations/${segment(id)}/members`, fetchImpl);
 
+/** Admin-only (`invitation.list`); a member's page never asks, so it never sees a 403 here. */
 export const listInvitations = (id: string, fetchImpl: typeof fetch = fetch) =>
   get<{ invitations: Invitation[] }>(`/api/v1/organizations/${segment(id)}/invitations`, fetchImpl);

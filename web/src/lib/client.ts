@@ -1,5 +1,5 @@
 /** Browser-side call to a same-origin route handler; network failures read as 503. */
-export async function send(method: "POST" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<{ status: number; json: unknown }> {
+export async function send(method: "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<{ status: number; json: unknown }> {
   try {
     const res = await fetch(path, {
       method,
@@ -20,6 +20,15 @@ export async function send(method: "POST" | "PATCH" | "DELETE", path: string, bo
 }
 
 export const unavailableText = "The service is unavailable. Try again shortly.";
+
+/** A 403 from an organization action: the caller's roles changed or never permitted it (GOZ-0004). */
+export const forbiddenText = "You no longer have permission to do that.";
+
+/**
+ * Where to go after a 403: the same organization page with a notice. The navigation re-renders the
+ * page with the caller's current permissions, so stale controls disappear while the notice stays.
+ */
+export const forbiddenNoticePath = (organizationId: string) => `/organizations/${encodeURIComponent(organizationId)}?notice=forbidden`;
 
 /** The API's field error for a display name, if any. */
 export function displayNameError(json: unknown): string | null {

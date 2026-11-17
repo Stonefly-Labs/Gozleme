@@ -1,0 +1,458 @@
+{
+ "sourceSpec": "GOZ-0004",
+ "implementationRevision": "7179977 (feature/goz-0004-scoped-rbac). drive-speckit reports make test 318 .NET + 139 web passing, lint and validate clean, and make demo 41 passed (goz-0000..goz-0004) after convergence pass 2 (fix 498facd). Read-only checks and one rolled-back reproduction (IF-14) were run against the running Compose stack at this revision. Maintainer decisions IF-02 (A) and IF-13 (B) of 2026-11-16 and the IF-14 fix were applied in the working tree afterwards",
+ "analyzedAt": "2026-11-16",
+ "findings": [
+  {
+   "id": "GOZ-0004-IF-01",
+   "severity": "high",
+   "title": "Every organization-scoped endpoint goes through the single decision point and the pinned action/resource contract",
+   "evidence": [
+    "src/Gozleme.Api/Organizations/OrganizationAccess.cs AuthorizeAsync: membership first (null -> empty 404, no decision recorded), then OrganizationPermissions.Allows(membership.Roles, action, OrgAction.ResourceOf(action)); a deny is traced, counted and audited 1301 after commit",
+    "src/Gozleme.Api/Organizations/OrganizationPermissions.cs: OrganizationRole (5 built-in roles), OrgResource (organization, membership, invitation), OrgAction.All (10 actions), the frozen role table, Allows, RenderTable, OrgActionAttribute",
+    "src/Gozleme.Api/Organizations/OrganizationEndpoints.cs:35-44 every /{organizationId} endpoint carries .WithMetadata(new OrgActionAttribute(...)); handlers return 403 {\"error\":\"forbidden\"} via Forbidden() before reading the target; role-dependent changes re-read the caller under LockMembersAsync and call Allows again",
+    "tests/Gozleme.Api.IntegrationTests/OrganizationPermissionContractTests.cs: Assert.Equal(9, scoped count); declared actions must equal OrgAction.All; resource must be one of three; RenderTable must equal the fenced table in docs/specs/004-scoped-rbac/contracts/permissions.md (moved to docs/architecture/contracts/organization-permissions.md under IF-13 option B); IsScoped matches only routes starting api/v1/organizations/{organizationId}",
+    "web/src/app/organizations/[organizationId]/page.tsx gates controls on organization.data.permissions; web/src/lib/organizations.ts duplicates ROLES; a 403 routes to forbiddenNoticePath (?notice=forbidden)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0005",
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Every new organization-scoped endpoint calls AuthorizeAsync first, decides before reading the target resource, declares OrgActionAttribute, and adds its action (and any new resource type) to OrgAction/OrgResource, the role table, the contract's fenced table and endpoint table, updating the contract test's count and resource pins. Keep scoped endpoints under /api/v1/organizations/{organizationId} or extend IsScoped. Gate UI on the permissions list from GET /organizations/{id}. Adding a built-in role needs maintainer approval (Q1). Which role holds a new action is that spec's clarification question.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-02",
+   "severity": "high",
+   "title": "Database-layer posture for later role-gated writes and reads is undecided: Q3 = B covered GOZ-0004's admin-only writes only",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261118000000_ScopedRbac.cs: organizations_update and invitations_insert/update/delete admit admins through gozleme.account_is_admin(org); memberships_guard requires admin for role changes, removals and adding others; reads stay member-level",
+    "docs/specs/004-scoped-rbac/progress.yaml decision rls-role-posture (Q3 option B): 'row-level rules and guards restrict every admin-only write (rename, invitation writes, removal of other members, role changes) to admins of that organization'",
+    "GOZ-0005 (publisher), GOZ-0014 (overlay writes), GOZ-0021 (review/approval), GOZ-0034 (grants) and GOZ-0012 (role-dependent visibility) will add role-gated actions on new tenant tables; the GOZ-0003-IF-01 default policy shape is member-level",
+    "GOZ-0018 policy conditions and facts cannot in general be expressed in SQL policies; only the role component can be mirrored"
+   ],
+   "affectedSpecs": [
+    "GOZ-0005",
+    "GOZ-0012",
+    "GOZ-0014",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0034",
+    "GOZ-0035",
+    "every spec adding a role-gated action on a tenant table"
+   ],
+   "recommendation": "Maintainer decides before the GOZ-0005 plan. Option A: every later role-gated write (not reads) is also enforced in the database through a non-definer generalisation such as gozleme.account_has_role(org, role), following account_is_admin, with an isolation-matrix test per role; policy conditions from GOZ-0018 stay application-only. Option B: the database stays member-level for later tables; the role and policy decision is application-only and the PR states it as a known limitation (only GOZ-0004's admin writes are mirrored). Option C: decide per spec during each spec's clarification. In every option reads stay member-level in the database unless decided otherwise.",
+   "disposition": "human-decided 2026-11-16: option A (applied to future prompts)",
+   "decision": {
+    "decidedAt": "2026-11-16",
+    "decidedBy": "maintainer",
+    "option": "A",
+    "verbatim": "1: A, 2: B",
+    "summary": "Every later role-gated write is also enforced in the database, mirroring Q3 = B, via a non-definer SQL function account_has_role(org, role) that generalises account_is_admin. Reads stay member-level at the database. GOZ-0018 conditions stay application-only. The first consumer (expected GOZ-0005) adds the function and designs per-table policy shapes."
+   }
+  },
+  {
+   "id": "GOZ-0004-IF-03",
+   "severity": "high",
+   "title": "GOZ-0018 replaces the evaluation behind AuthorizeAsync, but the database already caps the organization-management actions to admins",
+   "evidence": [
+    "OrganizationPermissions.Allows doc comment and contracts/permissions.md: 'GOZ-0018 replaces the evaluation behind the same decision point'",
+    "src/Gozleme.Api/Persistence/Migrations/20261118000000_ScopedRbac.cs: organization.rename, invitation.create/revoke (and invitation updates), membership.remove and membership.roles.change are refused in PostgreSQL for non-admins regardless of the application decision",
+    "Tenancy/TenantTransaction maps SQLSTATE 42501 to the empty 404 with refused_write and audit 1202 (GOZ-0003), so a policy that allowed a non-admin one of those actions would answer 404, not succeed",
+    "OrganizationBoundaryTests.No_policy_or_custom_role_surface_exists pins Allows(roles, action, resourceType) and AuthorizeAsync(db, organizationId, http, action, ct)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020"
+   ],
+   "recommendation": "GOZ-0018 keeps one decision point (membership-first 404, 403 forbidden, audit 1301, bounded gozleme.authz.* telemetry) and narrows the signature pins deliberately. It keeps the four organization-management action families role-only, or asks the maintainer, because widening them changes the Q3 = B database guarantee.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-04",
+   "severity": "medium",
+   "title": "Boundary tests later specs must narrow deliberately: forbidden table names, decision signatures and delegation routes",
+   "evidence": [
+    "tests/Gozleme.Api.IntegrationTests/OrganizationBoundaryTests.cs No_policy_or_custom_role_surface_exists: zero tables in gozleme/gozleme_private matching '(polic|grant|role|permission)'; parameter lists of Allows and AuthorizeAsync",
+    "OrganizationBoundaryTests.Delegation_routes_do_not_exist: /roles, /policies, /permissions, /grants, /admins, /transfer, /owner and POST/PATCH/DELETE /members/{user}/roles must answer 404",
+    "docs/specs/004-scoped-rbac/research.md R12 is the precedent for narrowing GOZ-0002 assertions by name"
+   ],
+   "affectedSpecs": [
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0034",
+    "all"
+   ],
+   "recommendation": "A spec that legitimately adds a policy, grant, permission or role table, a decision input or such a route narrows only the assertion it supersedes, names it in tasks and keeps the rest of the boundary.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-05",
+   "severity": "high",
+   "title": "publisher, reviewer and approver are inert placeholders: their first owners must handle no initial holders, no backfill, role loss and separation of duties",
+   "evidence": [
+    "OrganizationPermissions.cs: Approver, Publisher and Reviewer map to MemberActions (maintainer Q4 = A); admin's set is OrgAction.All and includes none of their future actions",
+    "src/Gozleme.Api/Persistence/Migrations/20261118000000_ScopedRbac.cs: existing rows got {admin,member} via the temporary default, then the default is {member}; memberships_insert allows creators roles <@ {admin,member} and redeemers exactly {member}",
+    "memberships_guard binds the owner and superusers; GOZ-0003-IF-03 decision forbids disabling a guard in a migration, so no migration can assign roles",
+    "OrganizationEndpoints.SetRolesAsync: an admin may change any member's roles including its own (contracts/permissions.md 'raise own roles: refused (an own-row change is still a role change and needs admin)'; RoleAssignmentTests:115 a member cannot raise its own roles; :229 an admin changes its own roles); roles are not mutually exclusive; audit 1302 records before/after",
+    "OrganizationEndpoints.SetRolesAsync: losing admin revokes the account's open invitations in the same transaction (Q2 = A), the precedent for role-loss consequences"
+   ],
+   "affectedSpecs": [
+    "GOZ-0005",
+    "GOZ-0021",
+    "GOZ-0014",
+    "GOZ-0034"
+   ],
+   "recommendation": "GOZ-0005 and GOZ-0021 state that nobody holds the new role after upgrade and an admin assigns it. Any creator default or backfill changes GOZ-0004's initial-role rule, so ask the maintainer. Each decides role-loss consequences for in-flight work explicitly and re-reads roles under the per-organization lock at decision time. GOZ-0021 enforces separation of duties between accounts per decision, and raises with the maintainer whether role combinations or self-grants should be forbidden. Seeded demo roles are assigned through the seeded admin.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-06",
+   "severity": "medium",
+   "title": "Row locks under role-restricted UPDATE policies silently lock nothing; lock order and the membership advisory lock",
+   "evidence": [
+    "docs/specs/004-scoped-rbac/research.md R5: with organizations_update admin-only, a non-admin's SELECT ... FOR UPDATE on its organization returns zero rows and locks nothing",
+    "OrganizationEndpoints.LockMembersAsync takes gozleme.lock_organization_members(org) first and the organization row lock only for an admin caller; order advisory -> organization -> invitation; redemption takes organization (FOR KEY SHARE) -> invitation",
+    "OrganizationEndpoints.RevokeOpenInvitationsAsync relies on 'a non-admin never holds an open invitation' (Q2), asserted by a test"
+   ],
+   "affectedSpecs": [
+    "GOZ-0005",
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039"
+   ],
+   "recommendation": "Use gozleme.lock_organization_members (or a new advisory lock in the same order) for per-organization serialization; never rely on a row lock on a table whose UPDATE policy may hide the row from the caller. Keep the lock order or prove a new one deadlock-free. A spec that gives invitation.create to a non-admin role must extend revocation on role loss.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-07",
+   "severity": "medium",
+   "title": "Authorization telemetry and audit; audit range 1301-1310 is taken, so 37 prompts' 'from 1301' guidance is stale",
+   "evidence": [
+    "src/Gozleme.Api/Organizations/AuthorizationTelemetry.cs: span gozleme.authz.decision with gozleme.authz.action, gozleme.authz.resource_type, gozleme.authz.outcome; counter gozleme.authz.decisions with the same labels",
+    "src/Gozleme.Api/Organizations/OrganizationTelemetry.cs: OrgFailure.Forbidden, OrgFailure.LastAdmin, OrgOperation.MemberRoles",
+    "src/Gozleme.Api/Identity/SecurityAudit.cs: 1301 gozleme.audit.authz_denied, 1302 gozleme.audit.org_member_roles_changed; comment reserves 1301-1310",
+    "docs/prompts/spec-0005..0041 GOZ-0003-IF-09 bullet: 'Give a new module the next free range, from 1301'",
+    "tests/Gozleme.Api.IntegrationTests/RbacTelemetryTests.cs asserts the decision span/counter and no personal data"
+   ],
+   "affectedSpecs": [
+    "GOZ-0005",
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "New actions are bounded label values; never record roles, account ids, names, emails or codes. A 403 is not a tenant denial. Next free audit range starts at 1401.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-08",
+   "severity": "medium",
+   "title": "Database enforcement facts, the guard binding the owner, and the pins every later migration updates; superseded GOZ-0002/0003 prompt wording",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261118000000_ScopedRbac.cs: DDL only; roles column + ck_memberships_roles; account_is_admin and lock_organization_members (non-definer, PUBLIC revoked, granted to gozleme_app); memberships_guard plpgsql trigger with FK-cascade bypass 'rls_internal() AND pg_trigger_depth() > 1'",
+    "tests/Gozleme.Api.IntegrationTests/TenantContextBoundaryTests.cs: an out-of-band superuser delete now needs SET session_replication_role = replica",
+    "e2e/tests/bootstrap-demo.spec.ts LATEST_MIGRATION = /_ScopedRbac$/; MigrationAndRoleTests expects 5 migrations; StatusEndpointTests schemaVersion 20261118000000_ScopedRbac; OrganizationBoundaryTests column pin includes memberships.roles",
+    "TableClassification.DefinerHelpers and RlsCatalog unchanged (no new table, no definer)",
+    "docs/prompts GOZ-0002-IF-05 'It has no role column' and FindMembershipAsync wording, GOZ-0003-IF-01 '(now /_TenantRls$/)' are stale"
+   ],
+   "affectedSpecs": [
+    "GOZ-0005",
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Prompts supersede the stale wording explicitly. Later migrations update the four pins. No migration may change guarded membership columns; a needed change extends the guard in a reviewed migration (GOZ-0003-IF-03). Out-of-band repairs use replica mode as a superuser.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-09",
+   "severity": "medium",
+   "title": "Seed, fixtures and demo state after GOZ-0004",
+   "evidence": [
+    "src/Gozleme.Api/Identity/OperatorCommands.cs SeedOrganizationAsync: acts only as a seeded member holding admin; creator regains admin before others are demoted; no seeded admin -> falls through to the create path, which fails ('run make reset')",
+    "docs/specs/004-scoped-rbac/research.md R11: Seeded Demo Org alice {admin,member}, carol {member}; Seeded Partner Org dave {admin,member}; verified read-only on the running stack at 7179977",
+    "e2e/tests/rbac-demo.spec.ts: project goz-0004 depends on goz-0003; afterAll restores carol {member} and the name; asApp sends one rolled-back statement per psql -f - call",
+    "tests/Gozleme.Api.IntegrationTests/Infrastructure/TwoTenants.cs: carol is admin of A (creates the fixture invitation); OrgClient.SetRolesAsync / SetRolesRawAsync"
+   ],
+   "affectedSpecs": [
+    "GOZ-0005",
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Later suites assume the seeded roles, assign demo roles in seed through the seeded admin, and reuse the asApp pattern for database evidence.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-10",
+   "severity": "medium",
+   "title": "Known residual: deleting an account cascades its memberships past both the last-member and last-admin rules, and nothing can restore an admin",
+   "evidence": [
+    "memberships_guard returns early for 'rls_internal() AND pg_trigger_depth() > 1' (FK cascades), research.md R4 'Consequence documented'",
+    "research.md R13: account deletion, HTTP recovery and platform administrator are not built; gozleme_app's DELETE on users is GOZ-0001/0003 posture",
+    "Role changes need an admin (memberships_guard, membership.roles.change admin-only), so an admin-less organization cannot be repaired through the product"
+   ],
+   "affectedSpecs": [
+    "GOZ-0035",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Whichever spec first adds account deletion, erasure or account merging defines the last-admin and last-member behaviour first (for example, refuse to delete a last admin, or require a handover). An operator recovery command would be new scope for the maintainer. No change is needed in GOZ-0004.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-11",
+   "severity": "medium",
+   "title": "GOZ-0039 restore and release gate must account for guard triggers",
+   "evidence": [
+    "memberships_guard and invitations_guard are BEFORE triggers with no signed context bypass; with no context current_account_id() is null, so an inserted membership for another account requires account_is_admin and is refused",
+    "pg_dump places trigger creation in post-data, so a full restore loads rows before the trigger exists; a data-only restore into an existing schema fires the guard",
+    "RlsCatalog does not inspect triggers (GOZ-0003-IF-19); guards are proved only by behavioural tests (RbacIsolationTests, TenantContextBoundaryTests)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0039"
+   ],
+   "recommendation": "Restore procedure uses a full restore or superuser --disable-triggers under the GOZ-0003-IF-11 procedure. The release gate verifies that memberships_guard and invitations_guard exist and are enabled, and that the permission contract, RBAC isolation and role tests pass.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-12",
+   "severity": "low",
+   "title": "Spec-specific stale references now made concrete",
+   "evidence": [
+    "spec-0014 GOZ-0002-IF-03 'Until GOZ-0004 replaces the interim rule'",
+    "spec-0018 GOZ-0002-IF-16 'no role column, plus the roles from GOZ-0004'",
+    "spec-0021 GOZ-0002-IF-15 'while GOZ-0004 has not narrowed it, any member may mint codes' (now admin only, Q2 = A)",
+    "spec-0023 GOZ-0002-IF-19 caches invalidated by removal only; roles are now another per-request input",
+    "spec-0034 GOZ-0002-IF-10 'and the GOZ-0004 permission'",
+    "spec-0040 'GOZ-0004: role assignment by address' (not built: PUT .../members/{userId}/roles by account id only)",
+    "spec-0041 GOZ-0002-IF-14 IdP claims and roles"
+   ],
+   "affectedSpecs": [
+    "GOZ-0014",
+    "GOZ-0018",
+    "GOZ-0021",
+    "GOZ-0023",
+    "GOZ-0034",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Supersede each explicitly in a GOZ-0004 Implementation alignment section; earlier provenance bullets are left as written.",
+   "disposition": "applied-to-future-prompts"
+  },
+  {
+   "id": "GOZ-0004-IF-13",
+   "severity": "low",
+   "title": "The living permission contract lives in GOZ-0004's spec workspace and is pinned there by a test",
+   "evidence": [
+    "OrganizationPermissionContractTests.The_code_renders_exactly_the_published_role_table reads docs/specs/004-scoped-rbac/contracts/permissions.md",
+    "contracts/permissions.md: 'Later specs extend this contract by adding actions and role rows in their own slices'",
+    "analyze-spec-impact authority: artifacts of completed specs need human approval to modify; GOZ-0005, GOZ-0014, GOZ-0018, GOZ-0021 and GOZ-0034 will each need to edit this file after GOZ-0004 merges"
+   ],
+   "affectedSpecs": [
+    "GOZ-0004",
+    "GOZ-0005",
+    "GOZ-0014",
+    "GOZ-0018",
+    "GOZ-0021",
+    "GOZ-0034"
+   ],
+   "recommendation": "Maintainer decides, before the GOZ-0005 plan at the latest. Option A: later specs edit docs/specs/004-scoped-rbac/contracts/permissions.md in place, as the contract says, and record the delta in their own contracts. Option B: drive-speckit moves the contract now, in this GOZ-0004 PR, to a living location such as docs/architecture/contracts/organization-permissions.md, updating the test path and references. Option C: each later spec copies the full table into its own contracts and the test reads the newest copy (not recommended: more drift).",
+   "disposition": "human-decided 2026-11-16: option B (contract moved on this branch; prompts updated)",
+   "decision": {
+    "decidedAt": "2026-11-16",
+    "decidedBy": "maintainer",
+    "option": "B",
+    "verbatim": "1: A, 2: B",
+    "summary": "The contract moved (git mv, with a provenance note) to docs/architecture/contracts/organization-permissions.md; OrganizationPermissionContractTests, code, tests, web and GOZ-0004 spec artifacts reference the new path (done by the coordinator). It is a living contract that each later spec edits in its own slice."
+   }
+  },
+  {
+   "id": "GOZ-0004-IF-14",
+   "severity": "low",
+   "title": "Implementation defect: any member can set another member's invitation_id to NULL at the database layer",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261118000000_ScopedRbac.cs memberships_guard: the identity check refuses invitation_id changes only when NEW.invitation_id IS NOT NULL, and an update with unchanged roles returns before the admin check; memberships_update admits every row of the caller's organizations",
+    "Reproduced on the running stack at 7179977, inside a rolled-back transaction: as gozleme_app in carol's signed context (account_is_admin = false), UPDATE gozleme.memberships SET invitation_id = NULL on alice's row in Seeded Demo Org changed 1 row. A follow-up read confirmed no change persisted",
+    "The FK ON DELETE SET NULL cascade already passes through the 'rls_internal() AND pg_trigger_depth() > 1' branch, so the depth-1 NULL allowance is not needed for it; no application path sets InvitationId except redemption",
+    "RbacIsolationTests covers only setting invitation_id to a new value (refused)",
+    "Fixed on the branch before the PR: memberships_guard now refuses any direct invitation_id change (the FK SET NULL cascade passes at pg_trigger_depth() > 1); RbacIsolationTests asserts a member nulling its own or a co-member's invitation_id, and an admin nulling a member's, are refused with 42501; make test 318/318, make demo 41 passed after make reset"
+   ],
+   "affectedSpecs": [
+    "GOZ-0004"
+   ],
+   "recommendation": "Bounded correction for drive-speckit: refuse any invitation_id change at depth 1 (the cascade branch already covers SET NULL), add a RbacIsolationTests case where a member nulls a co-member's and its own invitation_id, keep the research.md R4 step 3 text in sync, then re-run convergence and this analysis. Impact is limited to the redemption provenance link (invitations.used_by still records it), so the maintainer may instead accept it as a documented residual.",
+   "disposition": "fixed"
+  }
+ ]
+}

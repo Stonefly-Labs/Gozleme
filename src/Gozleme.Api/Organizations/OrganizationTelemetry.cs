@@ -49,6 +49,8 @@ internal static class OrgFailure
     public const string LastMember = "last_member";
     public const string RateLimited = "rate_limited";
     public const string RefusedWrite = "refused_write";
+    public const string Forbidden = "forbidden";
+    public const string LastAdmin = "last_admin";
 }
 
 /// <summary>Bounded operation names (span suffixes and metric label values).</summary>
@@ -62,4 +64,5 @@ internal static class OrgOperation
     public const string InviteRedeem = "invite_redeem";
     public const string MemberRemove = "member_remove";
     public const string MemberLeave = "member_leave";
+    public const string MemberRoles = "member_roles";
 }

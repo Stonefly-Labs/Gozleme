@@ -13,7 +13,8 @@ namespace Gozleme.Api.Persistence;
 /// <summary>
 /// Owns Gözleme schema migrations. GOZ-0001 adds local identity (user-only Identity store),
 /// server-side sessions and the Data Protection key ring; GOZ-0002 adds organizations, memberships
-/// and invitations; GOZ-0003 forces row-level security on those three tenant tables. All tables live
+/// and invitations; GOZ-0003 forces row-level security on those three tenant tables; GOZ-0004 adds
+/// built-in roles to memberships. All tables live
 /// in schema <c>gozleme</c>; the tenant context key lives in <c>gozleme_private</c>.
 /// </summary>
 internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> options)
@@ -21,6 +22,10 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
 {
     public const string Schema = "gozleme";
     public const string AppRole = "gozleme_app";
+
+    /// <summary><c>ck_memberships_roles</c> (GOZ-0004 research R1).</summary>
+    public const string RolesCheck =
+        "roles <@ ARRAY['admin', 'approver', 'member', 'publisher', 'reviewer']::text[] AND 'member' = ANY (roles) AND array_position(roles, NULL) IS NULL";
 
     /// <summary>Shared provider configuration for the API, migrator and operator commands.</summary>
     public static DbContextOptionsBuilder Configure(DbContextOptionsBuilder options, NpgsqlDataSource dataSource) =>
@@ -83,9 +88,15 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
 
         builder.Entity<Membership>(membership =>
         {
-            membership.ToTable("memberships", t => t.HasCheckConstraint("ck_memberships_joined_via", "joined_via IN ('creator', 'invitation')"));
+            membership.ToTable("memberships", t =>
+            {
+                t.HasCheckConstraint("ck_memberships_joined_via", "joined_via IN ('creator', 'invitation')");
+                // GOZ-0004 research R1: built-in roles only, always holding member; stored sorted by memberships_guard.
+                t.HasCheckConstraint("ck_memberships_roles", RolesCheck);
+            });
             membership.HasKey(m => new { m.OrganizationId, m.UserId });
             membership.Property(m => m.JoinedVia).HasMaxLength(16);
+            membership.Property(m => m.Roles).HasColumnType("text[]").HasDefaultValueSql("'{member}'::text[]");
             membership.Property(m => m.JoinedAt).HasDefaultValueSql("now()");
             membership.HasIndex(m => new { m.UserId, m.SelectedAt }).IsDescending(false, true);
             membership.HasOne<Organization>().WithMany().HasForeignKey(m => m.OrganizationId).OnDelete(DeleteBehavior.Cascade);

@@ -146,8 +146,9 @@ internal static class OperatorCommands
 
     /// <summary>
     /// Idempotent: every run restores the organization's name, exactly <paramref name="members"/> (the first is
-    /// the creator) and no invitations. It acts only through the signed context of a seeded member, so it has
-    /// no right that member lacks (GOZ-0003 research R10).
+    /// the creator and holds admin; the others hold member only) and no invitations. It acts only through the
+    /// signed context of a seeded member holding admin, so it has no right that admin lacks (GOZ-0003 research
+    /// R10, GOZ-0004 research R11).
     /// </summary>
     private static async Task<int> SeedOrganizationAsync(IServiceProvider services, Guid organizationId, string name, Guid[] members, TextWriter stdout, TextWriter stderr)
     {
@@ -160,9 +161,10 @@ internal static class OperatorCommands
             db.ChangeTracker.Clear();
             await using var transaction = await db.Database.BeginTransactionAsync();
             await TenantContext.EstablishAsync(db, signer.Sign(actor), CancellationToken.None);
-            if (!await db.Memberships.AnyAsync(m => m.OrganizationId == organizationId && m.UserId == actor))
+            var own = await db.Memberships.FirstOrDefaultAsync(m => m.OrganizationId == organizationId && m.UserId == actor);
+            if (own is null || !own.Roles.Contains(OrganizationRole.Admin))
             {
-                continue; // not a member: nothing of this organization is visible to this account
+                continue; // not an admin of it: an ordinary member cannot restore it
             }
 
             var organization = await db.Organizations.SingleAsync(o => o.Id == organizationId);
@@ -170,22 +172,42 @@ internal static class OperatorCommands
             organization.UpdatedAt = now;
             await db.Invitations.Where(i => i.OrganizationId == organizationId).ExecuteDeleteAsync();
             await db.Memberships.Where(m => m.OrganizationId == organizationId && !members.Contains(m.UserId)).ExecuteDeleteAsync();
-            var present = await db.Memberships.Where(m => m.OrganizationId == organizationId).Select(m => m.UserId).ToListAsync();
-            AddMembers(db, organizationId, members, present, now);
+            var present = await db.Memberships.Where(m => m.OrganizationId == organizationId).ToListAsync();
+            AddMembers(db, organizationId, members, [.. present.Select(m => m.UserId)], now);
+
+            // The creator regains admin before anyone is demoted, so the actor never removes the last admin.
+            if (present.SingleOrDefault(m => m.UserId == members[0]) is { } creator)
+            {
+                creator.Roles = [OrganizationRole.Admin, OrganizationRole.Member];
+            }
+
+            await db.SaveChangesAsync();
+            foreach (var membership in present.Where(m => m.UserId != members[0]))
+            {
+                membership.Roles = [OrganizationRole.Member];
+            }
+
             await db.SaveChangesAsync();
             await transaction.CommitAsync();
             await stdout.WriteLineAsync($"Seeded demo organization {organizationId}");
             return Ok;
         }
 
-        // No seeded member belongs to it: create it as the first seeded member through the creator path,
-        // then add the others as that member (a member may add memberships to its own organization).
+        // No seeded member administers it: create it as the first seeded member through the creator path,
+        // then add the others as that admin. If it exists with no seeded admin, a member's rights cannot restore it.
         db.ChangeTracker.Clear();
         await using (var transaction = await db.Database.BeginTransactionAsync())
         {
             await TenantContext.EstablishAsync(db, signer.Sign(members[0]), CancellationToken.None);
             db.Organizations.Add(new Organization { Id = organizationId, DisplayName = name, CreatedAt = now, CreatedBy = members[0], UpdatedAt = now });
-            db.Memberships.Add(new Membership { OrganizationId = organizationId, UserId = members[0], JoinedAt = now, JoinedVia = Membership.ViaCreator });
+            db.Memberships.Add(new Membership
+            {
+                OrganizationId = organizationId,
+                UserId = members[0],
+                JoinedAt = now,
+                JoinedVia = Membership.ViaCreator,
+                Roles = [OrganizationRole.Admin, OrganizationRole.Member],
+            });
             try
             {
                 await db.SaveChangesAsync();
@@ -218,6 +240,7 @@ internal static class OperatorCommands
                     UserId = members[i],
                     JoinedAt = now.AddSeconds(i),
                     JoinedVia = i == 0 ? Membership.ViaCreator : Membership.ViaInvitation,
+                    Roles = i == 0 ? [OrganizationRole.Admin, OrganizationRole.Member] : [OrganizationRole.Member],
                 });
             }
         }
