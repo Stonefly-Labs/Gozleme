@@ -62,7 +62,7 @@ export function ManifestResult({ result }: { result: ValidationResult }) {
           {Object.entries(projection.attributes).map(([name, value]) => (
             <div className="row" key={name} data-testid={`attribute-${name}`}>
               <dt>{name}</dt>
-              <dd><code>{`${name}: ${text(value)}`}</code><Derived projection={projection} pointer={`/attributes/${name}`} /></dd>
+              <dd><code>{text(value)}</code><Derived projection={projection} pointer={`/attributes/${name}`} /></dd>
             </div>
           ))}
         </dl>

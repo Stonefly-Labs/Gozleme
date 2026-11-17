@@ -302,7 +302,7 @@ test("observability: organization flows are traced browser → web → API → P
   await expect
     .poll(
       async () => {
-        spans = await recentSpans("gozleme-web-browser", 10);
+        spans = await recentSpans("gozleme-web-browser", 10, "gozleme.ui.org_create");
         for (const candidate of spans.filter((s) => s.name === "gozleme.ui.org_create" && s.attributes["gozleme.ui.outcome"] === "success")) {
           const trace = spans.filter((s) => s.traceId === candidate.traceId);
           const api = trace.some((s) => s.service === "gozleme-api" && s.name === "gozleme.org.create" && s.attributes["gozleme.org.outcome"] === "success");

@@ -66,7 +66,7 @@ describe("ManifestValidator (GOZ-0006 US1)", () => {
     expect(screen.getByTestId("native-document").textContent).toBe('{"name":"forecast-small"}\n');
     expect(within(screen.getByTestId("panel-projection")).getByRole("heading", { level: 2 })).toHaveTextContent("Projection");
     expect(screen.getByTestId("projection-version")).toHaveTextContent("projection v1");
-    expect(screen.getByTestId("attribute-mode")).toHaveTextContent("mode: stateless");
+    expect(screen.getByTestId("attribute-mode")).toHaveTextContent(/^modestateless/);
     expect(within(screen.getByTestId("attribute-mode")).getByTestId("derived-marker")).toBeInTheDocument();
   });
 

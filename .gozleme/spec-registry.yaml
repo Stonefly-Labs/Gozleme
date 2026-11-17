@@ -387,7 +387,7 @@ specs:
   dependencies:
   - GOZ-0005
   status: in-progress
-  stage: implement
+  stage: converge
   branch: feature/goz-0006-typed-manifests
   pullRequest: null
   promptRevision: 7
@@ -395,9 +395,9 @@ specs:
     specification: passed
     plan: passed
     tasks: passed
-    implementation: pending
-    tests: pending
-    demo: pending
+    implementation: passed
+    tests: passed
+    demo: passed
     convergence: pending
     impactAnalysis: pending
     roadmapSync: pending
@@ -406,11 +406,15 @@ specs:
   blockers: []
   impactFindings: []
   evidence:
-    tests: []
-    demos: []
-    screenshots: []
+    tests:
+    - docs/specs/006-typed-manifests/progress.yaml
+    demos:
+    - docs/specs/006-typed-manifests/evidence/demo-run.json
+    - docs/specs/006-typed-manifests/evidence/manifest-evidence.json
+    screenshots:
+    - docs/specs/006-typed-manifests/evidence/screenshots/
     reviews: []
-  nextAction: 'Implementing; setup T001-T004 done (P1 revised to Corvus.Text.Json.Validator; A2A vendored unstitched); next T005-T006 then Phase 2 foundational. See docs/specs/006-typed-manifests/progress.yaml.'
+  nextAction: 'Implemented T001-T072; cumulative demo goz-0000..goz-0006 passed (51 tests, 78 screenshots); lint/test (738 .NET, 194 Vitest)/build/validate pass. Next: convergence with review-security (secret pattern list v1, reserved vocabulary, parser restrictions, offline resolver), then analyze-spec-impact and review-roadmap.'
 - id: GOZ-0007
   number: 7
   title: Immutable revisions and signed attestations

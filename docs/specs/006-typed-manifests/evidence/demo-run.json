@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0006",
-  "commit": "7445a590dbbb79de81b369a8f167a12cba150470",
+  "commit": "1a8b782fa4ca9c8c68f40fefa295dfec250b53a2",
   "branch": "feature/goz-0006-typed-manifests",
   "workingTreeCleanAtStart": false,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-17T20:43:47Z",
-  "finishedAt": "2026-11-17T20:50:04Z",
-  "stackStartupSeconds": 16,
+  "startedAt": "2026-11-17T23:35:21Z",
+  "finishedAt": "2026-11-17T23:42:17Z",
+  "stackStartupSeconds": 5,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -20,7 +20,7 @@
     "pnpm --filter @gozleme/e2e exec playwright test --project goz-0006",
     "docker compose logs --no-color"
   ],
-  "result": "failed",
+  "result": "passed",
   "assertions": [
     {
       "name": "sign in as the seeded demo account",
@@ -208,23 +208,23 @@
     },
     {
       "name": "a publisher member validates every family's valid sample and sees three separate parts",
-      "result": "failed"
+      "result": "passed"
     },
     {
       "name": "every invalid sample is rejected with its expected problem and no secret on the page",
-      "result": "failed"
+      "result": "passed"
     },
     {
       "name": "through the API the native document is unchanged and extensions never change the projection",
-      "result": "failed"
+      "result": "passed"
     },
     {
       "name": "roles, non-members, suspension and the validation budget answer in the contract order",
-      "result": "failed"
+      "result": "passed"
     },
     {
       "name": "observability: validations are traced and counted with bounded labels and no content",
-      "result": "failed"
+      "result": "passed"
     },
     {
       "name": "secret scan of compose logs and status evidence",
@@ -232,8 +232,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 923 ms",
-    "sign-in\u2192dashboard 379 ms"
+    "register\u2192dashboard 226 ms",
+    "sign-in\u2192dashboard 167 ms"
   ],
   "evidence": [
     "docs/specs/006-typed-manifests/evidence/screenshots/01-accepted-valid-stateless-2026-07-28.png",
@@ -244,6 +244,30 @@
     "docs/specs/006-typed-manifests/evidence/screenshots/06-accepted-valid-asyncapi-3.0.0.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/07-accepted-valid-skill.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/08-accepted-valid-model-card.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/20-rejected-invalid-envelope-version.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/21-rejected-invalid-family.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/22-rejected-invalid-format-version.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/23-rejected-invalid-version-mismatch.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/24-rejected-invalid-yaml-for-a2a.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/25-rejected-invalid-yaml-alias.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/26-rejected-invalid-too-deep.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/27-rejected-invalid-unknown-field.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/28-rejected-invalid-reserved-openapi.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/29-rejected-invalid-a2a-signatures.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/30-rejected-invalid-reserved-envelope.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/31-rejected-invalid-secret-header.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/32-rejected-invalid-secret-pattern.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/33-rejected-invalid-secret-skill-body.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/34-rejected-invalid-secret-openapi-example.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/35-rejected-invalid-identity.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/36-rejected-invalid-external-ref.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/37-rejected-invalid-skill-name.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/38-rejected-invalid-model-modality.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/39-rejected-invalid-mcp-consistency.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/40-rejected-invalid-a2a-required.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/60-admin-without-publisher-forbidden.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/61-suspended-publisher.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/70-manifest-validate-trace-jaeger.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/01-healthy.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/02-database-down-degraded.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/03-recovered-healthy.png",

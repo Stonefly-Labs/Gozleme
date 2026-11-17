@@ -133,7 +133,10 @@ async function validateInUi(page: Page, sample: Sample) {
   await page.getByTestId("sample-select").selectOption(sample.id);
   await page.getByTestId("load-sample").click();
   await expect(page.getByTestId("manifest-text")).not.toHaveValue("");
-  expect(await page.getByTestId("manifest-text").inputValue()).toContain(`"capability": "${CANONICAL}"`);
+  // The placeholder is replaced with the seeded capability; the identity-mismatch sample names another one on purpose.
+  const loaded = await page.getByTestId("manifest-text").inputValue();
+  expect(loaded).not.toContain("{{capability}}");
+  if (sample.expected.problems?.some((p) => p.category === "identity_mismatch") !== true) expect(loaded).toContain(`"capability": "${CANONICAL}"`);
   await page.getByTestId("validate").click();
 }
 
@@ -173,7 +176,7 @@ test("a publisher member validates every family's valid sample and sees three se
     expect(await carol.getByTestId("native-document").textContent()).toBe(document);
     if (sample.family === "mcp") {
       const mode = sample.id.includes("2026-07-28") ? "stateless" : "stateful";
-      await expect(carol.getByTestId("attribute-mode")).toContainText(`mode: ${mode}`);
+      await expect(carol.getByTestId("attribute-mode").locator("dd code")).toHaveText(mode);
       await expect(carol.getByTestId("attribute-mode").getByTestId("derived-marker")).toBeVisible();
     }
 
@@ -206,8 +209,15 @@ test("every invalid sample is rejected with its expected problem and no secret o
       await expect(problem.getByTestId("problem-location")).toHaveText(locationText(e.location));
       await expect(problem.getByTestId("problem-message")).not.toBeEmpty();
     }
-    // The result region and the page text never show a submitted value (the input box holds what was typed).
-    const shown = (await carol.getByTestId("manifest-result").innerText()) + (await carol.locator("body").textContent());
+    // Nothing Gözleme shows back holds a submitted value: the result, and the whole page with the editor left out
+    // (the editor keeps the publisher's own text so they can fix it; maintainer decision 2026-11-17).
+    const shown =
+      (await carol.getByTestId("manifest-result").innerText()) +
+      (await carol.evaluate(() => {
+        const page = document.body.cloneNode(true) as HTMLElement;
+        page.querySelectorAll('[data-testid="manifest-text"]').forEach((editor) => editor.remove());
+        return `${document.title}\n${page.textContent ?? ""}`;
+      }));
     for (const secret of syntheticSecrets) expect(shown, `${sample.id} must not show a synthetic secret`).not.toContain(secret);
     rejected[sample.id] = expected.map((e) => `${e.category} ${e.rule}`).join(" + ");
     await list.scrollIntoViewIfNeeded();
@@ -278,7 +288,7 @@ test("roles, non-members, suspension and the validation budget answer in the con
   await expect(alice.getByTestId("permission-notice")).toBeVisible();
   await expect(alice.getByTestId("manifest-form")).toHaveCount(0);
   await expectAccessible(alice);
-  await alice.screenshot({ path: `${shots}/40-admin-without-publisher-forbidden.png`, fullPage: true });
+  await alice.screenshot({ path: `${shots}/60-admin-without-publisher-forbidden.png`, fullPage: true });
 
   // Each built-in role alone against the contract row: publisher allow, every other role deny.
   const matrix: Record<string, number> = {};
@@ -309,7 +319,7 @@ test("roles, non-members, suspension and the validation budget answer in the con
   await dave.goto(`/organizations/${PARTNER_ORG.id}/publishers/${squat.id}/capabilities/${squatCapability.id}/manifest`);
   await expect(dave.getByTestId("suspended-notice")).toBeVisible();
   await expect(dave.getByTestId("manifest-form")).toHaveCount(0);
-  await dave.screenshot({ path: `${shots}/41-suspended-publisher.png`, fullPage: true });
+  await dave.screenshot({ path: `${shots}/61-suspended-publisher.png`, fullPage: true });
   expect((await setRoles(dave, PARTNER_ORG.id, daveId, ["admin"])).status).toBe(200);
 
   // 31 validations inside a minute: the 31st is 429 with Retry-After (alice holds publisher only for this step,
@@ -352,6 +362,28 @@ test("observability: validations are traced and counted with bounded labels and 
       { timeout: 90_000, intervals: [3000] },
     )
     .toBe(true);
+  // A validation started in the page is one browser → web → API → PostgreSQL trace, like every other UI flow.
+  let uiTraceId: string | undefined;
+  await expect
+    .poll(
+      async () => {
+        const ui = await recentSpans("gozleme-web-browser", 20, "gozleme.ui.manifest_validate");
+        for (const candidate of ui.filter((s) => s.name === "gozleme.ui.manifest_validate" && s.attributes["gozleme.ui.outcome"] === "success")) {
+          const trace = ui.filter((s) => s.traceId === candidate.traceId);
+          const api = trace.some((s) => s.service === "gozleme-api" && s.name === "gozleme.manifest.validate" && s.attributes["gozleme.manifest.outcome"] === "accepted");
+          const web = trace.some((s) => s.service === "gozleme-web");
+          const db = trace.some((s) => s.service === "gozleme-api" && s.attributes["db.system.name"] === "postgresql");
+          if (api && web && db) {
+            uiTraceId = candidate.traceId;
+            return true;
+          }
+        }
+        return false;
+      },
+      { timeout: 60_000, intervals: [2000] },
+    )
+    .toBe(true);
+
   const allowedKeys = ["gozleme.manifest.family", "gozleme.manifest.outcome", "gozleme.manifest.problem_count", "gozleme.organization.id", "gozleme.publisher.id", "gozleme.capability.id"];
   for (const span of spans) for (const key of Object.keys(span.attributes)) expect(allowedKeys).toContain(key);
   const accepted = spans.find((s) => s.attributes["gozleme.manifest.outcome"] === "accepted" && s.attributes["gozleme.capability.id"] === CAPABILITY.id)!;
@@ -382,13 +414,13 @@ test("observability: validations are traced and counted with bounded labels and 
   const logs = await storedLogs('{service_name=~"gozleme-.+"}', 20);
   const page = await alice.context().newPage();
   await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.goto(`${JAEGER_URL}/trace/${accepted.traceId}`);
+  await page.goto(`${JAEGER_URL}/trace/${uiTraceId}`);
   await expect(page.getByText("gozleme.manifest.validate").first()).toBeAttached({ timeout: 15_000 });
   await page.getByRole("switch", { name: "gozleme-api gozleme.manifest.validate" }).first().click();
   await expect(page.getByRole("heading", { name: "gozleme.manifest.validate", level: 2 })).toBeVisible();
   const privateValues = [CAPABILITY.name, ALIAS, ...NATIVE_NAMES, ...syntheticSecrets, ...secretStrings, DEMO.alice, DEMO.carol, DEMO.dave, DEMO_PASSWORD, "/tools/0/execution", "/remotes/0/headers/0/value"];
   for (const v of privateValues) await expect(page.locator("body")).not.toContainText(v);
-  await page.screenshot({ path: `${shots}/50-manifest-validate-trace-jaeger.png`, fullPage: true });
+  await page.screenshot({ path: `${shots}/70-manifest-validate-trace-jaeger.png`, fullPage: true });
   await page.close();
 
   const digests = Object.values((record.validFamilies as { digests: Record<string, string> }).digests).map((d) => d.slice("sha256:".length));
