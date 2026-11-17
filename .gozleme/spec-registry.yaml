@@ -328,15 +328,15 @@ specs:
   prompt: docs/prompts/spec-0005.md
   dependencies:
   - GOZ-0004
-  status: not-started
-  stage: null
-  branch: null
+  status: in-progress
+  stage: tasks
+  branch: feature/goz-0005-publisher-identities
   pullRequest: null
   promptRevision: 6
   gates:
-    specification: pending
-    plan: pending
-    tasks: pending
+    specification: passed
+    plan: passed
+    tasks: passed
     implementation: pending
     tests: pending
     demo: pending
@@ -352,7 +352,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Prerequisite GOZ-0004 merged (IF-02 decided A, IF-13 decided B); at clarification decide whether creators also start with publisher (or a backfill) and what losing a role does to in-flight work, then start on feature/goz-0005-*'
+  nextAction: 'Tasks generated (52, docs/specs/005-publisher-identities/tasks.md); run /speckit-analyze then /speckit-implement from T001.'
 - id: GOZ-0006
   number: 6
   title: Typed manifests for capability families

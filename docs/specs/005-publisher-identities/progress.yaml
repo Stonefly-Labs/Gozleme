@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0005
-stage: plan
+stage: tasks
 status: in-progress
 promptRevision: 6
 branch: feature/goz-0005-publisher-identities
@@ -23,7 +23,8 @@ stages:
   specify: {status: done, artifact: docs/specs/005-publisher-identities/spec.md, at: '2026-11-16', checklist: docs/specs/005-publisher-identities/checklists/requirements.md}
   clarify: {status: done, at: '2026-11-16', questions: 1, note: 'Q10 resolved FR-036 (operator reclaim mechanism) as option A; FR-037 added'}
   plan: {status: done, at: '2026-11-16', artifact: docs/specs/005-publisher-identities/plan.md, artifacts: [research.md, data-model.md, quickstart.md, contracts/publishers-api.openapi.yaml, contracts/namespace.md, contracts/operator-commands.md, contracts/permissions-delta.md], note: 'Q11 decided (operator login = owner); claim-table design verified on scratch postgres:17 (research R2-R5)'}
+  tasks: {status: done, at: '2026-11-16', artifact: docs/specs/005-publisher-identities/tasks.md, count: 52, note: 'Setup 4, Foundational 9, US1 10, US2 6, US3 6, US5 5, US4 3, Polish 9; includes R12 pins (T044), RlsCatalog negatives for InstanceReference/InstanceClaims (T045) and review-security flag for Q11 (T052)'}
 attempts: []
 blockers: []
-nextAction: 'Run /speckit-tasks from plan.md; tasks must include the research R12 pin updates, the RlsCatalog negative tests for InstanceReference and InstanceClaims, and review-security on the Q11 owner-login design at convergence.'
+nextAction: 'Run /speckit-analyze on spec/plan/tasks, then /speckit-implement starting at T001 (MVP = Setup + Foundational + US1).'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}
