@@ -328,10 +328,10 @@ specs:
   prompt: docs/prompts/spec-0005.md
   dependencies:
   - GOZ-0004
-  status: ready-for-human-merge
-  stage: pr-ready
+  status: complete
+  stage: merged
   branch: feature/goz-0005-publisher-identities
-  pullRequest: null
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/19
   promptRevision: 6
   gates:
     specification: passed
@@ -343,8 +343,8 @@ specs:
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
-    humanReview: pending
-    merge: pending
+    humanReview: passed
+    merge: passed
   blockers: []
   impactFindings:
   - GOZ-0005-IF-01
@@ -377,7 +377,7 @@ specs:
     reviews:
     - docs/specs/005-publisher-identities/reviews/impact-analysis.md
     - docs/specs/005-publisher-identities/reviews/impact-findings.json
-  nextAction: 'Human review and merge of PR #19 (demo 46/46 at dc24888; all CI checks pass at 8815690); 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates.'
+  nextAction: 'Complete — merged to main in 2f63e016d5676734ff88ca6cf9b0917db4528d60 (PR #19, verified 2026-11-17); 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates.'
 - id: GOZ-0006
   number: 6
   title: Typed manifests for capability families
@@ -410,7 +410,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Await prerequisites and create allowed working branch
+  nextAction: 'Prerequisite GOZ-0005 merged (PR #19); no open impact decision is due before GOZ-0006 (IF-02 before GOZ-0012 plan; IF-04, IF-05, IF-08 before GOZ-0039); prompt revision 7 carries the publisher identity conventions (IF-01, IF-03, IF-06, IF-07, IF-09, IF-10); start on feature/goz-0006-*'
 - id: GOZ-0007
   number: 7
   title: Immutable revisions and signed attestations
