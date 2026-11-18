@@ -200,8 +200,13 @@ internal static class SigningKeyOperatorCommands
         {
             yield return new PublisherSigningKey
             {
-                Id = reader.GetGuid(0), OrganizationId = reader.GetGuid(1), PublisherId = reader.GetGuid(2), Generation = reader.GetInt32(3),
-                KeyId = reader.GetString(4), Algorithm = Ed25519Signer.Algorithm, PublicKey = reader.GetFieldValue<byte[]>(5),
+                Id = reader.GetGuid(0),
+                OrganizationId = reader.GetGuid(1),
+                PublisherId = reader.GetGuid(2),
+                Generation = reader.GetInt32(3),
+                KeyId = reader.GetString(4),
+                Algorithm = Ed25519Signer.Algorithm,
+                PublicKey = reader.GetFieldValue<byte[]>(5),
                 EncryptedPrivateKey = reader.GetFieldValue<byte[]>(6),
             };
         }

@@ -87,7 +87,8 @@ public sealed partial class SigningKeySuccessionTests : IAsyncLifetime
         var (capabilityId, canonical, first) = await _s.PublishedAsync("1.0.0", publisherId);
         await using var changed = new GozlemeApiFactory(_db.AppConnectionString, settings: new Dictionary<string, string?>
         {
-            ["Gozleme:Signing:KeyEncryptionKey"] = OtherKek, ["Gozleme:Manifests:ValidatePerMinute"] = "10000",
+            ["Gozleme:Signing:KeyEncryptionKey"] = OtherKek,
+            ["Gozleme:Manifests:ValidatePerMinute"] = "10000",
         });
         using var carol = (await TwoTenants.AddPublisherMemberAsync(changed, _s.Alice, Guid.Parse(_s.OrgA))).Client;
         var path = _s.Revisions(capabilityId, publisherId);

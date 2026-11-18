@@ -56,7 +56,9 @@ public sealed class RevisionImmutabilityTests(PgvectorDatabaseFixture fixture) :
         };
         var set = new Dictionary<string, string>
         {
-            ["manifest_revisions"] = "version = '9.9.9'", ["revision_attestations"] = "signature = signature", ["publisher_signing_keys"] = "generation = generation + 10",
+            ["manifest_revisions"] = "version = '9.9.9'",
+            ["revision_attestations"] = "signature = signature",
+            ["publisher_signing_keys"] = "generation = generation + 10",
             ["signing_key_retirements"] = "reason = 'compromised'",
         };
         var withContext = RevisionScenario.Context(_s.CarolId);

@@ -15,8 +15,13 @@ public sealed class SigningKeyVaultTests
 
     private static PublisherSigningKey Row(Guid publisherId, NewSigningKey key) => new()
     {
-        Id = Guid.CreateVersion7(), PublisherId = publisherId, Generation = 1, KeyId = key.KeyId, Algorithm = Ed25519Signer.Algorithm,
-        PublicKey = key.PublicKey, EncryptedPrivateKey = key.EncryptedPrivateKey,
+        Id = Guid.CreateVersion7(),
+        PublisherId = publisherId,
+        Generation = 1,
+        KeyId = key.KeyId,
+        Algorithm = Ed25519Signer.Algorithm,
+        PublicKey = key.PublicKey,
+        EncryptedPrivateKey = key.EncryptedPrivateKey,
     };
 
     [Theory]

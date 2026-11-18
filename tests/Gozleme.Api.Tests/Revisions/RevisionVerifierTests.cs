@@ -101,14 +101,24 @@ public sealed class RevisionVerifierTests
         // The attestation's own key row belongs to another publisher, even with a matching statement.
         var foreignKey = new PublisherSigningKey
         {
-            Id = _kit.Key.Id, OrganizationId = _kit.Key.OrganizationId, PublisherId = Guid.CreateVersion7(), Generation = 1,
-            KeyId = _kit.Key.KeyId, Algorithm = "Ed25519", PublicKey = _kit.Key.PublicKey,
+            Id = _kit.Key.Id,
+            OrganizationId = _kit.Key.OrganizationId,
+            PublisherId = Guid.CreateVersion7(),
+            Generation = 1,
+            KeyId = _kit.Key.KeyId,
+            Algorithm = "Ed25519",
+            PublicKey = _kit.Key.PublicKey,
         };
         Failed(VerificationReason.UnknownKey, _kit.Verify(key: foreignKey));
         var otherRow = new PublisherSigningKey
         {
-            Id = Guid.CreateVersion7(), OrganizationId = _kit.Key.OrganizationId, PublisherId = _kit.Key.PublisherId, Generation = 2,
-            KeyId = _kit.Key.KeyId, Algorithm = "Ed25519", PublicKey = _kit.Key.PublicKey,
+            Id = Guid.CreateVersion7(),
+            OrganizationId = _kit.Key.OrganizationId,
+            PublisherId = _kit.Key.PublisherId,
+            Generation = 2,
+            KeyId = _kit.Key.KeyId,
+            Algorithm = "Ed25519",
+            PublicKey = _kit.Key.PublicKey,
         };
         Failed(VerificationReason.UnknownKey, _kit.Verify(key: otherRow));
     }
@@ -121,13 +131,19 @@ public sealed class RevisionVerifierTests
         statement[at] = (byte)'1'; // "1.0.1": still canonical
         Failed(VerificationReason.SignatureInvalid, _kit.Verify(new RevisionAttestation
         {
-            RevisionId = _kit.Revision.Id, SigningKeyId = _kit.Key.Id, Statement = statement, Signature = _kit.Attestation.Signature,
+            RevisionId = _kit.Revision.Id,
+            SigningKeyId = _kit.Key.Id,
+            Statement = statement,
+            Signature = _kit.Attestation.Signature,
         }));
         var signature = (byte[])_kit.Attestation.Signature.Clone();
         signature[0] ^= 1;
         Failed(VerificationReason.SignatureInvalid, _kit.Verify(new RevisionAttestation
         {
-            RevisionId = _kit.Revision.Id, SigningKeyId = _kit.Key.Id, Statement = _kit.Attestation.Statement, Signature = signature,
+            RevisionId = _kit.Revision.Id,
+            SigningKeyId = _kit.Key.Id,
+            Statement = _kit.Attestation.Statement,
+            Signature = signature,
         }));
     }
 

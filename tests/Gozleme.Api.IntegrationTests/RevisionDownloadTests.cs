@@ -113,7 +113,9 @@ public sealed class RevisionDownloadTests(PgvectorDatabaseFixture fixture) : IAs
             await File.WriteAllBytesAsync(Path.Combine(dir.FullName, "statement.sig"), signature, TestContext.Current.CancellationToken);
             var start = new ProcessStartInfo("openssl", ["pkeyutl", "-verify", "-pubin", "-inkey", "key.pem", "-rawin", "-in", "statement.json", "-sigfile", "statement.sig"])
             {
-                WorkingDirectory = dir.FullName, RedirectStandardOutput = true, RedirectStandardError = true,
+                WorkingDirectory = dir.FullName,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
             };
             Process? process;
             try
