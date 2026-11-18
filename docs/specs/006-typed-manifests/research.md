@@ -260,7 +260,7 @@ Anything else is `identity_mismatch` at `/capability`, rule `identity.capability
 **Decision**:
 - A `$ref` or `$dynamicRef` whose value does not start with `#` is `external_reference`, rule `ref.external`. This applies to OpenAPI and AsyncAPI documents, to MCP `inputSchema`/`outputSchema`, and to embedded JSON Schemas. Internal `#…` references must resolve within the same document; otherwise the value is `invalid_value`, rule `ref.unresolved`.
 - A `$schema` or `jsonSchemaDialect` value outside the bundled dialect list is `external_reference`, rule `ref.dialect`, because it would need fetching. The bundled list is draft-07, 2019-09 and 2020-12, and for OpenAPI 3.1 also the OAS dialect `https://spec.openapis.org/oas/3.1/dialect/base`.
-- Informational URLs (`externalDocs.url`, `documentationUrl`, `iconUrl`, `websiteUrl`, `servers[].url`, remote endpoint URLs) are data and are never fetched or rejected for being URLs. They are still subject to the secret patterns (userinfo).
+- Informational URLs (`externalDocs.url`, `documentationUrl`, `iconUrl`, `websiteUrl`, `servers[].url`, remote endpoint URLs, OpenAPI Example `externalValue` and cross-document Link `operationRef` (maintainer decision 2026-11-17)) are data and are never fetched or rejected for being URLs. They are still subject to the secret patterns (userinfo).
 
 ## R11 — Endpoint, authorization order and rate limit (FR-019, FR-020)
 

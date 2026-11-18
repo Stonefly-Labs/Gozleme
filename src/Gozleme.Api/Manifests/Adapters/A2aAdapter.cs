@@ -7,7 +7,8 @@ namespace Gozleme.Api.Manifests.Adapters;
 /// <summary>
 /// <c>a2a/1</c>: the A2A Agent Card 1.0 (v1.0.1), validated against the generated per-message schemas through the
 /// Gözleme required-field overlay. <c>/signatures</c> is reserved (GOZ-0007 signs); <c>securitySchemes</c> and
-/// <c>securityRequirements</c> are declarations and accepted. Proto JSON accepts snake_case field names too.
+/// <c>securityRequirements</c> are declarations and accepted. <c>provider</c> is descriptive, never projected or trusted as
+/// owner (maintainer decision 2026-11-17). Proto JSON accepts snake_case field names too.
 /// </summary>
 internal sealed class A2aAdapter : IProtocolAdapter
 {

@@ -8,7 +8,8 @@ namespace Gozleme.Api.Manifests.Adapters;
 /// <summary>
 /// <c>api/1</c>: OpenAPI 3.1 (schema 2026-11-05) and 3.0 (schema 2024-10-18). The document's <c>openapi</c> must be in
 /// the declared line. <c>^x-</c> members are the extension mechanism; native <c>deprecated</c> flags are element
-/// metadata, not reserved (agent choice A1).
+/// metadata, not reserved (A1, maintainer approved 2026-11-17). Example <c>externalValue</c> and cross-document
+/// Link <c>operationRef</c> are informational URLs under R10: data, never fetched (maintainer decision 2026-11-17).
 /// </summary>
 internal sealed partial class OpenApiAdapter : IProtocolAdapter
 {

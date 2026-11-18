@@ -85,21 +85,24 @@ list results as authoritative, so Gözleme never presents these lists as verifie
 - **`securitySchemes` and `securityRequirements`**: these are declarations without values and are accepted.
 - **Secret-bearing fields**: none. Pattern list only.
 - **Native names**: `name` and skill `id`s are native names, never identity claims.
+- **`provider`**: `provider.organization` and `provider.url` are descriptive text, kept verbatim in the native document. They are never projected and never trusted as the capability's owner; the owner is the Gözleme publisher (maintainer decision 2026-11-17).
 
 ## `api/1` — OpenAPI 3.1 and 3.0
 
 - **Schemas**: OAS 3.1 schema `2026-11-05` (2020-12) and OAS 3.0 schema `2024-10-18` (draft-04). Both are closed upstream.
 - **Document field**: `openapi` must match the declared line (`unsupported_format`, rule `native.version-mismatch`).
 - **Extension mechanism**: `^x-` members. The vocabulary is applied to every `x-` name.
-- **Native `deprecated` flags**: operation, parameter, header and schema `deprecated` flags are protocol-native element metadata. They are not reserved (agent choice A1).
+- **Native `deprecated` flags**: operation, parameter, header and schema `deprecated` flags are protocol-native element metadata. They are not reserved (maintainer approved A1, 2026-11-17). A `deprecated` name that is not the protocol's own field, such as `x-deprecated`, is still reserved.
 - **Secret-bearing fields**: header and cookie parameters, and header objects, whose name is in the MCP list above. Their `example`, `examples.*.value` and `default` are checked.
 - **References**: `#`-internal `$ref` is allowed and must resolve. Other `$ref` values, and a `jsonSchemaDialect` outside the bundled list, are `external_reference`.
+- **Informational URLs**: Example `externalValue` and a Link `operationRef` that points outside the document are informational URLs under research R10 (maintainer decision 2026-11-17). They are kept as data, never fetched and never rejected for being URLs; the secret patterns still apply.
 
 ## `event/1` — AsyncAPI 3.0.0
 
 - **Schema**: `spec-json-schemas` `3.0.0` (draft-07). It is closed upstream, root included.
 - **Document field**: `asyncapi` must equal `3.0.0`.
 - **Extension mechanism**: `^x-[\w\d.\-_]+$` members.
+- **Native `deprecated` flags**: as for `api/1` (A1).
 - **Reserved, secret and reference rules**: as for `api/1`. This covers message and messageTrait `headers` schemas' `default`/`examples` for the listed header names.
 
 ## `skill/1` — Agent Skills `SKILL.md` (snapshot 2026-11-17)
