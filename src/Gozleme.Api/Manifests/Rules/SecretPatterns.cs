@@ -57,6 +57,19 @@ internal static partial class SecretPatterns
     public static bool IsMatch(string value) => Match(value) is not null;
 
     /// <summary>
+    /// The patterns whose match may contain <c>/</c> or <c>~</c>, so may span member names joined into an RFC 6901
+    /// location, with a fixed part every such match contains. Every other pattern matches inside one name, which the
+    /// per-name check already covers (T091). A test fails if a pattern allowing <c>/</c> or <c>~</c> is missing here.
+    /// </summary>
+    internal static readonly IReadOnlyList<(string Id, string[] Anchors)> Spanning =
+    [
+        ("auth-header", ["bearer", "basic", "digest"]),
+        ("url-userinfo", ["://"]), // in a location only as a name ending in ':' followed by an empty name
+        ("azure-connection-secret", ["accountkey=", "sharedaccesskey=", "sharedaccesssignature="]),
+    ];
+
+
+    /// <summary>
     /// A value that is never flagged in a secret-bearing field: empty, a secret reference <c>secretref:&lt;provider&gt;/&lt;key&gt;</c>
     /// (agent choice A2) or an MCP placeholder <c>{NAME}</c>.
     /// </summary>

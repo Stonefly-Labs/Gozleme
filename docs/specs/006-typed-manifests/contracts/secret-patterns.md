@@ -11,7 +11,9 @@ is a contract change and a **security review item**. There is no randomness (ent
 - Every YAML comment (OpenAPI/AsyncAPI YAML and `SKILL.md` front matter), from `#` to the end of its line, located by line and column (maintainer decision 2026-11-17).
 
 A match is `secret_value`. Its rule is `secret.pattern` for a value, or `secret.name` for a member name, in
-which case the location is the parent object (see [manifest-validation.md](./manifest-validation.md)).
+which case the location is the parent object (see [manifest-validation.md](./manifest-validation.md)). Member
+names are also checked joined into their RFC 6901 location, so a credential split across nested names is
+`secret.name` at the deepest parent whose location is clean (maintainer decision 2026-11-17, T091).
 
 ## Accepted (never flagged)
 

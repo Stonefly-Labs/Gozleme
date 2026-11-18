@@ -62,7 +62,8 @@ internal static class ManifestRuleChecks
     }
 
     /// <summary>
-    /// Drops every problem whose pointer has a credential-shaped segment: the <c>secret.name</c> problem at its parent
+    /// Drops every problem whose pointer has a credential-shaped segment, or whose RFC 6901 text matches the patterns
+    /// once its names are joined (T091): the <c>secret.name</c> problem at its parent
     /// already reports it, and a pointer must never carry a matched credential (contracts/manifest-validation.md).
     /// </summary>
     public static List<ManifestProblem> WithoutSecretPointers(List<ManifestProblem> problems)
@@ -71,6 +72,7 @@ internal static class ManifestRuleChecks
         // problem: pointers parsed from schema results share no steps (T074, T084).
         var carries = new Dictionary<JsonPointer, bool>(ReferenceEqualityComparer.Instance);
         var matched = new Dictionary<string, bool>(StringComparer.Ordinal);
+        var joined = new SecretFields.LocationScan();
         bool Carries(JsonPointer at)
         {
             if (at.Parent is null)
@@ -85,7 +87,7 @@ internal static class ManifestRuleChecks
                     matched[at.Segment] = own = SecretPatterns.IsMatch(at.Segment);
                 }
 
-                carries[at] = result = own || Carries(at.Parent);
+                carries[at] = result = own || Carries(at.Parent) || SecretFields.LocationMatches(at, joined);
             }
 
             return result;

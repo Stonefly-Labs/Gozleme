@@ -151,4 +151,38 @@ public sealed class SecretPatternTests
         var slow = new Regex("^(a+)+$", RegexOptions.None, TimeSpan.FromMilliseconds(1));
         Assert.Equal(("slow", 0), SecretPatterns.Match(new string('a', 40) + "!", [("slow", slow)]));
     }
+
+    private static string OpenApiWith(string extension) =>
+        """{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{},"x-z":""" + extension + "}";
+
+    /// <summary>T091 (maintainer decision "reject and trim"): a credential that only appears once names are joined.</summary>
+    [Fact]
+    public void A_credential_split_across_nested_names_is_rejected_at_the_deepest_clean_parent()
+    {
+        var problems = Problems(Validate("api", "openapi", "3.1", "json", OpenApiWith("""{"https:":{"":{"u:pw@host":{"verified":1}}}}""")));
+        Assert.Equal(["secret_value secret.name native /x-z/https:/"], problems);
+        Assert.DoesNotContain(problems, p => p.Contains("pw@", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Names_that_do_not_join_into_a_credential_stay_accepted() =>
+        Accepted(Validate("api", "openapi", "3.1", "json", OpenApiWith("""{"https:":{"x":{"u:pw@host":1}},"bearer":{"short":1}}""")));
+
+    /// <summary>Every pattern that can match across a joined name boundary (its source allows / or ~) is listed as spanning, with anchors it contains.</summary>
+    [Fact]
+    public void Every_pattern_that_can_span_names_is_listed_as_spanning()
+    {
+        var spanning = SecretPatterns.Spanning.ToDictionary(s => s.Id, s => s.Anchors);
+        foreach (var (id, pattern) in SecretPatterns.All)
+        {
+            var source = pattern.ToString();
+            Assert.True(!source.Contains('/') && !source.Contains('~') || spanning.ContainsKey(id), $"{id} can span names but is not in SecretPatterns.Spanning");
+        }
+
+        foreach (var (id, anchors) in spanning)
+        {
+            var source = SecretPatterns.All.Single(p => p.Id == id).Pattern.ToString().ToLowerInvariant();
+            Assert.All(anchors, a => Assert.Contains(a.TrimEnd('='), source, StringComparison.Ordinal));
+        }
+    }
 }

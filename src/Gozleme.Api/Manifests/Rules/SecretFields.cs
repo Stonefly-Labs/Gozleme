@@ -18,6 +18,7 @@ internal static class SecretFields
     public static IEnumerable<ManifestProblem> Patterns(ManifestNode tree, string part, string? skip = null)
     {
         var skipped = skip is null ? null : JsonPointer.Parse(skip);
+        var joined = new LocationScan();
         foreach (var node in tree.Descendants())
         {
             if (node is { IsString: true, Text: { } text } && !node.Pointer.Equals(skipped) && SecretPatterns.IsMatch(text))
@@ -25,10 +26,62 @@ internal static class SecretFields
                 yield return new ManifestProblem(ManifestRules.SecretPattern, ProblemLocation.At(part, node.Pointer));
             }
 
-            if (node.Members.Any(m => SecretPatterns.IsMatch(m.Key)))
+            // A credential in one member name, or one that only appears once names are joined into a location
+            // (`https:` → `` → `u:pw@host`): reported at the deepest parent whose own location is clean (T091).
+            if (node.Members.Any(m => SecretPatterns.IsMatch(m.Key))
+                || (node.Members.Count > 0 && !LocationMatches(node.Pointer, joined) && node.Members.Any(m => LocationMatches(m.Value.Pointer, joined))))
             {
                 yield return new ManifestProblem(ManifestRules.SecretName, ProblemLocation.At(part, node.Pointer));
             }
+        }
+    }
+
+    /// <summary>
+    /// Whether a location's RFC 6901 text, as it would be returned, matches the patterns (maintainer decision
+    /// 2026-11-17, "reject and trim", T091). The patterns run on the whole text only beneath a name holding the fixed
+    /// part of a pattern that can span names (<see cref="SecretPatterns.Spanning"/>); elsewhere only single names
+    /// could match, and those are checked one by one. Both answers are memoized per pointer in <paramref name="scan"/>.
+    /// </summary>
+    internal static bool LocationMatches(JsonPointer pointer, LocationScan scan)
+    {
+        if (pointer.Parent is null || !scan.Anchored(pointer))
+        {
+            return false;
+        }
+
+        if (!scan.Matched.TryGetValue(pointer, out var match))
+        {
+            scan.Matched[pointer] = match = SecretPatterns.IsMatch(pointer.ToString());
+        }
+
+        return match;
+    }
+
+    /// <summary>Per-validation memo for <see cref="LocationMatches"/>.</summary>
+    internal sealed class LocationScan
+    {
+        private static readonly string[] NameAnchors = [.. SecretPatterns.Spanning.SelectMany(s => s.Anchors).Where(a => a != "://")];
+
+        private readonly Dictionary<JsonPointer, bool> _anchored = new(ReferenceEqualityComparer.Instance);
+
+        public Dictionary<JsonPointer, bool> Matched { get; } = new(ReferenceEqualityComparer.Instance);
+
+        /// <summary>Whether the location's text contains a spanning pattern's fixed part, worked out name by name.</summary>
+        public bool Anchored(JsonPointer pointer)
+        {
+            if (pointer.Parent is null)
+            {
+                return false;
+            }
+
+            if (!_anchored.TryGetValue(pointer, out var anchored))
+            {
+                _anchored[pointer] = anchored = Anchored(pointer.Parent)
+                    || NameAnchors.Any(a => pointer.Segment.Contains(a, StringComparison.OrdinalIgnoreCase))
+                    || (pointer.Segment.Length == 0 && pointer.Parent.Segment.EndsWith(':'));
+            }
+
+            return anchored;
         }
     }
 
