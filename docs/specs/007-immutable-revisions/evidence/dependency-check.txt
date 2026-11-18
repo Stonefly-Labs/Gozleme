@@ -1,0 +1,8 @@
+# dotnet list package --vulnerable --include-transitive (2026-11-18T18:17:32Z, GOZ-0007 T001)
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+
+The following sources were used:
+   https://api.nuget.org/v3/index.json
+
+The given project `Gozleme.Api` has no vulnerable packages given the current sources.

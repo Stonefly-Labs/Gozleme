@@ -21,6 +21,18 @@ conflicts with the spec. Facts about the existing code were read from the branch
     tests use.
 - **Verify at vendoring**: libsodium loads in the runtime container and in CI (a smoke test signs and verifies at
   start-up warm-up), and `THIRD-PARTY-NOTICES.md` gains NSec (MIT) and libsodium (ISC).
+- **Verified at vendoring (2026-11-18, T001–T002)**:
+  - NSec.Cryptography 26.4.0 restored with libsodium 1.0.22. `dotnet list package --vulnerable --include-transitive`
+    reports no vulnerable packages ([evidence/dependency-check.txt](./evidence/dependency-check.txt)).
+  - `Ed25519VendoringTests` (osx-arm64, local) passes 4/4:
+    - the RFC 8032 section 7.1 TEST 1 signature matches byte-for-byte and verifies;
+    - a raw 32-byte seed imports with `AllowPlaintextExport` and with `None`, and with `None` it refuses export;
+    - a fresh key round-trips through its seed;
+    - the SPKI PEM has the RFC 8410 prefix `302a300506032b6570032100`, and `openssl pkey -pubin` accepts it.
+  - `docker run --rm gozleme-api:local signing-selftest` in the built `aspnet:10.0` runtime image prints
+    `signing-selftest: ok (Ed25519, RFC 8032 test 1)` and exits 0 on `linux/arm64` and on `linux/amd64` (buildx).
+  - CI (ubuntu-latest) runs the same suite in `dotnet test`. The result is recorded in `progress.yaml`.
+  - The stop rule was not triggered.
 - **Alternatives**: BouncyCastle.Cryptography 2.7.0 (managed, MIT; a large library of which only Ed25519 would be
   used); built-in ECDSA P-256 (no package, but its signatures are not deterministic, which conflicts with the spec
   assumption); ML-DSA (in the BCL, but needs OpenSSL 3.5+ and lacks broad independent verifiers today).
