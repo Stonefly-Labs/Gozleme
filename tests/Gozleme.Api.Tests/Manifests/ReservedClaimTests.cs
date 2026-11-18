@@ -117,6 +117,37 @@ public sealed class ReservedClaimTests
             ["unknown_field native.unknown-field native /serverInfo/owner", "reserved_claim reserved.vocabulary native /serverInfo/owner"],
             Problems(Validate("mcp", "mcp-server-manifest", "1", "json", Mcp().Replace("\"version\":\"1.0.0\"}", "\"version\":\"1.0.0\",\"owner\":\"acme\"}", StringComparison.Ordinal))));
 
+    private static string A2aCard() => System.Text.Json.JsonSerializer.Deserialize<string>(
+        JsonNode.Parse(File.ReadAllText(Path.Combine(ManifestSamples.Directory, "a2a", "valid-agent-card.json")))!["native"]!["document"]!.ToJsonString())!;
+
+    /// <summary>T086 (maintainer decision "follow the contract"): closed A2A, OpenAPI and AsyncAPI objects too.</summary>
+    [Fact]
+    public void A_reserved_name_in_a_closed_a2a_openapi_or_asyncapi_object_is_reserved_and_unknown()
+    {
+        var card = JsonNode.Parse(A2aCard())!;
+        card["verified"] = true;
+        Assert.Equal(
+            ["unknown_field native.unknown-field native /verified", "reserved_claim reserved.vocabulary native /verified"],
+            Problems(Validate("a2a", "a2a-agent-card", "1.0", "json", Text(card))));
+
+        Assert.Equal(
+            ["unknown_field native.unknown-field native /info/owner", "reserved_claim reserved.vocabulary native /info/owner"],
+            Problems(Validate("api", "openapi", "3.1", "json", """{"openapi":"3.1.0","info":{"title":"t","version":"1","owner":"acme"},"paths":{}}""")));
+
+        Assert.Equal(
+            ["unknown_field native.unknown-field native /info/trustLevel", "reserved_claim reserved.vocabulary native /info/trustLevel"],
+            Problems(Validate("event", "asyncapi", "3.0.0", "json", """{"asyncapi":"3.0.0","info":{"title":"t","version":"1","trustLevel":"high"}}""")));
+    }
+
+    [Fact]
+    public void An_unknown_name_that_is_not_reserved_stays_only_unknown_and_native_deprecated_stays_accepted()
+    {
+        Assert.Equal(
+            ["unknown_field native.unknown-field native /info/colour"],
+            Problems(Validate("api", "openapi", "3.1", "json", """{"openapi":"3.1.0","info":{"title":"t","version":"1","colour":"red"},"paths":{}}""")));
+        Accepted(Validate("api", "openapi", "3.1", "json", """{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{"/a":{"get":{"deprecated":true,"responses":{"200":{"description":"ok"}}}}}}"""));
+    }
+
     [Fact]
     public void Mcp_schema_property_and_variable_names_stay_user_data() =>
         Accepted(Validate("mcp", "mcp-server-manifest", "1", "json", Mcp().Replace("\"inputSchema\":{\"type\":\"object\"}", "\"inputSchema\":{\"type\":\"object\",\"properties\":{\"owner\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"}}}", StringComparison.Ordinal)));

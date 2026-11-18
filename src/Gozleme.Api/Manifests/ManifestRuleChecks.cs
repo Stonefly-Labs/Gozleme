@@ -32,6 +32,16 @@ internal static class ManifestRuleChecks
             problems.Add(new ManifestProblem(ManifestRules.ReservedVocabulary, ProblemLocation.At(ManifestPart.Native, position.Pointer)));
         }
 
+        // A reserved name in a closed A2A, OpenAPI or AsyncAPI object: the schema reports it as unknown, and it is a
+        // reserved claim as well (maintainer decision 2026-11-17, "follow the contract", T086). Fields the protocol
+        // defines are never unknown, so native fields such as `deprecated` stay untouched (A1).
+        if (adapter is A2aAdapter or OpenApiAdapter or AsyncApiAdapter)
+        {
+            var closed = problems.Where(p => p.Rule == ManifestRules.NativeUnknownField
+                && p.Location?.Path is { Parent: not null } path && ReservedClaims.IsReserved(path.Segment)).ToList();
+            problems.AddRange(closed.Select(p => new ManifestProblem(ManifestRules.ReservedVocabulary, p.Location)));
+        }
+
         problems.AddRange(SecretFields.Fields(adapter.SecretFields(tree), ManifestPart.Native));
         problems.AddRange(SecretFields.Patterns(tree, ManifestPart.Native));
         if (skill is not null)
