@@ -38,12 +38,16 @@ public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IA
     }
 
     [Fact]
-    public async Task Manifest_validation_adds_no_table_and_no_migration()
+    public async Task Manifest_validation_adds_only_its_rate_limit_counter()
     {
+        // FR-017 as clarified (maintainer decision 2026-11-18, "shared-rate-limit", T099): the one table is the shared
+        // validation counter, holding an account, a window and a count; no manifest, revision or projection is stored.
         var db = fixture.Database;
-        Assert.Equal(0L, await db.ScalarAsync<long>(
-            "SELECT count(*) FROM pg_tables WHERE tablename ~ '(manifest|revision|projection)'"));
-        Assert.Equal("20261119000000_PublisherIdentities", await db.ScalarAsync<string>("""SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """));
+        Assert.Equal("manifest_validation_attempts", await db.ScalarAsync<string>(
+            "SELECT string_agg(tablename, ',' ORDER BY tablename) FROM pg_tables WHERE tablename ~ '(manifest|revision|projection)'"));
+        Assert.Equal("account_id,window_start,attempts", await db.ScalarAsync<string>(
+            "SELECT string_agg(column_name, ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema = 'gozleme' AND table_name = 'manifest_validation_attempts'"));
+        Assert.Equal("20261120000000_ManifestValidationAttempts", await db.ScalarAsync<string>("""SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """));
     }
 
     [Fact]
@@ -52,7 +56,7 @@ public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IA
         var db = fixture.Database;
         Assert.Equal(1, await db.ScalarAsync<long>("SELECT count(*) FROM pg_namespace WHERE nspname = 'gozleme'"));
         var tables = await db.ScalarAsync<string>("SELECT string_agg(tablename, ',' ORDER BY tablename) FROM pg_tables WHERE schemaname = 'gozleme'");
-        Assert.Equal("alias_reservations,auth_sessions,capabilities,data_protection_keys,handle_claims,invitations,memberships,organizations,publisher_registration_attempts,publishers,registry_origin,user_claims,user_logins,user_tokens,users", tables);
+        Assert.Equal("alias_reservations,auth_sessions,capabilities,data_protection_keys,handle_claims,invitations,manifest_validation_attempts,memberships,organizations,publisher_registration_attempts,publishers,registry_origin,user_claims,user_logins,user_tokens,users", tables);
     }
 
     [Fact]

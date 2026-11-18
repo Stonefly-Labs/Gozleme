@@ -28,7 +28,7 @@ A rejected manifest returns categorized problems with locations and never echoes
   - The YamlDotNet *event* parser reads restricted YAML.
   - Everything is parsed into one positioned tree, so locations are RFC 6901 pointers for JSON, YAML and front matter alike.
 - **Strictness** (Q4; research R6–R10): unknown fields, reserved security claims (a vocabulary applied to extension points and to the fields each adapter lists), inline secrets (secret-bearing fields plus pattern list v1, with no entropy heuristic), identity mismatch and external references are all rejected, under a closed set of 11 categories and a fixed rule catalogue.
-- **Authorization** (Q2; research R11): the new action `manifest.validate` on `capability` is held by `publisher` only. Order: membership (404) → permission (403) → target (404) → suspension (409) → per-account in-memory rate limit (429) → media type and size (415/413) → validate. No audit event is written (FR-023).
+- **Authorization** (Q2; research R11): the new action `manifest.validate` on `capability` is held by `publisher` only. Order: membership (404) → permission (403) → target (404) → suspension (409) → per-account rate limit shared through PostgreSQL (429; T099) → media type and size (415/413) → validate. No audit event is written (FR-023).
 - **Product**: a **Validate manifest** page under the capability, with family picker, sample loader, three result panels and a problem list; a same-origin route handler; and a seeded demo publisher and capability (R14).
 - **Demo**: Playwright project `goz-0006` covers all six families (both MCP modes), every rejection category, the boundary test, the role matrix, the no-storage check and the telemetry no-secret scan, plus regression of all earlier suites ([quickstart.md](./quickstart.md)).
 
@@ -102,7 +102,7 @@ docs/specs/006-typed-manifests/
 ├── spec.md
 ├── plan.md                                   # this file
 ├── research.md                               # R1–R17
-├── data-model.md                             # no storage; in-memory entities
+├── data-model.md                             # in-memory entities; one counter table (T099)
 ├── quickstart.md
 ├── contracts/
 │   ├── manifest-validation.md                # request, order, result, categories, stages, bounds, rule catalogue

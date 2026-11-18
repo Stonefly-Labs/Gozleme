@@ -26,7 +26,7 @@ manifest.validate        capability    deny   deny      deny    allow      deny
 For `manifest.validate`, the steps after permission are:
 1. target (`404`);
 2. suspension (`409`);
-3. the account's in-memory validation budget (`429 {"error":"rate_limited"}`);
+3. the account's validation budget, shared through PostgreSQL across API instances (maintainer decision 2026-11-18, "shared-rate-limit", T099) (`429 {"error":"rate_limited"}`);
 4. media type and size (`415`/`413`);
 5. validation (`200` with an `accepted` or `rejected` outcome).
 

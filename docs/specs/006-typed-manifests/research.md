@@ -286,7 +286,7 @@ Anything else is `identity_mismatch` at `/capability`, rule `identity.capability
 
   The manifest is never parsed before step 5 (FR-019).
 - **Rate limit** (disclosed agent choice from specify):
-  - `ManifestValidationLimiter`: an in-memory `PartitionedRateLimiter` keyed by account ID, with a fixed window of `Gozleme:Manifests:ValidatePerMinute` (default 30).
+  - `ManifestValidationLimiter`: a per-account count per clock minute in `gozleme.manifest_validation_attempts`, limit `Gozleme:Manifests:ValidatePerMinute` (default 30), shared through PostgreSQL across API instances (maintainer decision 2026-11-18, "shared-rate-limit", T099); it replaces the earlier in-memory `PartitionedRateLimiter`.
   - It runs inside the handler after suspension, so a non-member, a forbidden caller or a suspended target never spends or sees `429` (pattern: GOZ-0005 U1).
   - A rejection is recorded as `gozleme.manifest.outcome=rate_limited` on the operation's own span and counter, never through the shared `OnRejected` sign-in path (GOZ-0002-IF-08).
   - Because the limiter is not middleware, no `RateLimitedOperation` metadata is needed.

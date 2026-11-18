@@ -16,6 +16,12 @@ read-only contract file.
 
 These are all existing member-level reads under the existing forced RLS policies. Nothing is written.
 
+## Stored: the validation counter (T099)
+
+`gozleme.manifest_validation_attempts` (`GlobalIdentity`, migration `20261120000000_ManifestValidationAttempts`):
+`account_id` (FK `users`, cascade), `window_start` (clock minute from the database), `attempts` (> 0); primary key
+`(account_id, window_start)`. Each call drops the account's expired windows. No manifest data (FR-017).
+
 ## Entities (in memory)
 
 ### ManifestEnvelope (v1)
@@ -106,7 +112,7 @@ belongs to GOZ-0007 (revisions) and to later specs.
 
 | Key | Default | Notes |
 |---|---|---|
-| `Gozleme:Manifests:ValidatePerMinute` | `30` | per account, in memory, per API instance |
+| `Gozleme:Manifests:ValidatePerMinute` | `30` | per account per clock minute, shared through PostgreSQL across API instances (maintainer decision 2026-11-18, "shared-rate-limit", T099) |
 
 The bounds in [contracts/manifest-validation.md](./contracts/manifest-validation.md) are contract constants,
 not configuration.

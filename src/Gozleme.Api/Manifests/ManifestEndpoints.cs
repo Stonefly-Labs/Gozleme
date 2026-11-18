@@ -66,7 +66,7 @@ internal static class ManifestEndpoints
             return Error(ManifestError.Suspended, StatusCodes.Status409Conflict);
         }
 
-        if (limiter.TryAcquire(membership.UserId) is { } retryAfter)
+        if (await limiter.TryAcquireAsync(membership.UserId, ct) is { } retryAfter)
         {
             ManifestTelemetry.Record(activity, ManifestOutcome.RateLimited);
             http.Response.Headers.RetryAfter = retryAfter.ToString(CultureInfo.InvariantCulture);

@@ -259,5 +259,5 @@ Task: "Route handler in web/src/app/api/.../manifests/validate/route.ts"
 ## Phase 11: Maintainer rulings on agent choices
 
 - [X] T098 Answer 400 for a malformed document, 413 for a too-large document and 422 for any other rejection, each with the rejected result body; accepted stays 200 and a body over 1 MiB keeps 413 {"error":"too_large"}; update the API contract, web page, tests and demo, per maintainer decision result-status-codes (contradicts)
-- [ ] T099 Share the validation rate limit across API instances with a PostgreSQL counter table (account, window, count) and migration, keep the rate_limited operation and Retry-After, amend FR-017 and the no-table test for this one table, with tests, per maintainer decision shared-rate-limit (contradicts)
+- [X] T099 Share the validation rate limit across API instances with a PostgreSQL counter table (account, window, count) and migration, keep the rate_limited operation and Retry-After, amend FR-017 and the no-table test for this one table, with tests, per maintainer decision shared-rate-limit (contradicts)
 - [ ] T100 Write the missing-member location rule into contracts/manifest-validation.md and record the ratified choices and the GOZ-0007 manifest resource type in the impact report and GOZ-0007 prompt, per maintainer decisions agent-choices-ratified and stored-text-projection-only (partial)

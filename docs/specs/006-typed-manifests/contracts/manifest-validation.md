@@ -40,7 +40,7 @@ The body is `application/json`, at most 1 MiB, and is a manifest envelope v1:
 3. `403 {"error":"forbidden"}`: the caller's roles lack `manifest.validate`.
 4. Empty `404`: the publisher or capability ID is malformed, unknown or belongs to another organization, or the capability belongs to another publisher.
 5. `409 {"error":"suspended"}`: the capability's publisher holds no handle claim.
-6. `429 {"error":"rate_limited"}` with `Retry-After`: the account's validation budget is spent (30 per minute by default, `Gozleme:Manifests:ValidatePerMinute`; in memory, per API instance).
+6. `429 {"error":"rate_limited"}` with `Retry-After`: the account's validation budget is spent (30 per clock minute by default, `Gozleme:Manifests:ValidatePerMinute`; shared through PostgreSQL across API instances (maintainer decision 2026-11-18, "shared-rate-limit", T099)).
 7. `415 {"error":"unsupported_media_type"}` unless `Content-Type` is `application/json`; `413 {"error":"too_large"}` over 1 MiB.
 8. The validation result: `200` when accepted; when rejected, `400` for a malformed document, `413` for a too-large one and `422` otherwise, always with the result body (maintainer decision 2026-11-18, "result-status-codes", T098).
 

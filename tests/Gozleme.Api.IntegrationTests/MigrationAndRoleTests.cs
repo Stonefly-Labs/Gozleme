@@ -16,8 +16,8 @@ public sealed class MigrationAndRoleTests(PgvectorDatabaseFixture fixture)
         var count = await Db.ScalarAsync<long>("""SELECT count(*) FROM public."__EFMigrationsHistory" """);
         var latest = await Db.ScalarAsync<string>("""SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """);
 
-        Assert.Equal(6, count); // Foundation (GOZ-0000) + LocalIdentity (GOZ-0001) + Organizations (GOZ-0002) + TenantRls (GOZ-0003) + ScopedRbac (GOZ-0004) + PublisherIdentities (GOZ-0005)
-        Assert.Equal("20261119000000_PublisherIdentities", latest);
+        Assert.Equal(7, count); // Foundation (GOZ-0000) + LocalIdentity (GOZ-0001) + Organizations (GOZ-0002) + TenantRls (GOZ-0003) + ScopedRbac (GOZ-0004) + PublisherIdentities (GOZ-0005) + ManifestValidationAttempts (GOZ-0006)
+        Assert.Equal("20261120000000_ManifestValidationAttempts", latest);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class MigrationAndRoleTests(PgvectorDatabaseFixture fixture)
     {
         var latest = await Db.ScalarAsync<string>(
             """SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """, Db.AppConnectionString);
-        Assert.Equal("20261119000000_PublisherIdentities", latest);
+        Assert.Equal("20261120000000_ManifestValidationAttempts", latest);
     }
 
     [Fact]

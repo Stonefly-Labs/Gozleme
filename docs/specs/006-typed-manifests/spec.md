@@ -192,7 +192,7 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
 - **FR-014**: The normalized projection MUST carry its own projection version, separate from the envelope and native versions. It contains only fields that the projection version defines for the family: family, kind, native name, title, description, declared version, the list of the family's entries by native name, and the few family attributes the projection version defines (for MCP, the protocol revision and the stateless or stateful mode derived from it; P4). It MUST mark values that the adapter derived or defaulted, rather than read directly. It MUST NOT assign child identities (GOZ-0008), and it MUST NOT write anything back into the native document.
 - **FR-015**: Validation MUST be deterministic: the same input against the same capability yields an identical result.
 - **FR-016**: Inputs MUST be bounded. There is a documented maximum size for the whole submission and for the native document, a maximum nesting depth, and a cap on entries per family. JSON with duplicate keys, invalid UTF-8, and YAML with aliases, anchors, merge keys or custom tags are `malformed`. Exceeding a bound is `too_large`.
-- **FR-017**: Validation MUST store nothing: no manifest, native document, projection or result is persisted in the database, logs, telemetry, audit records or files.
+- **FR-017**: Validation MUST store nothing: no manifest, native document, projection or result is persisted in the database, logs, telemetry, audit records or files. The one exception is the per-account validation rate-limit counter (FR-020), which holds an account, a time window and a count and no manifest data (maintainer decision 2026-11-18, "shared-rate-limit").
 
 **Samples**
 
@@ -252,6 +252,6 @@ An ordinary member sees the capability but is not offered **Validate manifest**,
 - Projections list entries (tools, skills, operations, channels) by native name only. Child capability identities and projection generations belong to GOZ-0008, and search indexing to GOZ-0013.
 - Signatures, attestations and digests that make a revision immutable belong to GOZ-0007. The SHA-256 digest here identifies the submitted bytes only and makes no authenticity claim.
 - The model card schema is Gözleme-defined for this slice (Q3) and documented as a versioned contract.
-- Rate limits are in memory and per API instance, like the existing session-scoped limiters (GOZ-0002-IF-08). Validation changes no shared state, so a shared budget is not required.
+- The validation rate limit is counted in PostgreSQL, so every API instance shares one budget per account and a restart does not reset it, like the publisher registration limit (GOZ-0005 FR-008; maintainer decision 2026-11-18, "shared-rate-limit", which replaces the earlier in-memory assumption).
 - No dependency on an external registry, schema host or network service. All pinned schemas are bundled.
 - Row-level security remains defence in depth beside application authorization. This slice reads only the existing capability and publisher rows.

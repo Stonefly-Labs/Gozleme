@@ -49,6 +49,10 @@ public sealed class ManifestNoStorageTests : IAsyncLifetime
 
         Assert.Equal(HttpStatusCode.Forbidden, (await ManifestClient.SendAsync(alice, path, "{}"u8.ToArray())).Status);
         Assert.Equal(before, await SnapshotAsync());
+        var carolId = await OrgClient.UserIdAsync(carol);
+        // Only the current minute's count is kept, so a batch that crosses a minute shows part of it.
+        Assert.InRange(await _db.ScalarAsync<int>(
+            $"SELECT sum(attempts)::int FROM gozleme.manifest_validation_attempts WHERE account_id = '{carolId}'", _db.SuperuserConnectionString), 1, ManifestClient.Samples.Count);
         Assert.Equal(denials + 1, _factory.Logs.Count(IsDenial));
         Assert.Equal(audits + 1, _factory.Logs.Count(IsAudit));
     }
@@ -69,7 +73,8 @@ public sealed class ManifestNoStorageTests : IAsyncLifetime
             "SELECT string_agg(table_name, ',' ORDER BY table_name) FROM information_schema.tables WHERE table_schema = 'gozleme' AND table_type = 'BASE TABLE'",
             _db.SuperuserConnectionString);
         var counts = new List<string>();
-        foreach (var table in tables.Split(','))
+        // The shared rate-limit counter (T099) changes by design; it is checked separately to hold only a count.
+        foreach (var table in tables.Split(',').Where(t => t != "manifest_validation_attempts"))
         {
             counts.Add($"{table}={await _db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.\"{table}\"", _db.SuperuserConnectionString)}");
         }
