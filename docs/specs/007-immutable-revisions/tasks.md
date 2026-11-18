@@ -15,7 +15,7 @@ description: "Task list for GOZ-0007 Immutable revisions and signed attestations
 
 **Stop rule (plan "Vendoring risk", research R1)**: T001–T002 verify the facts marked **verify at vendoring**. If libsodium does not load in the `mcr.microsoft.com/dotnet/aspnet:10.0` runtime image or in CI, if the RFC 8032 test 1 vector does not sign and verify, or if NSec cannot import and export a raw 32-byte private key seed for AES-GCM wrapping, record the difference in `progress.yaml` `blockers` with evidence and stop for maintainer review. Never fall back silently to another library, algorithm or framing (P1 and P2 are maintainer decisions).
 
-**Agent choices A1–A7** (research R4, R5, R11–R13, R18) are built as disclosed and stay open for maintainer veto. If the maintainer vetoes one, the corresponding tasks are amended before they are built.
+**Agent choices A1–A7** (research R4, R5, R11–R13, R18) were ruled on by the maintainer on 2026-11-18 before implementation: A1–A6 ratified as planned; A7 kept (the seed creates no revision), but the demo publishes to the seeded capability `manifest-demo` with run-unique pre-release versions instead of a run-unique capability (R18).
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -92,7 +92,7 @@ API `src/Gozleme.Api/` (new module `src/Gozleme.Api/Revisions/`), API tests `tes
 
 **Goal**: A `publisher` member validates and publishes two versions in the browser; both appear in order and verify
 
-**Independent Test**: As carol, publish two valid manifests with different versions to a run-unique capability; both are listed in sequence order with **Verified**, and the API returns the same records
+**Independent Test**: As carol, publish two valid manifests with different run-unique versions to the seeded capability `manifest-demo`; both are listed in sequence order with **Verified**, and the API returns the same records
 
 ### Tests for User Story 1
 

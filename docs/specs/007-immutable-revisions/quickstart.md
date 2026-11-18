@@ -56,18 +56,19 @@ Pins that change deliberately:
 ## Demo walkthrough (what `make demo` drives)
 
 After the seed, carol holds `{member, publisher}` and alice holds `{admin, member}` in **Seeded Demo Org**. Each run
-creates its own capability `rev-<runid>` under *Seeded Demo Publisher*.
+publishes to the seeded capability `manifest-demo` under *Seeded Demo Publisher* with run-unique SemVer pre-release
+versions (`1.0.0-r<runid>`, `1.1.0-r<runid>`), because revisions are never deleted (maintainer, A7 ruling 2026-11-18).
 
 1. **Publish two revisions** (User Story 1, SC-001).
-   - carol opens the capability → **Validate manifest**, loads the OpenAPI sample (version `1.0.0`), validates it and
+   - carol opens the capability → **Validate manifest**, loads the OpenAPI sample (version `1.0.0-r<runid>`), validates it and
      presses **Publish revision**. She is taken to the new revision.
-   - She goes back, loads it with version `1.1.0` and publishes it.
+   - She goes back, loads it with version `1.1.0-r<runid>` and publishes it.
    - **Revisions** shows sequence 1 and 2, the versions, times, the publishing account, the digests and two
      **Verified** badges.
    - Screenshots are taken of the list, the detail (Native, Projection and Attestation) and the key view, which shows
      generation 1 as active.
 2. **Mutation is refused** (User Story 2, SC-002, SC-003).
-   - Through the API: republishing `1.0.0` with different bytes, with identical bytes and as `1.0.0+build.7` gives
+   - Through the API: republishing `1.0.0-r<runid>` with different bytes, with identical bytes and as `1.0.0-r<runid>+build.7` gives
      `409 version_exists`. `PUT`, `PATCH` and `DELETE` on a revision give `405`.
    - Through `psql` as `gozleme_app` (with carol's context) and as `gozleme_migrator`: `UPDATE`, `DELETE` and
      `TRUNCATE` on each table are refused, and both revisions still verify.

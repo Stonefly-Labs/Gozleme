@@ -467,7 +467,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Tasks generated 2026-11-18 (74 tasks in docs/specs/007-immutable-revisions/tasks.md; vendoring stop rule T001-T002; A1-A7 open for veto); next /speckit-implement.'
+  nextAction: 'Tasks generated 2026-11-18 (74 tasks in docs/specs/007-immutable-revisions/tasks.md; vendoring stop rule T001-T002); A1-A7 ruled on by the maintainer 2026-11-18 (A1-A6 ratified, A7 demo uses the seeded capability); next /speckit-implement.'
 - id: GOZ-0008
   number: 8
   title: Child capability identities and projections

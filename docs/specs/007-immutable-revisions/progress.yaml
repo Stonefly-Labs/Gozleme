@@ -17,13 +17,13 @@ decisions:
 - {at: '2026-11-18', by: maintainer, topic: signing-library, decision: 'Plan P1: Ed25519 through NSec.Cryptography 26.4.0 (MIT; libsodium 1.0.22, ISC); .NET 10 BCL has no standalone Ed25519 (only composite ML-DSA); BouncyCastle 2.7.0 and built-in ECDSA P-256 (non-deterministic) rejected.'}
 - {at: '2026-11-18', by: maintainer, topic: signed-bytes, decision: 'Plan P2: raw Ed25519 signature over the RFC 8785 (JCS) canonical bytes of statement v1, no envelope; DSSE PAE framing rejected (extra step for independent verifiers), possible as a later statement version.'}
 agentChoices:
-- {at: '2026-11-18', topic: adapter-split, choice: 'A1: GOZ-0006 adapter id mcp/1 is recorded and signed as adapter.id mcp and adapter.version 1 (research R4); disclosed to the maintainer for veto.'}
-- {at: '2026-11-18', topic: key-id, choice: 'A2: key.id is sha256 of the 32-byte raw public key, so anyone can recompute it; rows also carry an opaque uuid for routes (R5); disclosed to the maintainer for veto.'}
-- {at: '2026-11-18', topic: no-account-fk, choice: 'A3: published_by and created_by are opaque account uuids without a foreign key to users, pinned to current_account_id() by policy, so immutability never blocks a future account erasure (R11; security-review item); disclosed to the maintainer for veto.'}
-- {at: '2026-11-18', topic: conflict-bodies, choice: 'A4: version_exists and suspended are 409 with {error} bodies; publish answers 201 with the revision detail and Location (R12); disclosed to the maintainer for veto.'}
-- {at: '2026-11-18', topic: key-read-action, choice: 'A5: signing-key list and public-key download use manifest.read; no signing-key resource (R13); disclosed to the maintainer for veto.'}
-- {at: '2026-11-18', topic: no-verify-endpoint, choice: 'A6: no public endpoint verifies arbitrary submitted statements; US4 refusals are proven on the pure verifier in unit tests and on superuser-tampered stored rows (R13); disclosed to the maintainer for veto.'}
-- {at: '2026-11-18', topic: seed-no-revision, choice: 'A7: the seed creates no revision and needs no KEK; demos publish to run-unique capabilities and publishers (R18); disclosed to the maintainer for veto.'}
+- {at: '2026-11-18', topic: adapter-split, choice: 'A1: GOZ-0006 adapter id mcp/1 is recorded and signed as adapter.id mcp and adapter.version 1 (research R4); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: key-id, choice: 'A2: key.id is sha256 of the 32-byte raw public key, so anyone can recompute it; rows also carry an opaque uuid for routes (R5); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: no-account-fk, choice: 'A3: published_by and created_by are opaque account uuids without a foreign key to users, pinned to current_account_id() by policy, so immutability never blocks a future account erasure (R11; security-review item); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: conflict-bodies, choice: 'A4: version_exists and suspended are 409 with {error} bodies; publish answers 201 with the revision detail and Location (R12); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: key-read-action, choice: 'A5: signing-key list and public-key download use manifest.read; no signing-key resource (R13); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: no-verify-endpoint, choice: 'A6: no public endpoint verifies arbitrary submitted statements; US4 refusals are proven on the pure verifier in unit tests and on superuser-tampered stored rows (R13); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: seed-no-revision, choice: 'A7: the seed creates no revision and needs no KEK (ratified); maintainer ruled 2026-11-18 that stories 1, 2 and 4 publish to the seeded capability manifest-demo with run-unique pre-release versions (1.0.0-r<runid>), not a run-unique capability, matching US1; rename, reclaim and succession keep run-unique publishers (R18).'}
 stages:
   specify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', checklist: docs/specs/007-immutable-revisions/checklists/requirements.md}
   clarify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', questions: 3, checklist: '16/16 passing'}
@@ -32,5 +32,5 @@ stages:
 attempts: []
 blockers: []
 pullRequest: null
-nextAction: 'Tasks generated 2026-11-18 (74 tasks; T001-T002 vendoring stop rule; agent choices A1-A7 still open for maintainer veto). Next: /speckit-implement.'
+nextAction: 'Tasks generated 2026-11-18 (74 tasks; T001-T002 vendoring stop rule); agent choices A1-A7 ruled on by the maintainer 2026-11-18 (A1-A6 ratified, A7 demo moved to the seeded capability). Next: /speckit-implement.'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}

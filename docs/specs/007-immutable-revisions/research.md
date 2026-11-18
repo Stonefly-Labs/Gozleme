@@ -312,8 +312,10 @@ conflicts with the spec. Facts about the existing code were read from the branch
 ## R18 — Seed and demo data (FR-024, FR-025)
 
 - **Seed (A7)**: the seed creates no revision. It stays idempotent and needs no KEK.
-- **Demo isolation**: every demo run creates its own capability (`rev-<runid>`) under the seeded demo publisher for
-  stories 1, 2 and 4. For the rename, reclaim and succession stories it registers a run-unique publisher
+- **Demo isolation** (maintainer ruling 2026-11-18, replacing a run-unique capability): stories 1, 2 and 4 publish to
+  the seeded capability `manifest-demo` under the seeded demo publisher, matching US1's "a seeded capability", with
+  run-unique SemVer pre-release versions (`1.0.0-r<runid>`, `1.1.0-r<runid>`), as FR-024 allows. Its revisions
+  accumulate across runs, because revisions are never deleted. For the rename, reclaim and succession stories it registers a run-unique publisher
   (`revdemo-<runid>`), because a reclaim suspends that publisher permanently.
 - **Tamper data**: superuser tampering happens only on a dedicated run-unique revision, which is labelled tampered in
   the evidence.
