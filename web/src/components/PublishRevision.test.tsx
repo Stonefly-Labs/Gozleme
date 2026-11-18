@@ -1,0 +1,71 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { CAP, detail, ORG, PUB, REV } from "@/lib/revisions.fixtures";
+import { REVISION_MESSAGES } from "@/lib/revisions";
+import { PublishRevision } from "./PublishRevision";
+
+const router = { push: vi.fn(), refresh: vi.fn() };
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
+
+const BODY = '  {"envelopeVersion" : 1}\n';
+
+const respond = (status: number, body: unknown) =>
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(body === null ? null : JSON.stringify(body), { status }));
+
+const renderPublish = (canPublish = true) =>
+  render(<PublishRevision organizationId={ORG} publisherId={PUB} capabilityId={CAP} body={BODY} canPublish={canPublish} />);
+
+describe("PublishRevision (GOZ-0007 US1, US2, US5)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    router.push.mockReset();
+  });
+
+  it("renders nothing without manifest.publish", () => {
+    renderPublish(false);
+    expect(screen.queryByTestId("publish-revision")).not.toBeInTheDocument();
+  });
+
+  it("posts the validated body unchanged and opens the new revision on 201", async () => {
+    const spy = respond(201, detail());
+    renderPublish();
+    fireEvent.click(screen.getByTestId("publish"));
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith(`/organizations/${ORG}/publishers/${PUB}/capabilities/${CAP}/revisions/${REV}`));
+    const [url, init] = spy.mock.calls[0]! as [string, RequestInit];
+    expect(url).toBe(`/api/organizations/${ORG}/publishers/${PUB}/capabilities/${CAP}/revisions`);
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe(BODY);
+  });
+
+  it("points a version_exists refusal to the revisions list", async () => {
+    respond(409, { error: "version_exists" });
+    renderPublish();
+    fireEvent.click(screen.getByTestId("publish"));
+    expect(await screen.findByTestId("publish-error")).toHaveTextContent(REVISION_MESSAGES.version_exists);
+    expect(screen.getByTestId("publish-revisions-link")).toHaveAttribute("href", `/organizations/${ORG}/publishers/${PUB}/capabilities/${CAP}/revisions`);
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [403, { error: "forbidden" }, REVISION_MESSAGES.forbidden],
+    [409, { error: "suspended" }, REVISION_MESSAGES.suspended],
+    [429, { error: "rate_limited" }, REVISION_MESSAGES.rate_limited],
+    [503, { error: "unavailable" }, REVISION_MESSAGES.unavailable],
+    [404, null, REVISION_MESSAGES.not_found],
+    [413, { error: "too_large" }, REVISION_MESSAGES.too_large],
+    [422, { outcome: "rejected", problems: [], truncated: false }, REVISION_MESSAGES.rejected],
+  ])("shows the message for %i", async (status, body, message) => {
+    respond(status, body);
+    renderPublish();
+    fireEvent.click(screen.getByTestId("publish"));
+    expect(await screen.findByTestId("publish-error")).toHaveTextContent(message);
+    expect(screen.queryByTestId("publish-revisions-link")).not.toBeInTheDocument();
+  });
+
+  it("reads a network failure as unavailable", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("offline"));
+    renderPublish();
+    fireEvent.click(screen.getByTestId("publish"));
+    expect(await screen.findByTestId("publish-error")).toHaveTextContent(REVISION_MESSAGES.unavailable);
+  });
+});

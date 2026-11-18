@@ -56,6 +56,7 @@ internal sealed class RevisionStore(GozlemeDbContext db)
     public async Task<PublisherSigningKey?> ActiveKeyForSigningAsync(Publisher publisher, CancellationToken ct) =>
         await db.PublisherSigningKeys.AsNoTracking()
             .Where(k => k.PublisherId == publisher.Id && k.OrganizationId == publisher.OrganizationId)
+            .Where(k => !db.SigningKeyRetirements.Any(r => r.KeyId == k.Id)) // a retired key never signs again (fails closed: 503)
             .OrderByDescending(k => k.Generation).FirstOrDefaultAsync(ct);
 
     private IQueryable<PublisherSigningKey> PublicKeys() =>

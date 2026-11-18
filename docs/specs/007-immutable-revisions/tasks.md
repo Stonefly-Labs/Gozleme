@@ -104,13 +104,13 @@ API `src/Gozleme.Api/` (new module `src/Gozleme.Api/Revisions/`), API tests `tes
 
 ### Implementation for User Story 1
 
-- [ ] T037 [P] [US1] Create `web/src/lib/revisions.ts`: types mirroring `RevisionContracts`, the fixed proof wording of research R17, verification reason → message map, and messages for `version_exists`, `forbidden`, `suspended`, `rate_limited`, `unavailable` and not found
-- [ ] T038 [P] [US1] Create the BFF route `web/src/app/api/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/revisions/route.ts`: `POST` (guarded by `isSameOrigin`, forwarding the same body as validate with the `x-gozleme-client` header) and `GET` (list, forwarding `after` and `limit`), passing status and body through as the validate route does
-- [ ] T039 [P] [US1] Create `web/src/components/PublishRevision.tsx` (+ `PublishRevision.test.tsx`): shown only after an accepted validation and only with `manifest.publish`; posts the validated body; on `201` navigates to the new revision; renders each error message
-- [ ] T040 [US1] Wire **Publish revision** into `web/src/components/ManifestValidator.tsx` and the page `web/src/app/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/manifest/page.tsx` (pass the member's `manifest.publish` permission)
-- [ ] T041 [P] [US1] Create `web/src/components/VerificationBadge.tsx` and `RevisionList.tsx` (+ tests): sequence, version, publication time, publishing account (opaque ID), shortened copyable native digest and the badge; paging with `next`; no "latest" label
-- [ ] T042 [US1] Create the page `web/src/app/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/revisions/page.tsx` (signed-in session required) and add a **Revisions** link to `web/src/components/CapabilityList.tsx`
-- [ ] T043 [US1] Create `web/src/components/RevisionDetail.tsx` and `AttestationPanel.tsx` (+ tests) and the page `…/capabilities/[capabilityId]/revisions/[revisionId]/page.tsx`: tabs Native, Projection and Attestation; the attestation shows the statement fields, key ID, algorithm, statement version, verification result and the fixed proof wording
+- [X] T037 [P] [US1] Create `web/src/lib/revisions.ts`: types mirroring `RevisionContracts`, the fixed proof wording of research R17, verification reason → message map, and messages for `version_exists`, `forbidden`, `suspended`, `rate_limited`, `unavailable` and not found
+- [X] T038 [P] [US1] Create the BFF route `web/src/app/api/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/revisions/route.ts`: `POST` (guarded by `isSameOrigin`, forwarding the same body as validate with the `x-gozleme-client` header) and `GET` (list, forwarding `after` and `limit`), passing status and body through as the validate route does
+- [X] T039 [P] [US1] Create `web/src/components/PublishRevision.tsx` (+ `PublishRevision.test.tsx`): shown only after an accepted validation and only with `manifest.publish`; posts the validated body; on `201` navigates to the new revision; renders each error message
+- [X] T040 [US1] Wire **Publish revision** into `web/src/components/ManifestValidator.tsx` and the page `web/src/app/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/manifest/page.tsx` (pass the member's `manifest.publish` permission)
+- [X] T041 [P] [US1] Create `web/src/components/VerificationBadge.tsx` and `RevisionList.tsx` (+ tests): sequence, version, publication time, publishing account (opaque ID), shortened copyable native digest and the badge; paging with `next`; no "latest" label
+- [X] T042 [US1] Create the page `web/src/app/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/revisions/page.tsx` (signed-in session required) and add a **Revisions** link to `web/src/components/CapabilityList.tsx`
+- [X] T043 [US1] Create `web/src/components/RevisionDetail.tsx` and `AttestationPanel.tsx` (+ tests) and the page `…/capabilities/[capabilityId]/revisions/[revisionId]/page.tsx`: tabs Native, Projection and Attestation; the attestation shows the statement fields, key ID, algorithm, statement version, verification result and the fixed proof wording
 
 **Checkpoint**: User Story 1 is demonstrable in the browser and the API
 
@@ -131,8 +131,8 @@ API `src/Gozleme.Api/` (new module `src/Gozleme.Api/Revisions/`), API tests `tes
 
 ### Implementation for User Story 2
 
-- [ ] T048 [US2] Map explicit `PUT`, `PATCH` and `DELETE` on the revision route in `src/Gozleme.Api/Revisions/RevisionEndpoints.cs` to `405` (or confirm the router answers `405` and pin it), and render the failed badge with its reason and a "never verified" message in `web/src/components/VerificationBadge.tsx` and `AttestationPanel.tsx`
-- [ ] T049 [US2] Handle `version_exists` in `web/src/components/PublishRevision.tsx` with a message that points to the **Revisions** list (clients recover by listing)
+- [X] T048 [US2] Map explicit `PUT`, `PATCH` and `DELETE` on the revision route in `src/Gozleme.Api/Revisions/RevisionEndpoints.cs` to `405` (or confirm the router answers `405` and pin it), and render the failed badge with its reason and a "never verified" message in `web/src/components/VerificationBadge.tsx` and `AttestationPanel.tsx`
+- [X] T049 [US2] Handle `version_exists` in `web/src/components/PublishRevision.tsx` with a message that points to the **Revisions** list (clients recover by listing)
 
 **Checkpoint**: User Stories 1 and 2 work independently
 
@@ -155,9 +155,9 @@ API `src/Gozleme.Api/` (new module `src/Gozleme.Api/Revisions/`), API tests `tes
 
 - [X] T054 [US3] Add the four download routes and the public-key route to `src/Gozleme.Api/Revisions/RevisionEndpoints.cs` with the media types and headers of contracts/attestation-statement-v1.md (native by encoding: `application/json`, `application/yaml` or `text/markdown`, `charset=utf-8`; projection and statement `application/json`; signature `application/octet-stream` 64 raw bytes; public key `application/x-pem-file` SPKI PEM)
 - [X] T055 [US3] Create `src/Gozleme.Api/Revisions/SigningKeyOperatorCommands.cs` and dispatch `signing-key-succession` in `src/Gozleme.Api/Program.cs` beside the handle commands: connect as `ConnectionStrings:GozlemeMigrator` with no account context; per publisher take `pg_advisory_xact_lock(hashtextextended('gozleme.signing:' || publisher_id, 0))`, read generation n, create n + 1 under the current KEK, insert the retirement (reason, successor), commit, write audit 1503 (1504 on refusal); `--undecryptable` iterates publishers whose active key fails to decrypt; print `<publisherId> retired <keyUuid> successor <keyUuid>`; exits 0/1/2/64; span `gozleme.operator.signing-key-succession` via `PublisherTelemetry.StartOperator` (R9, FR-007a)
-- [ ] T056 [P] [US3] Create the BFF routes `web/src/app/api/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/revisions/[revisionId]/[part]/route.ts` (only `native`, `projection`, `statement`, `signature`; anything else 404) and `…/publishers/[publisherId]/signing-keys/[keyId]/public-key/route.ts`, streaming bytes and headers unchanged, plus a `GET` for the revision detail and the key list
-- [ ] T057 [US3] Add downloads to `web/src/components/AttestationPanel.tsx`, the key status with retired time and reason and a prominent `compromised` banner, and the suspended-publisher banner to `RevisionList.tsx` and `RevisionDetail.tsx` (+ tests)
-- [ ] T058 [US3] Create `web/src/components/SigningKeyList.tsx` (+ test) and the page `web/src/app/organizations/[organizationId]/publishers/[publisherId]/signing-keys/page.tsx`: generations with key ID, algorithm, created time, active/retired, reason, successor; "No key yet" when empty; succession described as a local operator action only
+- [X] T056 [P] [US3] Create the BFF routes `web/src/app/api/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/revisions/[revisionId]/[part]/route.ts` (only `native`, `projection`, `statement`, `signature`; anything else 404) and `…/publishers/[publisherId]/signing-keys/[keyId]/public-key/route.ts`, streaming bytes and headers unchanged, plus a `GET` for the revision detail and the key list
+- [X] T057 [US3] Add downloads to `web/src/components/AttestationPanel.tsx`, the key status with retired time and reason and a prominent `compromised` banner, and the suspended-publisher banner to `RevisionList.tsx` and `RevisionDetail.tsx` (+ tests)
+- [X] T058 [US3] Create `web/src/components/SigningKeyList.tsx` (+ test) and the page `web/src/app/organizations/[organizationId]/publishers/[publisherId]/signing-keys/page.tsx`: generations with key ID, algorithm, created time, active/retired, reason, successor; "No key yet" when empty; succession described as a local operator action only
 
 **Checkpoint**: User Stories 1–3 work independently
 
@@ -173,7 +173,7 @@ API `src/Gozleme.Api/` (new module `src/Gozleme.Api/Revisions/`), API tests `tes
 
 - [X] T059 [P] [US4] In `tests/Gozleme.Api.Tests/Revisions/RevisionVerifierTests.cs`: statements with an added `delegation` member (top level and nested), `statementVersion` 2, `key.algorithm` `ES256`, and a key ID of another publisher's key → `failed` with `unknown_field`, `unknown_statement_version`, `unknown_algorithm`, `unknown_key` (US4-AS2; A6 — no public verify endpoint)
 - [ ] T060 [P] [US4] `tests/Gozleme.Api.IntegrationTests/RevisionBoundaryTests.cs`: `…/signing-keys/rotate`, `/replace`, `/transfer`, `/delegate` and `POST /api/v1/publish` → `404` for every method; API response bodies contain none of "delegat", "transfer", "chain of trust", "transparency", "publisher-held" (case-insensitive); a manifest carrying a `signature` claim is refused `reserved_claim` `422` exactly as validate (US4-AS3–AS5, FR-013)
-- [ ] T061 [P] [US4] Web wording guard in `web/src/components/AttestationPanel.test.tsx` (and the list, detail and key list tests): rendered output contains none of the banned phrases and contains the fixed proof wording
+- [X] T061 [P] [US4] Web wording guard in `web/src/components/AttestationPanel.test.tsx` (and the list, detail and key list tests): rendered output contains none of the banned phrases and contains the fixed proof wording
 
 ### Implementation for User Story 4
 
@@ -197,7 +197,7 @@ API `src/Gozleme.Api/` (new module `src/Gozleme.Api/Revisions/`), API tests `tes
 
 ### Implementation for User Story 5
 
-- [ ] T066 [US5] Hide **Publish revision** without `manifest.publish` in `web/src/components/PublishRevision.tsx` and `ManifestValidator.tsx`, and render `forbidden`, `suspended` and `rate_limited` (+ tests for alice and a suspended publisher)
+- [X] T066 [US5] Hide **Publish revision** without `manifest.publish` in `web/src/components/PublishRevision.tsx` and `ManifestValidator.tsx`, and render `forbidden`, `suspended` and `rate_limited` (+ tests for alice and a suspended publisher)
 
 **Checkpoint**: All user stories are independently functional
 

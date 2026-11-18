@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MANIFEST_MESSAGES } from "@/lib/manifests";
 import { ManifestValidator } from "./ManifestValidator";
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+
 const ORG = "0193a000-0000-7000-8000-000000000002";
 const PUB = "0193a000-0000-7000-8000-000000000010";
 const CAP = "0193a000-0000-7000-8000-000000000011";
@@ -30,7 +32,8 @@ const accepted = {
 const respond = (status: number, body: unknown) =>
   vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(body === null ? null : JSON.stringify(body), { status }));
 
-const renderValidator = () => render(<ManifestValidator organizationId={ORG} publisherId={PUB} capabilityId={CAP} canonicalId={CANONICAL} />);
+const renderValidator = (canPublish = false) =>
+  render(<ManifestValidator organizationId={ORG} publisherId={PUB} capabilityId={CAP} canonicalId={CANONICAL} canPublish={canPublish} />);
 
 describe("ManifestValidator (GOZ-0006 US1)", () => {
   afterEach(() => vi.restoreAllMocks());
@@ -113,5 +116,35 @@ describe("ManifestValidator (GOZ-0006 US1)", () => {
     fireEvent.change(screen.getByTestId("manifest-text"), { target: { value: "{}" } });
     fireEvent.click(screen.getByTestId("validate"));
     await waitFor(() => expect(screen.getByTestId("manifest-error")).toHaveTextContent(MANIFEST_MESSAGES.unavailable));
+  });
+
+  // GOZ-0007 T066: Publish revision only after an accepted result, only with manifest.publish, only for the validated text.
+  it("offers Publish revision only to holders of manifest.publish after an accepted result", async () => {
+    respond(200, accepted);
+    renderValidator(false);
+    fireEvent.change(screen.getByTestId("manifest-text"), { target: { value: "{}" } });
+    fireEvent.click(screen.getByTestId("validate"));
+    expect(await screen.findByTestId("manifest-accepted")).toBeInTheDocument();
+    expect(screen.queryByTestId("publish-revision")).not.toBeInTheDocument();
+  });
+
+  it("shows Publish revision for the validated text and hides it once the text changes", async () => {
+    respond(200, accepted);
+    renderValidator(true);
+    fireEvent.change(screen.getByTestId("manifest-text"), { target: { value: "{}" } });
+    expect(screen.queryByTestId("publish-revision")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("validate"));
+    expect(await screen.findByTestId("publish-revision")).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId("manifest-text"), { target: { value: "{ }" } });
+    expect(screen.queryByTestId("publish-revision")).not.toBeInTheDocument();
+  });
+
+  it("never offers Publish revision for a rejection", async () => {
+    respond(422, { outcome: "rejected", problems: [], truncated: false });
+    renderValidator(true);
+    fireEvent.change(screen.getByTestId("manifest-text"), { target: { value: "{}" } });
+    fireEvent.click(screen.getByTestId("validate"));
+    expect(await screen.findByTestId("problem-list")).toBeInTheDocument();
+    expect(screen.queryByTestId("publish-revision")).not.toBeInTheDocument();
   });
 });
