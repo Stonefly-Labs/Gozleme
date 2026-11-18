@@ -126,5 +126,5 @@ list results as authoritative, so Gözleme never presents these lists as verifie
 
 - **Schema**: [model-card-v1.schema.json](./model-card-v1.schema.json). It is closed.
 - **Extension mechanism**: `^x-` members at the root and in `modalities` and `limits`.
-- **Reserved names**: a lifecycle or ownership name at the root is reported as both `reserved_claim` and `unknown_field` at the same pointer (every distinct rule per pointer is kept, maintainer decision 2026-11-17; research R6).
+- **Reserved names**: a reserved-vocabulary name at the root or in the closed `modalities` and `limits` objects is reported as both `reserved_claim` and `unknown_field` at the same pointer (nested objects by maintainer decision 2026-11-17, T095) (every distinct rule per pointer is kept, maintainer decision 2026-11-17; research R6).
 - **Secret-bearing fields**: none. Pattern list only.

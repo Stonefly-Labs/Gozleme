@@ -7,8 +7,9 @@ namespace Gozleme.Api.Manifests.Adapters;
 
 /// <summary>
 /// <c>model/1</c>: the Gözleme model card v1 (contracts/model-card-v1.schema.json), closed, with <c>^x-</c> members at
-/// the root and in <c>modalities</c> and <c>limits</c>. Every root name is a reserved-vocabulary position, so a
-/// lifecycle or ownership name is <c>reserved_claim</c> rather than <c>unknown_field</c>.
+/// the root and in <c>modalities</c> and <c>limits</c>. Every name at the root and in those closed objects is a
+/// reserved-vocabulary position, so a reserved name there is <c>reserved_claim</c> beside <c>unknown_field</c>
+/// (maintainer decision 2026-11-17, "extend to nested", T095).
 /// </summary>
 internal sealed class ModelCardAdapter : IProtocolAdapter
 {
@@ -25,8 +26,8 @@ internal sealed class ModelCardAdapter : IProtocolAdapter
     public IEnumerable<NamePosition> ReservedNamePositions(ManifestNode tree) =>
         Members(tree).Select(m => new NamePosition(m.Key, m.Value.Pointer))
             .Concat(Members(tree).Where(IsExtension).SelectMany(m => AllNames(m.Value)))
-            .Concat(new[] { tree["modalities"], tree["limits"] }.SelectMany(n => Members(n)).Where(IsExtension)
-                .SelectMany(m => AllNames(m.Value).Prepend(new NamePosition(m.Key, m.Value.Pointer))));
+            .Concat(new[] { tree["modalities"], tree["limits"] }.SelectMany(n => Members(n))
+                .SelectMany(m => (IsExtension(m) ? AllNames(m.Value) : []).Prepend(new NamePosition(m.Key, m.Value.Pointer))));
 
     private static bool IsExtension(KeyValuePair<string, ManifestNode> member) => member.Key.StartsWith("x-", StringComparison.Ordinal);
 

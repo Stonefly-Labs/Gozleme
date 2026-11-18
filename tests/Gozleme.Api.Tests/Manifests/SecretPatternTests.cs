@@ -168,21 +168,64 @@ public sealed class SecretPatternTests
     public void Names_that_do_not_join_into_a_credential_stay_accepted() =>
         Accepted(Validate("api", "openapi", "3.1", "json", OpenApiWith("""{"https:":{"x":{"u:pw@host":1}},"bearer":{"short":1}}""")));
 
-    /// <summary>Every pattern that can match across a joined name boundary (its source allows / or ~) is listed as spanning, with anchors it contains.</summary>
+    /// <summary>Every pattern that can match across a joined name boundary (its source allows / or ~) is either checked on joined locations or deliberately exempt.</summary>
     [Fact]
-    public void Every_pattern_that_can_span_names_is_listed_as_spanning()
+    public void Every_pattern_that_can_span_names_is_joined_or_exempt()
     {
-        var spanning = SecretPatterns.Spanning.ToDictionary(s => s.Id, s => s.Anchors);
+        var joined = SecretPatterns.Joined.Select(p => p.Id).ToHashSet();
         foreach (var (id, pattern) in SecretPatterns.All)
         {
             var source = pattern.ToString();
-            Assert.True(!source.Contains('/') && !source.Contains('~') || spanning.ContainsKey(id), $"{id} can span names but is not in SecretPatterns.Spanning");
+            Assert.True(!source.Contains('/') && !source.Contains('~') || joined.Contains(id) || SecretPatterns.NotJoined.Contains(id), $"{id} can span names but is neither joined nor exempt");
         }
 
-        foreach (var (id, anchors) in spanning)
+        Assert.Equal(["url-userinfo", "azure-connection-secret"], SecretPatterns.Joined.Select(p => p.Id));
+
+        // SecretPatterns.JoinedReach is worked out from these two sources; a change here means revisiting it.
+        Assert.Equal(
+            [@"(?i)\b[a-z][a-z0-9+.-]{1,31}://[^\s/:@]{1,256}:[^\s/@]{1,256}@", @"(?i)(?:AccountKey|SharedAccessKey|SharedAccessSignature)=[A-Za-z0-9+/%=&:-]{16,}"],
+            SecretPatterns.Joined.Select(p => p.Pattern.ToString()));
+    }
+
+    /// <summary>T092 (maintainer decision "drop the header pattern"): honest names that only look like a header once joined stay accepted.</summary>
+    [Fact]
+    public void Header_words_in_names_are_not_joined_into_a_credential()
+    {
+        Accepted(Validate("api", "openapi", "3.1", "json",
+            """{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{},"components":{"schemas":{"S":{"type":"object","properties":{"basic info":{"type":"string","description":"d"}}}}}}"""));
+        Accepted(Validate("api", "openapi", "3.1", "json", OpenApiWith("""{"Bearer tokens":{"description":"how to obtain one"}}""")));
+    }
+
+    /// <summary>T092 (confirmation security review): the Kelvin sign and array positions.</summary>
+    [Theory]
+    [InlineData("""{"Account\u212Aey=abcdef":{"ghijklmnop":{"qrstuvwx":1}}}""", "/x-z/Account\u212Aey=abcdef")]
+    [InlineData("""{"AccountKey=abcdefgh":[[[[{"q":1}]]]]}""", "/x-z/AccountKey=abcdefgh/0/0/0")] // 16 characters after = complete at the fourth index
+    public void Joined_credentials_are_caught_through_case_folding_and_array_positions(string extension, string at)
+    {
+        var problems = Problems(Validate("api", "openapi", "3.1", "json", OpenApiWith(System.Text.RegularExpressions.Regex.Unescape(extension))));
+        Assert.Equal([$"secret_value secret.name native {System.Text.RegularExpressions.Regex.Unescape(at)}"], problems);
+    }
+
+    /// <summary>T092: cost at the tree bounds with every location anchored (SC-006).</summary>
+    [Fact]
+    public void Joined_location_checks_stay_within_budget_at_the_bounds()
+    {
+        // Anchored at the top but never completed ('!' is outside the key's characters), so every location is scanned.
+        var chain = new System.Text.StringBuilder("{\"AccountKey=\":");
+        for (var d = 0; d < 3; d++)
         {
-            var source = SecretPatterns.All.Single(p => p.Id == id).Pattern.ToString().ToLowerInvariant();
-            Assert.All(anchors, a => Assert.Contains(a.TrimEnd('='), source, StringComparison.Ordinal));
+            chain.Append("{\"").Append('!', 1000).Append("\":");
         }
+
+        chain.Append('[').Append(string.Join(',', Enumerable.Repeat("{\"k\":1}", 24_000))).Append(']').Append('}', 4);
+        var doc = OpenApiWith(chain.ToString());
+        Validate("api", "openapi", "3.1", "json", doc); // warm
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var result = Validate("api", "openapi", "3.1", "json", doc);
+        watch.Stop();
+        Accepted(result);
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"took {watch.Elapsed}");
+        Assert.True(GC.GetAllocatedBytesForCurrentThread() - before < 1L << 29, "allocated over 512 MiB");
     }
 }

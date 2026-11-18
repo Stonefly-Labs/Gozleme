@@ -71,7 +71,7 @@ The body is not read before step 7, and it is never parsed before step 8.
   - `{part, pointer}`: `part` is `envelope` or `native`, and `pointer` is RFC 6901 into that part's parsed tree. For `SKILL.md` it points into the front matter.
   - `{part, line, column}` (1-based, in Unicode scalar values): for `malformed`, and for secrets found in a `SKILL.md` body or in a YAML comment (OpenAPI/AsyncAPI YAML, `SKILL.md` front matter). Two `malformed` rules are located by envelope pointer instead: `parse.not-string` (`/native/document` is not a string) and `parse.syntax` for an encoding the format does not allow (maintainer decision 2026-11-17). For the envelope, the position is in the request body; for the native document, it is in the native string.
   - `null`: for `too_large`.
-- A pointer never contains a value matched by the secret patterns. When a member name matches, or names only match once joined into the pointer text, the pointer is that of the deepest parent object whose own pointer is clean (rule `secret.name`; T091).
+- A pointer never contains a member name matched by the secret patterns, nor pointer text matched by `url-userinfo` or `azure-connection-secret` (see [secret-patterns.md](./secret-patterns.md)). When a member name matches, or names only match once joined into the pointer text, the pointer is that of the deepest parent whose own pointer is clean (rule `secret.name`; T091, T092).
 - `message` and `rule` come from the fixed catalogue below. No response, log or span contains a submitted value.
 
 ## Categories (closed, in contract order)

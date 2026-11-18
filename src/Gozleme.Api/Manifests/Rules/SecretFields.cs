@@ -29,7 +29,8 @@ internal static class SecretFields
             // A credential in one member name, or one that only appears once names are joined into a location
             // (`https:` → `` → `u:pw@host`): reported at the deepest parent whose own location is clean (T091).
             if (node.Members.Any(m => SecretPatterns.IsMatch(m.Key))
-                || (node.Members.Count > 0 && !LocationMatches(node.Pointer, joined) && node.Members.Any(m => LocationMatches(m.Value.Pointer, joined))))
+                || ((node.Members.Count > 0 || node.Items.Count > 0) && !LocationMatches(node.Pointer, joined)
+                    && (node.Members.Any(m => LocationMatches(m.Value.Pointer, joined)) || node.Items.Any(i => LocationMatches(i.Pointer, joined)))))
             {
                 yield return new ManifestProblem(ManifestRules.SecretName, ProblemLocation.At(part, node.Pointer));
             }
@@ -39,8 +40,8 @@ internal static class SecretFields
     /// <summary>
     /// Whether a location's RFC 6901 text, as it would be returned, matches the patterns (maintainer decision
     /// 2026-11-17, "reject and trim", T091). The patterns run on the whole text only beneath a name holding the fixed
-    /// part of a pattern that can span names (<see cref="SecretPatterns.Spanning"/>); elsewhere only single names
-    /// could match, and those are checked one by one. Both answers are memoized per pointer in <paramref name="scan"/>.
+    /// part of a pattern checked on joined locations (<see cref="SecretPatterns.Joined"/>, T092); elsewhere they cannot
+    /// match. Array positions count as names here. Both answers are memoized per pointer in <paramref name="scan"/>.
     /// </summary>
     internal static bool LocationMatches(JsonPointer pointer, LocationScan scan)
     {
@@ -49,19 +50,39 @@ internal static class SecretFields
             return false;
         }
 
+        // Neither joined pattern asserts anything after its match, so a match in the parent's text is one here too;
+        // a new match ends in the last name and reaches back at most JoinedReach characters (T092).
         if (!scan.Matched.TryGetValue(pointer, out var match))
         {
-            scan.Matched[pointer] = match = SecretPatterns.IsMatch(pointer.ToString());
+            scan.Matched[pointer] = match = LocationMatches(pointer.Parent, scan) || SecretPatterns.IsJoinedMatch(Window(pointer));
         }
 
         return match;
     }
 
+    /// <summary>
+    /// The end of the pointer's RFC 6901 text: its last name plus whole earlier names until more than
+    /// <see cref="SecretPatterns.JoinedReach"/> characters precede it. It starts at a <c>/</c>, as at that point in the
+    /// full text, so a <c>\b</c> at a match start sees the same character.
+    /// </summary>
+    private static string Window(JsonPointer pointer)
+    {
+        var names = new List<string>();
+        var reach = 0;
+        for (var at = pointer; at.Parent is not null && reach <= SecretPatterns.JoinedReach; at = at.Parent)
+        {
+            var name = JsonPointer.Escape(at.Segment);
+            names.Add(name);
+            reach += at == pointer ? 0 : name.Length + 1;
+        }
+
+        names.Reverse();
+        return "/" + string.Join('/', names);
+    }
+
     /// <summary>Per-validation memo for <see cref="LocationMatches"/>.</summary>
     internal sealed class LocationScan
     {
-        private static readonly string[] NameAnchors = [.. SecretPatterns.Spanning.SelectMany(s => s.Anchors).Where(a => a != "://")];
-
         private readonly Dictionary<JsonPointer, bool> _anchored = new(ReferenceEqualityComparer.Instance);
 
         public Dictionary<JsonPointer, bool> Matched { get; } = new(ReferenceEqualityComparer.Instance);
@@ -77,7 +98,7 @@ internal static class SecretFields
             if (!_anchored.TryGetValue(pointer, out var anchored))
             {
                 _anchored[pointer] = anchored = Anchored(pointer.Parent)
-                    || NameAnchors.Any(a => pointer.Segment.Contains(a, StringComparison.OrdinalIgnoreCase))
+                    || SecretPatterns.JoinedAnchors.IsMatch(pointer.Segment)
                     || (pointer.Segment.Length == 0 && pointer.Parent.Segment.EndsWith(':'));
             }
 

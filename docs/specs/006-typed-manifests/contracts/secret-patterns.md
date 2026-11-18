@@ -12,8 +12,10 @@ is a contract change and a **security review item**. There is no randomness (ent
 
 A match is `secret_value`. Its rule is `secret.pattern` for a value, or `secret.name` for a member name, in
 which case the location is the parent object (see [manifest-validation.md](./manifest-validation.md)). Member
-names are also checked joined into their RFC 6901 location, so a credential split across nested names is
-`secret.name` at the deepest parent whose location is clean (maintainer decision 2026-11-17, T091).
+names are also checked joined into their RFC 6901 location with `url-userinfo` and `azure-connection-secret`, so
+such a credential split across nested names is `secret.name` at the deepest parent whose location is clean
+(maintainer decisions 2026-11-17, T091 and T092). `auth-header` is not checked on joined locations: a name such as
+`basic info` with a child would match once joined, so a header token split across names is not detected.
 
 ## Accepted (never flagged)
 

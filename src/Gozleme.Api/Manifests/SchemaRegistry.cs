@@ -35,7 +35,7 @@ internal static class SchemaIds
 /// (<c>native.unknown-field</c>), any other keyword → <c>invalid_value</c> (<c>native.schema</c>). No schema message
 /// text is ever returned.
 /// </summary>
-internal sealed class SchemaRegistry
+internal sealed partial class SchemaRegistry
 {
     public const string ResourcePrefix = "Manifests/Schemas/";
     public const string LocalBase = "https://schemas.gozleme.invalid/";
@@ -55,9 +55,11 @@ internal sealed class SchemaRegistry
     private readonly ConcurrentDictionary<string, Lazy<CorvusSchema>> _compiled = new(StringComparer.Ordinal);
     private readonly CorvusSchema.Options _options;
     private readonly SchemaDeclarations _declarations;
+    private readonly ILogger _logger;
 
-    public SchemaRegistry()
+    public SchemaRegistry(ILogger<SchemaRegistry>? logger = null)
     {
+        _logger = (ILogger?)logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
         _documents = Load().ToFrozenDictionary(StringComparer.Ordinal);
         _declarations = new SchemaDeclarations(_documents);
         JsonSchemaDocumentResolver resolver = (string uri, out ReadOnlyMemory<byte> json) =>
@@ -107,9 +109,11 @@ internal sealed class SchemaRegistry
             {
                 return [new ManifestProblem(ManifestRules.NativeSchema, ProblemLocation.At(part, string.Empty))];
             }
-            catch (Exception e) when (e is ArgumentException or OutOfMemoryException)
+            catch (Exception e) when (IsResultsOverflow(e))
             {
-                // The validator's result buffer cannot grow past 2 GB; a document that gets there is too large, never a 500 (T084).
+                // The validator's result buffer cannot grow past 2 GB; a document that gets there is too large, never a
+                // 500 (T084). Only that overflow: any other exception is a fault and fails loudly (T096).
+                LogResultsOverflow(_logger, uri, e.GetType().Name);
                 throw new Parsing.ValidationStop(ManifestRules.BoundResults, null);
             }
 
@@ -339,6 +343,20 @@ internal sealed class SchemaRegistry
 
         return LocalBase + path;
     }
+
+    /// <summary>
+    /// An <see cref="ArgumentException"/> or <see cref="OutOfMemoryException"/> thrown inside the validator's results
+    /// collector, where its result buffer grows (maintainer decision 2026-11-17, "narrow + log", T096). Matched by any
+    /// frame of <see cref="JsonSchemaResultsCollector"/>, not by method name, so an inlined helper still counts.
+    /// </summary>
+    internal static bool IsResultsOverflow(Exception e) =>
+        e is ArgumentException or OutOfMemoryException && ThrownByResultsCollector(e);
+
+    internal static bool ThrownByResultsCollector(Exception e) =>
+        new System.Diagnostics.StackTrace(e).GetFrames().Any(f => f.GetMethod()?.DeclaringType == typeof(JsonSchemaResultsCollector));
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Schema {Schema} produced more results than the validator can hold ({Exception}); the document is too_large")]
+    private static partial void LogResultsOverflow(ILogger logger, string schema, string exception);
 }
 
 /// <summary>Compiles every root schema once at start, off the start path so health does not wait (research R2).</summary>

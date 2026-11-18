@@ -249,9 +249,9 @@ Task: "Route handler in web/src/app/api/.../manifests/validate/route.ts"
 
 ## Phase 10: Convergence
 
-- [ ] T092 Check joined locations only with the patterns that need names joined (url-userinfo, azure-connection-secret), match anchors exactly as the patterns do (Kelvin sign U+212A), include array items when finding the deepest clean parent, and add a cost test at the tree bounds, per maintainer decisions joined-name-credentials and joined-names-patterns, confirmation reviews (partial)
-- [ ] T093 Treat Callback object entries as a map and draft-07 `dependencies` as a schema map in `Rules/DataPositions.cs`, with tests, per maintainer decision data-positions-gaps (partial)
-- [ ] T094 Treat an OpenAPI Link's `requestBody` and `parameters` values as literal data, and an object-valued `examples` in a bare JSON Schema as data, with tests, per maintainer decision data-positions-literal (contradicts)
-- [ ] T095 Apply the reserved vocabulary to the model card's closed nested objects (`modalities`, `limits`) beside `unknown_field`, amend native-formats.md and R6, with tests, per maintainer decision model-card-nested-reserved (partial)
-- [ ] T096 Narrow the validator overflow catch to the result-buffer overflow, log a warning without content, and let any other exception fail as a 500, with tests, per maintainer decision results-overflow-catch (partial)
+- [X] T092 Check joined locations only with the patterns that need names joined (url-userinfo, azure-connection-secret), match anchors exactly as the patterns do (Kelvin sign U+212A), include array items when finding the deepest clean parent, and add a cost test at the tree bounds, per maintainer decisions joined-name-credentials and joined-names-patterns, confirmation reviews (partial)
+- [X] T093 Treat Callback object entries as a map and draft-07 `dependencies` as a schema map in `Rules/DataPositions.cs`, with tests, per maintainer decision data-positions-gaps (partial)
+- [X] T094 Treat an OpenAPI Link's `requestBody` and `parameters` values as literal data, and an object-valued `examples` in a bare JSON Schema as data, with tests, per maintainer decision data-positions-literal (contradicts)
+- [X] T095 Apply the reserved vocabulary to the model card's closed nested objects (`modalities`, `limits`) beside `unknown_field`, amend native-formats.md and R6, with tests, per maintainer decision model-card-nested-reserved (partial)
+- [X] T096 Narrow the validator overflow catch to the result-buffer overflow, log a warning without content, and let any other exception fail as a 500, with tests, per maintainer decision results-overflow-catch (partial)
 - [X] T097 Text fixes: research R12 entry order, manifest-validation.md bounds rows (number, location, results), ReservedClaims summaries, per confirmation convergence F4, F5, F7 (contradicts)

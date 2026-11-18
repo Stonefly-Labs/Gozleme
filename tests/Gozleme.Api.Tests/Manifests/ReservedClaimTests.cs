@@ -174,6 +174,12 @@ public sealed class ReservedClaimTests
         Assert.Equal(["unknown_field native.unknown-field native /status", "reserved_claim reserved.vocabulary native /status"],
             Problems(Validate("model", "gozleme-model-card", "1", "json", Model.Replace("}}", "},\"status\":\"ga\"}", StringComparison.Ordinal))));
 
+    /// <summary>T095 (maintainer decision "extend to nested"): the model card's closed nested objects.</summary>
+    [Fact]
+    public void A_reserved_name_in_a_closed_model_card_object_is_reserved_and_unknown() =>
+        Assert.Equal(["unknown_field native.unknown-field native /limits/owner", "reserved_claim reserved.vocabulary native /limits/owner"],
+            Problems(Validate("model", "gozleme-model-card", "1", "json", Model.Replace("}}", "},\"limits\":{\"owner\":\"acme\"}}", StringComparison.Ordinal))));
+
     [Fact]
     public void User_data_examples_and_native_deprecated_flags_are_not_checked()
     {

@@ -57,16 +57,34 @@ internal static partial class SecretPatterns
     public static bool IsMatch(string value) => Match(value) is not null;
 
     /// <summary>
-    /// The patterns whose match may contain <c>/</c> or <c>~</c>, so may span member names joined into an RFC 6901
-    /// location, with a fixed part every such match contains. Every other pattern matches inside one name, which the
-    /// per-name check already covers (T091). A test fails if a pattern allowing <c>/</c> or <c>~</c> is missing here.
+    /// The patterns checked on a location's joined RFC 6901 text: those that need member names joined to exist, with a
+    /// fixed part every match contains (maintainer decisions 2026-11-17, "reject and trim" and "drop the header
+    /// pattern", T091/T092). <c>auth-header</c> also allows <c>/</c> but is checked only within single names and
+    /// values, because honest names such as <c>basic info</c> with a child would match once joined. A test fails if
+    /// another pattern allowing <c>/</c> or <c>~</c> is not listed here or in <see cref="NotJoined"/>.
     /// </summary>
-    internal static readonly IReadOnlyList<(string Id, string[] Anchors)> Spanning =
-    [
-        ("auth-header", ["bearer", "basic", "digest"]),
-        ("url-userinfo", ["://"]), // in a location only as a name ending in ':' followed by an empty name
-        ("azure-connection-secret", ["accountkey=", "sharedaccesskey=", "sharedaccesssignature="]),
-    ];
+    internal static readonly IReadOnlyList<(string Id, Regex Pattern)> Joined = [.. All.Where(p => p.Id is "url-userinfo" or "azure-connection-secret")];
+
+    /// <summary>Patterns that allow <c>/</c> or <c>~</c> but are deliberately not checked on joined locations.</summary>
+    internal static readonly string[] NotJoined = ["auth-header"];
+
+    /// <summary>
+    /// The fixed parts of <see cref="Joined"/> that sit inside one name, matched exactly as the patterns match them
+    /// (<c>(?i)</c>, culture-invariant, so the Kelvin sign U+212A counts as <c>k</c>). <c>://</c> is the other fixed
+    /// part; in a location it arises only from a name ending in <c>:</c> followed by an empty name.
+    /// </summary>
+    internal static readonly Regex JoinedAnchors = new(@"(?i)(?:AccountKey|SharedAccessKey|SharedAccessSignature)=", Options, Timeout);
+
+    /// <summary>
+    /// The most characters of a <see cref="Joined"/> match that can lie before the name completing it: a whole
+    /// <c>url-userinfo</c> match is at most 32 + 3 + 256 + 1 + 256 + 1 = 549 characters, and an
+    /// <c>azure-connection-secret</c> match that did not already match earlier has at most
+    /// <c>SharedAccessSignature=</c> plus 15 characters there. Changing either pattern means revisiting this.
+    /// </summary>
+    internal const int JoinedReach = 549;
+
+    /// <summary>Whether a location's joined text matches a <see cref="Joined"/> pattern.</summary>
+    public static bool IsJoinedMatch(string location) => Match(location, Joined) is not null;
 
 
     /// <summary>

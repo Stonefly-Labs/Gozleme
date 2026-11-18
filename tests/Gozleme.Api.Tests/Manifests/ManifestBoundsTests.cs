@@ -166,9 +166,9 @@ public sealed class ManifestBoundsTests
         }
 
         native.Append('[').Append(string.Join(',', Enumerable.Repeat("\"AKIAAAAAAAAAAAAAAAAA\"", 8_000))).Append(']').Append('}', 60).Append('}');
-        var before = GC.GetTotalAllocatedBytes(true);
+        var before = GC.GetAllocatedBytesForCurrentThread();
         Assert.IsType<RejectedResult>(Validate("api", "openapi", "3.1", "json", native.ToString()));
-        Assert.True(GC.GetTotalAllocatedBytes(true) - before < 512L << 20, "native document allocated over 512 MiB");
+        Assert.True(GC.GetAllocatedBytesForCurrentThread() - before < 512L << 20, "native document allocated over 512 MiB");
 
         var envelope = new StringBuilder("""{"envelopeVersion":1,"family":"model","capability":"x","version":"1.0.0","native":{"format":"gozleme-model-card","formatVersion":"1","encoding":"json","document":"{}"},"zz":""");
         for (var d = 0; d < 62; d++)
@@ -177,10 +177,10 @@ public sealed class ManifestBoundsTests
         }
 
         envelope.Append('[').Append(string.Join(',', Enumerable.Repeat("0", 20_000))).Append(']').Append('}', 62).Append('}');
-        before = GC.GetTotalAllocatedBytes(true);
+        before = GC.GetAllocatedBytesForCurrentThread();
         var result = Assert.IsType<RejectedResult>(Validate(Encoding.UTF8.GetBytes(envelope.ToString())));
         Assert.Equal("bound.location", Assert.Single(result.Problems).Rule); // refused while reading (T084), before the envelope size
-        Assert.True(GC.GetTotalAllocatedBytes(true) - before < 64L << 20, "envelope allocated over 64 MiB");
+        Assert.True(GC.GetAllocatedBytesForCurrentThread() - before < 64L << 20, "envelope allocated over 64 MiB");
     }
 
     /// <summary>T084 (maintainer decision "new limit + no crash"): a location over 4,096 characters is too_large.</summary>
@@ -222,5 +222,22 @@ public sealed class ManifestBoundsTests
         {
             TooLarge(result, "bound.location");
         }
+    }
+
+    /// <summary>T096 (maintainer decision "narrow + log"): only the results collector's overflow becomes too_large.</summary>
+    [Fact]
+    public void Only_an_overflow_inside_the_results_collector_is_too_large()
+    {
+        var enlarge = typeof(Corvus.Text.Json.JsonSchemaResultsCollector).GetMethod(
+            "Enlarge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        var inside = Assert.Throws<System.Reflection.TargetInvocationException>(() => enlarge.Invoke(null, [16, null, 0])).InnerException!;
+        Assert.True(SchemaRegistry.ThrownByResultsCollector(inside));
+        Assert.False(SchemaRegistry.IsResultsOverflow(inside)); // the right place, but not an overflow exception type
+
+        var elsewhere = Assert.Throws<ArgumentException>(() => ThrowArgument());
+        Assert.False(SchemaRegistry.ThrownByResultsCollector(elsewhere));
+        Assert.False(SchemaRegistry.IsResultsOverflow(elsewhere)); // an overflow type from elsewhere stays a fault
+
+        static void ThrowArgument() => throw new ArgumentException("a validator fault");
     }
 }
