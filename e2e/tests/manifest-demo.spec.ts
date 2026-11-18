@@ -102,8 +102,11 @@ function psql(sql: string): string {
 }
 
 /** Row counts of every `gozleme` table and the migration history, as the superuser (SC-007). */
+/** Row counts of every table except the validation rate-limit counter, which changes by design (FR-017 as clarified, T099). */
 function rowCounts(): string {
-  const tables = psql("SELECT string_agg(tablename, ',' ORDER BY tablename) FROM pg_tables WHERE schemaname = 'gozleme'").split(",");
+  const tables = psql("SELECT string_agg(tablename, ',' ORDER BY tablename) FROM pg_tables WHERE schemaname = 'gozleme'")
+    .split(",")
+    .filter((t) => t !== "manifest_validation_attempts");
   const counts = tables.map((t) => `(SELECT '${t}=' || count(*) FROM gozleme."${t}")`).join(" || ',' || ");
   return psql(`SELECT ${counts} || ',history=' || (SELECT count(*) FROM public."__EFMigrationsHistory");`);
 }
@@ -255,6 +258,8 @@ test("through the API the native document is unchanged and extensions never chan
   const byAlias = JSON.parse((await validate(carol, sampleText(valid[0]!, ALIAS))).text) as { outcome: string };
   expect(byAlias.outcome).toBe("accepted");
   expect(rowCounts()).toBe(rowsBefore);
+  // The counter holds only an account, a minute and a count (T099).
+  expect(psql("SELECT string_agg(column_name, ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema = 'gozleme' AND table_name = 'manifest_validation_attempts'")).toBe("account_id,window_start,attempts");
   Object.assign(record, { apiBoundary: boundary, aliasClaimAccepted: true, rowsUnchangedAfterValidations: true });
 });
 

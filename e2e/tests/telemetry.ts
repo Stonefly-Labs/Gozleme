@@ -74,7 +74,8 @@ export async function recentSpans(service: string, minutes = 10, operation?: str
   url.searchParams.set("query.service_name", service);
   url.searchParams.set("query.start_time_min", min.toISOString());
   url.searchParams.set("query.start_time_max", max.toISOString());
-  url.searchParams.set("query.num_traces", "50");
+  // Enough traces that every outcome of a cumulative demo run is still among those returned, not only the newest 50.
+  url.searchParams.set("query.num_traces", "1000");
   if (operation) url.searchParams.set("query.operation_name", operation);
   const res = await fetch(url);
   if (!res.ok) return [];

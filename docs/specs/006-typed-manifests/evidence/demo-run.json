@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0006",
-  "commit": "7391ed1fcc5c4b35f05c07e3fc1664e466cf5f12",
+  "commit": "6b63c006f87d9ce602d91dc1009e4eb165a02145",
   "branch": "feature/goz-0006-typed-manifests",
   "workingTreeCleanAtStart": false,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-18T03:08:47Z",
-  "finishedAt": "2026-11-18T03:15:53Z",
-  "stackStartupSeconds": 5,
+  "startedAt": "2026-11-18T15:27:55Z",
+  "finishedAt": "2026-11-18T15:34:26Z",
+  "stackStartupSeconds": 4,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -232,8 +232,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 882 ms",
-    "sign-in\u2192dashboard 341 ms"
+    "register\u2192dashboard 223 ms",
+    "sign-in\u2192dashboard 170 ms"
   ],
   "evidence": [
     "docs/specs/006-typed-manifests/evidence/screenshots/01-accepted-valid-stateless-2026-07-28.png",

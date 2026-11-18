@@ -10,7 +10,7 @@
     "limitMs": 2000,
     "environment": "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)"
   },
-  "capturedAt": "2026-11-18T03:15:53.116Z",
+  "capturedAt": "2026-11-18T15:34:25.828Z",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": "0193a000-0000-7000-8000-000000000010",
@@ -116,7 +116,7 @@
       "admin": 403,
       "approver": 403,
       "member": 403,
-      "publisher": 200,
+      "publisher": 422,
       "reviewer": 403
     },
     "nonMemberAndUnknownOrganization": "404 (identical, empty, no-store)",
@@ -125,7 +125,7 @@
     "rateLimit": {
       "allowed": 30,
       "thirty_first": 429,
-      "retryAfterSeconds": 60
+      "retryAfterSeconds": 57
     },
     "observability": {
       "span": "gozleme.manifest.validate",

@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0006
-stage: converge
+stage: pr-ready
 status: in-progress
 promptRevision: 7
 branch: feature/goz-0006-typed-manifests
@@ -81,7 +81,7 @@ stages:
   specify: {status: done, artifact: docs/specs/006-typed-manifests/spec.md, at: '2026-11-17', checklist: docs/specs/006-typed-manifests/checklists/requirements.md}
   clarify: {status: done, at: '2026-11-17', questions: 4, checklist: 16/16}
   plan: {status: done, at: '2026-11-17', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [P1, P2, P3, P4], verifyAtVendoring: ['Corvus run-time compile cost and keyword/instance-location output', 'MCP 2025-11-25 schema dialect', 'A2A v1.0.1 JSON Schema generation from proto', 'Utf8JsonReader duplicate-property option']}
-  implement: {status: done, at: '2026-11-17', done: [T001, T002, T003, T004, T005, T006, T007, T008, T009, T010, T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024, T025, T026, T027, T028, T029, T030, T031, T032, T033, T034, T035, T036, T037, T038, T039, T040, T041, T042, T043, T044, T045, T046, T047, T048, T049, T050, T051, T052, T053, T054, T055, T056, T057, T058, T059, T060, T061, T062, T063, T064, T065, T066, T067, T068, T069, T070, T071, T072, T073, T074, T075, T076, T077, T078, T079, T081, T082, T083, T084, T085, T086, T087, T088, T089, T090, T091, T092, T093, T094, T095, T096, T097], notBuilt: {T080: 'maintainer ruled 2026-11-17: externalValue and cross-document operationRef are informational URLs (R10)'}, blocked: [], gates: {lint: pass, test: '828 .NET (410 unit, 418 integration) + 194 Vitest, 0 failed', build: pass, validate: pass}, demo: {result: passed, suites: goz-0000..goz-0006, tests: 51, screenshots: 81, record: evidence/demo-run.json}, securityReviewFlags: ['secret pattern list v1', 'reserved vocabulary and where it applies (incl. trailing-words matching)', 'restricted YAML parser rules', 'offline schema resolver (incl. branch re-validation wrappers)']}
+  implement: {status: done, at: '2026-11-17', done: [T001, T002, T003, T004, T005, T006, T007, T008, T009, T010, T011, T012, T013, T014, T015, T016, T017, T018, T019, T020, T021, T022, T023, T024, T025, T026, T027, T028, T029, T030, T031, T032, T033, T034, T035, T036, T037, T038, T039, T040, T041, T042, T043, T044, T045, T046, T047, T048, T049, T050, T051, T052, T053, T054, T055, T056, T057, T058, T059, T060, T061, T062, T063, T064, T065, T066, T067, T068, T069, T070, T071, T072, T073, T074, T075, T076, T077, T078, T079, T081, T082, T083, T084, T085, T086, T087, T088, T089, T090, T091, T092, T093, T094, T095, T096, T097, T098, T099, T100], notBuilt: {T080: 'maintainer ruled 2026-11-17: externalValue and cross-document operationRef are informational URLs (R10)'}, blocked: [], gates: {lint: pass, test: '831 .NET (410 unit, 421 integration) + 197 Vitest, 0 failed', build: pass, validate: pass}, demo: {result: passed, suites: goz-0000..goz-0006, tests: 51, screenshots: 81, record: evidence/demo-run.json}, securityReviewFlags: ['secret pattern list v1', 'reserved vocabulary and where it applies (incl. trailing-words matching)', 'restricted YAML parser rules', 'offline schema resolver (incl. branch re-validation wrappers)']}
   tasks: {status: done, at: '2026-11-17', artifact: docs/specs/006-typed-manifests/tasks.md, count: 72, phases: {setup: 6, foundational: 21, US1: 18, US2: 10, US3: 3, US4: 6, polish: 8}, note: 'research R6 rule name aligned to contract catalogue (reserved.a2a-signatures)'}
 attempts: []
 blockers:
@@ -101,5 +101,5 @@ blockers:
   resolvedAt: '2026-11-17'
   summary: 'A2A generation needed a container; maintainer approved it. Generated bundle is byte-identical to the published a2a.json v1.0.1; AgentCard/AgentCapabilities/AgentCardSignature closed.'
   evidence: [src/Gozleme.Api/Manifests/Schemas/SOURCES.md, docs/specs/006-typed-manifests/research.md#r1]
-nextAction: 'Phase 10 (T092-T097) done; demo passed (51 tests, 81 screenshots). Next: analyze-spec-impact, review-roadmap, PR prep.'
+nextAction: 'Phase 11 (T098-T100) done; demo passed (51 tests, 81 screenshots); impact analysis and roadmap sync done. Next: PR marked ready-for-human-merge; the maintainer merges.'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}
