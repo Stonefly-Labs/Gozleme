@@ -174,7 +174,16 @@ rule, and still lists every independent problem.
    - every member name inside a format's extension mechanism;
    - each adapter's listed native fields.
 
-   A name matches when its normalized form (lower-case; namespace prefix removed up to the last `/` or `.`; leading `x-` removed; `-`, `_` and `.` removed), or the joined form of any trailing run of its `-`/`_`-separated words, is in the vocabulary. The trailing runs are what make `x-gozleme-verified` (words `gozleme`, `verified`) match; they also reserve names such as `x-api-status` in extension positions (maintainer decision, 2026-11-17, resolving the conflict between this algorithm and the rationale below):
+   - every member name nested inside an extension's value (`x-*` values, MCP `_meta` values and `capabilities.experimental`, Agent Skills `metadata`), as for A2A extension `params` (convergence T075);
+   - the member names of closed native objects (Agent Skills front matter, the closed MCP objects other than schemas and variable names, the model-card root), so a reserved name there is both `unknown_field` and `reserved_claim` (US2/AC2, convergence T076).
+
+   A name's words are found as follows (maintainer decisions 2026-11-17, "harden all" and "built-in fold table"):
+   1. Fold look-alike characters to ASCII with the generated table `ReservedClaimFolds` (`scripts/reserved-folds/generate.py`: fullwidth forms, roman numerals, mathematical and letterlike alphanumerics, enclosed letters, super/subscripts, modifier letters, ligatures, accented Latin letters, dotless `ı`). The API runs with invariant globalization, where .NET applies no NFKC, so the table stands in for it. It is not full NFKC: Greek and Cyrillic homoglyphs are not folded.
+   2. Remove default-ignorable characters (format characters such as zero-width space and soft hyphen, and variation selectors).
+   3. Remove the namespace prefix up to the last `/` or `.`, then a leading `x-`.
+   4. Split at every character that is not a letter or digit and at camelCase boundaries, then lower-case.
+
+   A name matches when its words joined, or the joined form of any trailing run of its words, is in the vocabulary. The trailing runs make `x-gozleme-verified` and `x-isVerified` match; they also reserve names such as `x-api-status` in extension positions (maintainer decision, 2026-11-17). `x-verifiedBy` does not match, because `verified` is not a trailing word:
 
    `signature, signatures, sig, jws, attestation, attestations, provenance, trust, trusted, trustlevel, verified, verification, approved, approval, certified, delegation, delegations, delegationchain, delegatedby, transfer, transfers, transferchain, transferredfrom, visibility, visible, grant, grants, sharing, sharedwith, acl, owner, ownedby, publisher, publishedby, organization, status, lifecycle, deprecated, revoked, withdrawn, yanked`.
 

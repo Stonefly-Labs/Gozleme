@@ -25,7 +25,7 @@ and execute no content (FR-006).
 
 - **Unknown members**: a member outside the pinned or overlay schema is `unknown_field`, unless it is under the format's extension mechanism.
 - **Extension members**: preserved verbatim in the native bytes and never projected.
-- **Reserved vocabulary**: applied to envelope names, to names inside extension mechanisms, and to the fields listed per adapter (research R6).
+- **Reserved vocabulary**: applied to envelope names, to every name inside extension mechanisms (nested values included), to the member names of closed native objects, and to the fields listed per adapter, after look-alike folding, camelCase splitting and separator splitting (research R6).
 - **Secrets**: secret pattern list v1 applies to every string value and member name ([secret-patterns.md](./secret-patterns.md)).
 - **References**: `$ref`/`$dynamicRef` not starting with `#` is `external_reference`, and so is an unbundled `$schema`/`jsonSchemaDialect`. Nothing is fetched.
 

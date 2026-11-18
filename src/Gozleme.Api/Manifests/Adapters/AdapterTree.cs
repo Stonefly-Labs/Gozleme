@@ -28,6 +28,7 @@ internal static class AdapterTree
     /// <summary>
     /// Member names that start with <c>x-</c> in structural positions (OpenAPI, AsyncAPI, model card): not below an
     /// example, default, enum or const value, and not the property names of a schema, which are user data (research R6).
+    /// Every member name inside an extension's value is included too (T075, R6 rule 1).
     /// </summary>
     public static IEnumerable<NamePosition> ExtensionNames(ManifestNode node)
     {
@@ -36,6 +37,11 @@ internal static class AdapterTree
             if (name.StartsWith("x-", StringComparison.OrdinalIgnoreCase))
             {
                 yield return new NamePosition(name, value.Pointer);
+                foreach (var inner in AllNames(value))
+                {
+                    yield return inner;
+                }
+
                 continue;
             }
 
@@ -70,6 +76,10 @@ internal static class AdapterTree
     }
 
     private static IEnumerable<NamePosition> Walk(ManifestNode value) => value.IsObject || value.IsArray ? ExtensionNames(value) : [];
+
+    /// <summary>Each member name of <paramref name="node"/> and every member name beneath it (an extension map and its values).</summary>
+    public static IEnumerable<NamePosition> MembersAndBeneath(ManifestNode? node) =>
+        Members(node).SelectMany(m => AllNames(m.Value).Prepend(new NamePosition(m.Key, m.Value.Pointer)));
 
     /// <summary>Every member name in a subtree (free-form maps such as A2A extension <c>params</c>).</summary>
     public static IEnumerable<NamePosition> AllNames(ManifestNode? node) =>

@@ -73,7 +73,37 @@ internal sealed partial class McpAdapter : IProtocolAdapter
 
     /// <summary>The vocabulary applies to <c>_meta</c> keys at every level.</summary>
     public IEnumerable<NamePosition> ReservedNamePositions(ManifestNode tree) =>
-        MetaObjects(tree).SelectMany(m => m.Members).Select(m => new NamePosition(m.Key, m.Value.Pointer));
+        MetaObjects(tree).SelectMany(MembersAndBeneath)
+            .Concat(MembersAndBeneath(tree["capabilities"]?["experimental"]))
+            .Concat(StructuralNames(tree));
+
+    /// <summary>
+    /// Member names of the closed MCP objects (US2/AC2: a reserved name there is <c>reserved_claim</c> as well as
+    /// <c>unknown_field</c>). Schemas (<c>inputSchema</c>, <c>outputSchema</c>) and variable names are user data; <c>_meta</c>
+    /// and <c>capabilities.experimental</c> are extension maps checked above.
+    /// </summary>
+    private static IEnumerable<NamePosition> StructuralNames(ManifestNode node)
+    {
+        foreach (var (name, value) in Members(node))
+        {
+            if (name is "inputSchema" or "outputSchema" or "_meta" || (name == "experimental" && node.Pointer.EndsWith("/capabilities", StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            yield return new NamePosition(name, value.Pointer);
+            var children = name == "variables" ? Members(value).Select(m => m.Value) : [value];
+            foreach (var inner in children.SelectMany(StructuralNames))
+            {
+                yield return inner;
+            }
+        }
+
+        foreach (var inner in Items(node).SelectMany(StructuralNames))
+        {
+            yield return inner;
+        }
+    }
 
     /// <summary>
     /// <c>value</c>/<c>default</c> of <c>remotes[].headers[]</c>, <c>remotes[].variables{}</c> and

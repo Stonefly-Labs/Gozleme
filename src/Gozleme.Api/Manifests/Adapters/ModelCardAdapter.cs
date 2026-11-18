@@ -24,8 +24,11 @@ internal sealed class ModelCardAdapter : IProtocolAdapter
 
     public IEnumerable<NamePosition> ReservedNamePositions(ManifestNode tree) =>
         Members(tree).Select(m => new NamePosition(m.Key, m.Value.Pointer))
-            .Concat(new[] { tree["modalities"], tree["limits"] }.SelectMany(n => Members(n))
-                .Where(m => m.Key.StartsWith("x-", StringComparison.Ordinal)).Select(m => new NamePosition(m.Key, m.Value.Pointer)));
+            .Concat(Members(tree).Where(IsExtension).SelectMany(m => AllNames(m.Value)))
+            .Concat(new[] { tree["modalities"], tree["limits"] }.SelectMany(n => Members(n)).Where(IsExtension)
+                .SelectMany(m => AllNames(m.Value).Prepend(new NamePosition(m.Key, m.Value.Pointer))));
+
+    private static bool IsExtension(KeyValuePair<string, ManifestNode> member) => member.Key.StartsWith("x-", StringComparison.Ordinal);
 
     public IEnumerable<ManifestNode> SecretFields(ManifestNode tree) => [];
 

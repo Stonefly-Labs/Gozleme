@@ -25,6 +25,28 @@ public sealed class ReservedClaimTests
     [InlineData("summary", false)]
     public void Normalization_catches_disguised_names(string name, bool reserved) => Assert.Equal(reserved, ReservedClaims.IsReserved(name));
 
+    /// <summary>Maintainer decision 2026-11-17 ("harden all"): camelCase, NFKC look-alikes, invisible characters and any separator.</summary>
+    [Theory]
+    [InlineData("x-gozlemeVerified", true)]
+    [InlineData("x-isVerified", true)]
+    [InlineData("x-JWS", true)]
+    [InlineData("x-\u2174erified", true)] // small roman numeral five, NFKC "v"
+    [InlineData("x-ver\u0131fied", true)] // dotless i
+    [InlineData("x-ve\u200Brified", true)] // zero-width space
+    [InlineData("x-veri\u00ADfied", true)] // soft hyphen
+    [InlineData("x-trust level", true)]
+    [InlineData("x-trust:level", true)]
+    [InlineData("x-ｖｅｒｉｆｉｅｄ", true)] // fullwidth
+    [InlineData("x-\U0001D42Fe\U0001D42Bified", true)] // mathematical bold v and r
+    [InlineData("x-v\u00E9rified", true)] // é
+    [InlineData("x-ⓥerified", true)] // enclosed
+    [InlineData("x-gözleme-verified", true)]
+    [InlineData("x-verifiedBy", false)] // "verified" is not a trailing word
+    [InlineData("readOnlyHint", false)]
+    [InlineData("x-owner-team", false)]
+    [InlineData("isSecret", false)]
+    public void Hardened_matching_catches_written_variants(string name, bool reserved) => Assert.Equal(reserved, ReservedClaims.IsReserved(name));
+
     [Fact]
     public void The_normalized_form_is_r6()
     {
@@ -53,6 +75,38 @@ public sealed class ReservedClaimTests
         { "skill", "agent-skills", "2026-11-17", "markdown", "---\nname: demo\ndescription: d\nmetadata:\n  trust-level: high\n---\n", "/metadata/trust-level" },
         { "mcp", "mcp-server-manifest", "1", "json", Mcp(extra: ""","_meta":{"io.example/provenance":"x"}"""), "/_meta/io.example~1provenance" },
     };
+
+    /// <summary>T075 (R6 rule 1): every member name inside an extension's value, in every adapter.</summary>
+    public static TheoryData<string, string, string, string, string, string> NestedExtensionPositions => new()
+    {
+        { "model", "gozleme-model-card", "1", "json", """{"name":"m","description":"d","modalities":{"input":["text"],"output":["text"]},"x-meta":{"approved":true}}""", "/x-meta/approved" },
+        { "api", "openapi", "3.1", "json", """{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{},"x-gozleme":{"note":{"verified":true}}}""", "/x-gozleme/note/verified" },
+        { "event", "asyncapi", "3.0.0", "json", """{"asyncapi":"3.0.0","info":{"title":"t","version":"1","x-team":{"owner":"acme"}}}""", "/info/x-team/owner" },
+        { "mcp", "mcp-server-manifest", "1", "json", Mcp(extra: ""","_meta":{"io.example/info":{"verified":true}}"""), "/_meta/io.example~1info/verified" },
+        { "mcp", "mcp-server-manifest", "1", "json", Mcp().Replace("\"capabilities\":{\"tools\":{}}", "\"capabilities\":{\"tools\":{},\"experimental\":{\"io.example/x\":{\"approved\":true}}}", StringComparison.Ordinal), "/capabilities/experimental/io.example~1x/approved" },
+    };
+
+    [Theory]
+    [MemberData(nameof(NestedExtensionPositions))]
+    public void Names_nested_in_an_extension_value_are_checked(string family, string format, string version, string encoding, string document, string location) =>
+        Assert.Equal([$"reserved_claim reserved.vocabulary native {location}"], Problems(Validate(family, format, version, encoding, document)));
+
+    /// <summary>T076 (US2/AC2): a reserved name in a closed native position is a reserved claim as well as an unknown field.</summary>
+    [Fact]
+    public void A_reserved_name_in_closed_skill_front_matter_is_reserved_and_unknown() =>
+        Assert.Equal(
+            ["unknown_field native.unknown-field native /verified", "reserved_claim reserved.vocabulary native /verified"],
+            Problems(Validate("skill", "agent-skills", "2026-11-17", "markdown", "---\nname: demo\ndescription: d\nverified: true\n---\n")));
+
+    [Fact]
+    public void A_reserved_name_in_a_closed_mcp_object_is_reserved_and_unknown() =>
+        Assert.Equal(
+            ["unknown_field native.unknown-field native /serverInfo/owner", "reserved_claim reserved.vocabulary native /serverInfo/owner"],
+            Problems(Validate("mcp", "mcp-server-manifest", "1", "json", Mcp().Replace("\"version\":\"1.0.0\"}", "\"version\":\"1.0.0\",\"owner\":\"acme\"}", StringComparison.Ordinal))));
+
+    [Fact]
+    public void Mcp_schema_property_and_variable_names_stay_user_data() =>
+        Accepted(Validate("mcp", "mcp-server-manifest", "1", "json", Mcp().Replace("\"inputSchema\":{\"type\":\"object\"}", "\"inputSchema\":{\"type\":\"object\",\"properties\":{\"owner\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"}}}", StringComparison.Ordinal)));
 
     [Theory]
     [MemberData(nameof(ExtensionPositions))]

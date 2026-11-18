@@ -22,7 +22,7 @@ internal sealed class AgentSkillsAdapter : IProtocolAdapter
     public void Validate(ManifestNode tree, NativeContext context) => context.Schema(SchemaIds.AgentSkills, tree);
 
     public IEnumerable<NamePosition> ReservedNamePositions(ManifestNode tree) =>
-        Members(tree["metadata"]).Select(m => new NamePosition(m.Key, m.Value.Pointer));
+        Members(tree).Select(m => new NamePosition(m.Key, m.Value.Pointer)).Concat(MembersAndBeneath(tree["metadata"]));
 
     public IEnumerable<ManifestNode> SecretFields(ManifestNode tree) => [];
 
