@@ -248,7 +248,7 @@ Anything else is `identity_mismatch` at `/capability`, rule `identity.capability
 **Decision** ([contracts/manifest-validation.md](./contracts/manifest-validation.md)):
 - **Both outcomes** answer `200`, with `{"outcome":"accepted", …}` or `{"outcome":"rejected","problems":[…],"truncated":false}` (disclosed agent choice A3). A rejection is a successful validation, and authorization failures keep their own statuses, so clients can tell "you may not" from "this is invalid".
 - **Problem**: `{category, rule, location, message}`.
-  - `location` is `{"part":"envelope"|"native","pointer":"…"}`, or `{"part":…,"line":n,"column":n}` for `malformed` and `SKILL.md` body secrets, or `null` for `too_large`.
+  - `location` is `{"part":"envelope"|"native","pointer":"…"}`, or `{"part":…,"line":n,"column":n}` for `malformed` (except `parse.not-string` and an encoding the format does not allow, which carry the envelope pointer; maintainer decision 2026-11-17), `SKILL.md` body secrets and YAML-comment secrets, or `null` for `too_large`.
   - `rule` and `message` come from one fixed catalogue (`ManifestRules.cs`, pinned by `ManifestRuleCatalogueTests`). No message is built from input.
 - **Accepted result**:
   - `envelope`: every envelope field except `native.document`;
