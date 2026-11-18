@@ -40,6 +40,7 @@ internal static class OrgResource
     public const string Invitation = "invitation";
     public const string Publisher = "publisher";
     public const string Capability = "capability";
+    public const string Manifest = "manifest";
 }
 
 /// <summary>Organization actions (docs/architecture/contracts/organization-permissions.md). Bounded: span attributes and metric label values.</summary>
@@ -64,6 +65,9 @@ internal static class OrgAction
     public const string CapabilityCreate = "capability.create";
     public const string CapabilityRename = "capability.rename";
     public const string ManifestValidate = "manifest.validate";
+    public const string ManifestPublish = "manifest.publish";
+    public const string ManifestList = "manifest.list";
+    public const string ManifestRead = "manifest.read";
 
     /// <summary>Every action with its resource type, in contract order.</summary>
     public static readonly IReadOnlyList<(string Action, string Resource)> All =
@@ -86,7 +90,10 @@ internal static class OrgAction
         (CapabilityRead, OrgResource.Capability),
         (CapabilityCreate, OrgResource.Capability),
         (CapabilityRename, OrgResource.Capability),
-        (ManifestValidate, OrgResource.Capability),
+        (ManifestValidate, OrgResource.Manifest),
+        (ManifestPublish, OrgResource.Manifest),
+        (ManifestList, OrgResource.Manifest),
+        (ManifestRead, OrgResource.Manifest),
     ];
 
     public static string ResourceOf(string action) => All.Single(a => a.Action == action).Resource;
@@ -102,6 +109,7 @@ internal static class OrganizationPermissions
     [
         OrgAction.OrganizationRead, OrgAction.OrganizationSelect, OrgAction.MembershipList, OrgAction.MembershipLeave,
         OrgAction.PublisherList, OrgAction.PublisherRead, OrgAction.CapabilityList, OrgAction.CapabilityRead,
+        OrgAction.ManifestList, OrgAction.ManifestRead,
     ];
 
     /// <summary>
@@ -116,8 +124,12 @@ internal static class OrganizationPermissions
         OrgAction.PublisherRegister, OrgAction.PublisherRename,
     ];
 
-    /// <summary>Since GOZ-0006, <see cref="OrgAction.ManifestValidate"/> too (maintainer Q2): publisher only, admin does not hold it.</summary>
-    private static readonly string[] PublisherActions = [.. MemberActions, OrgAction.CapabilityCreate, OrgAction.CapabilityRename, OrgAction.ManifestValidate];
+    /// <summary>
+    /// Since GOZ-0006, <see cref="OrgAction.ManifestValidate"/> too (maintainer Q2), and since GOZ-0007
+    /// <see cref="OrgAction.ManifestPublish"/> (maintainer Q4): publisher only, admin holds neither.
+    /// </summary>
+    private static readonly string[] PublisherActions =
+        [.. MemberActions, OrgAction.CapabilityCreate, OrgAction.CapabilityRename, OrgAction.ManifestValidate, OrgAction.ManifestPublish];
 
     private static readonly FrozenDictionary<string, FrozenSet<string>> Table = new Dictionary<string, FrozenSet<string>>(StringComparer.Ordinal)
     {

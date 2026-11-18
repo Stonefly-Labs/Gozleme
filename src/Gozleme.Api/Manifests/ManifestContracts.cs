@@ -98,6 +98,13 @@ internal static class ManifestJson
         WriteIndented = false,
     };
 
+    /// <summary>The projection as a JSON tree, the input of its canonical form (GOZ-0007 research R3).</summary>
+    public static System.Text.Json.Nodes.JsonNode ProjectionNode(Projection.ManifestProjection projection) =>
+        JsonSerializer.SerializeToNode(projection, Options)!;
+
+    /// <summary>The envelope summary as stored on a revision (not signed).</summary>
+    public static string SummaryJson(EnvelopeSummary summary) => JsonSerializer.Serialize(summary, Options);
+
     public static byte[] Serialize(ValidationResult result) => result switch
     {
         AcceptedResult accepted => JsonSerializer.SerializeToUtf8Bytes(accepted, Options),

@@ -434,6 +434,315 @@ namespace Gozleme.Api.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Gozleme.Api.Revisions.ManifestRevision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AdapterId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("adapter_id");
+
+                    b.Property<string>("AdapterVersion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("adapter_version");
+
+                    b.Property<Guid>("CapabilityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("capability_id");
+
+                    b.Property<string>("EnvelopeSummary")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("envelope_summary");
+
+                    b.Property<string>("Family")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("family");
+
+                    b.Property<int>("NativeByteLength")
+                        .HasColumnType("integer")
+                        .HasColumnName("native_byte_length");
+
+                    b.Property<string>("NativeDigest")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("native_digest");
+
+                    b.Property<byte[]>("NativeDocument")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("native_document");
+
+                    b.Property<string>("NativeEncoding")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("native_encoding");
+
+                    b.Property<string>("NativeFormat")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("native_format");
+
+                    b.Property<string>("NativeFormatVersion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("native_format_version");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<byte[]>("Projection")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("projection");
+
+                    b.Property<string>("ProjectionDigest")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("projection_digest");
+
+                    b.Property<string>("ProjectionVersion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("projection_version");
+
+                    b.Property<DateTimeOffset>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<Guid>("PublishedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("published_by");
+
+                    b.Property<Guid>("PublisherId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("publisher_id");
+
+                    b.Property<string>("RuleCatalogueVersion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("rule_catalogue_version");
+
+                    b.Property<string>("SchemaBundleVersion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("schema_bundle_version");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("version");
+
+                    b.Property<string>("VersionKey")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("version_key");
+
+                    b.HasKey("Id")
+                        .HasName("pk_manifest_revisions");
+
+                    b.HasAlternateKey("Id", "OrganizationId")
+                        .HasName("ak_manifest_revisions_id_organization_id");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_manifest_revisions_organization_id");
+
+                    b.HasIndex("PublisherId")
+                        .HasDatabaseName("ix_manifest_revisions_publisher_id");
+
+                    b.HasIndex("CapabilityId", "OrganizationId")
+                        .HasDatabaseName("ix_manifest_revisions_capability_id_organization_id");
+
+                    b.HasIndex("CapabilityId", "Sequence")
+                        .IsUnique()
+                        .HasDatabaseName("ix_manifest_revisions_capability_id_sequence");
+
+                    b.HasIndex("CapabilityId", "VersionKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_manifest_revisions_capability_id_version_key");
+
+                    b.HasIndex("PublisherId", "OrganizationId")
+                        .HasDatabaseName("ix_manifest_revisions_publisher_id_organization_id");
+
+                    b.ToTable("manifest_revisions", "gozleme");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Revisions.PublisherSigningKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Algorithm")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("algorithm");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<byte[]>("EncryptedPrivateKey")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("encrypted_private_key");
+
+                    b.Property<int>("Generation")
+                        .HasColumnType("integer")
+                        .HasColumnName("generation");
+
+                    b.Property<string>("KeyId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("key_id");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<byte[]>("PublicKey")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("public_key");
+
+                    b.Property<Guid>("PublisherId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("publisher_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_publisher_signing_keys");
+
+                    b.HasAlternateKey("Id", "OrganizationId")
+                        .HasName("ak_publisher_signing_keys_id_organization_id");
+
+                    b.HasIndex("KeyId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_publisher_signing_keys_key_id");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_publisher_signing_keys_organization_id");
+
+                    b.HasIndex("PublisherId", "Generation")
+                        .IsUnique()
+                        .HasDatabaseName("ix_publisher_signing_keys_publisher_id_generation");
+
+                    b.HasIndex("PublisherId", "OrganizationId")
+                        .HasDatabaseName("ix_publisher_signing_keys_publisher_id_organization_id");
+
+                    b.ToTable("publisher_signing_keys", "gozleme");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Revisions.RevisionAttestation", b =>
+                {
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("revision_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<byte[]>("Signature")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("signature");
+
+                    b.Property<Guid>("SigningKeyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("signing_key_id");
+
+                    b.Property<byte[]>("Statement")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("statement");
+
+                    b.Property<short>("StatementVersion")
+                        .HasColumnType("smallint")
+                        .HasColumnName("statement_version");
+
+                    b.HasKey("RevisionId")
+                        .HasName("pk_revision_attestations");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_revision_attestations_organization_id");
+
+                    b.HasIndex("SigningKeyId")
+                        .HasDatabaseName("ix_revision_attestations_signing_key_id");
+
+                    b.HasIndex("RevisionId", "OrganizationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_revision_attestations_revision_id_organization_id");
+
+                    b.HasIndex("SigningKeyId", "OrganizationId")
+                        .HasDatabaseName("ix_revision_attestations_signing_key_id_organization_id");
+
+                    b.ToTable("revision_attestations", "gozleme");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Revisions.SigningKeyRetirement", b =>
+                {
+                    b.Property<Guid>("KeyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("key_id");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset>("RetiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("retired_at");
+
+                    b.Property<Guid>("SuccessorKeyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("successor_key_id");
+
+                    b.HasKey("KeyId")
+                        .HasName("pk_signing_key_retirements");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_signing_key_retirements_organization_id");
+
+                    b.HasIndex("SuccessorKeyId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_signing_key_retirements_successor_key_id");
+
+                    b.HasIndex("KeyId", "OrganizationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_signing_key_retirements_key_id_organization_id");
+
+                    b.HasIndex("SuccessorKeyId", "OrganizationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_signing_key_retirements_successor_key_id_organization_id");
+
+                    b.ToTable("signing_key_retirements", "gozleme");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
@@ -646,6 +955,102 @@ namespace Gozleme.Api.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_publishers_organizations_organization_id");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Revisions.ManifestRevision", b =>
+                {
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_manifest_revisions_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Publishers.Capability", null)
+                        .WithMany()
+                        .HasForeignKey("CapabilityId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_manifest_revisions_capabilities_capability_id_organization_~");
+
+                    b.HasOne("Gozleme.Api.Publishers.Publisher", null)
+                        .WithMany()
+                        .HasForeignKey("PublisherId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_manifest_revisions_publishers_publisher_id_organization_id");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Revisions.PublisherSigningKey", b =>
+                {
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_publisher_signing_keys_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Publishers.Publisher", null)
+                        .WithMany()
+                        .HasForeignKey("PublisherId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_publisher_signing_keys_publishers_publisher_id_organization~");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Revisions.RevisionAttestation", b =>
+                {
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_revision_attestations_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Revisions.ManifestRevision", null)
+                        .WithOne()
+                        .HasForeignKey("Gozleme.Api.Revisions.RevisionAttestation", "RevisionId", "OrganizationId")
+                        .HasPrincipalKey("Gozleme.Api.Revisions.ManifestRevision", "Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_revision_attestations_manifest_revisions_revision_id_organi~");
+
+                    b.HasOne("Gozleme.Api.Revisions.PublisherSigningKey", null)
+                        .WithMany()
+                        .HasForeignKey("SigningKeyId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_revision_attestations_publisher_signing_keys_signing_key_id~");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Revisions.SigningKeyRetirement", b =>
+                {
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_signing_key_retirements_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Revisions.PublisherSigningKey", null)
+                        .WithOne()
+                        .HasForeignKey("Gozleme.Api.Revisions.SigningKeyRetirement", "KeyId", "OrganizationId")
+                        .HasPrincipalKey("Gozleme.Api.Revisions.PublisherSigningKey", "Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_signing_key_retirements_publisher_signing_keys_key_id_organ~");
+
+                    b.HasOne("Gozleme.Api.Revisions.PublisherSigningKey", null)
+                        .WithOne()
+                        .HasForeignKey("Gozleme.Api.Revisions.SigningKeyRetirement", "SuccessorKeyId", "OrganizationId")
+                        .HasPrincipalKey("Gozleme.Api.Revisions.PublisherSigningKey", "Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_signing_key_retirements_publisher_signing_keys_successor_ke~");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>

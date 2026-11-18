@@ -9,6 +9,7 @@ import { SignedInHeader } from "@/components/SignedInHeader";
 import { StateBadge } from "@/components/StateBadge";
 import { MANIFEST_MESSAGES } from "@/lib/manifests";
 import { getOrganization } from "@/lib/organizations";
+import { revisionsPage } from "@/lib/revisions";
 import { getCapability, getPublisher } from "@/lib/publishers-server";
 import { getSession } from "@/lib/session";
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = { title: "Validate manifest — Gözleme" };
  * Validate a manifest for one capability (GOZ-0006). The API re-checks membership on every load, so non-members and
  * unknown, malformed or foreign ids all get the same "not found" page. Reached directly without `manifest.validate`,
  * or while the publisher is suspended, the page explains why instead of showing the form; the API still decides
- * every validation.
+ * every validation. Members holding `manifest.publish` can publish an accepted manifest as a revision (GOZ-0007).
  */
 export default async function ManifestPage({
   params,
@@ -42,6 +43,7 @@ export default async function ManifestPage({
 
   const ready = organization.state === "ok" && publisher.state === "ok" && capability.state === "ok";
   const permitted = organization.state === "ok" && organization.data.permissions.includes("manifest.validate");
+  const canPublish = organization.state === "ok" && organization.data.permissions.includes("manifest.publish");
   const active = publisher.state === "ok" && publisher.data.state === "active";
   return (
     <>
@@ -73,6 +75,11 @@ export default async function ManifestPage({
                   </dd>
                 </div>
               </dl>
+              <p className="form-inline">
+                <Link href={revisionsPage(organizationId, publisherId, capability.data.id)} data-testid="revisions-link">
+                  Revisions
+                </Link>
+              </p>
             </section>
             {!active ? (
               <div className="notice" role="status" data-testid="suspended-notice">
@@ -88,6 +95,7 @@ export default async function ManifestPage({
                 publisherId={publisherId}
                 capabilityId={capability.data.id}
                 canonicalId={capability.data.canonicalId}
+                canPublish={canPublish}
               />
             )}
           </div>

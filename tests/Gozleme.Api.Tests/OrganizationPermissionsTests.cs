@@ -6,7 +6,8 @@ namespace Gozleme.Api.Tests;
 /// GOZ-0004 FR-001–FR-003 (research R7): built-in roles, union semantics and the role table. GOZ-0005 (research R9):
 /// every role reads publishers and capabilities, admin registers and renames publishers but holds no capability
 /// write, and publisher alone creates and renames capabilities (maintainer Q5). GOZ-0006: publisher alone validates
-/// manifests; admin does not (maintainer Q2).
+/// manifests; admin does not (maintainer Q2). GOZ-0007 (maintainer Q4): resource <c>manifest</c>; publisher alone
+/// publishes, every role lists and reads revisions, and <c>manifest.validate</c> moves to the new resource unchanged.
 /// </summary>
 public sealed class OrganizationPermissionsTests
 {
@@ -14,9 +15,10 @@ public sealed class OrganizationPermissionsTests
     [
         OrgAction.OrganizationRead, OrgAction.OrganizationSelect, OrgAction.MembershipList, OrgAction.MembershipLeave,
         OrgAction.PublisherList, OrgAction.PublisherRead, OrgAction.CapabilityList, OrgAction.CapabilityRead,
+        OrgAction.ManifestList, OrgAction.ManifestRead,
     ];
 
-    private static readonly string[] CapabilityWrites = [OrgAction.CapabilityCreate, OrgAction.CapabilityRename, OrgAction.ManifestValidate];
+    private static readonly string[] CapabilityWrites = [OrgAction.CapabilityCreate, OrgAction.CapabilityRename, OrgAction.ManifestValidate, OrgAction.ManifestPublish];
 
     [Theory]
     [InlineData(OrganizationRole.Member)]
@@ -42,14 +44,20 @@ public sealed class OrganizationPermissionsTests
     }
 
     [Fact]
-    public void Manifest_validate_is_allowed_for_publisher_only()
+    public void Manifest_validate_and_publish_are_allowed_for_publisher_only_and_every_role_reads()
     {
         foreach (var role in OrganizationRole.All)
         {
-            Assert.Equal(role == OrganizationRole.Publisher, OrganizationPermissions.Allows([role], OrgAction.ManifestValidate, OrgResource.Capability));
+            Assert.Equal(role == OrganizationRole.Publisher, OrganizationPermissions.Allows([role], OrgAction.ManifestValidate, OrgResource.Manifest));
+            Assert.Equal(role == OrganizationRole.Publisher, OrganizationPermissions.Allows([role], OrgAction.ManifestPublish, OrgResource.Manifest));
+            Assert.True(OrganizationPermissions.Allows([role], OrgAction.ManifestList, OrgResource.Manifest));
+            Assert.True(OrganizationPermissions.Allows([role], OrgAction.ManifestRead, OrgResource.Manifest));
         }
 
-        Assert.False(OrganizationPermissions.Allows([OrganizationRole.Publisher], OrgAction.ManifestValidate, OrgResource.Publisher));
+        // Moved: the old resource no longer matches (the decision checks the action's own resource type).
+        Assert.False(OrganizationPermissions.Allows([OrganizationRole.Publisher], OrgAction.ManifestValidate, OrgResource.Capability));
+        Assert.Equal(OrgResource.Manifest, OrgAction.ResourceOf(OrgAction.ManifestValidate));
+        Assert.Equal(22, OrgAction.All.Count);
     }
 
     [Fact]
@@ -84,7 +92,7 @@ public sealed class OrganizationPermissionsTests
     [Fact]
     public void Every_action_has_a_resource_type_and_the_table_lists_every_action()
     {
-        Assert.All(OrgAction.All, a => Assert.Contains(a.Resource, new[] { OrgResource.Organization, OrgResource.Membership, OrgResource.Invitation, OrgResource.Publisher, OrgResource.Capability }));
+        Assert.All(OrgAction.All, a => Assert.Contains(a.Resource, new[] { OrgResource.Organization, OrgResource.Membership, OrgResource.Invitation, OrgResource.Publisher, OrgResource.Capability, OrgResource.Manifest }));
         var table = OrganizationPermissions.RenderTable();
         Assert.All(OrgAction.All, a => Assert.Contains($"\n{a.Action} ", table));
     }

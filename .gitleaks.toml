@@ -10,4 +10,6 @@ regexes = [
   '''local-dev-context-key-not-a-secret-[0-9]{4}''',
   '''(it|unit-test)-context-key-0003-not-a-secret(-[A-Za-z0-9]{4})?''',
   '''a-different-key-of-sufficient-length-[0-9]{2}''',
+  # Demo screenshot file names ("NN-name.png"); generic-api-key matched one after a span name argument (GOZ-0007).
+  '''^[0-9]{2}-[a-z0-9-]+\.png$''',
 ]

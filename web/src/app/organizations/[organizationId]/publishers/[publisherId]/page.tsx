@@ -12,6 +12,7 @@ import { StateBadge } from "@/components/StateBadge";
 import { forbiddenText } from "@/lib/client";
 import { getOrganization } from "@/lib/organizations";
 import { SUSPENDED } from "@/lib/publishers";
+import { signingKeysPage } from "@/lib/revisions";
 import { getPublisher, listCapabilities } from "@/lib/publishers-server";
 import { getSession } from "@/lib/session";
 
@@ -110,6 +111,13 @@ export default async function PublisherPage({
                   inputId="publisher-rename"
                 />
               )}
+              {permissions.includes("manifest.read") && (
+                <p className="form-inline">
+                  <Link href={signingKeysPage(organizationId, publisher.data.id)} data-testid="signing-keys-link">
+                    Signing keys
+                  </Link>
+                </p>
+              )}
             </section>
             {active && permissions.includes("capability.create") && <CreateCapabilityForm organizationId={organizationId} publisherId={publisher.data.id} />}
             <CapabilityList
@@ -118,6 +126,7 @@ export default async function PublisherPage({
               capabilities={capabilities.data.capabilities}
               canRename={active && permissions.includes("capability.rename")}
               canValidate={active && permissions.includes("manifest.validate")}
+              canListRevisions={permissions.includes("manifest.list")}
             />
           </div>
         )}

@@ -39,6 +39,12 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.database.existingSecret }}
                   key: rls-context-key
+            - name: Gozleme__Signing__KeyEncryptionKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.signing.existingSecret }}
+                  key: signing-key-encryption-key
+                  optional: true
             - name: Gozleme__Registry__Origin
               value: {{ required "registry.origin is required: the permanent registry origin host name (GOZ-0005)" .Values.registry.origin | quote }}
           securityContext:

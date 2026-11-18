@@ -138,3 +138,13 @@ a { color: var(--focus); }
 .problem { border-left: 3px solid var(--down-fg); padding: 4px 0 4px 12px; display: grid; gap: 4px; }
 .problem p { margin: 0; }
 .problem-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.875rem; color: var(--muted); }
+/* GOZ-0007 revisions */
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--border); }
+.tab { font: inherit; padding: 8px 14px; border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0; background: transparent; color: var(--muted); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--surface); border-color: var(--border); color: var(--text); font-weight: 600; margin-bottom: -1px; }
+.tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.verification { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.verification-reason { color: var(--down-fg); font-size: 0.875rem; text-align: right; }
+.notice-danger { background: var(--down-bg); color: var(--down-fg); font-weight: 600; }
+.proof { margin: 0 0 12px; padding: 12px; border-left: 3px solid var(--focus); background: var(--unknown-bg); border-radius: 0 6px 6px 0; }
+.download-list { margin: 0; padding-left: 20px; display: grid; gap: 4px; }

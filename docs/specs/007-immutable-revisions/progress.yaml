@@ -1,0 +1,74 @@
+schemaVersion: '1.0'
+specId: GOZ-0007
+stage: pr-ready
+status: in-progress
+promptRevision: 8
+branch: feature/goz-0007-immutable-revisions
+featureDirectory: docs/specs/007-immutable-revisions
+decisions:
+- {at: '2026-11-18', by: maintainer, topic: key-custody, decision: 'Q1 option A: registry-held signing key per publisher; Gozleme signs on the publisher''s behalf when an authorized publisher member publishes; private keys encrypted under a key-encryption key from a Secret reference (never database-only or Data Protection); stated limit: proves registry origin accepted the revision from publisher P, not publisher-held key; GOZ-0029 pins these per-publisher public keys.'}
+- {at: '2026-11-18', by: maintainer, topic: attestation-coverage, decision: 'Q2 option A: statement covers canonical capability and publisher IDs, origin, version, native sha256 digest and byteLength, adapter id and version, projectionVersion, and sha256 of the projection canonical byte-deterministic serialization (GOZ-0006-IF-08).'}
+- {at: '2026-11-18', by: maintainer, topic: suspension, decision: 'Q3 option A: a suspended publisher''s existing revisions and attestations stay readable by members, verifiable and frozen, shown as suspended; new revisions refused with 409 suspended in the API and write policy (GOZ-0005-IF-08).'}
+- {at: '2026-11-18', by: maintainer, topic: manifest-resource, decision: 'Q4 option A: new manifest resource with manifest.publish (publisher only, held-claim check in write policy), member-level manifest.list and manifest.read; manifest.validate moves from capability to manifest with role and behaviour unchanged (GOZ-0006-IF-03, IF-13).'}
+- {at: '2026-11-18', by: maintainer, topic: key-succession, decision: 'Q5 option A (raised after drafting by a side-agent note: one key for life plus a lost or leaked key-encryption key would block publishing for good): add-only key succession; an operator command (no API route) adds a new publisher signing key and retires the current one with time and reason (lost, compromised); old keys never changed or deleted and still verify their revisions; also recovers a lost key-encryption key; API/UI rotation, signature revocation and cross-registry key replacement stay with GOZ-0033/GOZ-0039; peers must not trust a succession without their own check (GOZ-0029, CR-05).'}
+- {at: '2026-11-18', by: maintainer, topic: identical-replay, decision: 'clarify Q option A: republishing an existing version is always 409 version_exists, even with identical content; no idempotent success and no idempotency key; clients recover by listing.'}
+- {at: '2026-11-18', by: maintainer, topic: version-ordering, decision: 'clarify Q option A: versions may be published in any order, unique only by SemVer 2.0.0 precedence; lists ordered by publication sequence; no latest designation (GOZ-0026, GOZ-0027).'}
+- {at: '2026-11-18', by: maintainer, topic: key-creation, decision: 'clarify Q option A: a publisher signing key is created lazily inside its first publication transaction; publisher registration (GOZ-0005) unchanged; concurrent first publications create exactly one key.'}
+- {at: '2026-11-18', by: maintainer, topic: signing-library, decision: 'Plan P1: Ed25519 through NSec.Cryptography 26.4.0 (MIT; libsodium 1.0.22, ISC); .NET 10 BCL has no standalone Ed25519 (only composite ML-DSA); BouncyCastle 2.7.0 and built-in ECDSA P-256 (non-deterministic) rejected.'}
+- {at: '2026-11-18', by: maintainer, topic: signed-bytes, decision: 'Plan P2: raw Ed25519 signature over the RFC 8785 (JCS) canonical bytes of statement v1, no envelope; DSSE PAE framing rejected (extra step for independent verifiers), possible as a later statement version.'}
+agentChoices:
+- {at: '2026-11-18', topic: adapter-split, choice: 'A1: GOZ-0006 adapter id mcp/1 is recorded and signed as adapter.id mcp and adapter.version 1 (research R4); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: key-id, choice: 'A2: key.id is sha256 of the 32-byte raw public key, so anyone can recompute it; rows also carry an opaque uuid for routes (R5); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: no-account-fk, choice: 'A3: published_by and created_by are opaque account uuids without a foreign key to users, pinned to current_account_id() by policy, so immutability never blocks a future account erasure (R11; security-review item); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: conflict-bodies, choice: 'A4: version_exists and suspended are 409 with {error} bodies; publish answers 201 with the revision detail and Location (R12); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: key-read-action, choice: 'A5: signing-key list and public-key download use manifest.read; no signing-key resource (R13); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: no-verify-endpoint, choice: 'A6: no public endpoint verifies arbitrary submitted statements; US4 refusals are proven on the pure verifier in unit tests and on superuser-tampered stored rows (R13); ratified by maintainer 2026-11-18.'}
+- {at: '2026-11-18', topic: seed-no-revision, choice: 'A7: the seed creates no revision and needs no KEK (ratified); maintainer ruled 2026-11-18 that stories 1, 2 and 4 publish to the seeded capability manifest-demo with run-unique pre-release versions (1.0.0-r<runid>), not a run-unique capability, matching US1; rename, reclaim and succession keep run-unique publishers (R18).'}
+- {at: '2026-11-18', topic: operator-span-name, choice: 'A8: maintainer ruled 2026-11-18 that the succession span is gozleme.operator.signing_key_succession, through PublisherTelemetry.StartOperator like the GOZ-0005 handle spans; research.md, quickstart.md and tasks.md corrected from the hyphenated spelling.'}
+- {at: '2026-11-18', topic: helm-kek-optional, choice: 'A9: maintainer ruled 2026-11-18 that the KEK secretKeyRef stays optional on both the API and the migrate Job; a succession Job without the KEK exits 1 and commits nothing.'}
+- {at: '2026-11-18', topic: proof-source, choice: 'A10: maintainer ruled 2026-11-18 that the revision page renders the API attestation.proof (single source); the web copy of the R17 wording exists only for the wording tests.'}
+disclosures:
+- 'List paging: the contract allows limit 1-100 (default 50) and after >= 0 and defines no 400 for the list, so an out-of-range or non-integer limit is clamped or defaulted and an invalid after is treated as 0.'
+- 'signing-key-succession --undecryptable succeeds every undecryptable publisher in one transaction, so exit 1 commits nothing (contract exit table); each succession is still under its own per-publisher exclusive lock.'
+- 'RlsCatalog is unchanged: its existing definer and PUBLIC-execute checks already cover is_operator() and the new guard functions (The_migrated_database_has_no_violations passes).'
+- 'The shared RLS matrix expects the owner login without an account context to see the four revision tables (is_operator select branch); RevisionIsolationTests pins is_operator() exactly.'
+- 'ActiveKeyForSigningAsync also excludes retired keys (defence in depth; the guards already make the highest generation the unretired one); a retired-only key set fails closed with 503.'
+- 'The independent openssl pkeyutl -rawin check in RevisionDownloadTests runs only where OpenSSL 3 is installed (CI ubuntu); LibreSSL on macOS lacks -rawin and the check is skipped there; NSec PEM import + verify always runs.'
+- 'Route matching is case-insensitive (ASP.NET Core), so /Native serves the native part like /native; any other part name answers 404.'
+- 'UI copy other than the fixed R17 proof wording (reason and error messages, banners, "No key yet") is implementation wording, not pinned in the contracts.'
+securityReviewItems:
+- {id: SR1, item: 'is_operator() branch on forced-RLS tables', where: 'src/Gozleme.Api/Persistence/Migrations/20261121000000_ManifestRevisions.cs (is_operator, key/retirement policies)', evidence: 'RevisionIsolationTests.Is_operator_is_true_only_for_the_owner_without_an_account_context; SigningKeySuccessionTests.The_app_login_cannot_insert_a_later_generation_or_a_retirement', status: passed}
+- {id: SR2, item: 'KEK handling and associated-data binding', where: 'src/Gozleme.Api/Revisions/Signing/SigningKeyVault.cs, SigningOptions.cs; compose.yaml x-signing-kek; deploy/helm (secretKeyRef optional, A9)', evidence: 'SigningKeyVaultTests (moved blob, wrong/absent KEK, ToString); SigningKeySuccessionTests KEK-change case', status: passed}
+- {id: SR3, item: 'no foreign key on published_by / created_by (R11, A3)', where: 'manifest_revisions.published_by, publisher_signing_keys.created_by; pinned to current_account_id() by the insert policies', evidence: 'RevisionAtomicityTests, RevisionAuthorizationTests direct-SQL refusals', status: passed}
+- {id: SR4, item: 'deferred attestation trigger', where: 'manifest_revisions_attested constraint trigger (DEFERRABLE INITIALLY DEFERRED)', evidence: 'RevisionAtomicityTests.A_revision_without_an_attestation_cannot_commit and A_failure_after_the_key_insert_leaves_no_key_and_no_revision', status: passed}
+- {id: SR5, item: 'canonical JSON writer', where: 'src/Gozleme.Api/Revisions/CanonicalJson.cs', evidence: 'CanonicalJsonTests (UTF-16 order incl. non-BMP, escaping, refusals); demo step 3 Node re-canonicalization', status: passed}
+- {id: SR6, item: 'no-secret scan coverage', where: 'RevisionTelemetryTests; e2e revision-demo step 8 (Jaeger, Loki, metrics, compose logs); compose.ts secretStrings now includes the local KEK', evidence: 'KEK, encrypted key (base64/hex), statement and signature (base64/hex), digests, version, names', status: passed}
+- {id: SR7, item: 'proof wording', where: 'RevisionContracts.AttestationProof; web renders attestation.proof (A10)', evidence: 'RevisionBoundaryTests wording scan; AttestationPanel tests; RevisionContractWordingTests', status: passed}
+securityReview:
+  reviewer: security-reviewer agent (review-security), 2026-11-18, read-only
+  result: 'SR1-SR7 pass; no critical or high findings'
+  findings:
+  - {id: SEC-1, severity: low, summary: 'published_by, rule/schema versions, family and envelope title/summary are shown beside the Verified badge but are not in statement v1 (FR-008 fixes the members)', status: fixed, ruling: 'maintainer 2026-11-18: label unsigned fields; statement v1 unchanged', evidence: 'RevisionDetail "Recorded, not attested" group; RevisionList footnote; RevisionDetail.test.tsx, RevisionList.test.tsx; contracts/attestation-statement-v1.md'}
+  - {id: SEC-2, severity: low, summary: 'revision_attestations insert guard accepted a retired key', status: fixed, evidence: 'migration guard now refuses a key with a retirement row; RevisionAtomicityTests.An_attestation_by_a_retired_key_is_refused'}
+  - {id: SEC-3, severity: low, summary: 'Helm migrate Job carries the KEK although migrations never read it', status: accepted-per-A9, note: 'A9 ruled the optional secretKeyRef stays on the migrate Job; maintainer may reopen'}
+  - {id: SEC-4, severity: low, summary: 'a lone surrogate in the native document might 500 on publish', status: not-reproduced, evidence: 'RevisionPublishTests.A_lone_surrogate_in_the_native_document_is_refused_never_a_server_error (4xx, nothing stored)'}
+  - {id: SEC-5, severity: info, summary: 'the KEK could be passed as a --Key=Value argument', status: documented, evidence: 'contracts/signing-keys.md operator section'}
+maintainerRulings:
+- {finding: GOZ-0007-IF-14, date: 2026-11-18, ruling: 'accept second owner-login operator command for MVP; GOZ-0005-IF-04 stays open until GOZ-0039 clarification'}
+- {finding: GOZ-0007-IF-15, date: 2026-11-18, ruling: 'approve additive decision-register entries and architecture-baseline MVP wording (registry-held attestations, stated limit, SEC-1)'}
+- {finding: CI-gitleaks, date: 2026-11-18, ruling: 'approve the .gitleaks.toml allowlist entry for demo screenshot file names (^[0-9]{2}-[a-z0-9-]+\.png$), commit c1750fe'}
+stages:
+  specify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', checklist: docs/specs/007-immutable-revisions/checklists/requirements.md}
+  clarify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', questions: 3, checklist: '16/16 passing'}
+  plan: {status: done, at: '2026-11-18', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [P1, P2], agentChoices: [A1, A2, A3, A4, A5, A6, A7], verifyAtVendoring: ['libsodium native load in aspnet:10.0 runtime image and CI (RFC 8032 test 1 sign/verify smoke test)', 'NSec raw private key import/export policy for AES-GCM wrapping']}
+  tasks: {status: done, at: '2026-11-18', artifact: docs/specs/007-immutable-revisions/tasks.md, total: 74, perPhase: {setup: 6, foundational: 25, us1: 12, us2: 6, us3: 9, us4: 4, us5: 4, polish: 8}, stopRule: 'T001-T002 verify-at-vendoring gate; any failure is a blocker for maintainer review'}
+  implement: {status: done, at: '2026-11-18', done: T001-T074, commits: [a1edb3a, 1ef3d38, a911fe9, 68b797b, 4aa12a4, 5fb7ca3, a753974, 85fb2d7, 9da6bbb, 20d4a62, 8d5ec9b, b035614, cae3eee, c41905c, 78f4cfc]}
+  verify: {status: done, at: '2026-11-18', tests: 'make test: backend 944/944, web 254/254', lint: passed, build: passed, validate: passed, demo: {result: passed, commit: 1557796, suites: goz-0000..goz-0007, tests: 59, assertions: 60, screenshots: 97, record: docs/specs/007-immutable-revisions/evidence/demo-run.json}, timings: 'SC-007 publish median 75 ms, verify median 23 ms'}
+  converge: {status: done, at: '2026-11-18', review: 'review-security (security-reviewer agent): SR1-SR7 pass; SEC-1 fixed per maintainer ruling, SEC-2 fixed, SEC-3 accepted per A9, SEC-4 not reproduced, SEC-5 documented', commits: [b035614, cae3eee]}
+  impactAnalysis: {status: done, at: '2026-11-18', artifact: docs/specs/007-immutable-revisions/reviews/impact-analysis.md, findings: GOZ-0007-IF-01..IF-15, applied: 13, decidedByMaintainer: [GOZ-0007-IF-14, GOZ-0007-IF-15], commit: 6b17c9c}
+  roadmapSync: {status: done, at: '2026-11-18', promptRevisions: 'GOZ-0008..0039 8->9, GOZ-0040..0041 6->7', commit: 1557796}
+attempts: []
+blockers: []
+pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/23
+nextAction: 'Ready for human merge: PR #23 (https://github.com/Stonefly-Labs/Gozleme/pull/23). Maintainer reviews and merges; agents never merge.'
+evidence: {tests: [tests/Gozleme.Api.Tests/Revisions/, tests/Gozleme.Api.IntegrationTests/, web/src/components/], demos: [docs/specs/007-immutable-revisions/evidence/demo-run.json, docs/specs/007-immutable-revisions/evidence/revision-evidence.json], screenshots: [docs/specs/007-immutable-revisions/evidence/screenshots/], reviews: [docs/specs/007-immutable-revisions/reviews/impact-analysis.md]}

@@ -2,6 +2,7 @@ using System.Text;
 using Gozleme.Api.Identity;
 using Gozleme.Api.Organizations;
 using Gozleme.Api.Publishers;
+using Gozleme.Api.Revisions;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -16,7 +17,8 @@ namespace Gozleme.Api.Persistence;
 /// server-side sessions and the Data Protection key ring; GOZ-0002 adds organizations, memberships
 /// and invitations; GOZ-0003 forces row-level security on those three tenant tables; GOZ-0004 adds
 /// built-in roles to memberships; GOZ-0005 adds publishers and capabilities (and, outside this model, the
-/// origin and the installation-owned claim tables). All tables live
+/// origin and the installation-owned claim tables); GOZ-0007 adds the write-once revisions, attestations, signing
+/// keys and retirements (and, outside this model, the publication budget). All tables live
 /// in schema <c>gozleme</c>; the tenant context key lives in <c>gozleme_private</c>.
 /// </summary>
 internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> options)
@@ -61,6 +63,14 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
     public DbSet<Publisher> Publishers => Set<Publisher>();
 
     public DbSet<Capability> Capabilities => Set<Capability>();
+
+    public DbSet<ManifestRevision> ManifestRevisions => Set<ManifestRevision>();
+
+    public DbSet<RevisionAttestation> RevisionAttestations => Set<RevisionAttestation>();
+
+    public DbSet<PublisherSigningKey> PublisherSigningKeys => Set<PublisherSigningKey>();
+
+    public DbSet<SigningKeyRetirement> SigningKeyRetirements => Set<SigningKeyRetirement>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -165,6 +175,62 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
             capability.HasOne<Publisher>().WithMany().HasForeignKey(c => new { c.PublisherId, c.OrganizationId })
                 .HasPrincipalKey(p => new { p.Id, p.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
             capability.HasOne<GozlemeUser>().WithMany().HasForeignKey(c => c.CreatedBy).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Tenant-owned (GOZ-0007), RLS forced, write-once for every login (migration ManifestRevisions). Constraints,
+        // guards, policies and the deferred attestation trigger live in the migration's SQL; this maps the columns.
+        builder.Entity<PublisherSigningKey>(key =>
+        {
+            key.ToTable("publisher_signing_keys");
+            key.HasAlternateKey(k => new { k.Id, k.OrganizationId });
+            key.HasIndex(k => new { k.PublisherId, k.Generation }).IsUnique();
+            key.HasIndex(k => k.KeyId).IsUnique();
+            key.HasIndex(k => k.OrganizationId);
+            key.HasOne<Organization>().WithMany().HasForeignKey(k => k.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            key.HasOne<Publisher>().WithMany().HasForeignKey(k => new { k.PublisherId, k.OrganizationId })
+                .HasPrincipalKey(p => new { p.Id, p.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<SigningKeyRetirement>(retirement =>
+        {
+            retirement.ToTable("signing_key_retirements");
+            retirement.HasKey(r => r.KeyId);
+            retirement.HasIndex(r => r.SuccessorKeyId).IsUnique();
+            retirement.HasIndex(r => r.OrganizationId);
+            retirement.HasOne<Organization>().WithMany().HasForeignKey(r => r.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            retirement.HasOne<PublisherSigningKey>().WithOne().HasForeignKey<SigningKeyRetirement>(r => new { r.KeyId, r.OrganizationId })
+                .HasPrincipalKey<PublisherSigningKey>(k => new { k.Id, k.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+            retirement.HasOne<PublisherSigningKey>().WithOne().HasForeignKey<SigningKeyRetirement>(r => new { r.SuccessorKeyId, r.OrganizationId })
+                .HasPrincipalKey<PublisherSigningKey>(k => new { k.Id, k.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<ManifestRevision>(revision =>
+        {
+            revision.ToTable("manifest_revisions");
+            revision.HasAlternateKey(r => new { r.Id, r.OrganizationId });
+            revision.HasIndex(r => new { r.CapabilityId, r.Sequence }).IsUnique();
+            revision.HasIndex(r => new { r.CapabilityId, r.VersionKey }).IsUnique();
+            revision.HasIndex(r => r.OrganizationId);
+            revision.HasIndex(r => r.PublisherId);
+            revision.Property(r => r.EnvelopeSummary).HasColumnType("jsonb");
+            revision.HasOne<Organization>().WithMany().HasForeignKey(r => r.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            revision.HasOne<Publisher>().WithMany().HasForeignKey(r => new { r.PublisherId, r.OrganizationId })
+                .HasPrincipalKey(p => new { p.Id, p.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+            revision.HasOne<Capability>().WithMany().HasForeignKey(r => new { r.CapabilityId, r.OrganizationId })
+                .HasPrincipalKey(c => new { c.Id, c.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<RevisionAttestation>(attestation =>
+        {
+            attestation.ToTable("revision_attestations");
+            attestation.HasKey(a => a.RevisionId);
+            attestation.HasIndex(a => a.OrganizationId);
+            attestation.HasIndex(a => a.SigningKeyId);
+            attestation.HasOne<Organization>().WithMany().HasForeignKey(a => a.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            attestation.HasOne<ManifestRevision>().WithOne().HasForeignKey<RevisionAttestation>(a => new { a.RevisionId, a.OrganizationId })
+                .HasPrincipalKey<ManifestRevision>(r => new { r.Id, r.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+            attestation.HasOne<PublisherSigningKey>().WithMany().HasForeignKey(a => new { a.SigningKeyId, a.OrganizationId })
+                .HasPrincipalKey(k => new { k.Id, k.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
         });
 
         ApplySnakeCaseNames(builder);

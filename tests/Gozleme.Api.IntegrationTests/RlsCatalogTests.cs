@@ -23,8 +23,8 @@ public sealed class RlsCatalogTests(PgvectorDatabaseFixture fixture)
     [Fact]
     public void Identity_tables_are_global_and_tenant_tables_are_disjoint_from_them()
     {
-        Assert.Equal(["auth_sessions", "data_protection_keys", "manifest_validation_attempts", "publisher_registration_attempts", "user_claims", "user_logins", "user_tokens", "users"], TableClassification.GlobalIdentity.Order(StringComparer.Ordinal));
-        Assert.Equal(["capabilities", "invitations", "memberships", "organizations", "publishers"], TableClassification.TenantOwned.Order(StringComparer.Ordinal));
+        Assert.Equal(["auth_sessions", "data_protection_keys", "manifest_publication_attempts", "manifest_validation_attempts", "publisher_registration_attempts", "user_claims", "user_logins", "user_tokens", "users"], TableClassification.GlobalIdentity.Order(StringComparer.Ordinal));
+        Assert.Equal(["capabilities", "invitations", "manifest_revisions", "memberships", "organizations", "publisher_signing_keys", "publishers", "revision_attestations", "signing_key_retirements"], TableClassification.TenantOwned.Order(StringComparer.Ordinal));
         Assert.Empty(TableClassification.SharedPublic);
     }
 

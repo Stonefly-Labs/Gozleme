@@ -9,9 +9,15 @@ switch (args.FirstOrDefault())
     case var command when HandleOperatorCommands.Handles(command):
         // Operator-only handle namespace: handle-reserve | handle-release | handle-reclaim (GOZ-0005, owner login).
         return await HandleOperatorCommands.RunAsync(command!, args[1..], Console.Out, Console.Error);
+    case var command when Gozleme.Api.Revisions.SigningKeyOperatorCommands.Handles(command):
+        // Operator-only signing-key succession: --publisher <uuid> | --undecryptable (GOZ-0007, owner login + KEK).
+        return await Gozleme.Api.Revisions.SigningKeyOperatorCommands.RunAsync(args[1..], Console.Out, Console.Error);
     case var command when OperatorCommands.Handles(command):
         // Operator-only account maintenance: seed | reset-password | unlock (never exposed over HTTP).
         return await OperatorCommands.RunAsync(command!, args[1..], Console.In, Console.Out, Console.Error);
+    case "signing-selftest":
+        // GOZ-0007 research R1: the runtime image has no SDK, so this proves libsodium loads and signs there.
+        return await Gozleme.Api.Revisions.Signing.SigningSelfTest.RunCommandAsync(Console.Out, Console.Error);
     case "healthcheck":
         // Container probe without shipping curl in the runtime image: `healthcheck [live|ready]`.
         return await ContainerHealthCheck.RunAsync(args.ElementAtOrDefault(1) ?? "live");

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Capability } from "@/lib/publishers";
+import { revisionsPage } from "@/lib/revisions";
 import { CanonicalId } from "./CanonicalId";
 import { RenameDisplayNameForm } from "./RenameDisplayNameForm";
 import { StateBadge } from "./StateBadge";
@@ -7,7 +8,8 @@ import { StateBadge } from "./StateBadge";
 /**
  * A publisher's capabilities with their canonical ids and aliases (FR-013, FR-014). The rename form appears only
  * for callers holding `capability.rename` while the publisher is active, and **Validate manifest** for callers holding
- * `manifest.validate` (GOZ-0006); the API still decides every request.
+ * `manifest.validate` (GOZ-0006). **Revisions** appears for callers holding `manifest.list`, also while the publisher
+ * is suspended, because revisions stay readable (GOZ-0007); the API still decides every request.
  */
 export function CapabilityList({
   organizationId,
@@ -15,12 +17,14 @@ export function CapabilityList({
   capabilities,
   canRename,
   canValidate = false,
+  canListRevisions = false,
 }: {
   organizationId: string;
   publisherId: string;
   capabilities: Capability[];
   canRename: boolean;
   canValidate?: boolean;
+  canListRevisions?: boolean;
 }) {
   return (
     <section className="card" aria-labelledby="capabilities-heading">
@@ -54,15 +58,22 @@ export function CapabilityList({
                   </dd>
                 </div>
               </dl>
-              {canValidate && c.state === "active" && (
-                <p className="form-inline">
-                  <Link
-                    className="button"
-                    href={`/organizations/${encodeURIComponent(organizationId)}/publishers/${encodeURIComponent(publisherId)}/capabilities/${encodeURIComponent(c.id)}/manifest`}
-                    data-testid="validate-manifest-link"
-                  >
-                    Validate manifest
-                  </Link>
+              {((canValidate && c.state === "active") || canListRevisions) && (
+                <p className="form-inline detail-actions">
+                  {canValidate && c.state === "active" && (
+                    <Link
+                      className="button"
+                      href={`/organizations/${encodeURIComponent(organizationId)}/publishers/${encodeURIComponent(publisherId)}/capabilities/${encodeURIComponent(c.id)}/manifest`}
+                      data-testid="validate-manifest-link"
+                    >
+                      Validate manifest
+                    </Link>
+                  )}
+                  {canListRevisions && (
+                    <Link className="button" href={revisionsPage(organizationId, publisherId, c.id)} data-testid="revisions-link">
+                      Revisions
+                    </Link>
+                  )}
                 </p>
               )}
               {canRename && c.state === "active" && (

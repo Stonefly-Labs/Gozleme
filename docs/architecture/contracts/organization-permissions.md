@@ -24,6 +24,11 @@ this file in their own slice. The broader authorization architecture is `docs/ar
    (`415`/`413`), then validation: `200` when accepted; when rejected, the result body with `400` (malformed), `413`
    (too large) or `422` (any other problem) (GOZ-0006 maintainer decisions 2026-11-18, "shared-rate-limit" and
    "result-status-codes"). A non-member never sees `403`, `409` or `429`.
+   For `manifest.publish` (GOZ-0007) the steps after permission are: target (`404`), suspension (`409
+   {"error":"suspended"}`), the account's publication budget (`429`), media type and size (`415`/`413`), GOZ-0006
+   validation unchanged (a rejection answers exactly as validate), version uniqueness by SemVer precedence (`409
+   {"error":"version_exists"}`), signing key available (`503`), then `201`. Reads (`manifest.list`, `manifest.read`)
+   check the target (`404`), then answer `200`.
 
 Inputs are exactly `(the caller's roles in this organization, action)`. There are no conditions,
 attributes, per-user or per-resource grants, deny rules or policy documents. A role is held only
@@ -56,7 +61,10 @@ capability.list          capability    allow  allow     allow   allow      allow
 capability.read          capability    allow  allow     allow   allow      allow
 capability.create        capability    deny   deny      deny    allow      deny
 capability.rename        capability    deny   deny      deny    allow      deny
-manifest.validate        capability    deny   deny      deny    allow      deny
+manifest.validate        manifest      deny   deny      deny    allow      deny
+manifest.publish         manifest      deny   deny      deny    allow      deny
+manifest.list            manifest      allow  allow     allow   allow      allow
+manifest.read            manifest      allow  allow     allow   allow      allow
 ```
 
 GOZ-0005 (contracts/permissions-delta.md): resources `publisher` and `capability`. `admin` no longer holds
@@ -65,6 +73,11 @@ every action. `publisher` is the first role that permits more than `member` (mai
 GOZ-0006 (contracts/permissions-delta.md): `manifest.validate` on the existing `capability` resource, held by
 `publisher` only (maintainer Q2). Validation stores nothing, so it adds no database enforcement row. 19 actions
 over 5 resources; 18 scoped endpoints.
+
+GOZ-0007 (contracts/permissions-delta.md, maintainer Q4): new resource `manifest`. `manifest.validate` moves to it
+with its role row unchanged; `manifest.publish` is held by `publisher` only and also needs a held handle claim (`409
+suspended` in the handler, and the insert policies below); `manifest.list` and `manifest.read` are member-level. 22
+actions over 6 resources; 27 scoped endpoints.
 
 Account-level operations, outside this table and open to every signed-in account: create an
 organization (the creator holds `admin` and `member`) and redeem an invitation (the redeemer holds
@@ -93,6 +106,12 @@ organization (the creator holds `admin` and `member`) and redeem an invitation (
 | `GET …/publishers/{publisherId}/capabilities/{capabilityId}` | `capability.read` |
 | `PATCH …/publishers/{publisherId}/capabilities/{capabilityId}` | `capability.rename` |
 | `POST …/publishers/{publisherId}/capabilities/{capabilityId}/manifests/validate` | `manifest.validate` |
+| `POST …/publishers/{publisherId}/capabilities/{capabilityId}/revisions` | `manifest.publish` |
+| `GET …/publishers/{publisherId}/capabilities/{capabilityId}/revisions` | `manifest.list` |
+| `GET …/capabilities/{capabilityId}/revisions/{revisionId}` | `manifest.read` |
+| `GET …/revisions/{revisionId}/native` · `/projection` · `/statement` · `/signature` | `manifest.read` |
+| `GET …/publishers/{publisherId}/signing-keys` | `manifest.read` |
+| `GET …/publishers/{publisherId}/signing-keys/{keyId}/public-key` | `manifest.read` |
 
 The `DELETE …/members/{userId}` endpoint declares both actions and picks one from the target.
 
@@ -112,6 +131,9 @@ The `DELETE …/members/{userId}` endpoint declares both actions and picks one f
 | create or rename a capability | `capabilities_insert` and `capabilities_update` admit `publisher` holders, only while the publisher is active |
 | change a handle, name, id, organization or publisher; delete anything | refused (guards, revoked `DELETE`/`TRUNCATE`) for every login |
 | reserve, release or reclaim a handle | the owner login only, through the operator commands; `handle_claims_guard` limits it to one-way transitions |
+| publish a revision (revision, attestation, first signing key) | `manifest_revisions_insert`, `revision_attestations_insert` and `publisher_signing_keys_insert` admit `publisher` holders, only while the publisher holds its handle claim; a member inserts key generation 1 only |
+| add a successor signing key; retire a key | `is_operator()` only (the owner login with no account context), through `signing-key-succession` |
+| change or delete a revision, attestation, signing key or retirement | refused for every login, including the owner (`immutable_row_guard`); `gozleme_app` holds `SELECT, INSERT` only |
 
 Reads stay member-level at the database. The application withholds the invitation list from
 non-admins.

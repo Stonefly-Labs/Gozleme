@@ -52,3 +52,34 @@ export async function forwardToApi(
   const status = upstream.status >= 500 ? 503 : upstream.status;
   return new Response(status === 204 ? null : await upstream.text(), { status, headers });
 }
+
+/** Download headers relayed unchanged (GOZ-0007 contracts/attestation-statement-v1.md "Downloads"). */
+const DOWNLOAD_HEADERS = ["content-type", "content-disposition", "x-content-type-options"] as const;
+
+/**
+ * Forward a download (GET) and relay the exact bytes with their media type, `Content-Disposition` and `nosniff`.
+ * Unlike {@link forwardToApi} the body is never decoded as text, so the 64 raw signature bytes arrive unchanged.
+ */
+export async function forwardBytesFromApi(request: Request, path: string, { fetchImpl = fetch }: { fetchImpl?: typeof fetch } = {}): Promise<Response> {
+  let upstream: Response;
+  try {
+    upstream = await fetchImpl(new URL(path, apiBaseUrl()), {
+      method: "GET",
+      headers: apiHeaders(request, false),
+      cache: "no-store",
+      redirect: "manual",
+      signal: AbortSignal.timeout(API_FORWARD_TIMEOUT_MS),
+    });
+  } catch {
+    return unavailable();
+  }
+
+  if (upstream.status >= 500) return unavailable();
+  const headers = new Headers({ "cache-control": "no-store" });
+  for (const cookie of upstream.headers.getSetCookie()) headers.append("set-cookie", cookie);
+  for (const name of DOWNLOAD_HEADERS) {
+    const value = upstream.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  return new Response(await upstream.arrayBuffer(), { status: upstream.status, headers });
+}

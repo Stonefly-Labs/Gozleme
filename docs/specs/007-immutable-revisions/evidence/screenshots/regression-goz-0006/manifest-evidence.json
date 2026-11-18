@@ -1,0 +1,144 @@
+{
+  "spec": "GOZ-0006",
+  "capturedAt": "2026-11-18T22:06:51.769Z",
+  "origin": "registry.demo.gozleme.test",
+  "organization": "0193a000-0000-7000-8000-000000000002",
+  "publisher": "0193a000-0000-7000-8000-000000000010",
+  "capability": {
+    "id": "0193a000-0000-7000-8000-000000000011",
+    "canonicalId": "gz://registry.demo.gozleme.test/cap/0193a000-0000-7000-8000-000000000011"
+  },
+  "demo": {
+    "validFamilies": {
+      "samples": [
+        "valid-stateless-2026-07-28",
+        "valid-stateful-2025-11-25",
+        "valid-agent-card",
+        "valid-openapi-3.1",
+        "valid-openapi-3.0",
+        "valid-asyncapi-3.0.0",
+        "valid-skill",
+        "valid-model-card"
+      ],
+      "elapsedSeconds": 3,
+      "limitSeconds": 180,
+      "digests": {
+        "valid-stateless-2026-07-28": "sha256:2570f7c5c88085fbcba4cbffeb0d59521bd3d15d9efed79fda0d2cdf91b2d05f",
+        "valid-stateful-2025-11-25": "sha256:28ec159552690ddf489bcd9d9215e3adb0c59a64c5fad200f3d64acb6c22cf95",
+        "valid-agent-card": "sha256:35bd05af0a164097d4bde836b79fc76d4efc50f5714c3461bdcd738230cf9cbb",
+        "valid-openapi-3.1": "sha256:8f2ce8db93e9ca0f66e1b7e2864e9e030a465bfb2fe75cb3d474b243a8e0ab2d",
+        "valid-openapi-3.0": "sha256:4bdbca1467e368b2f5643a8a2a2ce26bcb609e8bfd6c3d3002eac89b718ca39d",
+        "valid-asyncapi-3.0.0": "sha256:0ac91fd98d706de798f98fdb17e2dd20ad2493dd580e7ab82059130dc91320c3",
+        "valid-skill": "sha256:a83afaf4f4076e8fee004f9fdc15aa8c0b962d1b06a419884246a396d5ec3b23",
+        "valid-model-card": "sha256:7c82f509647339991c526a59fe90c7262279be27b91e2058be236708eb134881"
+      }
+    },
+    "rejections": {
+      "invalid-envelope-version": "unsupported_version envelope.version",
+      "invalid-family": "unsupported_family envelope.family",
+      "invalid-format-version": "unsupported_format envelope.format",
+      "invalid-version-mismatch": "unsupported_format native.version-mismatch + invalid_value native.schema",
+      "invalid-yaml-for-a2a": "malformed parse.syntax",
+      "invalid-yaml-alias": "malformed parse.yaml-feature",
+      "invalid-too-deep": "too_large bound.depth",
+      "invalid-unknown-field": "unknown_field native.unknown-field",
+      "invalid-reserved-openapi": "reserved_claim reserved.vocabulary",
+      "invalid-a2a-signatures": "reserved_claim reserved.a2a-signatures",
+      "invalid-reserved-envelope": "unknown_field envelope.unknown-field + reserved_claim reserved.vocabulary",
+      "invalid-secret-header": "secret_value secret.field + secret_value secret.pattern",
+      "invalid-secret-pattern": "secret_value secret.pattern",
+      "invalid-secret-skill-body": "secret_value secret.pattern",
+      "invalid-secret-openapi-example": "secret_value secret.field + secret_value secret.pattern",
+      "invalid-secret-yaml-comment": "secret_value secret.pattern",
+      "invalid-identity": "identity_mismatch identity.capability",
+      "invalid-external-ref": "external_reference ref.external",
+      "invalid-skill-name": "invalid_value native.schema",
+      "invalid-model-modality": "invalid_value native.schema",
+      "invalid-mcp-consistency": "invalid_value native.consistency",
+      "invalid-a2a-required": "invalid_value native.schema"
+    },
+    "apiBoundary": {
+      "valid-stateless-2026-07-28": {
+        "documentUnchanged": true,
+        "digestMatchesLocalSha256": true,
+        "extensionChangesDigestOnly": true
+      },
+      "valid-stateful-2025-11-25": {
+        "documentUnchanged": true,
+        "digestMatchesLocalSha256": true,
+        "extensionChangesDigestOnly": true
+      },
+      "valid-agent-card": {
+        "documentUnchanged": true,
+        "digestMatchesLocalSha256": true,
+        "extensionChangesDigestOnly": true
+      },
+      "valid-openapi-3.1": {
+        "documentUnchanged": true,
+        "digestMatchesLocalSha256": true,
+        "extensionChangesDigestOnly": true
+      },
+      "valid-openapi-3.0": {
+        "documentUnchanged": true,
+        "digestMatchesLocalSha256": true,
+        "extensionChangesDigestOnly": true
+      },
+      "valid-asyncapi-3.0.0": {
+        "documentUnchanged": true,
+        "digestMatchesLocalSha256": true,
+        "extensionChangesDigestOnly": true
+      },
+      "valid-skill": {
+        "documentUnchanged": true,
+        "digestMatchesLocalSha256": true,
+        "extensionChangesDigestOnly": true
+      },
+      "valid-model-card": {
+        "documentUnchanged": true,
+        "digestMatchesLocalSha256": true,
+        "extensionChangesDigestOnly": true
+      }
+    },
+    "aliasClaimAccepted": true,
+    "rowsUnchangedAfterValidations": true,
+    "adminWithoutPublisher": "403 forbidden, no control shown",
+    "roleMatrix": {
+      "admin": 403,
+      "approver": 403,
+      "member": 403,
+      "publisher": 422,
+      "reviewer": 403
+    },
+    "nonMemberAndUnknownOrganization": "404 (identical, empty, no-store)",
+    "crossOrganizationIds": "404 (Partner Org publisher/capability under Demo Org path, identical to unknown IDs)",
+    "suspendedByHandleReclaim": "409 suspended (body not read)",
+    "rateLimit": {
+      "allowed": 30,
+      "thirty_first": 429,
+      "retryAfterSeconds": 57
+    },
+    "observability": {
+      "span": "gozleme.manifest.validate",
+      "spanOutcomes": [
+        "accepted",
+        "forbidden",
+        "not_found",
+        "rate_limited",
+        "rejected",
+        "suspended"
+      ],
+      "counters": [
+        "gozleme_manifest_validations_total",
+        "gozleme_manifest_problems_total"
+      ],
+      "authRateLimitedSeries": 0,
+      "noContentInSpansMetricsOrLogs": true
+    },
+    "boundary": {
+      "GET /api/v1/capabilities": 404,
+      "POST /api/v1/publish": 404,
+      "GET /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/manifests": 404,
+      "GET /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/manifests/validate": 405
+    }
+  }
+}

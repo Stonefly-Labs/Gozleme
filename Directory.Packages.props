@@ -23,6 +23,8 @@
     <!-- Typed manifests (GOZ-0006, research R2/R3/R17) -->
     <PackageVersion Include="Corvus.Text.Json.Validator" Version="5.8.11" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
+    <!-- Signed attestations (GOZ-0007, maintainer P1): Ed25519 via NSec; brings native libsodium [1.0.22, 1.0.23) -->
+    <PackageVersion Include="NSec.Cryptography" Version="26.4.0" />
     <!-- Tests -->
     <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="1.21.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.15" />

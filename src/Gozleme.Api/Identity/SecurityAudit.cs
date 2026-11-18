@@ -1,7 +1,7 @@
 namespace Gozleme.Api.Identity;
 
 /// <summary>
-/// Security audit events (GOZ-0001 FR-029; organization events GOZ-0002 FR-023; role events GOZ-0004 FR-019; publisher events GOZ-0005 FR-026): category <c>Gozleme.Security.Audit</c>, opaque account id only —
+/// Security audit events (GOZ-0001 FR-029; organization events GOZ-0002 FR-023; role events GOZ-0004 FR-019; publisher events GOZ-0005 FR-026; revision and signing-key events GOZ-0007 FR-022): category <c>Gozleme.Security.Audit</c>, opaque account id only —
 /// never an email, password, cookie or session key. Exported through the normal log pipeline.
 /// </summary>
 internal sealed partial class SecurityAudit(ILoggerFactory loggers)
@@ -106,4 +106,18 @@ internal sealed partial class SecurityAudit(ILoggerFactory loggers)
 
     [LoggerMessage(EventId = 1408, EventName = "gozleme.audit.handle_reclaimed", Level = LogLevel.Warning, Message = "Operator reclaimed handle claim {ClaimId}; publisher {PublisherId} of {OrganizationId} suspended; earmark {EarmarkClaimId}")]
     public partial void HandleReclaimed(Guid claimId, Guid publisherId, Guid organizationId, Guid? earmarkClaimId);
+
+    // Revisions and signing keys (GOZ-0007): 1501–1510. Opaque ids and fixed vocabularies only: never a version,
+    // digest, statement, signature, key ID or key material. Written after commit.
+    [LoggerMessage(EventId = 1501, EventName = "gozleme.audit.revision_published", Level = LogLevel.Information, Message = "Revision published {RevisionId} of {CapabilityId} under {PublisherId} in {OrganizationId} by {UserId}")]
+    public partial void RevisionPublished(Guid revisionId, Guid capabilityId, Guid publisherId, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1502, EventName = "gozleme.audit.signing_key_created", Level = LogLevel.Information, Message = "Signing key created {KeyId} for {PublisherId} in {OrganizationId} by {UserId}")]
+    public partial void SigningKeyCreated(Guid keyId, Guid publisherId, Guid organizationId, Guid userId);
+
+    [LoggerMessage(EventId = 1503, EventName = "gozleme.audit.signing_key_succeeded", Level = LogLevel.Warning, Message = "Operator retired signing key {RetiredKeyId} of {PublisherId} ({Reason}); successor {SuccessorKeyId}")]
+    public partial void SigningKeySucceeded(Guid retiredKeyId, Guid successorKeyId, Guid publisherId, string reason);
+
+    [LoggerMessage(EventId = 1504, EventName = "gozleme.audit.signing_key_succession_refused", Level = LogLevel.Warning, Message = "Operator signing key succession refused ({Category})")]
+    public partial void SigningKeySuccessionRefused(string category);
 }

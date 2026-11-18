@@ -6,11 +6,15 @@ namespace Gozleme.Api.IntegrationTests;
 /// <summary>
 /// GOZ-0003 US2 (FR-001–FR-005, FR-014, FR-015, SC-001): connected directly to PostgreSQL, the ordinary
 /// app role and the owner login see and change only rows of organizations the verified account
-/// belongs to, with the application check skipped entirely. Ground truth comes from the superuser.
+/// belongs to, with the application check skipped entirely. Ground truth comes from the superuser. GOZ-0007 adds the
+/// four revision tables; their select policy also admits the operator (owner login, no account context), so without a
+/// context only the app role is blind to them (RevisionIsolationTests pins <c>is_operator()</c> itself).
 /// </summary>
 public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
     private static readonly string[] Tables = ["organizations", "memberships", "invitations", "publishers", "capabilities"];
+
+    private static readonly string[] RevisionTables = ["manifest_revisions", "revision_attestations", "publisher_signing_keys", "signing_key_retirements"];
 
     private GozlemeApiFactory _factory = null!;
     private TwoTenants _t = null!;
@@ -19,7 +23,7 @@ public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncL
 
     public async ValueTask InitializeAsync()
     {
-        _factory = new GozlemeApiFactory(Db.AppConnectionString);
+        _factory = new GozlemeApiFactory(Db.AppConnectionString, settings: new Dictionary<string, string?> { ["Gozleme:Manifests:ValidatePerMinute"] = "10000" });
         _t = await TwoTenants.CreateAsync(_factory);
 
         // GOZ-0005: one publisher with one capability in each tenant (research R12).
@@ -27,7 +31,17 @@ public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncL
         {
             await OrgClient.SetRolesAsync(admin, org.ToString(), publisherId.ToString(), "admin", "publisher");
             var registered = await OrgClient.RegisterPublisherAsync(admin, org.ToString());
-            await OrgClient.CreateCapabilityAsync(publisher, org.ToString(), registered.GetProperty("id").GetString()!);
+            var publisherIdText = registered.GetProperty("id").GetString()!;
+            var capability = await OrgClient.CreateCapabilityAsync(publisher, org.ToString(), publisherIdText);
+
+            // GOZ-0007: one signed revision, its key and, after operator succession, a retirement in each tenant.
+            var capabilityId = capability.GetProperty("id").GetString()!;
+            await RevisionClient.PublishedAsync(publisher, RevisionClient.Revisions(org.ToString(), publisherIdText, capabilityId),
+                RevisionClient.Envelope(capability.GetProperty("canonicalId").GetString()!, "1.0.0"));
+            using var stdout = new StringWriter();
+            using var stderr = new StringWriter();
+            Assert.Equal(0, await Gozleme.Api.Revisions.SigningKeyOperatorCommands.RunAsync(
+                ["--publisher", publisherIdText, "--reason", "lost", $"--ConnectionStrings:GozlemeMigrator={Db.MigratorConnectionString}", $"--Gozleme:Signing:KeyEncryptionKey={RevisionClient.TestKek}"], stdout, stderr));
         }
     }
 
@@ -43,7 +57,7 @@ public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncL
     [MemberData(nameof(Roles))]
     public async Task Without_a_context_no_tenant_row_is_visible_to_either_role(string role)
     {
-        foreach (var table in Tables)
+        foreach (var table in role == "app" ? [.. Tables, .. RevisionTables] : Tables)
         {
             Assert.True(await TwoTenants.TruthAsync(Db, table, _t.OrgA) > 0);
             Assert.Equal(0, await GozlemeDatabase.InTransactionAsync<long>(Connection(role), null, $"SELECT count(*) FROM gozleme.{table}"));
@@ -56,7 +70,7 @@ public sealed class RlsIsolationTests(PgvectorDatabaseFixture fixture) : IAsyncL
     {
         var alice = GozlemeDatabase.Establish(GozlemeDatabase.SignContext(_t.AliceId));
         Assert.Equal($"{_t.OrgA}", await GozlemeDatabase.InTransactionAsync<string>(Connection(role), alice, "SELECT string_agg(id::text, ',') FROM gozleme.organizations"));
-        foreach (var table in new[] { "memberships", "invitations", "publishers", "capabilities" })
+        foreach (var table in Tables.Skip(1).Concat(RevisionTables))
         {
             var visible = await GozlemeDatabase.InTransactionAsync<long>(Connection(role), alice, $"SELECT count(*) FROM gozleme.{table}");
             Assert.Equal(await TwoTenants.TruthAsync(Db, table, _t.OrgA), visible);

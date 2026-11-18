@@ -2,7 +2,7 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 42 · **Complete on main:** 7 · **Blocked:** 0 · **Ready for human merge:** 0
+**Specs:** 42 · **Complete on main:** 7 · **Blocked:** 0 · **Ready for human merge:** 1
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
@@ -13,7 +13,7 @@
 | [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | complete | merged | GOZ-0003 | Complete — merged to main in b48a2af2bcadb8073eb076750a17bf435fb83da5 (PR #17, verified 2026-11-16). |
 | [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | complete | merged | GOZ-0004 | Complete — merged to main in 2f63e016d5676734ff88ca6cf9b0917db4528d60 (PR #19, verified 2026-11-17); 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates. |
 | [GOZ-0006](../prompts/spec-0006.md) — Typed manifests for capability families | publishing | complete | merged | GOZ-0005 | Complete — merged to main in ffc4112c2f5fc1694f5f6d2a94a07583f985434f (PR #21, verified 2026-11-18); no open GOZ-0006 impact decisions (IF-05 and IF-13 decided 2026-11-18). |
-| [GOZ-0007](../prompts/spec-0007.md) — Immutable revisions and signed attestations | publishing | not-started | — | GOZ-0006 | Prerequisite GOZ-0006 merged (PR #21); no open impact decision is due before GOZ-0007 (GOZ-0005-IF-02 before GOZ-0012 plan; IF-04, IF-05, IF-08 before GOZ-0039; suspension semantics for revisions are a GOZ-0007 clarification question); prompt revision 8 carries the typed manifest conventions (GOZ-0006-IF-01 to IF-06, IF-08, IF-13, IF-14); start on feature/goz-0007-* |
+| [GOZ-0007](../prompts/spec-0007.md) — Immutable revisions and signed attestations | publishing | ready-for-human-merge | pr-ready | GOZ-0006 | Ready for human merge: T001-T074 done; make test (944 backend, 254 web), lint, build, validate and the cumulative demo GOZ-0000..GOZ-0007 (59 tests, 60 assertions, 97 screenshots, commit 1557796) pass; security review SR1-SR7 pass, SEC-1/2 fixed; impact analysis IF-01..IF-15 (IF-14, IF-15 decided). Maintainer reviews and merges; not merged. |
 | [GOZ-0008](../prompts/spec-0008.md) — Child capability identities and projections | publishing | not-started | — | GOZ-0007 | Await prerequisites and create allowed working branch |
 | [GOZ-0009](../prompts/spec-0009.md) — Filesystem artifact publication | publishing | not-started | — | GOZ-0007 | Await prerequisites and create allowed working branch |
 | [GOZ-0010](../prompts/spec-0010.md) — S3-compatible artifact adapter | publishing | not-started | — | GOZ-0009 | Await prerequisites and create allowed working branch |

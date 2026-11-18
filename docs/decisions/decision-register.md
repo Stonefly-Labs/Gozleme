@@ -109,6 +109,14 @@ The available project summary establishes: permanent origin-qualified registry/c
 | R3-32 | Production-capable MVP including opt-in pgvector hybrid semantic search | GOZ-0015, GOZ-0016, GOZ-0017 | Confirmed summary; exact source wording not a quotation |
 | R3-33 | Architecture baseline and demo-first dependency-ordered Spec Kit | GOZ-0000, all | Confirmed summary; exact source wording not a quotation |
 
+## Maintainer rulings from spec delivery (keyed by their finding IDs; no ADR numbers assigned)
+
+| Finding | Position | Specs | Source |
+|---|---|---|---|
+| GOZ-0007-IF-15 (key custody) | MVP publisher revisions carry **registry-held** Ed25519 attestations: one key per publisher, wrapped with an operator-held KEK. The fixed proof is "registry *origin* accepted this revision from an authorized publisher member"; it is **not a signature made by the publisher**, and an operator holding the KEK and database access could sign any statement. Publisher-held keys, delegation and transparency logs stay outside MVP (R3-25, R3-28). | GOZ-0007; GOZ-0029, GOZ-0030, GOZ-0034, GOZ-0039 | Maintainer approval 2026-11-18 (GOZ-0007 PR); `docs/specs/007-immutable-revisions/contracts/attestation-statement-v1.md` |
+| GOZ-0007-SEC-1 | Statement v1 members stay fixed (FR-008). `publishedBy`, the rule catalogue and schema bundle versions, the family and the envelope title/summary are **recorded, not attested**; the UI labels them so, and signing them belongs to a later statement version. | GOZ-0007; all downstream | Maintainer ruling 2026-11-18; `docs/specs/007-immutable-revisions/progress.yaml` securityReview |
+| GOZ-0007-IF-14 | The second owner-login operator command (`signing-key-succession`) is accepted for MVP. GOZ-0005-IF-04 (least-privilege operator role) stays open until GOZ-0039 clarification. | GOZ-0005, GOZ-0007, GOZ-0039 | Maintainer ruling 2026-11-18 |
+
 ## Reconciliation rule
 
 Never mark a position source-verified without an original source reference; do not create synthetic ADR identifiers to fill gaps. The complete thematic baseline and 14 approved corrections are authoritative working design references, with per-position provenance still pending for historical Round 2 items. Once available, replace the individual placeholders on an approved PR and update traceability.
