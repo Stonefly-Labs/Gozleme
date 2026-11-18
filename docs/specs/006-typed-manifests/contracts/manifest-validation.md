@@ -125,7 +125,7 @@ which `ManifestRuleCatalogueTests` pins to this table.
 | Rule | Category |
 |---|---|
 | `parse.syntax`, `parse.duplicate-key`, `parse.yaml-feature`, `parse.encoding`, `parse.not-string`, `parse.front-matter`, `parse.empty` | `malformed` |
-| `bound.body`, `bound.envelope`, `bound.native`, `bound.depth`, `bound.nodes`, `bound.name`, `bound.entries` | `too_large` |
+| `bound.body`, `bound.envelope`, `bound.native`, `bound.depth`, `bound.nodes`, `bound.name`, `bound.number`, `bound.entries` | `too_large` |
 | `envelope.version` | `unsupported_version` |
 | `envelope.family` | `unsupported_family` |
 | `envelope.format`, `native.version-mismatch` | `unsupported_format` |

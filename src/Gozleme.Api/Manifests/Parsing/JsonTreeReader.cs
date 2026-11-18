@@ -146,6 +146,11 @@ internal static class JsonTreeReader
 
                 return ManifestNode.String(pointer, line, column, GetString(ref reader, state, (line, column)));
             case JsonTokenType.Number:
+                if (reader.ValueSpan.Length > TreeBounds.MaxNumberLength)
+                {
+                    throw new ValidationStop(ManifestRules.BoundNumber, null);
+                }
+
                 return ManifestNode.Number(pointer, line, column, Encoding.UTF8.GetString(reader.ValueSpan));
             case JsonTokenType.True:
                 return ManifestNode.Bool(pointer, line, column, true);

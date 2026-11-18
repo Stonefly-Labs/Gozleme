@@ -86,6 +86,40 @@ public sealed class ManifestBoundsTests
         TooLarge(Validate("model", "gozleme-model-card", "1", "json", Doc(1025)), "bound.name");
     }
 
+    /// <summary>T079 (maintainer decision 2026-11-17): a number may have 1,024 characters and not 1,025, in JSON and YAML, refused before conversion.</summary>
+    [Theory]
+    [InlineData("json", "", 1024, true)]
+    [InlineData("json", "", 1025, false)]
+    [InlineData("yaml", "", 1024, true)]
+    [InlineData("yaml", "", 1025, false)]
+    [InlineData("yaml", "0o", 1025, false)]
+    [InlineData("yaml", "0x", 1025, false)]
+    public void A_number_may_have_1024_characters_and_not_1025(string encoding, string prefix, int length, bool accepted)
+    {
+        var number = prefix + "1" + new string('7', length - prefix.Length - 1);
+        var doc = encoding == "json"
+            ? """{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{},"x-n":""" + number + "}"
+            : "openapi: 3.1.0\ninfo:\n  title: t\n  version: '1'\npaths: {}\nx-n: " + number + "\n";
+        var result = Validate("api", "openapi", "3.1", encoding, doc);
+        if (accepted)
+        {
+            Accepted(result);
+        }
+        else
+        {
+            TooLarge(result, "bound.number");
+        }
+    }
+
+    [Fact]
+    public void A_huge_yaml_number_is_refused_quickly()
+    {
+        var doc = "openapi: 3.1.0\ninfo:\n  title: t\n  version: '1'\npaths: {}\nx-n: 0o" + new string('7', 400_000) + "\n";
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        TooLarge(Validate("api", "openapi", "3.1", "yaml", doc), "bound.number");
+        Assert.True(watch.Elapsed < TimeSpan.FromMilliseconds(500), $"took {watch.Elapsed}");
+    }
+
     [Fact]
     public void A_family_may_declare_1000_entries_and_not_1001()
     {

@@ -171,6 +171,7 @@ internal static class TreeBounds
     public const int MaxDepth = 64;
     public const int MaxNodes = 50_000;
     public const int MaxNameLength = 1_024;
+    public const int MaxNumberLength = 1_024;
 }
 
 /// <summary>A stage that stops processing with exactly one problem (<c>malformed</c>, <c>too_large</c>, or an unsupported envelope version, family, format or encoding).</summary>

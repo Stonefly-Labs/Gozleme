@@ -171,6 +171,12 @@ internal static partial class RestrictedYamlReader
             return ManifestNode.Bool(pointer, line, column, value[0] is 't' or 'T');
         }
 
+        // Numeric scalars beyond the bound are refused before any BigInteger work (maintainer decision 2026-11-17, T079).
+        if (value.Length > TreeBounds.MaxNumberLength && (DecimalInt().IsMatch(value) || OctalInt().IsMatch(value) || HexInt().IsMatch(value) || Float().IsMatch(value)))
+        {
+            throw new ValidationStop(ManifestRules.BoundNumber, null);
+        }
+
         if (DecimalInt().IsMatch(value))
         {
             return ManifestNode.Number(pointer, line, column, BigInteger.Parse(value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture));

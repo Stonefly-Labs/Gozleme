@@ -125,6 +125,7 @@ pinning OpenAPI 3.1.0's 2022-10-07 schema (superseded upstream).
 | Nesting depth (envelope and native, separately) | 64 | problem `too_large` |
 | Nodes per native tree | 50,000 | problem `too_large` |
 | Member name length | 1,024 characters | problem `too_large` |
+| Number length (JSON and YAML numeric scalars) | 1,024 characters, checked before conversion | problem `too_large`, rule `bound.number` (maintainer decision 2026-11-17, T079) |
 | Entries per family (tools + resources + templates + prompts; skills; operations; channels + operations) | 1,000 | problem `too_large` |
 | Problems returned | 50, in stable order, then `"truncated": true` | — |
 
