@@ -1,6 +1,6 @@
 {
  "sourceSpec": "GOZ-0006",
- "implementationRevision": "b492064 (feature/goz-0006-typed-manifests), after Phase 10 confirmation-review fixes (T092-T097). Demo 51 tests / 81 screenshots recorded by drive-speckit in evidence/demo-run.json; tests not re-run by the analyst.",
+ "implementationRevision": "b492064 (feature/goz-0006-typed-manifests), after Phase 10 confirmation-review fixes (T092-T097). Demo 51 tests / 81 screenshots recorded by drive-speckit in evidence/demo-run.json; tests not re-run by the analyst. Re-analysed 2026-11-18 at df7916f after Phase 11 (T098 result status codes, T099 shared PostgreSQL rate limit).",
  "analyzedAt": "2026-11-17",
  "findings": [
   {
@@ -57,12 +57,14 @@
   {
    "id": "GOZ-0006-IF-02",
    "severity": "high",
-   "title": "Pins, seed and demo after GOZ-0006: no migration; new BootstrapBoundaryTests no-table/no-migration pin; 18 scoped endpoints / 19 actions; product endpoints still 404; fixed seeded-demo publisher and manifest-demo capability; goz-0006 Playwright project",
+   "title": "Pins, seed and demo after GOZ-0006: migration 20261120000000_ManifestValidationAttempts and table manifest_validation_attempts; renamed boundary test; 7 migrations; 18 scoped endpoints / 19 actions; product endpoints still 404; fixed seeded-demo publisher and manifest-demo capability; goz-0006 Playwright project",
    "evidence": [
     "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs Manifest_validation_adds_no_table_and_no_migration",
     "tests/Gozleme.Api.IntegrationTests/OrganizationPermissionContractTests.cs Assert.Equal(18, …)",
     "src/Gozleme.Api/Identity/OperatorCommands.cs SeedCapabilityAsync (DemoPublisherId …0010, DemoCapabilityId …0011); TenantSeedTests",
-    "e2e/playwright.config.ts goz-0006 depends on goz-0005; e2e/tests/evidence.ts specDirs"
+    "e2e/playwright.config.ts goz-0006 depends on goz-0005; e2e/tests/evidence.ts specDirs",
+    "src/Gozleme.Api/Persistence/Migrations/20261120000000_ManifestValidationAttempts.cs",
+    "BootstrapBoundaryTests.Manifest_validation_adds_only_its_rate_limit_counter; MigrationAndRoleTests 7; e2e LATEST_MIGRATION /_ManifestValidationAttempts$/"
    ],
    "affectedSpecs": [
     "GOZ-0007",
@@ -108,12 +110,13 @@
   {
    "id": "GOZ-0006-IF-03",
    "severity": "medium",
-   "title": "Telemetry, audit and limiter facts: span gozleme.manifest.validate, counters gozleme.manifest.validations/problems, bounded outcomes incl. unavailable, opaque IDs after membership; no audit event so 1501-1510 still free; in-memory per-instance budget",
+   "title": "Telemetry, audit and limiter facts: span and counters, bounded outcomes incl. unavailable; no audit event so 1501-1510 still free; validation budget shared through PostgreSQL (gozleme.manifest_validation_attempts)",
    "evidence": [
     "src/Gozleme.Api/Manifests/ManifestTelemetry.cs",
-    "src/Gozleme.Api/Manifests/ManifestValidationLimiter.cs (Gozleme:Manifests:ValidatePerMinute=30)",
     "web/src/telemetry/ui.ts manifest_validate",
-    "progress.yaml agentChoices no-audit, rate-limit, unavailable-outcome"
+    "progress.yaml agentChoices no-audit, rate-limit, unavailable-outcome",
+    "src/Gozleme.Api/Manifests/ManifestValidationLimiter.cs (PostgreSQL counter per account per clock minute)",
+    "progress.yaml decision shared-rate-limit (2026-11-18)"
    ],
    "affectedSpecs": [
     "GOZ-0007",
@@ -152,7 +155,7 @@
     "GOZ-0040",
     "GOZ-0041"
    ],
-   "recommendation": "Record names and the free audit range; attach the limiter to the open GOZ-0005-IF-05 multi-replica decision.",
+   "recommendation": "Record names and the free audit range; GOZ-0005-IF-05 stays open only for the sign-in and invitation-redeem limits.",
    "disposition": "applied",
    "status": "applied"
   },
@@ -212,7 +215,8 @@
    "evidence": [
     "src/Gozleme.Api/Manifests/Rules/SecretPatterns.cs, SecretFields.cs",
     "docs/specs/006-typed-manifests/contracts/secret-patterns.md 'auth-header is not checked on joined locations'",
-    "progress.yaml decisions joined-name-credentials, joined-names-patterns, yaml-comment-secrets"
+    "progress.yaml decisions joined-name-credentials, joined-names-patterns, yaml-comment-secrets",
+    "progress.yaml decision stored-text-projection-only (2026-11-18)"
    ],
    "affectedSpecs": [
     "GOZ-0007",
@@ -223,10 +227,9 @@
     "GOZ-0031",
     "GOZ-0032"
    ],
-   "recommendation": "Prompts now say validation is not a no-credential guarantee. Maintainer decides, after security review and before the GOZ-0007 plan, whether persisting/indexing/egressing manifest text accepts this residual risk or requires an extra control (re-scan at egress, index only projection, or restore a narrowed joined auth-header check).",
-   "disposition": "needs-human-decision (limit recorded in prompts; per-spec questions routed to clarification)",
-   "status": "open",
-   "decideBefore": "GOZ-0007 plan"
+   "recommendation": "Maintainer decided: later specs search and embed projection fields only; raw native text stays stored and exportable as sent; indexing or embedding raw text needs its own decision. Written into the prompts.",
+   "disposition": "decided-by-maintainer (stored-text-projection-only, 2026-11-18); applied",
+   "status": "applied"
   },
   {
    "id": "GOZ-0006-IF-06",
@@ -235,7 +238,8 @@
    "evidence": [
     "spec.md FR-003, FR-017, FR-021, FR-027",
     "ManifestEndpoints.cs: no write; BootstrapBoundaryTests pins",
-    "progress.yaml decision Q1"
+    "progress.yaml decision Q1",
+    "ManifestEndpoints.cs: accepted 200, rejected 400/413/422 (T098)"
    ],
    "affectedSpecs": [
     "GOZ-0007"
@@ -355,16 +359,17 @@
    "severity": "high",
    "title": "Disclosed GOZ-0006 agent choices that were offered for veto but never explicitly ratified by the maintainer become permanent stored data once GOZ-0007 persists manifests: secretref:<provider>/<key> form (A2), 200 for rejected (A3), markdown encoding value, lifecycle claims reserved, manifest.validate on the capability resource, in-memory per-instance limiter, unavailable outcome, missing-member location, YAML .inf/.nan kept as strings, A2A required overlay, _meta on MCP serverInfo",
    "evidence": [
-    "docs/specs/006-typed-manifests/progress.yaml agentChoices (each 'disclosed to the maintainer for veto')"
+    "docs/specs/006-typed-manifests/progress.yaml agentChoices (each 'disclosed to the maintainer for veto')",
+    "progress.yaml decisions agent-choices-ratified, result-status-codes, shared-rate-limit (2026-11-18)",
+    "src/Gozleme.Api/Manifests/ManifestEndpoints.cs status mapping 400/413/422"
    ],
    "affectedSpecs": [
     "GOZ-0007",
     "GOZ-0016"
    ],
-   "recommendation": "Maintainer ratifies or vetoes each before the GOZ-0007 plan; not decided by the analyst.",
-   "disposition": "needs-human-decision",
-   "status": "open",
-   "decideBefore": "GOZ-0007 plan"
+   "recommendation": "Maintainer decided: 10 choices ratified as built; A3 replaced by result-status-codes; in-memory limit replaced by shared-rate-limit; manifest.validate stays on capability and GOZ-0007 introduces a manifest resource type. Written into the prompts.",
+   "disposition": "decided-by-maintainer (2026-11-18); applied",
+   "status": "applied"
   },
   {
    "id": "GOZ-0006-IF-14",
@@ -428,11 +433,14 @@
     "GOZ-0013",
     "GOZ-0015",
     "GOZ-0016",
-    "GOZ-0017"
+    "GOZ-0017",
+    "GOZ-0031",
+    "GOZ-0032"
    ],
    "recommendation": "Default recorded; indexing native text beyond the projection is a clarification/security question.",
-   "disposition": "applied (routed to clarification)",
+   "disposition": "applied (maintainer decision stored-text-projection-only)",
    "status": "applied"
   }
- ]
+ ],
+ "updatedAt": "2026-11-18"
 }
