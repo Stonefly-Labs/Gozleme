@@ -24,6 +24,7 @@ export const forbiddenStrings = [
   "Host=postgres",
   process.env.GOZLEME_DEMO_PASSWORD ?? "local-dev-demo-pass",
   process.env.GOZLEME_CONTEXT_KEY ?? "local-dev-context-key-not-a-secret-0001",
+  process.env.GOZLEME_SIGNING_KEK ?? "bG9jYWwtZGV2LXNpZ25pbmcta2VrLW5vdC1zZWNyZXQ=",
   "Exception",
 ];
 
