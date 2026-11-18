@@ -1,0 +1,260 @@
+openapi: 3.1.0
+info:
+  title: Gözleme Manifest Revisions API — GOZ-0007
+  version: "1"
+  description: >
+    Immutable, signed manifest revisions of a registered capability, organization-scoped under the Organizations
+    API v1. Inherited: session required, Cache-Control no-store, x-gozleme-client on unsafe methods, the identical
+    empty 404 for a malformed, unknown or non-member organization and for unknown, malformed, foreign or misplaced
+    publisher, capability, revision or key IDs, 503 {"error":"unavailable"} while PostgreSQL is unreachable or the
+    registry origin is not verified, 403 {"error":"forbidden"} when the caller's roles lack the action
+    (docs/architecture/contracts/organization-permissions.md, contracts/permissions-delta.md). There are no update,
+    replace or delete operations. Statement and verification: contracts/attestation-statement-v1.md. Keys:
+    contracts/signing-keys.md. Attestations prove registry acceptance with a registry-held per-publisher key; no
+    delegation, transfer, chain or transparency claim exists in v1.
+servers:
+  - url: http://api:8080
+security:
+  - session: []
+paths:
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/revisions:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+    post:
+      operationId: publishRevision
+      x-gozleme-action: manifest.publish
+      description: >
+        Order: membership → permission → target → suspension (409) → publication budget (429) → media type (415) →
+        size (413) → GOZ-0006 validation, unchanged (400/413/422 with the GOZ-0006 Rejected body) → version
+        uniqueness by SemVer precedence (409 version_exists; content never compared, identical replays included)
+        → signing key available (503) → 201. The revision, the publisher's first key (if none) and the attestation
+        commit together or not at all.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '../../006-typed-manifests/contracts/manifest-envelope-v1.schema.json' }
+      responses:
+        '201':
+          description: Published and signed.
+          headers: { Location: { schema: { type: string }, description: 'The revision URL.' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/RevisionDetail' } } }
+        '400': { $ref: '#/components/responses/Rejected' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: The publisher is suspended, or the version exists.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              examples:
+                suspended: { value: { error: suspended } }
+                versionExists: { value: { error: version_exists } }
+        '413':
+          description: Body over 1 MiB (Error) or a validation bound (GOZ-0006 Rejected with one too_large problem).
+          content: { application/json: { schema: { oneOf: [ { $ref: '#/components/schemas/Error' }, { $ref: '../../006-typed-manifests/contracts/manifest-api.openapi.yaml#/components/schemas/Rejected' } ] } } }
+        '415': { description: 'Content-Type is not application/json.', content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: unsupported_media_type } } } }
+        '422': { $ref: '#/components/responses/Rejected' }
+        '429':
+          description: Publication budget exhausted (Gozleme:Manifests:PublishPerMinute).
+          headers: { Retry-After: { schema: { type: integer } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: rate_limited } } }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    get:
+      operationId: listRevisions
+      x-gozleme-action: manifest.list
+      parameters:
+        - { name: after, in: query, required: false, schema: { type: integer, minimum: 0 }, description: 'Return revisions with sequence greater than this.' }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        '200':
+          description: Revisions in publication order (sequence ascending). No "latest" designation.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RevisionList' } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/revisions/{revisionId}:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+      - $ref: '#/components/parameters/revisionId'
+    get:
+      operationId: readRevision
+      x-gozleme-action: manifest.read
+      description: The revision, its attestation and a verification result computed now from the stored bytes. PUT, PATCH and DELETE answer 405.
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/RevisionDetail' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/revisions/{revisionId}/{part}:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+      - $ref: '#/components/parameters/revisionId'
+      - { name: part, in: path, required: true, schema: { type: string, enum: [native, projection, statement, signature] } }
+    get:
+      operationId: downloadRevisionPart
+      x-gozleme-action: manifest.read
+      description: >
+        Four fixed routes (one per part, not a template parameter at run time). native → the native bytes as published,
+        media type by encoding; projection and statement → canonical JSON bytes; signature → 64 raw bytes. Always
+        Content-Disposition attachment and X-Content-Type-Options nosniff.
+      responses:
+        '200':
+          description: The exact stored bytes.
+          content:
+            application/json: { schema: { type: string, format: binary } }
+            application/yaml: { schema: { type: string, format: binary } }
+            text/markdown: { schema: { type: string, format: binary } }
+            application/octet-stream: { schema: { type: string, format: binary } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/signing-keys:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+    get:
+      operationId: listSigningKeys
+      x-gozleme-action: manifest.read
+      responses:
+        '200': { description: 'Keys by generation; empty when the publisher has no key yet.', content: { application/json: { schema: { $ref: '#/components/schemas/SigningKeyList' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/signing-keys/{keyId}/public-key:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - { name: keyId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: downloadPublicKey
+      x-gozleme-action: manifest.read
+      responses:
+        '200': { description: 'SubjectPublicKeyInfo PEM (RFC 8410).', content: { application/x-pem-file: { schema: { type: string } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+components:
+  securitySchemes:
+    session: { type: apiKey, in: cookie, name: gozleme_session }
+  parameters:
+    organizationId: { name: organizationId, in: path, required: true, schema: { type: string } }
+    publisherId: { name: publisherId, in: path, required: true, schema: { type: string } }
+    capabilityId: { name: capabilityId, in: path, required: true, schema: { type: string } }
+    revisionId: { name: revisionId, in: path, required: true, schema: { type: string } }
+  responses:
+    Forbidden: { description: 'The caller lacks the action.', content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: forbidden } } } }
+    NotFound: { description: 'Unknown, malformed, non-member or foreign IDs. Empty body.' }
+    Unavailable: { description: 'Database unreachable, origin not verified, or (publish only) signing key unavailable.', content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: unavailable } } } }
+    Rejected:
+      description: GOZ-0006 validation rejected the manifest; the body and status are exactly those of the validate endpoint. Nothing is stored.
+      content: { application/json: { schema: { $ref: '../../006-typed-manifests/contracts/manifest-api.openapi.yaml#/components/schemas/Rejected' } } }
+  schemas:
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error: { type: string, enum: [forbidden, suspended, version_exists, rate_limited, unsupported_media_type, too_large, unavailable] }
+    Verification:
+      type: object
+      additionalProperties: false
+      required: [status, reason, key]
+      properties:
+        status: { type: string, enum: [verified, failed] }
+        reason:
+          type: [string, 'null']
+          enum: [null, malformed_statement, unknown_statement_version, unknown_field, unknown_algorithm, unknown_key, signature_invalid, statement_mismatch, native_digest_mismatch, projection_digest_mismatch]
+        key: { $ref: '#/components/schemas/KeyStatus' }
+    KeyStatus:
+      type: object
+      additionalProperties: false
+      required: [id, keyId, status]
+      properties:
+        id: { type: string, format: uuid }
+        keyId: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        status: { type: string, enum: [active, retired] }
+        retiredAt: { type: string, format: date-time }
+        retiredReason: { type: string, enum: [lost, compromised] }
+    RevisionSummary:
+      type: object
+      additionalProperties: false
+      required: [id, capabilityId, version, sequence, publishedAt, publishedBy, nativeDigest, verification]
+      properties:
+        id: { type: string, format: uuid }
+        capabilityId: { type: string, description: 'Canonical capability ID gz://<origin>/cap/<uuid>.' }
+        version: { type: string }
+        sequence: { type: integer, minimum: 1 }
+        publishedAt: { type: string, format: date-time }
+        publishedBy: { type: string, format: uuid, description: 'Opaque account ID.' }
+        nativeDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        verification: { $ref: '#/components/schemas/Verification' }
+    RevisionList:
+      type: object
+      additionalProperties: false
+      required: [publisherSuspended, revisions, next]
+      properties:
+        publisherSuspended: { type: boolean }
+        revisions: { type: array, items: { $ref: '#/components/schemas/RevisionSummary' } }
+        next: { type: [integer, 'null'], description: 'Pass as after= for the next page; null at the end.' }
+    RevisionDetail:
+      allOf:
+        - $ref: '#/components/schemas/RevisionSummary'
+        - type: object
+          required: [publisherId, publisherSuspended, envelope, native, projection, adapter, ruleCatalogueVersion, schemaBundleVersion, attestation]
+          properties:
+            publisherId: { type: string, description: 'Canonical publisher ID gz://<origin>/pub/<uuid>.' }
+            publisherSuspended: { type: boolean }
+            envelope: { type: object, description: 'The GOZ-0006 envelope without native.document (as in its Accepted result); not signed.' }
+            native:
+              type: object
+              required: [format, formatVersion, encoding, document, digest, byteLength]
+              properties:
+                format: { type: string }
+                formatVersion: { type: string }
+                encoding: { type: string, enum: [json, yaml, markdown] }
+                document: { type: string }
+                digest: { type: string }
+                byteLength: { type: integer }
+            projection: { type: object, description: 'Projection v1 as stored (GOZ-0006 contracts/projection-v1.md); never re-derived.' }
+            projectionDigest: { type: string }
+            adapter: { type: object, required: [id, version], properties: { id: { type: string }, version: { type: string } } }
+            ruleCatalogueVersion: { type: string }
+            schemaBundleVersion: { type: string }
+            attestation:
+              type: object
+              required: [statementVersion, statement, algorithm, keyId, proof]
+              properties:
+                statementVersion: { type: integer, const: 1 }
+                statement: { type: object, description: 'The parsed statement members (contracts/attestation-statement-v1.md).' }
+                algorithm: { type: string, const: Ed25519 }
+                keyId: { type: string }
+                proof: { type: string, description: 'Fixed text: what the attestation proves and does not prove.' }
+    SigningKeyList:
+      type: object
+      additionalProperties: false
+      required: [publisherId, keys]
+      properties:
+        publisherId: { type: string, format: uuid }
+        keys:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, keyId, algorithm, generation, createdAt, status]
+            properties:
+              id: { type: string, format: uuid }
+              keyId: { type: string }
+              algorithm: { type: string, const: Ed25519 }
+              generation: { type: integer, minimum: 1 }
+              createdAt: { type: string, format: date-time }
+              status: { type: string, enum: [active, retired] }
+              retiredAt: { type: string, format: date-time }
+              retiredReason: { type: string, enum: [lost, compromised] }
+              successorId: { type: string, format: uuid }

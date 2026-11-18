@@ -26,6 +26,11 @@ Clarification questions (`/speckit-clarify`, 2026-11-18):
 - Q: Can a capability's versions be published in any order, or must each new version be higher than all earlier ones? → A: **Any order.** Versions need only be unique by SemVer 2.0.0 precedence (so backport releases such as `1.2.5` after `2.0.0` are allowed). Lists are ordered by publication sequence, and this slice designates no "latest" revision (GOZ-0026, GOZ-0027).
 - Q: When is a publisher's signing key created: at first publication, at publisher registration, or only by an operator command? → A: **Lazily, at first publication**, inside that publication's transaction. Publisher registration (GOZ-0005) is unchanged and never needs the key-encryption key. A publisher that has never published has no key, and a key never exists without a revision it signed.
 
+Plan decisions (`/speckit-plan`, 2026-11-18, maintainer):
+
+- P1: Which library signs and verifies, given that .NET 10 has no standalone Ed25519? → A: **Ed25519 through `NSec.Cryptography` 26.4.0** (MIT, with libsodium 1.0.22, ISC). BouncyCastle and built-in ECDSA P-256 were rejected; ECDSA because its signatures are not deterministic.
+- P2: How are the signed bytes framed? → A: **A raw Ed25519 signature over the RFC 8785 (JCS) canonical bytes** of statement v1, with no envelope. DSSE framing was rejected for this version.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Publish two revisions of a capability (Priority: P1)

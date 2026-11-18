@@ -444,13 +444,13 @@ specs:
   dependencies:
   - GOZ-0006
   status: in-progress
-  stage: clarify
+  stage: plan
   branch: feature/goz-0007-immutable-revisions
   pullRequest: null
   promptRevision: 8
   gates:
     specification: done
-    plan: pending
+    plan: passed
     tasks: pending
     implementation: pending
     tests: pending
@@ -467,7 +467,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Spec and clarify done 2026-11-18 (maintainer Q1-Q5; clarify: replay always 409, any version order, lazy key creation at first publication). Next: /speckit-plan.'
+  nextAction: 'Planned 2026-11-18 (maintainer P1-P2 and agent choices A1-A7 in docs/specs/007-immutable-revisions/progress.yaml); next /speckit-tasks.'
 - id: GOZ-0008
   number: 8
   title: Child capability identities and projections
