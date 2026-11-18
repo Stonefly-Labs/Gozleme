@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-17
 
-**Status**: Draft (specify done 2026-11-17)
+**Status**: Implemented, in convergence (specify done 2026-11-17; implementation and demo passed 2026-11-17)
 
 **Input**: User description: "GOZ-0006 — Typed manifests for capability families. User-visible outcome: validate sample MCP, A2A, model, skill, API and event manifests. In scope: versioned typed envelope and protocol-specific adapters; reject unknown unsafe claims. Important boundary: keep protocol-native documents and normalized projections distinct." (full prompt: `docs/prompts/spec-0006.md`, revision 7, including the convention sections GOZ-0000-IF-11, GOZ-0001-IF-01/02/09/11/17, GOZ-0002-IF-01/05/06/07/08, GOZ-0003-IF-01/02/07/08/09/10/19, GOZ-0004-IF-01/02/04/06/07/08/09/13 and GOZ-0005-IF-01/03/06/07/09/10)
 

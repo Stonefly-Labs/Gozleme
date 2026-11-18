@@ -93,6 +93,8 @@ public sealed class ManifestPerformanceTests(PgvectorDatabaseFixture fixture) : 
             ["limitMs"] = 2000,
             ["environment"] = "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)",
         };
-        File.WriteAllText(file, evidence.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) + "\n");
+        // Relaxed escaping keeps the e2e-written text (e.g. "+") byte-identical; this is a local evidence file, not HTML.
+        var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+        File.WriteAllText(file, evidence.ToJsonString(options) + "\n");
     }
 }
