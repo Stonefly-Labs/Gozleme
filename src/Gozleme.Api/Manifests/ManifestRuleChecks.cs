@@ -41,7 +41,13 @@ internal static class ManifestRuleChecks
 
         foreach (var scope in adapter.ReferenceScopes(tree))
         {
-            problems.AddRange(ExternalReferences.Check(scope, ManifestPart.Native, allowOasDialect: adapter is OpenApiAdapter));
+            var positions = adapter switch
+            {
+                OpenApiAdapter => DataPositions.OpenApi,
+                AsyncApiAdapter => DataPositions.AsyncApi,
+                _ => DataPositions.JsonSchema,
+            };
+            problems.AddRange(ExternalReferences.Check(scope, ManifestPart.Native, allowOasDialect: adapter is OpenApiAdapter, positions));
         }
     }
 

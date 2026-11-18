@@ -1,4 +1,5 @@
 using Gozleme.Api.Manifests.Parsing;
+using Gozleme.Api.Manifests.Rules;
 
 namespace Gozleme.Api.Manifests.Adapters;
 
@@ -7,12 +8,6 @@ internal static class AdapterTree
 {
     /// <summary>The header names whose values are credentials (contracts/native-formats.md, research R7).</summary>
     public static readonly string[] SecretHeaderNames = ["Authorization", "Proxy-Authorization", "Cookie", "X-Api-Key", "Api-Key", "X-Auth-Token"];
-
-    /// <summary>Keys whose values are data, not structure: extension names are not looked for beneath them.</summary>
-    private static readonly string[] DataKeys = ["example", "examples", "default", "enum", "const"];
-
-    /// <summary>Keys whose member names are user data, though their values are structure (schema property maps).</summary>
-    private static readonly string[] DataNameKeys = ["properties", "patternProperties"];
 
     public static bool IsSecretHeader(string? name) => name is not null && SecretHeaderNames.Contains(name, StringComparer.OrdinalIgnoreCase);
 
@@ -26,15 +21,15 @@ internal static class AdapterTree
     public static List<string> Distinct(IEnumerable<string?> values) => [.. values.OfType<string>().Distinct(StringComparer.Ordinal)];
 
     /// <summary>
-    /// Member names that start with <c>x-</c> in structural positions (OpenAPI, AsyncAPI, model card): not below an
-    /// example, default, enum or const value, and not the property names of a schema, which are user data (research R6).
+    /// Member names that start with <c>x-</c> in structural positions (OpenAPI, AsyncAPI): sample data is skipped by
+    /// position (<see cref="DataPositions"/>, T083), and the property names of a schema are user data (research R6).
     /// Every member name inside an extension's value is included too (T075, R6 rule 1).
     /// </summary>
-    public static IEnumerable<NamePosition> ExtensionNames(ManifestNode node)
+    public static IEnumerable<NamePosition> ExtensionNames(ManifestNode node, DataPositions positions, PositionKind kind = PositionKind.Object)
     {
-        foreach (var (name, value) in Members(node))
+        foreach (var (name, value, childKind) in positions.Members(node, kind))
         {
-            if (name.StartsWith("x-", StringComparison.OrdinalIgnoreCase))
+            if (kind != PositionKind.DataNameMap && name.StartsWith("x-", StringComparison.OrdinalIgnoreCase))
             {
                 yield return new NamePosition(name, value.Pointer);
                 foreach (var inner in AllNames(value))
@@ -45,37 +40,23 @@ internal static class AdapterTree
                 continue;
             }
 
-            if (DataKeys.Contains(name, StringComparer.Ordinal))
+            if (value.IsObject || value.IsArray)
             {
-                continue;
-            }
-
-            if (DataNameKeys.Contains(name, StringComparer.Ordinal))
-            {
-                foreach (var inner in Members(value).SelectMany(m => Walk(m.Value)))
+                foreach (var inner in ExtensionNames(value, positions, childKind))
                 {
                     yield return inner;
                 }
-
-                continue;
-            }
-
-            foreach (var inner in Walk(value))
-            {
-                yield return inner;
             }
         }
 
         foreach (var item in Items(node))
         {
-            foreach (var inner in ExtensionNames(item))
+            foreach (var inner in ExtensionNames(item, positions))
             {
                 yield return inner;
             }
         }
     }
-
-    private static IEnumerable<NamePosition> Walk(ManifestNode value) => value.IsObject || value.IsArray ? ExtensionNames(value) : [];
 
     /// <summary>Each member name of <paramref name="node"/> and every member name beneath it (an extension map and its values).</summary>
     public static IEnumerable<NamePosition> MembersAndBeneath(ManifestNode? node) =>

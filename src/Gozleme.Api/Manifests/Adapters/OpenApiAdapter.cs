@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Gozleme.Api.Manifests.Parsing;
 using Gozleme.Api.Manifests.Projection;
+using Gozleme.Api.Manifests.Rules;
 using static Gozleme.Api.Manifests.Adapters.AdapterTree;
 
 namespace Gozleme.Api.Manifests.Adapters;
@@ -38,7 +39,7 @@ internal sealed partial class OpenApiAdapter : IProtocolAdapter
         context.Schema(is31 ? SchemaIds.OpenApi31 : SchemaIds.OpenApi30, tree);
     }
 
-    public IEnumerable<NamePosition> ReservedNamePositions(ManifestNode tree) => ExtensionNames(tree);
+    public IEnumerable<NamePosition> ReservedNamePositions(ManifestNode tree) => ExtensionNames(tree, DataPositions.OpenApi);
 
     /// <summary>Header and cookie parameters, and header objects, with a credential name: their examples and defaults.</summary>
     public IEnumerable<ManifestNode> SecretFields(ManifestNode tree) => CredentialHolders(tree).SelectMany(ExampleValues);

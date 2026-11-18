@@ -207,10 +207,14 @@ rule, and still lists every independent problem.
 
 **Protocol-native `deprecated` flags** on OpenAPI operations, parameters, headers and schemas, and on
 AsyncAPI messages and schemas, describe an API element. They are not a publisher-asserted lifecycle state of
-the capability, so they are **not** reserved (disclosed agent choice A1). The vocabulary is applied only to
+the capability, so they are **not** reserved (A1, maintainer approved 2026-11-17). The vocabulary is applied only to
 name positions in rules 1 and 2, never to user data such as schema property names (for example a
 `components.schemas.Repo.properties.owner` field) or example values. Otherwise ordinary API descriptions
-would be rejected.
+would be rejected. Sample data is recognised by **position**, not by name (maintainer decisions 2026-11-17, T083):
+`example`, `default`, `enum`, `const` and an array-valued `examples` are data only as fields of an ordinary object,
+and an OpenAPI Example object's `value` is data. An entry of a map that has one of those names (`responses.default`,
+a schema or parameter named `enum`) and an Example object's own members are structure and are checked. The same
+positions apply to the R10 reference walk.
 
 **Rationale**: FR-009 says each adapter documents its mapped fields. Extension points are the only places
 where a publisher can invent names, so that is where trust claims would be smuggled in. Normalization catches
@@ -260,7 +264,7 @@ Anything else is `identity_mismatch` at `/capability`, rule `identity.capability
 ## R10 — External references (FR-006)
 
 **Decision**:
-- A `$ref` or `$dynamicRef` whose value does not start with `#` is `external_reference`, rule `ref.external`. This applies to OpenAPI and AsyncAPI documents, to MCP `inputSchema`/`outputSchema`, and to embedded JSON Schemas. Internal `#…` references must resolve within the same document; otherwise the value is `invalid_value`, rule `ref.unresolved`.
+- A `$ref` or `$dynamicRef` whose value does not start with `#` is `external_reference`, rule `ref.external`, except inside sample data, recognised by position as in R6 (T083). This applies to OpenAPI and AsyncAPI documents, to MCP `inputSchema`/`outputSchema`, and to embedded JSON Schemas. Internal `#…` references must resolve within the same document; otherwise the value is `invalid_value`, rule `ref.unresolved`.
 - A `$schema` or `jsonSchemaDialect` value outside the bundled dialect list is `external_reference`, rule `ref.dialect`, because it would need fetching. The bundled list is draft-07, 2019-09 and 2020-12, and for OpenAPI 3.1 also the OAS dialect `https://spec.openapis.org/oas/3.1/dialect/base`.
 - Informational URLs (`externalDocs.url`, `documentationUrl`, `iconUrl`, `websiteUrl`, `servers[].url`, remote endpoint URLs, OpenAPI Example `externalValue` and cross-document Link `operationRef` (maintainer decision 2026-11-17)) are data and are never fetched or rejected for being URLs. They are still subject to the secret patterns (userinfo).
 

@@ -19,24 +19,19 @@ internal static class ExternalReferences
         "https://json-schema.org/draft/2019-09/schema", "https://json-schema.org/draft/2020-12/schema",
     ];
 
-    private static readonly string[] DataKeys = ["example", "examples", "default", "enum", "const"];
-
-    public static IEnumerable<ManifestProblem> Check(ManifestNode scope, string part, bool allowOasDialect)
+    /// <summary>Checks references in <paramref name="scope"/>; sample data is skipped by position (<see cref="DataPositions"/>, T083).</summary>
+    public static IEnumerable<ManifestProblem> Check(ManifestNode scope, string part, bool allowOasDialect, DataPositions positions)
     {
         var problems = new List<ManifestProblem>();
-        Walk(scope, scope, part, allowOasDialect, problems);
+        Walk(scope, PositionKind.Object, scope, part, allowOasDialect, positions, problems);
         return problems;
     }
 
-    private static void Walk(ManifestNode node, ManifestNode scope, string part, bool allowOasDialect, List<ManifestProblem> problems)
+    private static void Walk(
+        ManifestNode node, PositionKind kind, ManifestNode scope, string part, bool allowOasDialect, DataPositions positions, List<ManifestProblem> problems)
     {
-        foreach (var (name, value) in node.Members)
+        foreach (var (name, value, childKind) in positions.Members(node, kind))
         {
-            if (DataKeys.Contains(name, StringComparer.Ordinal))
-            {
-                continue;
-            }
-
             if (name is "$ref" or "$dynamicRef" && value is { IsString: true, Text: { } reference })
             {
                 if (!reference.StartsWith('#'))
@@ -54,12 +49,12 @@ internal static class ExternalReferences
                 problems.Add(new ManifestProblem(ManifestRules.RefDialect, ProblemLocation.At(part, value.Pointer)));
             }
 
-            Walk(value, scope, part, allowOasDialect, problems);
+            Walk(value, childKind, scope, part, allowOasDialect, positions, problems);
         }
 
         foreach (var item in node.Items)
         {
-            Walk(item, scope, part, allowOasDialect, problems);
+            Walk(item, PositionKind.Object, scope, part, allowOasDialect, positions, problems);
         }
     }
 

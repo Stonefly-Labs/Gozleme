@@ -1,5 +1,6 @@
 using Gozleme.Api.Manifests.Parsing;
 using Gozleme.Api.Manifests.Projection;
+using Gozleme.Api.Manifests.Rules;
 using static Gozleme.Api.Manifests.Adapters.AdapterTree;
 
 namespace Gozleme.Api.Manifests.Adapters;
@@ -29,7 +30,7 @@ internal sealed class AsyncApiAdapter : IProtocolAdapter
         context.Schema(SchemaIds.AsyncApi300, tree);
     }
 
-    public IEnumerable<NamePosition> ReservedNamePositions(ManifestNode tree) => ExtensionNames(tree);
+    public IEnumerable<NamePosition> ReservedNamePositions(ManifestNode tree) => ExtensionNames(tree, DataPositions.AsyncApi);
 
     /// <summary>The <c>default</c>, <c>example</c> and <c>examples</c> of credential-named properties of any <c>headers</c> schema.</summary>
     public IEnumerable<ManifestNode> SecretFields(ManifestNode tree) =>
