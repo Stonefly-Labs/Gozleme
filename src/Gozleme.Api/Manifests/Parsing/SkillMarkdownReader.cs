@@ -24,7 +24,7 @@ internal static class SkillMarkdownReader
 
         var yaml = string.Join("\n", lines.Skip(1).Take(close - 1).Select(l => l.Text));
         var frontMatter = RestrictedYamlReader.Read(yaml, part, lineOffset: 1)
-            ?? ManifestNode.Object(string.Empty, 2, 1, []);
+            ?? ManifestNode.Object(JsonPointer.Root, 2, 1, []);
         return new SkillDocument(frontMatter, [.. lines.Skip(close + 1)], yaml);
     }
 

@@ -15,7 +15,7 @@ internal static class NativeEncoding
 internal sealed record NativeFormat(string Format, string FormatVersion, IReadOnlyList<string> Encodings);
 
 /// <summary>A name in a position the reserved vocabulary applies to, located at the member's own pointer.</summary>
-internal sealed record NamePosition(string Name, string Pointer);
+internal sealed record NamePosition(string Name, JsonPointer Pointer);
 
 /// <summary>What an adapter reads besides the tree: the validated envelope, the schema registry and the problem sink.</summary>
 internal sealed class NativeContext(ManifestEnvelope envelope, SchemaRegistry schemas, List<ManifestProblem> problems)
@@ -26,7 +26,7 @@ internal sealed class NativeContext(ManifestEnvelope envelope, SchemaRegistry sc
 
     public List<ManifestProblem> Problems { get; } = problems;
 
-    public void Add(ManifestRule rule, string pointer) => Problems.Add(new ManifestProblem(rule, ProblemLocation.At(ManifestPart.Native, pointer)));
+    public void Add(ManifestRule rule, JsonPointer pointer) => Problems.Add(new ManifestProblem(rule, ProblemLocation.At(ManifestPart.Native, pointer)));
 
     /// <summary>Validates the whole tree against a bundled schema and collects its problems.</summary>
     public void Schema(string uri, ManifestNode tree) => Problems.AddRange(Schemas.Validate(uri, tree.ToJson(), ManifestPart.Native));

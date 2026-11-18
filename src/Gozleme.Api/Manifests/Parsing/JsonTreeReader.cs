@@ -47,7 +47,7 @@ internal static class JsonTreeReader
                 throw new ValidationStop(ManifestRules.ParseEmpty, ProblemLocation.At(part, 1, 1));
             }
 
-            var root = ReadValue(ref reader, state, string.Empty, 0);
+            var root = ReadValue(ref reader, state, JsonPointer.Root, 0);
             if (reader.Read())
             {
                 throw Syntax(utf8, start, reader.TokenStartIndex, state);
@@ -82,7 +82,7 @@ internal static class JsonTreeReader
         }
     }
 
-    private static ManifestNode ReadValue(ref Utf8JsonReader reader, State state, string pointer, int depth)
+    private static ManifestNode ReadValue(ref Utf8JsonReader reader, State state, JsonPointer pointer, int depth)
     {
         if (++state.Nodes > TreeBounds.MaxNodes)
         {
@@ -116,7 +116,7 @@ internal static class JsonTreeReader
                         }
 
                         reader.Read();
-                        members.Add(new(name, ReadValue(ref reader, state, ManifestNode.Child(pointer, name), depth + 1)));
+                        members.Add(new(name, ReadValue(ref reader, state, pointer.Child(name), depth + 1)));
                     }
 
                     return ManifestNode.Object(pointer, line, column, members);
@@ -132,14 +132,14 @@ internal static class JsonTreeReader
                     var items = new List<ManifestNode>();
                     while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                     {
-                        items.Add(ReadValue(ref reader, state, ManifestNode.Child(pointer, items.Count), depth + 1));
+                        items.Add(ReadValue(ref reader, state, pointer.Child(items.Count), depth + 1));
                     }
 
                     return ManifestNode.Array(pointer, line, column, items);
                 }
 
             case JsonTokenType.String:
-                if (string.Equals(pointer, state.Measure, StringComparison.Ordinal))
+                if (pointer.Equals(state.Measure))
                 {
                     state.Measured = reader.HasValueSequence ? reader.ValueSequence.Length : reader.ValueSpan.Length;
                 }
@@ -188,7 +188,7 @@ internal static class JsonTreeReader
 
         public string Part { get; } = part;
 
-        public string? Measure { get; } = measure;
+        public JsonPointer? Measure { get; } = measure is null ? null : JsonPointer.Parse(measure);
 
         public long Measured { get; set; }
 

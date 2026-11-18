@@ -134,6 +134,8 @@ internal static partial class EnvelopeReader
         }
     }
 
+    private static ManifestProblem Problem(ManifestRule rule, JsonPointer pointer) => new(rule, ProblemLocation.At(ManifestPart.Envelope, pointer));
+
     private static ManifestProblem Problem(ManifestRule rule, string pointer) => new(rule, ProblemLocation.At(ManifestPart.Envelope, pointer));
 
     private static ValidationStop Stop(ManifestRule rule, string pointer) => new(rule, ProblemLocation.At(ManifestPart.Envelope, pointer));

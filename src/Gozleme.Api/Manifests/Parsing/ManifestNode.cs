@@ -15,12 +15,13 @@ internal enum NodeKind
 
 /// <summary>
 /// One value of the positioned tree every format is parsed into (research R3, data-model.md). Objects keep their
-/// members in source order; a number keeps its text in JSON form. Every node carries its RFC 6901 pointer and its
+/// members in source order; a number keeps its text in JSON form. Every node carries its RFC 6901 pointer (as a
+/// <see cref="JsonPointer"/> link, built into text only when reported) and its
 /// 1-based start line and column in its source text, so JSON, YAML and front matter give identical locations.
 /// </summary>
 internal sealed class ManifestNode
 {
-    private ManifestNode(NodeKind kind, string pointer, int line, int column)
+    private ManifestNode(NodeKind kind, JsonPointer pointer, int line, int column)
     {
         Kind = kind;
         Pointer = pointer;
@@ -30,7 +31,7 @@ internal sealed class ManifestNode
 
     public NodeKind Kind { get; }
 
-    public string Pointer { get; }
+    public JsonPointer Pointer { get; }
 
     public int Line { get; }
 
@@ -71,27 +72,22 @@ internal sealed class ManifestNode
     /// <summary>The string value of member <paramref name="name"/>, or null when absent or not a string.</summary>
     public string? StringOf(string name) => this[name] is { Kind: NodeKind.String } node ? node.Text : null;
 
-    public static ManifestNode Object(string pointer, int line, int column, IReadOnlyList<KeyValuePair<string, ManifestNode>> members) =>
+    public static ManifestNode Object(JsonPointer pointer, int line, int column, IReadOnlyList<KeyValuePair<string, ManifestNode>> members) =>
         new(NodeKind.Object, pointer, line, column) { Members = members };
 
-    public static ManifestNode Array(string pointer, int line, int column, IReadOnlyList<ManifestNode> items) =>
+    public static ManifestNode Array(JsonPointer pointer, int line, int column, IReadOnlyList<ManifestNode> items) =>
         new(NodeKind.Array, pointer, line, column) { Items = items };
 
-    public static ManifestNode String(string pointer, int line, int column, string value) =>
+    public static ManifestNode String(JsonPointer pointer, int line, int column, string value) =>
         new(NodeKind.String, pointer, line, column) { Text = value };
 
-    public static ManifestNode Number(string pointer, int line, int column, string jsonText) =>
+    public static ManifestNode Number(JsonPointer pointer, int line, int column, string jsonText) =>
         new(NodeKind.Number, pointer, line, column) { Text = jsonText };
 
-    public static ManifestNode Bool(string pointer, int line, int column, bool value) =>
+    public static ManifestNode Bool(JsonPointer pointer, int line, int column, bool value) =>
         new(NodeKind.Boolean, pointer, line, column) { Boolean = value };
 
-    public static ManifestNode Null(string pointer, int line, int column) => new(NodeKind.Null, pointer, line, column);
-
-    /// <summary>The pointer of member <paramref name="name"/> under <paramref name="parent"/> (RFC 6901: <c>~</c> → <c>~0</c>, <c>/</c> → <c>~1</c>).</summary>
-    public static string Child(string parent, string name) => $"{parent}/{name.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal)}";
-
-    public static string Child(string parent, int index) => $"{parent}/{index}";
+    public static ManifestNode Null(JsonPointer pointer, int line, int column) => new(NodeKind.Null, pointer, line, column);
 
     /// <summary>Visits this node and every descendant, depth first in source order.</summary>
     public IEnumerable<ManifestNode> Descendants()

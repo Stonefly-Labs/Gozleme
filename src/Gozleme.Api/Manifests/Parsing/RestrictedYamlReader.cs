@@ -39,7 +39,7 @@ internal static partial class RestrictedYamlReader
                 return null;
             }
 
-            var root = ReadNode(parser, state, string.Empty, 0);
+            var root = ReadNode(parser, state, JsonPointer.Root, 0);
             parser.Consume<DocumentEnd>();
             if (parser.Accept<DocumentStart>(out var second))
             {
@@ -101,7 +101,7 @@ internal static partial class RestrictedYamlReader
         }
     }
 
-    private static ManifestNode ReadNode(IParser parser, State state, string pointer, int depth)
+    private static ManifestNode ReadNode(IParser parser, State state, JsonPointer pointer, int depth)
     {
         if (++state.Nodes > TreeBounds.MaxNodes)
         {
@@ -136,7 +136,7 @@ internal static partial class RestrictedYamlReader
                     var items = new List<ManifestNode>();
                     while (!parser.TryConsume<SequenceEnd>(out _))
                     {
-                        items.Add(ReadNode(parser, state, ManifestNode.Child(pointer, items.Count), depth + 1));
+                        items.Add(ReadNode(parser, state, pointer.Child(items.Count), depth + 1));
                     }
 
                     return ManifestNode.Array(pointer, line, column, items);
@@ -172,7 +172,7 @@ internal static partial class RestrictedYamlReader
                         }
 
                         parser.MoveNext();
-                        members.Add(new(key.Value, ReadNode(parser, state, ManifestNode.Child(pointer, key.Value), depth + 1)));
+                        members.Add(new(key.Value, ReadNode(parser, state, pointer.Child(key.Value), depth + 1)));
                     }
 
                     return ManifestNode.Object(pointer, line, column, members);
@@ -184,7 +184,7 @@ internal static partial class RestrictedYamlReader
     }
 
     /// <summary>YAML 1.2 core schema (https://yaml.org/spec/1.2.2/#1032-tag-resolution) for plain scalars; every other style is a string.</summary>
-    private static ManifestNode Resolve(Scalar scalar, string pointer, int line, int column)
+    private static ManifestNode Resolve(Scalar scalar, JsonPointer pointer, int line, int column)
     {
         var value = scalar.Value;
         if (scalar.Style != ScalarStyle.Plain)

@@ -49,6 +49,25 @@ internal static class ManifestRuleChecks
     /// Drops every problem whose pointer has a credential-shaped segment: the <c>secret.name</c> problem at its parent
     /// already reports it, and a pointer must never carry a matched credential (contracts/manifest-validation.md).
     /// </summary>
-    public static List<ManifestProblem> WithoutSecretPointers(List<ManifestProblem> problems) =>
-        [.. problems.Where(p => p.Location?.Pointer is not { } pointer || !SecretFields.CarriesSecret(pointer))];
+    public static List<ManifestProblem> WithoutSecretPointers(List<ManifestProblem> problems)
+    {
+        // Memoized per pointer step, so the patterns run once per distinct segment, not once per problem (T074).
+        var carries = new Dictionary<JsonPointer, bool>(ReferenceEqualityComparer.Instance);
+        bool Carries(JsonPointer at)
+        {
+            if (at.Parent is null)
+            {
+                return false;
+            }
+
+            if (!carries.TryGetValue(at, out var result))
+            {
+                carries[at] = result = SecretPatterns.IsMatch(at.Segment) || Carries(at.Parent);
+            }
+
+            return result;
+        }
+
+        return [.. problems.Where(p => p.Location?.Path is not { } path || !Carries(path))];
+    }
 }

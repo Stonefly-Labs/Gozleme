@@ -49,8 +49,8 @@ public sealed class ManifestParserTests
     {
         var tree = Json("{\"a/b\":{\"c~d\":[true,\"😀\",3]},\n  \"é\":null}");
         var array = tree["a/b"]!["c~d"]!;
-        Assert.Equal("/a~1b/c~0d", array.Pointer);
-        Assert.Equal("/a~1b/c~0d/2", array.Items[2].Pointer);
+        Assert.Equal("/a~1b/c~0d", array.Pointer.ToString());
+        Assert.Equal("/a~1b/c~0d/2", array.Items[2].Pointer.ToString());
         Assert.Equal((1, 25), (array.Items[2].Line, array.Items[2].Column)); // the emoji is one column
         Assert.Equal((2, 7), (tree["é"]!.Line, tree["é"]!.Column));
     }
@@ -97,7 +97,7 @@ public sealed class ManifestParserTests
     {
         var tree = RestrictedYamlReader.Read("paths:\n  /a~b:\n    get:\n      summary: x\n", "native")!;
         var summary = tree["paths"]!["/a~b"]!["get"]!["summary"]!;
-        Assert.Equal("/paths/~1a~0b/get/summary", summary.Pointer);
+        Assert.Equal("/paths/~1a~0b/get/summary", summary.Pointer.ToString());
         Assert.Equal((4, 16), (summary.Line, summary.Column));
     }
 

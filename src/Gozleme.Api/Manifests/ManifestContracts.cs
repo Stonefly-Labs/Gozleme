@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Gozleme.Api.Manifests.Parsing;
 using Gozleme.Api.Manifests.Projection;
 
 namespace Gozleme.Api.Manifests;
@@ -16,9 +17,14 @@ internal static class ManifestPart
 /// Unicode scalar values). A <c>null</c> location is used for <c>too_large</c>.
 /// </summary>
 [JsonConverter(typeof(ProblemLocationConverter))]
-internal sealed record ProblemLocation(string Part, string? Pointer, int Line, int Column)
+internal sealed record ProblemLocation(string Part, JsonPointer? Path, int Line, int Column)
 {
-    public static ProblemLocation At(string part, string pointer) => new(part, pointer, 0, 0);
+    /// <summary>The RFC 6901 text of <see cref="Path"/>, built on demand (only reported problems are written).</summary>
+    public string? Pointer => Path?.ToString();
+
+    public static ProblemLocation At(string part, JsonPointer pointer) => new(part, pointer, 0, 0);
+
+    public static ProblemLocation At(string part, string pointer) => new(part, JsonPointer.Parse(pointer), 0, 0);
 
     public static ProblemLocation At(string part, int line, int column) => new(part, null, line, column);
 }

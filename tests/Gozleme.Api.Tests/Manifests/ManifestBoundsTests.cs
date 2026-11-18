@@ -151,4 +151,35 @@ public sealed class ManifestBoundsTests
         var body = Encoding.UTF8.GetBytes("{\"envelopeVersion\":1,\"family\":\"model\",");
         Assert.Equal(["malformed parse.syntax envelope 1:38"], Problems(Validate(body)));
     }
+
+    /// <summary>
+    /// T074 (security review F2): deep, long member names cost memory linear in the document, not in depth × name
+    /// length per node, and envelope junk is refused as too large without building costly locations.
+    /// </summary>
+    [Fact]
+    public void Deep_long_names_stay_linear_in_memory()
+    {
+        var native = new StringBuilder("""{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{},"x-z":""");
+        for (var d = 0; d < 60; d++)
+        {
+            native.Append("{\"").Append((char)('a' + (d % 26)), 1000).Append("\":");
+        }
+
+        native.Append('[').Append(string.Join(',', Enumerable.Repeat("\"AKIAAAAAAAAAAAAAAAAA\"", 8_000))).Append(']').Append('}', 60).Append('}');
+        var before = GC.GetTotalAllocatedBytes(true);
+        Assert.IsType<RejectedResult>(Validate("api", "openapi", "3.1", "json", native.ToString()));
+        Assert.True(GC.GetTotalAllocatedBytes(true) - before < 512L << 20, "native document allocated over 512 MiB");
+
+        var envelope = new StringBuilder("""{"envelopeVersion":1,"family":"model","capability":"x","version":"1.0.0","native":{"format":"gozleme-model-card","formatVersion":"1","encoding":"json","document":"{}"},"zz":""");
+        for (var d = 0; d < 62; d++)
+        {
+            envelope.Append("{\"").Append('/', 1024).Append("\":");
+        }
+
+        envelope.Append('[').Append(string.Join(',', Enumerable.Repeat("0", 20_000))).Append(']').Append('}', 62).Append('}');
+        before = GC.GetTotalAllocatedBytes(true);
+        var result = Assert.IsType<RejectedResult>(Validate(Encoding.UTF8.GetBytes(envelope.ToString())));
+        Assert.Equal("bound.envelope", Assert.Single(result.Problems).Rule);
+        Assert.True(GC.GetTotalAllocatedBytes(true) - before < 64L << 20, "envelope allocated over 64 MiB");
+    }
 }

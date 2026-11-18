@@ -86,7 +86,7 @@ internal sealed partial class McpAdapter : IProtocolAdapter
     {
         foreach (var (name, value) in Members(node))
         {
-            if (name is "inputSchema" or "outputSchema" or "_meta" || (name == "experimental" && node.Pointer.EndsWith("/capabilities", StringComparison.Ordinal)))
+            if (name is "inputSchema" or "outputSchema" or "_meta" || (name == "experimental" && node.Pointer is { Depth: 1, Segment: "capabilities" }))
             {
                 continue;
             }

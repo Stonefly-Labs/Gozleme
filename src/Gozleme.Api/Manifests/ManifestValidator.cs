@@ -123,9 +123,9 @@ internal sealed class ManifestValidator
             var c = Rank(a).CompareTo(Rank(b));
             if (c == 0 && a is not null && b is not null)
             {
-                c = (a.Pointer, b.Pointer) switch
+                c = (a.Path, b.Path) switch
                 {
-                    ({ } p, { } q) => ComparePointers(p, q),
+                    ({ } p, { } q) => ComparePointers(p.Segments(), q.Segments()),
                     (null, null) => (a.Line, a.Column).CompareTo((b.Line, b.Column)),
                     (null, _) => 1,
                     _ => -1,
@@ -147,13 +147,13 @@ internal sealed class ManifestValidator
             _ => 2,
         };
 
-        private static int ComparePointers(string p, string q)
+        /// <summary>Segment by segment: indices numerically, names ordinally in their RFC 6901 escaped form.</summary>
+        private static int ComparePointers(string[] a, string[] b)
         {
-            var a = p.Split('/');
-            var b = q.Split('/');
             for (var i = 0; i < Math.Min(a.Length, b.Length); i++)
             {
-                var c = int.TryParse(a[i], out var m) && int.TryParse(b[i], out var n) ? m.CompareTo(n) : string.CompareOrdinal(a[i], b[i]);
+                var c = int.TryParse(a[i], out var m) && int.TryParse(b[i], out var n) ? m.CompareTo(n)
+                    : string.CompareOrdinal(JsonPointer.Escape(a[i]), JsonPointer.Escape(b[i]));
                 if (c != 0)
                 {
                     return c;

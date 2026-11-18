@@ -17,9 +17,10 @@ internal static class SecretFields
     /// <summary>Rule 2 over a tree; <paramref name="skip"/> is a pointer whose value is not scanned (the envelope's native document).</summary>
     public static IEnumerable<ManifestProblem> Patterns(ManifestNode tree, string part, string? skip = null)
     {
+        var skipped = skip is null ? null : JsonPointer.Parse(skip);
         foreach (var node in tree.Descendants())
         {
-            if (node is { IsString: true, Text: { } text } && node.Pointer != skip && SecretPatterns.IsMatch(text))
+            if (node is { IsString: true, Text: { } text } && !node.Pointer.Equals(skipped) && SecretPatterns.IsMatch(text))
             {
                 yield return new ManifestProblem(ManifestRules.SecretPattern, ProblemLocation.At(part, node.Pointer));
             }
@@ -59,8 +60,4 @@ internal static class SecretFields
             }
         }
     }
-
-    /// <summary>Whether an RFC 6901 pointer has a segment that matches the patterns (such a pointer is never returned).</summary>
-    public static bool CarriesSecret(string pointer) =>
-        pointer.Split('/').Any(s => s.Length > 0 && SecretPatterns.IsMatch(s.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal)));
 }
