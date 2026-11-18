@@ -52,4 +52,28 @@ public sealed class SchemaNoiseTests
             ["unknown_field native.unknown-field native /packages/0/transport/url", "invalid_value native.schema native /packages/0/version"],
             Problems(Validate("mcp", "mcp-server-manifest", "1", "json", Text(doc))));
     }
+
+    /// <summary>
+    /// T073 (SC-006, security review F1): thousands of unknown members on one object beside an invalid value cost one
+    /// branch re-validation per alternative, not one per member, and every one is still reported (up to the cap).
+    /// </summary>
+    [Fact]
+    public void Many_unknown_members_beside_an_invalid_value_stay_cheap()
+    {
+        var doc = JsonNode.Parse(Mcp())!.AsObject();
+        var transport = new JsonObject { ["type"] = "stdio" };
+        for (var i = 0; i < 8_000; i++)
+        {
+            transport["u" + i] = 1;
+        }
+
+        doc["packages"] = new JsonArray(new JsonObject { ["registryType"] = "npm", ["identifier"] = "@e/f", ["version"] = 5, ["transport"] = transport });
+        var text = Text(doc);
+        Validate("mcp", "mcp-server-manifest", "1", "json", text); // warm the branch wrappers
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var result = Assert.IsType<Gozleme.Api.Manifests.RejectedResult>(Validate("mcp", "mcp-server-manifest", "1", "json", text));
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"took {watch.Elapsed}");
+        Assert.True(result.Truncated);
+        Assert.All(result.Problems, p => Assert.Contains(p.Category, (string[])["unknown_field", "invalid_value"]));
+    }
 }

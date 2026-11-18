@@ -117,9 +117,29 @@ internal sealed class SchemaRegistry
             }
         }
 
+        // One validation's branch checks are memoized per (branch, object) and each object is serialized once (T073),
+        // so many unknown members of one object cost one re-validation per alternative, not one per member.
         var instance = new Lazy<System.Text.Json.Nodes.JsonNode?>(() => System.Text.Json.Nodes.JsonNode.Parse(instanceJson));
+        var objects = new Dictionary<string, byte[]?>(StringComparer.Ordinal);
+        var matches = new Dictionary<(string Branch, string Object), bool>();
         var problems = Reduce(failures, part, (evaluation, member) =>
-            _declarations.IsDeclared(uri, evaluation, member, branch => MatchesBranch(branch, instance.Value, Parent(member))));
+        {
+            var owner = Parent(member);
+            return _declarations.IsDeclared(uri, evaluation, member, branch =>
+            {
+                if (!matches.TryGetValue((branch, owner), out var match))
+                {
+                    if (!objects.TryGetValue(owner, out var bytes))
+                    {
+                        objects[owner] = bytes = ObjectBytes(instance.Value, owner);
+                    }
+
+                    matches[(branch, owner)] = match = bytes is not null && MatchesBranch(branch, bytes);
+                }
+
+                return match;
+            });
+        });
 
         // Never accept an invalid document: if every failure was judged noise, report the unknown members anyway.
         return problems.Count > 0 ? problems
@@ -138,15 +158,43 @@ internal sealed class SchemaRegistry
     internal static List<ManifestProblem> Reduce(List<(string Evaluation, string Instance)> failures, string part, Func<string, string, bool> declared)
     {
         var distinct = failures.Distinct().ToList();
-        var leaves = distinct.Where(f => !distinct.Any(o => o.Evaluation.Length > f.Evaluation.Length
-            && o.Evaluation.StartsWith(f.Evaluation, StringComparison.Ordinal) && o.Evaluation[f.Evaluation.Length] == '/')).ToList();
+
+        // A failure is a leaf when no other failure's evaluation path extends it; one pass over every path's prefixes (T073).
+        var extended = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (evaluation, _) in distinct)
+        {
+            if (evaluation.Length > 0)
+            {
+                extended.Add(string.Empty);
+            }
+
+            for (var i = evaluation.Length > 1 ? evaluation.IndexOf('/', 1) : -1; i > 0; i = evaluation.IndexOf('/', i + 1))
+            {
+                extended.Add(evaluation[..i]);
+            }
+        }
+
+        var leaves = distinct.Where(f => !extended.Contains(f.Evaluation)).ToList();
+
+        // An object-level additional/unevaluatedProperties entry gives way to its member entries under the same keyword path.
+        var summarized = new HashSet<(string Evaluation, string Instance)>();
+        foreach (var (evaluation, instance) in leaves)
+        {
+            for (var at = instance; at.Length > 0;)
+            {
+                at = Parent(at);
+                if (!summarized.Add((evaluation, at)))
+                {
+                    break;
+                }
+            }
+        }
 
         var mapped = new List<(string Keyword, string Instance)>();
         foreach (var (evaluation, instance) in leaves)
         {
             var keyword = Keyword(evaluation);
-            if (keyword is "additionalProperties" or "unevaluatedProperties"
-                && leaves.Any(o => o.Evaluation == evaluation && IsBeneath(o.Instance, instance)))
+            if (keyword is "additionalProperties" or "unevaluatedProperties" && summarized.Contains((evaluation, instance)))
             {
                 continue;
             }
@@ -186,8 +234,8 @@ internal sealed class SchemaRegistry
         return keyword;
     }
 
-    /// <summary>Whether the value at <paramref name="pointer"/> is valid against the bundled schema at <paramref name="branch"/> alone.</summary>
-    private bool MatchesBranch(string branch, System.Text.Json.Nodes.JsonNode? root, string pointer)
+    /// <summary>The value at <paramref name="pointer"/> serialized as UTF-8 JSON, or null when there is none.</summary>
+    private static byte[]? ObjectBytes(System.Text.Json.Nodes.JsonNode? root, string pointer)
     {
         var node = root;
         foreach (var segment in pointer.Split('/', StringSplitOptions.RemoveEmptyEntries))
@@ -201,21 +249,22 @@ internal sealed class SchemaRegistry
             };
             if (node is null)
             {
-                return false;
+                return null;
             }
         }
 
-        if (node is null)
-        {
-            return false;
-        }
+        return node is null ? null : System.Text.Encoding.UTF8.GetBytes(node.ToJsonString());
+    }
 
+    /// <summary>Whether <paramref name="value"/> is valid against the bundled schema at <paramref name="branch"/> alone.</summary>
+    private bool MatchesBranch(string branch, byte[] value)
+    {
         var wrapper = _compiled.GetOrAdd("branch " + branch, _ => new Lazy<CorvusSchema>(
             () => CompileText(System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string> { ["$ref"] = branch }), LocalBase + "branch/" + Uri.EscapeDataString(branch)),
             LazyThreadSafetyMode.ExecutionAndPublication)).Value;
         try
         {
-            return wrapper.Validate(System.Text.Encoding.UTF8.GetBytes(node.ToJsonString()));
+            return wrapper.Validate(value);
         }
         catch (RegexMatchTimeoutException)
         {
@@ -224,9 +273,6 @@ internal sealed class SchemaRegistry
     }
 
     private static string Parent(string pointer) => pointer.LastIndexOf('/') is var i and > 0 ? pointer[..i] : string.Empty;
-
-    private static bool IsBeneath(string pointer, string ancestor) =>
-        pointer.Length > ancestor.Length && pointer.StartsWith(ancestor, StringComparison.Ordinal) && pointer[ancestor.Length] == '/';
 
     private static string Pointer(string location) => location.StartsWith('#') ? location[1..] : location;
 
