@@ -60,9 +60,11 @@ public sealed class RevisionTelemetryTests(PgvectorDatabaseFixture fixture) : IA
         var statement = await _s.Erin.GetByteArrayAsync(new Uri(_s.Revision(capabilityId, revisionId) + "/statement", UriKind.Relative), ct);
         var signature = await _s.Erin.GetByteArrayAsync(new Uri(_s.Revision(capabilityId, revisionId) + "/signature", UriKind.Relative), ct);
 
-        // The operator span: its exit code only.
+        // The operator span: its exit code only. The listener is process-wide and other classes run succession in
+        // parallel, so only spans in this test's own trace count.
         var operatorSpans = new List<Activity>();
-        using (Listen(operatorSpans))
+        using (var parent = new Activity("revision-telemetry-test").Start())
+        using (Listen(operatorSpans, parent.TraceId))
         {
             Assert.Equal(0, (await _s.SuccessionAsync(null, null, "--publisher", _s.PublisherId, "--reason", "lost")).Code);
         }
@@ -152,7 +154,7 @@ public sealed class RevisionTelemetryTests(PgvectorDatabaseFixture fixture) : IA
         return points;
     }
 
-    private static ActivityListener Listen(List<Activity> spans)
+    private static ActivityListener Listen(List<Activity> spans, ActivityTraceId trace)
     {
         var listener = new ActivityListener
         {
@@ -160,7 +162,7 @@ public sealed class RevisionTelemetryTests(PgvectorDatabaseFixture fixture) : IA
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = a =>
             {
-                if (a.DisplayName.StartsWith("gozleme.operator.", StringComparison.Ordinal))
+                if (a.TraceId == trace && a.DisplayName.StartsWith("gozleme.operator.", StringComparison.Ordinal))
                 {
                     lock (spans)
                     {
