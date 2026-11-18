@@ -14,9 +14,13 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="Corvus.Text.Json.Validator" />
+    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Identity/common-passwords.txt" LogicalName="Gozleme.Api.Identity.common-passwords.txt" />
+    <!-- GOZ-0006: bundled manifest schemas, resolved offline by SchemaRegistry (resource name = path under Schemas/) -->
+    <EmbeddedResource Include="Manifests/Schemas/**/*.json" LogicalName="Manifests/Schemas/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Gozleme.Api.Tests" />

@@ -17,3 +17,6 @@ export const listCapabilities = (
   publisherId: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<Fetched<{ origin: string; capabilities: Capability[] }>> => get(capabilitiesPath(organizationId, publisherId), fetchImpl);
+
+export const getCapability = (organizationId: string, publisherId: string, capabilityId: string, fetchImpl: typeof fetch = fetch): Promise<Fetched<Capability>> =>
+  get(`${capabilitiesPath(organizationId, publisherId)}/${segment(capabilityId)}`, fetchImpl);

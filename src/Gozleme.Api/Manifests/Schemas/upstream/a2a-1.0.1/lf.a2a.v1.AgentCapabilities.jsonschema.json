@@ -1,0 +1,39 @@
+{
+  "$id": "lf.a2a.v1.AgentCapabilities.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines optional capabilities supported by an agent.",
+  "patternProperties": {
+    "^(extended_agent_card)$": {
+      "description": "Indicates if the agent supports providing an extended agent card when authenticated.",
+      "type": "boolean"
+    },
+    "^(push_notifications)$": {
+      "description": "Indicates if the agent supports sending push notifications for asynchronous task updates.",
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "extendedAgentCard": {
+      "description": "Indicates if the agent supports providing an extended agent card when authenticated.",
+      "type": "boolean"
+    },
+    "extensions": {
+      "description": "A list of protocol extensions supported by the agent.",
+      "items": {
+        "$ref": "lf.a2a.v1.AgentExtension.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "pushNotifications": {
+      "description": "Indicates if the agent supports sending push notifications for asynchronous task updates.",
+      "type": "boolean"
+    },
+    "streaming": {
+      "description": "Indicates if the agent supports streaming responses.",
+      "type": "boolean"
+    }
+  },
+  "title": "Agent Capabilities",
+  "type": "object"
+}

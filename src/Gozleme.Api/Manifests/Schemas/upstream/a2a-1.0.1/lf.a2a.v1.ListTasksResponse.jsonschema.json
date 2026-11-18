@@ -1,0 +1,89 @@
+{
+  "$id": "lf.a2a.v1.ListTasksResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Result object for `ListTasks` method containing an array of tasks and pagination information.",
+  "patternProperties": {
+    "^(next_page_token)$": {
+      "default": "",
+      "description": "A token to retrieve the next page of results, or empty if there are no more results in the list.",
+      "type": "string"
+    },
+    "^(page_size)$": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0,
+      "description": "The page size used for this response."
+    },
+    "^(total_size)$": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0,
+      "description": "Total number of tasks available (before pagination)."
+    }
+  },
+  "properties": {
+    "nextPageToken": {
+      "default": "",
+      "description": "A token to retrieve the next page of results, or empty if there are no more results in the list.",
+      "type": "string"
+    },
+    "pageSize": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0,
+      "description": "The page size used for this response."
+    },
+    "tasks": {
+      "description": "Array of tasks matching the specified criteria.",
+      "items": {
+        "$ref": "lf.a2a.v1.Task.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "totalSize": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0,
+      "description": "Total number of tasks available (before pagination)."
+    }
+  },
+  "title": "List Tasks Response",
+  "type": "object"
+}

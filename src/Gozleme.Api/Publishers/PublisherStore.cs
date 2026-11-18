@@ -63,14 +63,15 @@ internal sealed class PublisherStore(GozlemeDbContext db, TimeProvider time)
     /// <summary>
     /// Inserts the publisher, then consumes this organization's earmark for the handle or inserts a held claim, in
     /// the request transaction (research R2). The live unique index makes a concurrent registration wait, then fail.
+    /// <paramref name="id"/> is set only by the demo seed (GOZ-0006 research R14).
     /// </summary>
     public async Task<(WriteResult Result, Publisher? Publisher, Guid ClaimId)> RegisterAsync(
-        Guid organizationId, Guid userId, string handle, string displayName, CancellationToken ct)
+        Guid organizationId, Guid userId, string handle, string displayName, CancellationToken ct, Guid? id = null)
     {
         var now = Now();
         var publisher = new Publisher
         {
-            Id = Guid.CreateVersion7(now),
+            Id = id ?? Guid.CreateVersion7(now),
             OrganizationId = organizationId,
             Handle = handle,
             DisplayName = displayName,
@@ -105,14 +106,14 @@ internal sealed class PublisherStore(GozlemeDbContext db, TimeProvider time)
         }
     }
 
-    /// <summary>One insert; <c>capabilities_reserve_alias</c> reserves <c>handle/name</c> in the same statement.</summary>
+    /// <summary>One insert; <c>capabilities_reserve_alias</c> reserves <c>handle/name</c> in the same statement. <paramref name="id"/>: demo seed only.</summary>
     public async Task<(WriteResult Result, Capability? Capability)> CreateCapabilityAsync(
-        Publisher publisher, Guid userId, string name, string displayName, CancellationToken ct)
+        Publisher publisher, Guid userId, string name, string displayName, CancellationToken ct, Guid? id = null)
     {
         var now = Now();
         var capability = new Capability
         {
-            Id = Guid.CreateVersion7(now),
+            Id = id ?? Guid.CreateVersion7(now),
             OrganizationId = publisher.OrganizationId,
             PublisherId = publisher.Id,
             Name = name,

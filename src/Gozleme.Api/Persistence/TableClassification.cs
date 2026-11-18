@@ -17,11 +17,13 @@ internal static class TableClassification
 
     /// <summary>
     /// Global account-level infrastructure (GOZ-0001): keyed by account, no tenant content, no tenant RLS. GOZ-0005 adds
-    /// the per-account publisher registration counter, which is used after authorization and goes with the account.
+    /// the per-account publisher registration counter and GOZ-0006 the per-account manifest validation counter (T099), both
+    /// used after authorization and gone with the account.
     /// </summary>
     public static readonly IReadOnlySet<string> GlobalIdentity = new HashSet<string>(StringComparer.Ordinal)
     {
         "users", "user_claims", "user_logins", "user_tokens", "auth_sessions", "data_protection_keys", "publisher_registration_attempts",
+        "manifest_validation_attempts",
     };
 
     /// <summary>

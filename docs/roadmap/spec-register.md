@@ -2,7 +2,7 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 42 · **Complete on main:** 6 · **Blocked:** 0 · **Ready for human merge:** 0
+**Specs:** 42 · **Complete on main:** 6 · **Blocked:** 0 · **Ready for human merge:** 1
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
@@ -12,7 +12,7 @@
 | [GOZ-0003](../prompts/spec-0003.md) — Tenant RLS and visibility scaffolding | foundation | complete | merged | GOZ-0002 | Complete — merged to main in 0fc67d21f0771a3793248c48a9aff0043038af25 (PR #10, verified 2026-11-16). |
 | [GOZ-0004](../prompts/spec-0004.md) — Scoped RBAC permission foundation | foundation | complete | merged | GOZ-0003 | Complete — merged to main in b48a2af2bcadb8073eb076750a17bf435fb83da5 (PR #17, verified 2026-11-16). |
 | [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | complete | merged | GOZ-0004 | Complete — merged to main in 2f63e016d5676734ff88ca6cf9b0917db4528d60 (PR #19, verified 2026-11-17); 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates. |
-| [GOZ-0006](../prompts/spec-0006.md) — Typed manifests for capability families | publishing | not-started | — | GOZ-0005 | Prerequisite GOZ-0005 merged (PR #19); no open impact decision is due before GOZ-0006 (IF-02 before GOZ-0012 plan; IF-04, IF-05, IF-08 before GOZ-0039); prompt revision 7 carries the publisher identity conventions (IF-01, IF-03, IF-06, IF-07, IF-09, IF-10); start on feature/goz-0006-* |
+| [GOZ-0006](../prompts/spec-0006.md) — Typed manifests for capability families | publishing | ready-for-human-merge | pr-ready | GOZ-0005 | Human review and merge of PR #21 (all CI checks pass at 1c88ccd); no open GOZ-0006 impact decisions (IF-05 and IF-13 decided 2026-11-18). |
 | [GOZ-0007](../prompts/spec-0007.md) — Immutable revisions and signed attestations | publishing | not-started | — | GOZ-0006 | Await prerequisites and create allowed working branch |
 | [GOZ-0008](../prompts/spec-0008.md) — Child capability identities and projections | publishing | not-started | — | GOZ-0007 | Await prerequisites and create allowed working branch |
 | [GOZ-0009](../prompts/spec-0009.md) — Filesystem artifact publication | publishing | not-started | — | GOZ-0007 | Await prerequisites and create allowed working branch |

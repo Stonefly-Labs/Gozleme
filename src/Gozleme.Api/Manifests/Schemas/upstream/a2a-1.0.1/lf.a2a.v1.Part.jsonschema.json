@@ -1,0 +1,48 @@
+{
+  "$id": "lf.a2a.v1.Part.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "`Part` represents a container for a section of communication content.\n Parts can be purely textual, some sort of file (image, video, etc) or\n a structured data blob (i.e. JSON).",
+  "patternProperties": {
+    "^(media_type)$": {
+      "default": "",
+      "description": "The `media_type` (MIME type) of the part content (e.g., \"text/plain\", \"application/json\", \"image/png\").\n This field is available for all part types.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "data": {
+      "$ref": "google.protobuf.Value.jsonschema.json",
+      "description": "Arbitrary structured `data` as a JSON value (object, array, string, number, boolean, or null)."
+    },
+    "filename": {
+      "default": "",
+      "description": "An optional `filename` for the file (e.g., \"document.pdf\").",
+      "type": "string"
+    },
+    "mediaType": {
+      "default": "",
+      "description": "The `media_type` (MIME type) of the part content (e.g., \"text/plain\", \"application/json\", \"image/png\").\n This field is available for all part types.",
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "google.protobuf.Struct.jsonschema.json",
+      "description": "Optional. metadata associated with this part."
+    },
+    "raw": {
+      "description": "The `raw` byte content of a file. In JSON serialization, this is encoded as a base64 string.",
+      "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+      "type": "string"
+    },
+    "text": {
+      "description": "The string content of the `text` part.",
+      "type": "string"
+    },
+    "url": {
+      "description": "A `url` pointing to the file's content.",
+      "type": "string"
+    }
+  },
+  "title": "Part",
+  "type": "object"
+}

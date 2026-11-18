@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gozleme.dev/manifest/projection/1.json",
+  "title": "Gözleme normalized projection v1 (GOZ-0006, contracts/projection-v1.md)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "projectionVersion",
+    "adapter",
+    "family",
+    "kind",
+    "nativeName",
+    "title",
+    "description",
+    "declaredVersion",
+    "attributes",
+    "entries",
+    "derived"
+  ],
+  "properties": {
+    "projectionVersion": {
+      "const": "1"
+    },
+    "adapter": {
+      "enum": [
+        "mcp/1",
+        "a2a/1",
+        "api/1",
+        "event/1",
+        "skill/1",
+        "model/1"
+      ]
+    },
+    "family": {
+      "enum": [
+        "mcp",
+        "a2a",
+        "model",
+        "skill",
+        "api",
+        "event"
+      ]
+    },
+    "kind": {
+      "enum": [
+        "mcp-server",
+        "a2a-agent",
+        "openapi-api",
+        "asyncapi-application",
+        "agent-skill",
+        "model"
+      ]
+    },
+    "nativeName": {
+      "type": "string"
+    },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "declaredVersion": {
+      "type": "string"
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocolRevision": {
+          "enum": [
+            "2026-07-28",
+            "2025-11-25"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "stateless",
+            "stateful"
+          ]
+        },
+        "transports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "protocolBindings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "openapiVersion": {
+          "type": "string"
+        },
+        "asyncapiVersion": {
+          "type": "string"
+        },
+        "inputModalities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outputModalities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contextWindowTokens": {
+          "type": "integer"
+        },
+        "maxOutputTokens": {
+          "type": "integer"
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "nativeName"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "tool",
+              "resource",
+              "resource-template",
+              "prompt",
+              "skill",
+              "operation",
+              "webhook",
+              "channel"
+            ]
+          },
+          "nativeName": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "derived": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

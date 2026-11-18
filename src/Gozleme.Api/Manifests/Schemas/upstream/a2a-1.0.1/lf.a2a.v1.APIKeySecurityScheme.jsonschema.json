@@ -1,0 +1,25 @@
+{
+  "$id": "lf.a2a.v1.APIKeySecurityScheme.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines a security scheme using an API key.",
+  "properties": {
+    "description": {
+      "default": "",
+      "description": "An optional description for the security scheme.",
+      "type": "string"
+    },
+    "location": {
+      "default": "",
+      "description": "The location of the API key. Valid values are \"query\", \"header\", or \"cookie\".",
+      "type": "string"
+    },
+    "name": {
+      "default": "",
+      "description": "The name of the header, query, or cookie parameter to be used.",
+      "type": "string"
+    }
+  },
+  "title": "API Key Security Scheme",
+  "type": "object"
+}

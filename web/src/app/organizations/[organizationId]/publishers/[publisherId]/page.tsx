@@ -117,6 +117,7 @@ export default async function PublisherPage({
               publisherId={publisher.data.id}
               capabilities={capabilities.data.capabilities}
               canRename={active && permissions.includes("capability.rename")}
+              canValidate={active && permissions.includes("manifest.validate")}
             />
           </div>
         )}

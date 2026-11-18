@@ -1,0 +1,27 @@
+{
+  "$id": "lf.a2a.v1.OpenIdConnectSecurityScheme.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines a security scheme using OpenID Connect.",
+  "patternProperties": {
+    "^(open_id_connect_url)$": {
+      "default": "",
+      "description": "The [OpenID Connect Discovery URL](https://openid.net/specs/openid-connect-discovery-1_0.html) for the OIDC provider's metadata.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "description": {
+      "default": "",
+      "description": "An optional description for the security scheme.",
+      "type": "string"
+    },
+    "openIdConnectUrl": {
+      "default": "",
+      "description": "The [OpenID Connect Discovery URL](https://openid.net/specs/openid-connect-discovery-1_0.html) for the OIDC provider's metadata.",
+      "type": "string"
+    }
+  },
+  "title": "Open Id Connect Security Scheme",
+  "type": "object"
+}

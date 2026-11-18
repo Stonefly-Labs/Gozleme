@@ -122,3 +122,19 @@ a { color: var(--focus); }
 .capability-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
 .form-inline { margin-top: 12px; }
 .detail-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+/* GOZ-0006 manifests */
+.family-picker { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.family-picker legend { font-weight: 600; margin-bottom: 6px; }
+.family-option { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; cursor: pointer; }
+.family-option:has(input:checked) { border-color: var(--focus); color: var(--focus); font-weight: 600; }
+.field select, .manifest-input { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.manifest-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8125rem; min-height: 280px; width: 100%; resize: vertical; }
+.panels { display: grid; gap: 16px; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+.panel-version { color: var(--muted); font-size: 0.875rem; }
+.native-document { margin: 12px 0 0; max-height: 360px; overflow: auto; padding: 12px; border-radius: 6px; background: var(--unknown-bg); font-size: 0.8125rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.derived { margin-left: 6px; }
+.problem-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.problem { border-left: 3px solid var(--down-fg); padding: 4px 0 4px 12px; display: grid; gap: 4px; }
+.problem p { margin: 0; }
+.problem-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.875rem; color: var(--muted); }

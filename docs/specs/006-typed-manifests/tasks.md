@@ -1,0 +1,263 @@
+---
+
+description: "Task list for GOZ-0006 Typed manifests for capability families"
+---
+
+# Tasks: Typed Manifests for Capability Families
+
+**Input**: Design documents from `docs/specs/006-typed-manifests/`
+
+**Prerequisites**: plan.md, spec.md, research.md (R1–R17), data-model.md, contracts/ (manifest-validation.md, manifest-api.openapi.yaml, manifest-envelope-v1.schema.json, native-formats.md, mcp-server-manifest-v1.schema.json, model-card-v1.schema.json, projection-v1.md, secret-patterns.md, permissions-delta.md), quickstart.md
+
+**Tests**: Required. The spec demands every bundled sample to give exactly its expected result (SC-001), byte-identical native documents (SC-003), a no-secret scan of telemetry, logs and responses (SC-004), the role × action matrix (SC-005), a performance bound (SC-006), proof that nothing is stored (SC-007) and a cumulative browser demo (FR-026; Constitution IV/VI).
+
+**Organization**: Tasks are grouped by user story so each story can be implemented and tested independently. All four stories are P1 and run in spec order: US1, US2, US3, US4. The endpoint and its full authorization order are foundational, because every story calls it. US4 proves that order and adds the permission-hidden UI.
+
+**Stop rule (research R1–R3, plan "Vendoring risks")**: T001–T004 verify upstream facts marked **verify at vendoring**. If a fact differs from research.md, record the difference in `progress.yaml` `blockers` with evidence and stop for maintainer review. Never fall back silently to another library or format (P1–P4 are maintainer decisions).
+
+## Format: `[ID] [P?] [Story] Description`
+
+- **[P]**: Can run in parallel (different files, no dependencies)
+- **[Story]**: Which user story this task belongs to (US1–US4)
+
+## Path Conventions
+
+API `src/Gozleme.Api/` (new module `src/Gozleme.Api/Manifests/`), API tests `tests/Gozleme.Api.Tests/Manifests/` (unit) and `tests/Gozleme.Api.IntegrationTests/` (Testcontainers), web `web/src/`, samples `web/src/samples/manifests/`, demo `e2e/`.
+
+---
+
+## Phase 1: Setup (Vendoring, packages, bundled schemas)
+
+**Purpose**: Pin dependencies and upstream material, and verify the "verify at vendoring" facts before any code depends on them
+
+- [X] T001 Add `Corvus.Text.Json.Validator` 5.8.11 (P1 revised 2026-11-17; V4 `Corvus.Json.Validator` was replaced after T002) and `YamlDotNet` 18.1.0 to `Directory.Packages.props` (remove the Corvus CTJ* analyzers in `Directory.Build.targets`) and reference both from `src/Gozleme.Api/Gozleme.Api.csproj`. Run `dotnet list package --vulnerable --include-transitive` and record the output in `docs/specs/006-typed-manifests/evidence/dependency-check.txt` (research R17)
+- [X] T002 Spike Corvus in a throwaway test under `tests/Gozleme.Api.Tests/Manifests/CorvusSpikeTests.cs` (deleted or folded into `ManifestSchemaPinTests` after): (a) whether it compiles schemas dynamically with Roslyn, and the measured start-up time and published image size delta; (b) that each failure exposes the keyword and instance location; (c) that a 2020-12 overlay can `$ref` draft-07 `$defs` and apply `unevaluatedProperties`; (d) that a draft-04 schema (OAS 3.0) validates. Record results in `research.md` R2 under a "Verified at vendoring" note. If (a) or (b) fails, record a blocker and stop (research R2). If (c) fails, the overlay restates the `server.json` shapes in 2020-12 and records it in `SOURCES.md`
+- [X] T003 [P] Vendor the upstream schemas byte-for-byte into `src/Gozleme.Api/Manifests/Schemas/upstream/` (research R1): `mcp-2026-07-28.json` and `mcp-2025-11-25.json` (repo `modelcontextprotocol/modelcontextprotocol`, tags `2026-07-28` and `2025-11-25`, `schema/<rev>/schema.json`), `mcp-registry-2025-12-11.json` (`server.schema.json`), `oas-3.1-2026-11-05.json`, `oas-3.0-2024-10-18.json`, `asyncapi-3.0.0.json` (`spec-json-schemas` release v6.11.1, `schemas/3.0.0-without-$id.json`). Verify the 2025-11-25 MCP dialect (research R1 table: **verify at vendoring**) and record it
+- [X] T004 [P] Produce `src/Gozleme.Api/Manifests/Schemas/upstream/a2a-1.0.1/` (47 unstitched per-message files, each `$id` = file name; maintainer decision 2026-11-17) by generating JSON Schema from `specification/a2a.proto` at A2A tag `v1.0.1`, and record the generator, its version and the command in `SOURCES.md`. Verify that `AgentCard`, `AgentCapabilities` and `AgentCardSignature` are closed (`additionalProperties: false`). If the published `a2a.json` differs materially from the generated bundle, record the difference and stop for review (research R1)
+- [X] T005 Write the Gözleme schemas in `src/Gozleme.Api/Manifests/Schemas/gozleme/`: `envelope-1.json` (copy of contracts/manifest-envelope-v1.schema.json), `mcp-server-manifest-1.json` (contracts/mcp-server-manifest-v1.schema.json), `mcp-strict-2026-07-28.json` and `mcp-strict-2025-11-25.json` (overlays that `$ref` the upstream `Implementation`, `ServerCapabilities`, `Tool`, `Resource`, `ResourceTemplate`, `Prompt` `$defs` of their revision and the `server.json` remote and `Package` shapes, adding `unevaluatedProperties: false` at every object Gözleme closes and leaving `_meta` open; research R2), `agent-skills-2026-11-17.json` (the front-matter table in contracts/native-formats.md: `name` "1–64 characters, `^[a-z0-9]+(-[a-z0-9]+)*$`", `description` "1–1024 characters", optional `license`, `compatibility` "1–500 characters", `metadata` string → string map, `allowed-tools` string; closed), `a2a-strict-1.0.1.json` (overlay over `upstream/a2a-1.0.1/lf.a2a.v1.AgentCard.jsonschema.json` adding the `required` lists of every `(google.api.field_behavior) = REQUIRED` field reachable from `AgentCard` in `a2a.proto` v1.0.1, which the generator drops; research R2), `model-card-1.json` (contracts/model-card-v1.schema.json) and `projection-1.json` (closed; contracts/projection-v1.md shape)
+- [X] T006 Embed all schema files as resources in `src/Gozleme.Api/Gozleme.Api.csproj`, and write `src/Gozleme.Api/Manifests/Schemas/SOURCES.md`: for each file its source URL, tag or commit, SHA-256 and licence (OpenAPI and AsyncAPI Apache-2.0, MCP MIT, A2A Apache-2.0, Gözleme files marked as such). Add the upstream notices to the repository third-party notices file (create `THIRD-PARTY-NOTICES.md` at the root if none exists)
+
+---
+
+## Phase 2: Foundational (Blocking Prerequisites)
+
+**Purpose**: Parsing, bounds, rule catalogue, offline schema registry, pipeline, permission, endpoint, telemetry and seed that every story uses
+
+**⚠️ CRITICAL**: No user story work can begin until this phase is complete
+
+- [X] T007 Create `src/Gozleme.Api/Manifests/ManifestRules.cs`: the closed category enum in contract order (`malformed`, `too_large`, `unsupported_version`, `unsupported_family`, `unsupported_format`, `unknown_field`, `reserved_claim`, `secret_value`, `identity_mismatch`, `external_reference`, `invalid_value`) and the rule catalogue v1, exactly the rule → category table in contracts/manifest-validation.md, each with one fixed English message that never interpolates input. A2A signatures use `reserved.a2a-signatures` (research R6 was aligned to the contract at tasks time)
+- [X] T008 [P] Create `src/Gozleme.Api/Manifests/ManifestContracts.cs`: `ValidationProblem {category, rule, location, message}`; `ProblemLocation` as `{part, pointer}`, `{part, line, column}` or `null`; accepted result `{outcome: accepted, envelope (without document), native {format, formatVersion, encoding, document, digest, byteLength}, projection}`; rejected result `{outcome: rejected, problems[≤50], truncated}`; error bodies `forbidden`, `suspended`, `rate_limited`, `unsupported_media_type`, `too_large`, `unavailable`. Serialization uses fixed property order so results are byte-identical for identical input (FR-015)
+- [X] T009 [P] Create `src/Gozleme.Api/Manifests/Parsing/ManifestNode.cs` and `Parsing/TextPositions.cs`: immutable node kinds object (ordered members), array, string, number (kept as source text), boolean, null; each with RFC 6901 `pointer` (escape `~` → `~0`, `/` → `~1`) and 1-based `line`/`column` in Unicode scalar values; byte-offset → line/column mapping. Bounds per data-model.md: "depth 64, 50,000 nodes, member names of at most 1,024 characters"
+- [X] T010 Create `src/Gozleme.Api/Manifests/Parsing/JsonTreeReader.cs` over `Utf8JsonReader` with `MaxDepth = 64`, `CommentHandling = Disallow`, `AllowTrailingCommas = false`: ordinal per-object duplicate detection (`parse.duplicate-key`), skip but keep a leading U+FEFF, control characters other than TAB/LF/CR outside strings → `parse.encoding`, depth/node/name bounds → `bound.depth`/`bound.nodes`/`bound.name`, syntax errors → `parse.syntax` with line and column. Check whether the reader exposes a duplicate-property option and, if so, use it as a second check (research R3, verify at vendoring)
+- [X] T011 Create `src/Gozleme.Api/Manifests/Parsing/RestrictedYamlReader.cs` using only `YamlDotNet.Core.Parser` events (P2): `AnchorAlias`, any non-empty `Anchor`, any explicit `Tag` (including `!!str`), a `<<` key, more than one document, a non-scalar mapping key and a duplicate key are `malformed` rule `parse.yaml-feature` or `parse.duplicate-key`; plain scalars resolve with the YAML 1.2 core schema (`null`/`~`/empty → null; `true`/`false` → boolean; core int and float patterns → number; everything else, including `yes`/`no`/`on`/`off`, → string); positions from the event `Start` mark; depth and node counts enforced while streaming, stopping before more tree is built (research R3)
+- [X] T012 [P] Create `src/Gozleme.Api/Manifests/Parsing/SkillMarkdownReader.cs`: optional BOM, a `---` line, front matter parsed by `RestrictedYamlReader`, a closing `---` line; otherwise `malformed` rule `parse.front-matter` at line 1. The body after the closing line is kept unparsed and exposed line by line with line numbers for the secret scan (research R3)
+- [X] T013 [P] Create `src/Gozleme.Api/Manifests/SchemaRegistry.cs`: registers every embedded schema by `$id` (MCP files, which have none, and the A2A per-message files under fixed `https://schemas.gozleme.invalid/upstream/...` base URIs) in an in-memory `JsonSchemaDocumentResolver` (Corvus.Text.Json.Validator) that refuses any URI not bundled (no network, no file system; FR-006); compiles each schema once; reduces failures to `(keyword, instance location)` pairs, mapping `additionalProperties`/`unevaluatedProperties`/`propertyNames` to `unknown_field` (rule `native.unknown-field`) and every other keyword to `invalid_value` (rule `native.schema`), never returning schema message text (research R2). Add a hosted warm-up service that compiles all schemas at start without blocking health
+- [X] T014 Create `src/Gozleme.Api/Manifests/Adapters/IProtocolAdapter.cs`: `Id` (`mcp/1`, `a2a/1`, `api/1`, `event/1`, `skill/1`, `model/1`), `Formats` rows `(format, formatVersion, encodings)` exactly per the contracts/native-formats.md matrix, `Validate(tree, context, problems)` and `Project(tree, envelope)`. Adapters are stateless singletons with no I/O (data-model.md ProtocolAdapter)
+- [X] T015 Create `src/Gozleme.Api/Manifests/EnvelopeReader.cs` (research R3, R5 stages 1–2, data-model.md ManifestEnvelope): parse the body with `JsonTreeReader`; envelope without `native.document` "≤ 16 KiB" else `bound.envelope`; `envelopeVersion` must be `1` else `unsupported_version` (stop); `family` one of the six else `unsupported_family` (stop); `native.format`/`formatVersion` must be a row of the family's matrix else `unsupported_format` rule `envelope.format` (stop); `native.encoding` allowed for the format else `malformed` (stop); `native.document` not a string → `malformed` rule `parse.not-string`; a lone surrogate in `native.document` → `malformed` at its body position; then collect `envelope.unknown-field`, `envelope.required`, `envelope.semver` (SemVer 2.0.0 pattern from the envelope schema, "maxLength 256"), `envelope.length` (`title` "1–100", `summary` "1–500", `capability` "1–512")
+- [X] T016 Create `src/Gozleme.Api/Manifests/ManifestValidator.cs`, the pure pipeline `Validate(bytes, target) → Result` (research R5): envelope stages → native parse (native document "512 KiB (UTF-8 bytes)" else `bound.native`; empty or whitespace-only → `parse.empty`; encoding dispatch to JSON/YAML/SKILL.md readers; `malformed` and `too_large` stop with one problem) → adapter checks (collecting) → entry cap "1,000" else `bound.entries` → projection only when there are no problems. De-duplicate by `(part, pointer, category, rule)`; keep one problem per pointer with `reserved_claim`/`secret_value` beating `unknown_field`; order by part (`envelope` first), pointer segment by segment (indices numerically, names ordinally), category in contract order, then rule; return the first 50 and `truncated`. Compute `digest` as `sha256:` + lowercase hex over the UTF-8 bytes and `byteLength`
+- [X] T017 [P] Create `src/Gozleme.Api/Manifests/ManifestTelemetry.cs` (research R16, FR-022): span `gozleme.manifest.validate` with `gozleme.manifest.family` (six or `unknown`), `gozleme.manifest.outcome` (`accepted`, `rejected`, `forbidden`, `not_found`, `suspended`, `rate_limited`, `too_large`, `unsupported_media_type`) and `gozleme.manifest.problem_count`; opaque organization, publisher and capability IDs set only after membership is confirmed; counters `gozleme.manifest.validations` {family, outcome} and `gozleme.manifest.problems` {family, category}, once per distinct category. No pointer, rule-with-input, name, document, projection or digest is ever recorded. Register the meter and source with the existing OpenTelemetry setup
+- [X] T018 [P] Create `src/Gozleme.Api/Manifests/ManifestValidationLimiter.cs`: in-memory `PartitionedRateLimiter` keyed by account ID, fixed window per minute, `Gozleme:Manifests:ValidatePerMinute` default "30", validated on start; returns `Retry-After` seconds; no `OnRejected` sign-in path (research R11, GOZ-0002-IF-08). Add the default to `src/Gozleme.Api/appsettings.json`
+- [X] T019 Add `manifest.validate` on resource `capability` to `src/Gozleme.Api/Organizations/OrganizationPermissions.cs`, held by `publisher` only (role row `deny deny deny allow deny`; contracts/permissions-delta.md), and add the endpoint → action row
+- [X] T020 Create `src/Gozleme.Api/Manifests/ManifestEndpoints.cs` with `MapManifestEndpoints` on the organizations route group: `POST …/publishers/{publisherId}/capabilities/{capabilityId}/manifests/validate`, in exactly this order (contracts/manifest-validation.md "Order of checks", research R11): origin verified via `RegistryOriginReader` (`503 unavailable`) → `OrganizationAccess.AuthorizeAsync(manifest.validate)` (empty `404` for non-member, `403 forbidden`) → capability under publisher via `PublisherStore` (identical empty `404` for malformed, unknown or foreign IDs) → `PublisherStore.IsActiveAsync` (`409 suspended`) → limiter (`429 rate_limited` + `Retry-After`) → `Content-Type` `application/json` (`415`) → read body through a counting stream capped at "1 MiB" (`413 too_large`, no `RequestSizeLimitAttribute`) → `ManifestValidator` → `200`. The body is not read before the media-type step. A database failure fails closed with `503`. Every exit sets the span outcome
+- [X] T021 Create `src/Gozleme.Api/Manifests/ManifestServiceCollectionExtensions.cs` (registry, warm-up, six adapters, validator, limiter, telemetry, options) and wire it plus `MapManifestEndpoints` into `src/Gozleme.Api/GozlemeApp.cs`
+- [X] T022 Extend the seed in `src/Gozleme.Api/Identity/OperatorCommands.cs` (research R14, FR-025): after the organizations, alice (admin) registers publisher `seeded-demo` ("Seeded Demo Publisher", fixed ID `0193a000-0000-7000-8000-000000000010`) and carol (`publisher`) creates capability `manifest-demo` ("Manifest Demo", fixed ID `0193a000-0000-7000-8000-000000000011`) in Seeded Demo Org, each through its own signed tenant context; idempotent when the rows exist; fails with a clear message if the handle is held by another organization
+- [X] T023 Apply contracts/permissions-delta.md to `docs/architecture/contracts/organization-permissions.md`: role-table row, endpoint row, decision-procedure steps (target, suspension, rate limit, media type and size, validation) and counts "19 actions over 5 resources", "18 scoped endpoints"
+- [X] T024 [P] Unit tests `tests/Gozleme.Api.Tests/Manifests/ManifestParserTests.cs`: JSON duplicate keys (nested too), comments and trailing commas refused, BOM preserved in bytes and skipped by parser, control characters, lone surrogate; YAML anchors, aliases, `!!str` and custom tags, merge keys, multi-document, complex keys, duplicate keys; core-schema scalars (`yes` stays a string, `~` is null); SKILL.md missing or unclosed front matter; line and column correctness; RFC 6901 escaping of `~` and `/`
+- [X] T025 [P] Unit tests `tests/Gozleme.Api.Tests/Manifests/ManifestBoundsTests.cs`: each bound in contracts/manifest-validation.md at the limit (accepted) and one past it (`too_large` with the right rule and `null` location); depth 64 for envelope and native separately; 50 problems then `truncated: true`; `too_large` and `malformed` stop with exactly one problem
+- [X] T026 [P] Unit tests `tests/Gozleme.Api.Tests/Manifests/ManifestRuleCatalogueTests.cs`: `ManifestRules` equals the contracts/manifest-validation.md rule → category table exactly (parse the Markdown table), categories are the closed 11 in contract order, every message is constant and contains no format placeholder
+- [X] T027 [P] Unit tests `tests/Gozleme.Api.Tests/Manifests/ManifestSchemaPinTests.cs`: every embedded schema's SHA-256 equals `SOURCES.md`; every `SOURCES.md` row has an embedded file and vice versa; resolving an unbundled `$ref` fails without any network or file access (assert no `HttpClient`/file handler is reachable from the resolver)
+
+**Checkpoint**: The endpoint answers in the documented order, the pipeline parses and bounds both parts, and every category and rule exists. No adapter validates yet.
+
+---
+
+## Phase 3: User Story 1 — Validate a sample manifest for every capability family (Priority: P1) 🎯 MVP
+
+**Goal**: A `publisher` member validates the valid sample of each of the six families in the browser and the API, and sees envelope, native document with digest, and projection as three separate parts
+
+**Independent Test**: Sign in as carol, open Seeded Demo Publisher → Manifest Demo → **Validate manifest**, load each family's valid sample (both MCP samples), validate, and see three separate panels. The same requests through the API return identical results, twice
+
+### Tests for User Story 1
+
+- [X] T028 [P] [US1] Unit tests `tests/Gozleme.Api.Tests/Manifests/McpManifestTests.cs`: a primitive is typed by its declared revision (`execution.taskSupport` on a tool under `2026-07-28` is `unknown_field`); `protocolRevision` other than `2026-07-28`/`2025-11-25` is `unsupported_format` rule `native.version-mismatch`; `mode` derivation (`stateless`/`stateful`, always in `derived`); consistency rules (rule `native.consistency`): "non-empty `tools` needs `capabilities.tools`", "`resources` or `resourceTemplates` need `capabilities.resources`", "`prompts` need `capabilities.prompts`", unique names per list, unique resource `uri`
+- [X] T029 [P] [US1] Integration tests `tests/Gozleme.Api.IntegrationTests/ManifestEndpointTests.cs` (happy path part): carol validates each family's valid sample against `manifest-demo` → `200` `accepted`; envelope has no `document`; `native.document` equals the submitted string; `digest` equals a local SHA-256; a second request gives a byte-identical response (FR-015); YAML and JSON OpenAPI both accepted; the alias `seeded-demo/manifest-demo` and the canonical ID both match
+- [X] T030 [P] [US1] Integration tests `tests/Gozleme.Api.IntegrationTests/ManifestNoStorageTests.cs` (SC-007, FR-017): as the owner, snapshot the `gozleme` schema (tables, columns, functions, grants) and row counts of every table plus `__EFMigrationsHistory`; run a batch of accepted and rejected validations; snapshot again; identical. Assert no audit row was added
+- [X] T031 [P] [US1] Vitest `web/src/components/ManifestValidator.test.tsx`: family picker lists six families; loading a sample substitutes `{{capability}}` with the canonical ID before display; accepted result renders three panels labelled *Envelope*, *Native document* (with `sha256:` digest) and *Projection* (version 1); messages for `forbidden`, `suspended`, `rate_limited`, `unavailable`, `not_found`
+
+### Implementation for User Story 1
+
+- [X] T032 [US1] Implement the identity check in `src/Gozleme.Api/Manifests/EnvelopeReader.cs` (research R8, FR-011): `capability` matches when it ordinally equals `CanonicalId.Capability(verifiedOrigin, capability.Id)` or `<held handle>/<capability name>`; otherwise `identity_mismatch` at `/capability`, rule `identity.capability`. No trimming, no case-folding, no lookup of any other capability
+- [X] T033 [P] [US1] Create `src/Gozleme.Api/Manifests/Projection/Projection.cs` and `Projection/ProjectionBuilder.cs` (contracts/projection-v1.md): fields `projectionVersion: "1"`, `adapter`, `family`, `kind`, `nativeName`, `title`, `description`, `declaredVersion` (envelope `version`), `attributes`, `entries[] {kind, nativeName, title?}` in native document order, `derived[]` pointers in fixed order; `title`/`description` `null` when absent; `title` falling back to `nativeName` adds `/title` to `derived`. Built from tree values only, never writes to the native bytes
+- [X] T034 [P] [US1] Create `src/Gozleme.Api/Manifests/Adapters/McpAdapter.cs` (`mcp/1`, P4, contracts/native-formats.md): validate the root against `mcp-server-manifest-1` and each primitive against the overlay of the declared `protocolRevision`; consistency rules; `_meta` key pattern `^[a-z0-9-]+(\.[a-z0-9-]+)+/.+$` else `invalid_value` rule `native.meta-key`; projection `kind: mcp-server`, `nativeName` = `serverInfo.name`, `title` = `serverInfo.title`, `description` = `serverInfo.description`, attributes `protocolRevision`, `mode` (derived), `transports[]` (distinct `remotes[].type` then `packages[].transport.type`), entries `tool`, `resource`, `resource-template`, `prompt`
+- [X] T035 [P] [US1] Create `src/Gozleme.Api/Manifests/Adapters/A2aAdapter.cs` (`a2a/1`): validate against `a2a-strict-1.0.1` (over the unstitched `upstream/a2a-1.0.1/` files); `securitySchemes` and `securityRequirements` accepted as declarations; projection `kind: a2a-agent`, `nativeName` = `name`, `title` derived from `name`, `description`, attribute `protocolBindings[]` (distinct `supportedInterfaces[].protocolBinding`), entries `skill` (`id` as nativeName, `name` as title)
+- [X] T036 [P] [US1] Create `src/Gozleme.Api/Manifests/Adapters/OpenApiAdapter.cs` (`api/1`, 3.1 and 3.0): `openapi` must match `^3\.1\.\d+$` or `^3\.0\.\d+$` per the declared line else `unsupported_format` rule `native.version-mismatch` at `/openapi`; validate against `oas-3.1-2026-11-05` or `oas-3.0-2024-10-18`; projection `kind: openapi-api`, `nativeName`/`title` = `info.title`, `description` = `info.description`, attribute `openapiVersion`, entries `operation` per path and method in source order (`operationId`, else `"<METHOD> <path>"` marked derived at `/entries/<i>/nativeName`, title = `summary`) and `webhook` (3.1) with the same rule
+- [X] T037 [P] [US1] Create `src/Gozleme.Api/Manifests/Adapters/AsyncApiAdapter.cs` (`event/1`): `asyncapi` must equal `3.0.0`; validate against `asyncapi-3.0.0`; projection `kind: asyncapi-application`, `nativeName`/`title` = `info.title`, `description`, attribute `asyncapiVersion`, entries `channel` per `channels` key and `operation` per `operations` key in source order, title = `title`
+- [X] T038 [P] [US1] Create `src/Gozleme.Api/Manifests/Adapters/AgentSkillsAdapter.cs` (`skill/1`): validate the front matter against `agent-skills-2026-11-17`; the "name equals parent directory" rule is documented as not enforced; projection `kind: agent-skill`, `nativeName` = `name`, `title` derived, `description`, `attributes {}`, `entries []`
+- [X] T039 [P] [US1] Create `src/Gozleme.Api/Manifests/Adapters/ModelCardAdapter.cs` (`model/1`): validate against `model-card-1` (`name` "`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`", `description` "1–4000", `modalities.input`/`output` "minItems 1, uniqueItems", enum `text, image, audio, video, embedding, structured`, `limits.contextWindowTokens`/`maxOutputTokens` "integer 1–1000000000"); projection `kind: model`, attributes `inputModalities[]`, `outputModalities[]`, `contextWindowTokens` and `maxOutputTokens` when present, `entries []`
+- [X] T040 [US1] Create the valid samples in `web/src/samples/manifests/` and `index.json` (research R15, FR-018): `mcp/valid-stateless-2026-07-28.json`, `mcp/valid-stateful-2025-11-25.json`, `a2a/valid-agent-card.json`, `api/valid-openapi-3.1.json` (YAML native), `api/valid-openapi-3.0.json` (JSON native), `event/valid-asyncapi-3.0.0.json`, `skill/valid-skill.json`, `model/valid-model-card.json`; each a complete envelope with `capability` = `{{capability}}` and `expected: {outcome: accepted}`; synthetic content only (no real organizations, people, endpoints or credentials). Include at least one extension member per family so US3 can vary it
+- [X] T041 [US1] Link the samples into `tests/Gozleme.Api.IntegrationTests/Gozleme.Api.IntegrationTests.csproj` (`<None Include="../../web/src/samples/manifests/**" CopyToOutputDirectory="PreserveNewest" />`) and create `tests/Gozleme.Api.IntegrationTests/ManifestSampleTests.cs`, which iterates `index.json`, substitutes the placeholder and asserts exactly `expected` (outcome, category, rule, location) for every entry (SC-001)
+- [X] T042 [P] [US1] Create `web/src/lib/manifests.ts`: types mirroring `ManifestContracts.cs`, the sample index loader (bundled at build time), `{{capability}}` substitution, and user messages for each error body
+- [X] T043 [P] [US1] Create the same-origin route handler `web/src/app/api/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/manifests/validate/route.ts` (POST only, `isSameOrigin` check, forwards the body and session to the API with `x-gozleme-client: web`, passes status and body through) and its tests in `routes.test.ts` beside it (cross-origin refused, pass-through of `200`/`403`/`404`/`409`/`429`/`503`)
+- [X] T044 [US1] Create `web/src/components/FamilyPicker.tsx`, `ManifestResult.tsx` (three separate panels: envelope; native document unchanged with digest and byte length; projection with its version and derived markers) and `ManifestValidator.tsx` (family picker, sample loader, paste area, **Validate**, browser span `gozleme.ui.manifest_validate`)
+- [X] T045 [US1] Create the page `web/src/app/organizations/[organizationId]/publishers/[publisherId]/capabilities/[capabilityId]/manifest/page.tsx` (signed-in session required; capability name and canonical ID header; renders `ManifestValidator`; `not-found` for unknown targets)
+
+**Checkpoint**: US1 complete — every family's valid sample is accepted in the browser and the API, with three distinct parts.
+
+---
+
+## Phase 4: User Story 2 — Unknown and unsafe claims are rejected with a clear reason (Priority: P1)
+
+**Goal**: Reserved claims, inline secrets, identity mismatches, external references, unknown fields and unsupported or malformed inputs are rejected by category and location, and no submitted value is ever echoed
+
+**Independent Test**: Validate every invalid sample and get exactly its expected category, rule and location; scan the response, page, logs and telemetry for each sample's synthetic secret and find none
+
+### Tests for User Story 2
+
+- [X] T046 [P] [US2] Unit tests `tests/Gozleme.Api.Tests/Manifests/SecretPatternTests.cs` (contracts/secret-patterns.md): one obviously synthetic positive per pattern 1–14 (contains `EXAMPLE`, `SYNTHETIC` or repeated characters); near-miss negatives (UUID, SHA-256 hex, `Bearer` + short word, URL without password, `sk-` + short word); accepted forms `secretref:<provider>/<key>` (provider "`^[a-z][a-z0-9-]{0,31}$`", key "`^[A-Za-z0-9._/-]{1,128}$`"), MCP `{NAME}`, empty, `isSecret: true` with no value; a matched member name gives rule `secret.name` at the parent pointer; a timeout counts as a match
+- [X] T047 [P] [US2] Unit tests `tests/Gozleme.Api.Tests/Manifests/ReservedClaimTests.cs` (research R6): normalization catches `x-gozleme-verified`, `io.example/trust-level`, `Approved`; vocabulary applied to envelope names and every extension position (`x-*`, `_meta` keys, A2A `capabilities.extensions[].params` names, skill `metadata` keys, model card `x-` and root names); not applied to `components.schemas.*.properties.owner`, example values or OpenAPI/AsyncAPI `deprecated` flags (agent choice A1); A2A `/signatures` → rule `reserved.a2a-signatures`; MCP `io.modelcontextprotocol/` prefix → `reserved.mcp-namespace`; `io.modelcontextprotocol.registry/*` other than `publisher-provided` → `reserved.mcp-registry-meta`
+- [X] T048 [P] [US2] Extend `tests/Gozleme.Api.IntegrationTests/ManifestEndpointTests.cs` (rejection part): identity mismatch for another canonical ID, another alias, a foreign origin, an upper-case variant, surrounding whitespace and another organization's capability ID, each byte-identical apart from nothing (no existence oracle); `$ref` to `https://…` gives `external_reference` and no outbound request (assert via a failing `HttpMessageHandler` registered in the test host); no rejected response contains any substring of the submitted values
+- [X] T049 [P] [US2] Vitest `web/src/components/ProblemList.test.tsx`: renders category, rule, location (pointer, line/column, or none) and message; shows the "more problems exist" note when `truncated`; never renders any field not in the problem shape
+
+### Implementation for User Story 2
+
+- [X] T050 [P] [US2] Create `src/Gozleme.Api/Manifests/Rules/ReservedClaims.cs`: the vocabulary list in research R6 verbatim, the normalization (lower-case; strip namespace prefix up to the last `/` or `.`; strip leading `x-`; remove `-`, `_`, `.`), and the name-position walker over envelope names, each adapter's extension positions and adapter-listed fields (rule `reserved.vocabulary`)
+- [X] T051 [P] [US2] Create `src/Gozleme.Api/Manifests/Rules/SecretPatterns.cs` (pattern list v1 in contract order, each `RegexOptions.CultureInvariant | RegexOptions.NonBacktracking`, 100 ms timeout treated as a match; accepted forms) and `Rules/SecretFields.cs` (rule 1, `secret.field`): MCP `remotes[].headers[]`, `remotes[].variables{}`, `packages[].environmentVariables[]` entries with `isSecret: true` or a header `name` case-insensitively in `Authorization`, `Proxy-Authorization`, `Cookie`, `X-Api-Key`, `Api-Key`, `X-Auth-Token` (check `value` and `default`); OpenAPI/AsyncAPI header and cookie parameters and header objects with those names (check `example`, `examples.*.value`, `default`). Apply rule 2 to every string value and member name in both trees and to the SKILL.md body line by line (line/column location)
+- [X] T052 [P] [US2] Create `src/Gozleme.Api/Manifests/Rules/ExternalReferences.cs` (research R10): `$ref`/`$dynamicRef` not starting with `#` → `ref.external`; internal refs must resolve in the same document else `invalid_value` rule `ref.unresolved`; `$schema`/`jsonSchemaDialect` outside draft-07, 2019-09, 2020-12 and (OAS 3.1) `https://spec.openapis.org/oas/3.1/dialect/base` → `ref.dialect`. Applies to OpenAPI, AsyncAPI, MCP `inputSchema`/`outputSchema` and embedded schemas. Informational URLs are never rejected for being URLs
+- [X] T053 [US2] Wire `ReservedClaims`, `SecretPatterns`, `SecretFields` and `ExternalReferences` into `ManifestValidator.cs` envelope stage 3 and native stage 5, and give each adapter (T034–T039) its extension paths, reserved fields and secret fields per contracts/native-formats.md. Pointers never contain a matched credential
+- [X] T054 [US2] Create the invalid samples in `web/src/samples/manifests/<family>/invalid-*.json` with `index.json` entries giving exact `expected {outcome: rejected, category, rule, location}`: at least one per category (all 11, including `unsupported_version`, `unsupported_family`, `unsupported_format`, `malformed` via YAML alias and via YAML declared for A2A, `too_large` via depth) and at least one per family; secret samples use obviously synthetic values that still match pattern list v1 (for example `ghp_` + `EXAMPLE` repeated; a PEM block with body `R0FMTEVNRS1TWU5USEVUSUMtS0VZ`); the identity sample hard-codes a foreign canonical ID. Export the list of synthetic secret strings as `web/src/samples/manifests/synthetic-secrets.json` for the no-secret scans
+- [X] T055 [US2] Create `web/src/components/ProblemList.tsx` and render it from `ManifestResult.tsx` for `rejected` outcomes
+
+**Checkpoint**: US2 complete — every invalid sample is rejected with its expected category; no value echoes.
+
+---
+
+## Phase 5: User Story 3 — Native documents and normalized projections stay distinct (Priority: P1)
+
+**Goal**: Prove for every family that the native document is returned byte-for-byte, that extension or key-order changes alter the digest but not the projection, and that the projection is closed and versioned on its own
+
+**Independent Test**: For each family, validate a sample, compare the returned native string and digest with the input, validate a copy with a changed extension member, and compare projections
+
+- [X] T056 [P] [US3] Unit tests `tests/Gozleme.Api.Tests/Manifests/ProjectionBoundaryTests.cs` (User Story 3, SC-003), per family: native `document` byte-identical including a BOM; digest over exactly the UTF-8 bytes; a copy with a changed or added extension member (`x-*`, `_meta`, A2A extension `params`, skill `metadata`) → different digest, deep-equal projection; JSON key reorder that does not reorder entries → different digest, equal projection; extension values never appear anywhere in the projection; a defaulted value (e.g. OpenAPI derived operation name, MCP mode) is listed in `derived` while the native document is unchanged
+- [X] T057 [P] [US3] Unit tests `tests/Gozleme.Api.Tests/Manifests/ProjectionSchemaTests.cs`: every projection from every valid sample validates against the closed `projection-1.json`; `projectionVersion` is independent of `envelopeVersion` and `native.formatVersion`; no child identity field exists (GOZ-0008)
+- [X] T058 [US3] Fix any boundary failure found by T056/T057 in `Projection/ProjectionBuilder.cs` or the adapters, and make `ManifestResult.tsx` label each panel's version (envelope `1`, native `format formatVersion`, projection `1`) and mark derived values in the projection panel
+
+**Checkpoint**: US3 complete — the native/projection boundary is proven per family.
+
+---
+
+## Phase 6: User Story 4 — Only publisher members of the owning organization can validate (Priority: P1)
+
+**Goal**: The role matrix, identical not-found answers, suspension and rate limiting behave exactly as the permission contract states, and the UI hides the control from members without `manifest.validate`
+
+**Independent Test**: For each built-in role, attempt validation and compare with the contract table; repeat as a non-member and with a cross-organization ID; validate against a suspended publisher's capability; exceed the budget
+
+### Tests for User Story 4
+
+- [X] T059 [P] [US4] Extend `tests/Gozleme.Api.Tests/OrganizationPermissionsTests.cs`: `manifest.validate` is allowed for `publisher` only; `admin` lacks it
+- [X] T060 [P] [US4] Update `tests/Gozleme.Api.IntegrationTests/OrganizationPermissionContractTests.cs` ("19 actions", "18 scoped endpoints", the new rows parsed from `docs/architecture/contracts/organization-permissions.md`) and `tests/Gozleme.Api.IntegrationTests/EndpointAuthorizationTests.cs` (the new endpoint is scoped and authorized)
+- [X] T061 [US4] Extend `tests/Gozleme.Api.IntegrationTests/ManifestEndpointTests.cs` (authorization part, SC-005): each built-in role alone → contract result; `403` and `409` never parse the body (send a malformed body and assert the status, not `200`); non-member, unknown, malformed and cross-organization IDs, and a capability under another publisher → byte-identical empty `404`; suspended publisher (via `handle-reclaim`) → `409 suspended`; 31st request in a minute → `429` with `Retry-After` and no `gozleme.auth` failure; non-members, forbidden callers and suspended targets never consume the budget or see `429`; `415` for non-JSON; `413` over 1 MiB; database outage → `503`; role removed mid-session takes effect on the next request
+- [X] T062 [P] [US4] Update `tests/Gozleme.Api.IntegrationTests/TenantSeedTests.cs`: the seed creates `seeded-demo` and `manifest-demo` with the fixed IDs, is idempotent on re-run, and fails clearly when the handle is held elsewhere
+- [X] T063 [P] [US4] Extend `web/src/components/Publishers.test.tsx`: `CapabilityList` shows **Validate manifest** only when permissions include `manifest.validate` and the publisher is active
+
+### Implementation for User Story 4
+
+- [X] T064 [US4] Add the **Validate manifest** link to `web/src/components/CapabilityList.tsx` (to `…/capabilities/[capabilityId]/manifest`), shown only when the caller's permissions include `manifest.validate` and the publisher is active; make the manifest page show the forbidden and suspended messages when reached directly
+
+**Checkpoint**: US4 complete — the new action matches the contract for every role and boundary.
+
+---
+
+## Phase 7: Polish & Cross-Cutting Concerns (pins, telemetry, performance, demo, evidence)
+
+- [X] T065 [P] Integration tests `tests/Gozleme.Api.IntegrationTests/ManifestTelemetryTests.cs` (FR-022, SC-004): span and both counters for each outcome with bounded labels; opaque IDs only after membership; captured spans, logs and metrics contain no sample document text, no string from `synthetic-secrets.json`, no capability name, alias, native name, pointer or digest
+- [X] T066 [P] Integration tests `tests/Gozleme.Api.IntegrationTests/ManifestPerformanceTests.cs` (SC-006): a generated 512 KiB OpenAPI native document validates in under 2 s after warm-up; record the measured time in `docs/specs/006-typed-manifests/evidence/manifest-evidence.json`
+- [X] T067 [P] Re-assert the boundary pins in `tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs`: `POST /api/v1/publish` and `GET /api/v1/capabilities` still `404`; no manifest, revision or projection table; migration pins unchanged (FR-021, FR-027)
+- [X] T068 Add the `goz-0006` Playwright project to `e2e/playwright.config.ts` (`testMatch: /manifest-demo\.spec\.ts/`, depends on `goz-0005`) and the `specDirs` entry `docs/specs/006-typed-manifests` in `e2e/tests/evidence.ts`
+- [X] T069 Write `e2e/tests/manifest-demo.spec.ts` quickstart steps 1–3: carol validates every family's valid sample in the browser (screenshots for all six families and both MCP modes, showing `mode: stateless` and `mode: stateful`), measuring total interaction time under 180 s (SC-002) and recording it; every invalid sample rejected with its expected problem (screenshots) and a DOM scan for every string in `synthetic-secrets.json`; the API boundary checks per family
+- [X] T070 In `e2e/tests/manifest-demo.spec.ts` quickstart steps 4–7: alice sees no control and gets `403`; role matrix against the contract row; dave gets the identical empty `404`; a capability of a publisher suspended with `handle-reclaim` answers `409`; 31 validations → `429` with `Retry-After`; row counts of every `gozleme` table and `__EFMigrationsHistory` equal before and after (SC-007); Jaeger spans `gozleme.manifest.validate`, Prometheus `gozleme_manifest_validations_total` and `gozleme_manifest_problems_total` (poll ≤ 90 s), and the no-secret scan of spans and logs. Write sanitized `evidence/manifest-evidence.json`
+- [X] T071 Run the cumulative demo (`make demo`) with earlier suites writing to `evidence/screenshots/regression-goz-000N/`, and record `docs/specs/006-typed-manifests/evidence/demo-run.json` via the `validate-demo` skill; all suites `goz-0000`…`goz-0006` must pass (SC-008)
+- [X] T072 Update `docs/specs/006-typed-manifests/progress.yaml`, `.gozleme/spec-registry.yaml` and the generated register (`scripts/generate_register.py`); run `make lint`, `make test`, `make build` and `make validate` and record the counts; flag for `review-security` at convergence: secret pattern list v1, the reserved vocabulary and where it applies, the parser restrictions, and the offline resolver (plan, post-design re-check)
+
+---
+
+## Dependencies & Execution Order
+
+- **Setup (T001–T006)**: T001 first; T002 (Corvus spike) is a **stop point** — nothing in Phase 2 that uses Corvus (T013) starts until it passes (passed with V5 after the maintainer revised P1). T003 and T004 can run alongside T002; T005 needs T003/T004; T006 needs T005.
+- **Foundational (T007–T027)**: T007–T012 need only T001. T013 needs T002 and T006. T014 needs T007–T009. T015 needs T010 and T014. T016 needs T011–T015. T017–T019 are independent. T020 needs T016–T019. T021 needs T020. T022 and T023 are independent. Tests T024–T027 follow their subjects.
+- **US1 (T028–T045)** is the MVP. T032 (identity) and T033 (projection) precede the adapters' projection code; T034–T039 run in parallel; T040 needs the adapters; T041 needs T040; web T042–T045 can proceed alongside the API adapters.
+- **US2 (T046–T055)** depends on Foundational and the US1 adapters (T034–T039) for per-adapter wiring (T053). T050–T052 can start right after Foundational.
+- **US3 (T056–T058)** depends on US1 (adapters and projection) and the extension paths from T053.
+- **US4 (T059–T064)** depends only on Foundational for the API tests; T063/T064 depend on the US1 page route.
+- **Polish (T065–T072)** depends on all stories. T071 (demo run) runs last before T072.
+
+## Parallel Opportunities
+
+- T003 and T004 alongside T002.
+- T008, T009, T012, T013, T017, T018 together once their inputs exist; T024–T027 together.
+- US1: T028–T031 together; adapters T034–T039 together; web T042–T043 alongside the adapters.
+- US2: T046, T047, T049 together; T050, T051, T052 together.
+- US3: T056 and T057 together.
+- US4: T059, T060, T062, T063 together.
+- Polish: T065, T066, T067 together.
+
+## Parallel Example: User Story 1
+
+```bash
+Task: "McpAdapter in src/Gozleme.Api/Manifests/Adapters/McpAdapter.cs"
+Task: "A2aAdapter in src/Gozleme.Api/Manifests/Adapters/A2aAdapter.cs"
+Task: "OpenApiAdapter in src/Gozleme.Api/Manifests/Adapters/OpenApiAdapter.cs"
+Task: "AsyncApiAdapter in src/Gozleme.Api/Manifests/Adapters/AsyncApiAdapter.cs"
+Task: "AgentSkillsAdapter in src/Gozleme.Api/Manifests/Adapters/AgentSkillsAdapter.cs"
+Task: "ModelCardAdapter in src/Gozleme.Api/Manifests/Adapters/ModelCardAdapter.cs"
+Task: "Route handler in web/src/app/api/.../manifests/validate/route.ts"
+```
+
+## Implementation Strategy
+
+1. **Vendoring first**: T001–T006, honouring the stop rule. A differing upstream fact stops the run for maintainer review.
+2. **MVP**: Foundational + US1 — every family's valid sample accepted in the browser and the API, three distinct parts, nothing stored.
+3. Add US2 (reserved claims, secrets, references, identity; invalid samples) and US3 (boundary proofs), completing the validation contract.
+4. Add US4 (role matrix proofs and the permission-hidden control).
+5. Polish: telemetry and performance suites, pins, the `goz-0006` demo and evidence. Then converge (with `review-security` on the items in T072), run the post-convergence impact analysis and the roadmap sync per `drive-speckit`.
+
+**Total**: 72 tasks (Setup 6, Foundational 21, US1 18, US2 10, US3 3, US4 6, Polish 8).
+
+## Phase 8: Convergence
+
+- [X] T073 Bound the cost of separating schema noise: in `SchemaRegistry.MatchesBranch`/`SchemaDeclarations`, memoize branch matches per (branch URI, parent pointer) within one validation, serialize each parent once, replace the O(F²) leaf reduction in `Reduce` with an O(F log F) one, and stop collecting after the problem cap; add a performance test with a parent holding thousands of unknown members per SC-006 (partial; security review F1)
+- [X] T074 Bound tree memory: build node pointers lazily from a parent link plus segment (only for reported problems), check the envelope size before building the envelope's subtree, and run `SecretFields.CarriesSecret` only on problems that will be reported; add tests with deeply nested long member names per SC-006 and FR-013 (partial; security review F2)
+- [X] T075 Apply the reserved vocabulary to every member name in the subtree under each extension point (`x-*` values in OpenAPI/AsyncAPI/model card, MCP `_meta` values and `capabilities.experimental`, Agent Skills `metadata` values), as the A2A adapter already does; add one test per adapter per FR-009 and research R6 rule 1 (partial)
+- [X] T076 Report `reserved_claim` (alongside `unknown_field`) for reserved names in closed native positions: Agent Skills front-matter root and the closed MCP objects, as the model-card root already does, per US2/AC2 (partial)
+- [X] T077 Harden reserved-name matching (maintainer decision 2026-11-17 "harden all"): split camelCase boundaries into words, apply NFKC, strip default-ignorable code points, treat any non-alphanumeric character as a separator, then keep trailing-word matching; tests for `x-gozlemeVerified`, `x-isVerified`, U+2174, dotless ı, zero-width space, `x-trust level`, `x-trust:level`; amend research R6 and the contract per FR-009 (partial)
+- [X] T078 Scan raw YAML text for credentials (maintainer decision 2026-11-17 "scan raw text"): run the secret pattern list over every line of OpenAPI/AsyncAPI YAML and SKILL.md front matter, reporting `secret_value` at line:column without the value, as for the SKILL.md body; add an invalid sample and amend research R7 per FR-010 (partial; security review F3)
+- [X] T079 Cap numeric scalar length in `RestrictedYamlReader` (and JSON numbers) so huge integers are never converted with superlinear BigInteger work; reject or keep as string beyond the cap with a test per SC-006 (partial; security review F6)
+- [X] T080 (not built: maintainer ruled 2026-11-17 to allow both as informational URLs under R10; recorded via T082) Treat OpenAPI Link `operationRef` that does not start with `#` and Example `externalValue` as `external_reference`, with tests, per US2/AC6 and edge case "Remote references" (partial)
+- [X] T081 Add a cross-organization step to `e2e/tests/manifest-demo.spec.ts`: carol posts a Partner Org publisher/capability ID under the Demo Org path and gets the identical empty 404, per FR-026 (partial)
+- [X] T082 Record the maintainer rulings in the format contract: protocol-native `deprecated` flags on OpenAPI/AsyncAPI elements are element metadata, not reserved (A1 approved 2026-11-17); A2A `provider` is descriptive, kept verbatim and never projected or trusted as owner (2026-11-17); update `native-formats.md` and the adapter field lists; OpenAPI `externalValue` and cross-document `operationRef` are informational URLs under R10 (2026-11-17) per FR-009 (partial)
+
+## Phase 9: Convergence
+
+- [X] T083 Skip example/examples/default/enum/const only by data position (schema keyword values, parameter/media/header/Example `value`) in `Rules/ExternalReferences.cs` and `Adapters/AdapterTree.cs`; check `responses.default`, `components.examples` entries (Example objects' own x- names) and schemas/parameters named after those keys, with tests, per FR-006, FR-009, US2/AC6, maintainer decisions data-key-skip-by-position and example-object-extensions (partial)
+- [X] T084 Add a `too_large` bound on one location's length (4,096 characters, checked while reading JSON and YAML), turn a validator results overflow into `too_large` instead of a 500, expand evaluation-path prefixes once per distinct path and cache parent/key strings in `SchemaRegistry`, with tests for the reviewer's deep repros, per SC-006, FR-012, maintainer decision deep-document-bound, security F1/F2/N2 (partial)
+- [X] T085 Bound the process-wide `SchemaDeclarations` owner cache (size cap or per-validation scope) so distinct evaluation paths cannot grow memory across requests, with a test, per SC-006, security N1 (missing)
+- [X] T086 Apply the reserved vocabulary to member names of closed A2A, OpenAPI and AsyncAPI objects (reserved_claim beside unknown_field) and amend research R6, with tests, per US2/AC2, contracts/native-formats.md, maintainer decision reserved-closed-objects (contradicts)
+- [X] T087 List projection entries derived from maps (OpenAPI paths/operations, AsyncAPI channels/operations) in a fixed sorted order and amend `contracts/projection-v1.md`, with a reordering test and regenerated sample expectations, per US3/AC2, SC-003, maintainer decision projection-map-order (contradicts)
+- [X] T088 Check the whole name (dots as separators) besides the part after the namespace cut, and use the whole name when the remainder is empty; update R6 and the `x-owned.by` test, per FR-009, maintainer decision reserved-dotted-names (partial)
+- [X] T089 Remove all default-ignorable code points (incl. Hangul fillers) in reserved-name matching and add Latin-script TR39 look-alikes to the generated fold table, with tests, per FR-009, research R6, maintainer decision lookalike-fillers-latin (partial)
+- [X] T090 Amend FR-012, `contracts/manifest-validation.md` and research R9 so `parse.not-string` and the encoding-mismatch `parse.syntax` are located by envelope pointer, and list YAML-comment secrets among line/column locations, per maintainer decision malformed-envelope-locations (contradicts)
+- [X] T091 Check each location's joined RFC 6901 text against the secret patterns: report `secret.name` at the deepest parent whose location is clean, and drop every other problem whose location's joined text matches, with tests (incl. `https:` → `` → `u:pw@host`) and a cost check at the tree bounds, per FR-012 ("never echo submitted values"), contracts/secret-patterns.md, maintainer decision joined-name-credentials (partial)
+
+## Phase 10: Convergence
+
+- [X] T092 Check joined locations only with the patterns that need names joined (url-userinfo, azure-connection-secret), match anchors exactly as the patterns do (Kelvin sign U+212A), include array items when finding the deepest clean parent, and add a cost test at the tree bounds, per maintainer decisions joined-name-credentials and joined-names-patterns, confirmation reviews (partial)
+- [X] T093 Treat Callback object entries as a map and draft-07 `dependencies` as a schema map in `Rules/DataPositions.cs`, with tests, per maintainer decision data-positions-gaps (partial)
+- [X] T094 Treat an OpenAPI Link's `requestBody` and `parameters` values as literal data, and an object-valued `examples` in a bare JSON Schema as data, with tests, per maintainer decision data-positions-literal (contradicts)
+- [X] T095 Apply the reserved vocabulary to the model card's closed nested objects (`modalities`, `limits`) beside `unknown_field`, amend native-formats.md and R6, with tests, per maintainer decision model-card-nested-reserved (partial)
+- [X] T096 Narrow the validator overflow catch to the result-buffer overflow, log a warning without content, and let any other exception fail as a 500, with tests, per maintainer decision results-overflow-catch (partial)
+- [X] T097 Text fixes: research R12 entry order, manifest-validation.md bounds rows (number, location, results), ReservedClaims summaries, per confirmation convergence F4, F5, F7 (contradicts)
+
+## Phase 11: Maintainer rulings on agent choices
+
+- [X] T098 Answer 400 for a malformed document, 413 for a too-large document and 422 for any other rejection, each with the rejected result body; accepted stays 200 and a body over 1 MiB keeps 413 {"error":"too_large"}; update the API contract, web page, tests and demo, per maintainer decision result-status-codes (contradicts)
+- [X] T099 Share the validation rate limit across API instances with a PostgreSQL counter table (account, window, count) and migration, keep the rate_limited operation and Retry-After, amend FR-017 and the no-table test for this one table, with tests, per maintainer decision shared-rate-limit (contradicts)
+- [X] T100 Write the missing-member location rule into contracts/manifest-validation.md and record the ratified choices and the GOZ-0007 manifest resource type in the impact report and GOZ-0007 prompt, per maintainer decisions agent-choices-ratified and stored-text-projection-only (partial)

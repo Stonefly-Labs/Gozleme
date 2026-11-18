@@ -283,7 +283,7 @@ test("observability: a sign-in is one browser → web → API → PostgreSQL tra
   await expect
     .poll(
       async () => {
-        spans = await recentSpans("gozleme-web-browser", 5);
+        spans = await recentSpans("gozleme-web-browser", 5, "gozleme.ui.sign_in");
         const ui = spans.filter((s) => s.name === "gozleme.ui.sign_in" && s.attributes["gozleme.ui.outcome"] === "success");
         for (const candidate of ui) {
           const trace = spans.filter((s) => s.traceId === candidate.traceId);

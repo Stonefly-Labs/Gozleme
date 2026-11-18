@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "a2a",
+  "capability": "{{capability}}",
+  "version": "1.4.0",
+  "native": {
+    "format": "a2a-agent-card",
+    "formatVersion": "1.0",
+    "encoding": "yaml",
+    "document": "name: Forecast Agent\n"
+  }
+}

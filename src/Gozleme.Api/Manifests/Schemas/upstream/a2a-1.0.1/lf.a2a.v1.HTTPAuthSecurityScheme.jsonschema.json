@@ -1,0 +1,32 @@
+{
+  "$id": "lf.a2a.v1.HTTPAuthSecurityScheme.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Defines a security scheme using HTTP authentication.",
+  "patternProperties": {
+    "^(bearer_format)$": {
+      "default": "",
+      "description": "A hint to the client to identify how the bearer token is formatted (e.g., \"JWT\").\n Primarily for documentation purposes.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "bearerFormat": {
+      "default": "",
+      "description": "A hint to the client to identify how the bearer token is formatted (e.g., \"JWT\").\n Primarily for documentation purposes.",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "description": "An optional description for the security scheme.",
+      "type": "string"
+    },
+    "scheme": {
+      "default": "",
+      "description": "The name of the HTTP Authentication scheme to be used in the Authorization header,\n as defined in RFC7235 (e.g., \"Bearer\").\n This value should be registered in the IANA Authentication Scheme registry.",
+      "type": "string"
+    }
+  },
+  "title": "HTTP Auth Security Scheme",
+  "type": "object"
+}

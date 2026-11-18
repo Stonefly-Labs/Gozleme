@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gozleme.dev/manifest/model-card/1.json",
+  "title": "Gözleme model card v1 (GOZ-0006, Q3)",
+  "description": "Gözleme-defined because no single model card standard exists. Closed; x- members are the extension mechanism (preserved, never projected). Ownership, trust and lifecycle names are reserved_claim (research R6), not fields.",
+  "type": "object",
+  "required": ["name", "description", "modalities"],
+  "properties": {
+    "name": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "modelVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "license": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "documentationUrl": { "type": "string", "format": "uri", "maxLength": 2048 },
+    "intendedUse": { "type": "string", "maxLength": 4000 },
+    "limitations": { "type": "string", "maxLength": 4000 },
+    "modalities": {
+      "type": "object",
+      "required": ["input", "output"],
+      "properties": {
+        "input": { "$ref": "#/$defs/modalityList" },
+        "output": { "$ref": "#/$defs/modalityList" }
+      },
+      "patternProperties": { "^x-": true },
+      "additionalProperties": false
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "contextWindowTokens": { "type": "integer", "minimum": 1, "maximum": 1000000000 },
+        "maxOutputTokens": { "type": "integer", "minimum": 1, "maximum": 1000000000 }
+      },
+      "patternProperties": { "^x-": true },
+      "additionalProperties": false
+    }
+  },
+  "patternProperties": { "^x-": true },
+  "additionalProperties": false,
+  "$defs": {
+    "modalityList": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["text", "image", "audio", "video", "embedding", "structured"] }
+    }
+  }
+}

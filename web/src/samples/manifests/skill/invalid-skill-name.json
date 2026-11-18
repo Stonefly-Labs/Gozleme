@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "skill",
+  "capability": "{{capability}}",
+  "version": "1.4.0",
+  "native": {
+    "format": "agent-skills",
+    "formatVersion": "2026-11-17",
+    "encoding": "markdown",
+    "document": "---\nname: Forecast-Summary\ndescription: Summarizes a synthetic weather forecast for a region.\nlicense: Apache-2.0\nmetadata:\n  author-team: demo\n---\n# Forecast summary\n\nUse this skill to summarize a synthetic forecast. It calls no tools.\n"
+  }
+}

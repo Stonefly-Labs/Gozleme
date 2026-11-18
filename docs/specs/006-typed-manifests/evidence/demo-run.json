@@ -1,0 +1,321 @@
+{
+  "specId": "GOZ-0006",
+  "commit": "6b63c006f87d9ce602d91dc1009e4eb165a02145",
+  "branch": "feature/goz-0006-typed-manifests",
+  "workingTreeCleanAtStart": false,
+  "environment": {
+    "os": "Darwin 25.5.0 arm64",
+    "docker": "29.8.2",
+    "compose": "5.5.0",
+    "node": "v24.10.0"
+  },
+  "startedAt": "2026-11-18T15:27:55Z",
+  "finishedAt": "2026-11-18T15:34:26Z",
+  "stackStartupSeconds": 4,
+  "commands": [
+    "docker compose up -d --build --wait",
+    "pnpm install --frozen-lockfile",
+    "pnpm --filter @gozleme/e2e exec playwright install chromium",
+    "docker compose --profile demo run --rm seed",
+    "pnpm --filter @gozleme/e2e exec playwright test --project goz-0006",
+    "docker compose logs --no-color"
+  ],
+  "result": "passed",
+  "assertions": [
+    {
+      "name": "sign in as the seeded demo account",
+      "result": "passed"
+    },
+    {
+      "name": "healthy: dashboard shows real API and database status matching the API",
+      "result": "passed"
+    },
+    {
+      "name": "degraded: stopping PostgreSQL shows Degraded within 15 s, readiness 503, liveness 200",
+      "result": "passed"
+    },
+    {
+      "name": "recovery: restarting PostgreSQL returns to Healthy within 30 s without restarting api/web",
+      "result": "passed"
+    },
+    {
+      "name": "unreachable: stopping the API shows API unreachable and no stale database data",
+      "result": "passed"
+    },
+    {
+      "name": "boundary: catalog features are not implemented",
+      "result": "passed"
+    },
+    {
+      "name": "observability: one trace threads browser \u2192 web \u2192 API \u2192 PostgreSQL, with metrics and no secrets",
+      "result": "passed"
+    },
+    {
+      "name": "stored logs: outage warnings are stored in Loki, correlated to their trace, metrics stored, no secrets",
+      "result": "passed"
+    },
+    {
+      "name": "observability resilience: the app stays healthy when the telemetry collector is down",
+      "result": "passed"
+    },
+    {
+      "name": "anonymous: the dashboard redirects to sign-in and status data is refused",
+      "result": "passed"
+    },
+    {
+      "name": "register: field errors, then a new synthetic account lands on the protected dashboard",
+      "result": "passed"
+    },
+    {
+      "name": "sign out ends the session server-side; a replayed cookie is anonymous; sign-in returns to the page",
+      "result": "passed"
+    },
+    {
+      "name": "sign out everywhere ends the account's sessions in every browser",
+      "result": "passed"
+    },
+    {
+      "name": "signing in again from a sign-in form opened before the browser signed in keeps a working session",
+      "result": "passed"
+    },
+    {
+      "name": "lockout: five failures lock the account; every failure reads exactly like an unknown email",
+      "result": "passed"
+    },
+    {
+      "name": "operator closes registration: new accounts are refused, existing accounts still sign in",
+      "result": "passed"
+    },
+    {
+      "name": "boundary: no external identity provider is offered, configured or reachable",
+      "result": "passed"
+    },
+    {
+      "name": "observability: a sign-in is one browser \u2192 web \u2192 API \u2192 PostgreSQL trace with no personal data",
+      "result": "passed"
+    },
+    {
+      "name": "privacy: audit events are stored with opaque ids; logs hold no emails, passwords or cookies",
+      "result": "passed"
+    },
+    {
+      "name": "anonymous: organization pages redirect to sign-in and the API refuses",
+      "result": "passed"
+    },
+    {
+      "name": "create two organizations, see only your own, switch context and rename",
+      "result": "passed"
+    },
+    {
+      "name": "invite with a single-use code shown once; another account joins",
+      "result": "passed"
+    },
+    {
+      "name": "used and revoked codes are refused with one generic message",
+      "result": "passed"
+    },
+    {
+      "name": "removing a member takes effect on their next request; they stay signed in",
+      "result": "passed"
+    },
+    {
+      "name": "the last member can neither leave nor be removed",
+      "result": "passed"
+    },
+    {
+      "name": "isolation: a non-member cannot tell real organizations from unknown or malformed ids; cross-site writes fail",
+      "result": "passed"
+    },
+    {
+      "name": "boundary: no ownership or delegation surface exists in the UI or the API",
+      "result": "passed"
+    },
+    {
+      "name": "observability: organization flows are traced browser \u2192 web \u2192 API \u2192 PostgreSQL with no personal data",
+      "result": "passed"
+    },
+    {
+      "name": "privacy: organization audit events carry opaque ids only; logs hold no names, emails or codes",
+      "result": "passed"
+    },
+    {
+      "name": "two tenants: each account sees only its own organizations",
+      "result": "passed"
+    },
+    {
+      "name": "the other tenant's organization answers exactly like an unknown id, in the UI and the API",
+      "result": "passed"
+    },
+    {
+      "name": "database: forced row-level security returns only the signed account's rows, for the serving role and the owner",
+      "result": "passed"
+    },
+    {
+      "name": "fail closed: an API whose key differs from the provisioned one shows no organization data",
+      "result": "passed"
+    },
+    {
+      "name": "observability: each organization request runs in one traced tenant transaction with no token, key or personal data",
+      "result": "passed"
+    },
+    {
+      "name": "a member sees role badges but no admin controls, and the API refuses a member's rename",
+      "result": "passed"
+    },
+    {
+      "name": "an admin grants admin in the UI and the member's next rename succeeds",
+      "result": "passed"
+    },
+    {
+      "name": "revoking admin takes effect on the next request; a stale page shows the permission message",
+      "result": "passed"
+    },
+    {
+      "name": "the last admin cannot demote itself",
+      "result": "passed"
+    },
+    {
+      "name": "demotion revokes the demoted account's invitations; a non-member gets an identical 404",
+      "result": "passed"
+    },
+    {
+      "name": "evidence: API role \u00d7 action matrix, policy-evaluator boundary and database refusals",
+      "result": "passed"
+    },
+    {
+      "name": "observability: authorization decisions are traced, counted and audited with no personal data",
+      "result": "passed"
+    },
+    {
+      "name": "an admin registers a publisher and a publisher member creates and renames a capability with permanent IDs",
+      "result": "passed"
+    },
+    {
+      "name": "a taken handle gets one identical answer and a duplicate capability name conflicts",
+      "result": "passed"
+    },
+    {
+      "name": "evidence: API role \u00d7 action matrix, database refusals for both logins and the origin mismatch",
+      "result": "passed"
+    },
+    {
+      "name": "an operator earmarks, blocks and reclaims handles; the reclaimed publisher is suspended with unchanged IDs",
+      "result": "passed"
+    },
+    {
+      "name": "observability: publisher writes and operator commands are traced, counted and audited with opaque IDs only",
+      "result": "passed"
+    },
+    {
+      "name": "a publisher member validates every family's valid sample and sees three separate parts",
+      "result": "passed"
+    },
+    {
+      "name": "every invalid sample is rejected with its expected problem and no secret on the page",
+      "result": "passed"
+    },
+    {
+      "name": "through the API the native document is unchanged and extensions never change the projection",
+      "result": "passed"
+    },
+    {
+      "name": "roles, non-members, suspension and the validation budget answer in the contract order",
+      "result": "passed"
+    },
+    {
+      "name": "observability: validations are traced and counted with bounded labels and no content",
+      "result": "passed"
+    },
+    {
+      "name": "secret scan of compose logs and status evidence",
+      "result": "passed"
+    }
+  ],
+  "timings": [
+    "register\u2192dashboard 223 ms",
+    "sign-in\u2192dashboard 170 ms"
+  ],
+  "evidence": [
+    "docs/specs/006-typed-manifests/evidence/screenshots/01-accepted-valid-stateless-2026-07-28.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/02-accepted-valid-stateful-2025-11-25.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/03-accepted-valid-agent-card.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/04-accepted-valid-openapi-3.1.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/05-accepted-valid-openapi-3.0.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/06-accepted-valid-asyncapi-3.0.0.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/07-accepted-valid-skill.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/08-accepted-valid-model-card.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/20-rejected-invalid-envelope-version.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/21-rejected-invalid-family.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/22-rejected-invalid-format-version.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/23-rejected-invalid-version-mismatch.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/24-rejected-invalid-yaml-for-a2a.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/25-rejected-invalid-yaml-alias.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/26-rejected-invalid-too-deep.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/27-rejected-invalid-unknown-field.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/28-rejected-invalid-reserved-openapi.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/29-rejected-invalid-a2a-signatures.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/30-rejected-invalid-reserved-envelope.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/31-rejected-invalid-secret-header.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/32-rejected-invalid-secret-pattern.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/33-rejected-invalid-secret-skill-body.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/34-rejected-invalid-secret-openapi-example.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/35-rejected-invalid-secret-yaml-comment.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/36-rejected-invalid-identity.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/37-rejected-invalid-external-ref.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/38-rejected-invalid-skill-name.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/39-rejected-invalid-model-modality.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/40-rejected-invalid-mcp-consistency.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/41-rejected-invalid-a2a-required.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/60-admin-without-publisher-forbidden.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/61-suspended-publisher.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/70-manifest-validate-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/71-manifest-rejected-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/72-manifest-not-found-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/01-healthy.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/02-database-down-degraded.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/03-recovered-healthy.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/04-api-unreachable.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/05-distributed-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/06-stored-logs-grafana.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/01-anonymous-redirected-to-sign-in.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/02-register-validation.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/03-registered-dashboard.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/04-signed-out.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/05-signed-out-everywhere-second-browser.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/06-lockout-generic-error.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/07-registration-closed.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/08-sign-in-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0001/09-signed-in-again-session-kept.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/01-anonymous-redirected-to-sign-in.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/02-two-organizations-created.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/03-switched-to-alpha.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/04-renamed-beta.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/05-invitation-code-shown-once-masked.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/06-open-invitation-listed-without-code.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/07-bob-joined-alpha.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/08-reused-code-generic-refusal.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/09-bob-removed-by-alice.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/10-removed-member-sees-not-found.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/11-last-member-cannot-leave.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0002/12-create-organization-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0003/01-alice-sees-only-her-tenants.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0003/02-dave-sees-only-seeded-partner-org.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0003/03-dave-cannot-reach-seeded-demo-org.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0003/04-mismatched-key-fails-closed.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0003/05-tenant-transaction-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0004/01-member-sees-no-admin-controls.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0004/02-admin-edits-carols-roles.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0004/03-carol-granted-admin.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0004/04-carol-renames-after-grant.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0004/05-revoked-member-sees-permission-message.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0004/06-last-admin-cannot-demote-itself.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0004/07-authz-decision-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0005/01-admin-registers-publisher.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0005/02-publisher-creates-capability.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0005/03-renamed-twice-ids-unchanged.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0005/04-taken-handle-unavailable.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0005/05-duplicate-name-conflicts.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0005/06-reclaimed-publisher-suspended.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0005/07-publisher-register-trace-jaeger.png"
+  ]
+}

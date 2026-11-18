@@ -1,0 +1,42 @@
+{
+  "$id": "lf.a2a.v1.AgentInterface.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Declares a combination of a target URL, transport and protocol version for interacting with the agent.\n This allows agents to expose the same functionality over multiple protocol binding mechanisms.",
+  "patternProperties": {
+    "^(protocol_binding)$": {
+      "default": "",
+      "description": "The protocol binding supported at this URL. This is an open form string, to be\n easily extended for other protocol bindings. The core ones officially\n supported are `JSONRPC`, `GRPC` and `HTTP+JSON`.",
+      "type": "string"
+    },
+    "^(protocol_version)$": {
+      "default": "",
+      "description": "The version of the A2A protocol this interface exposes.\n Use the latest supported minor version per major version.\n Examples: \"0.3\", \"1.0\"",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "protocolBinding": {
+      "default": "",
+      "description": "The protocol binding supported at this URL. This is an open form string, to be\n easily extended for other protocol bindings. The core ones officially\n supported are `JSONRPC`, `GRPC` and `HTTP+JSON`.",
+      "type": "string"
+    },
+    "protocolVersion": {
+      "default": "",
+      "description": "The version of the A2A protocol this interface exposes.\n Use the latest supported minor version per major version.\n Examples: \"0.3\", \"1.0\"",
+      "type": "string"
+    },
+    "tenant": {
+      "default": "",
+      "description": "Optional. An opaque string used for routing requests to a specific agent\n or tenant when multiple agents are served behind a single A2A endpoint.\n When set, clients MUST include this value in the `tenant` field of all\n request messages sent to this interface. The server is responsible for\n interpreting the value and routing requests accordingly; the protocol\n does not define its format or semantics.",
+      "type": "string"
+    },
+    "url": {
+      "default": "",
+      "description": "The URL where this interface is available. Must be a valid absolute HTTPS URL in production.\n Example: \"https://api.example.com/a2a/v1\", \"https://grpc.example.com/a2a\"",
+      "type": "string"
+    }
+  },
+  "title": "Agent Interface",
+  "type": "object"
+}

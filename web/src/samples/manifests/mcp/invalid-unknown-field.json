@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "mcp",
+  "capability": "{{capability}}",
+  "version": "1.4.0",
+  "native": {
+    "format": "mcp-server-manifest",
+    "formatVersion": "1",
+    "encoding": "json",
+    "document": "{\n  \"protocolRevision\": \"2026-07-28\",\n  \"serverInfo\": {\n    \"name\": \"io.example.demo/forecasts\",\n    \"title\": \"Forecasts\",\n    \"version\": \"1.4.0\",\n    \"description\": \"Synthetic demo server for forecasts.\"\n  },\n  \"capabilities\": {\n    \"tools\": {\n      \"listChanged\": false\n    },\n    \"resources\": {},\n    \"prompts\": {}\n  },\n  \"tools\": [\n    {\n      \"name\": \"get_forecast\",\n      \"title\": \"Get forecast\",\n      \"description\": \"Returns a synthetic forecast for a region.\",\n      \"inputSchema\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"region\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"region\"\n        ]\n      },\n      \"annotations\": {\n        \"readOnlyHint\": true\n      },\n      \"_meta\": {\n        \"io.example.demo/cost\": \"free\"\n      },\n      \"execution\": {\n        \"taskSupport\": \"optional\"\n      }\n    }\n  ],\n  \"resources\": [\n    {\n      \"name\": \"regions\",\n      \"uri\": \"https://forecasts.example.test/regions\",\n      \"mimeType\": \"application/json\"\n    }\n  ],\n  \"prompts\": [\n    {\n      \"name\": \"summarize_week\",\n      \"title\": \"Summarize the week\",\n      \"arguments\": [\n        {\n          \"name\": \"region\",\n          \"required\": true\n        }\n      ]\n    }\n  ],\n  \"remotes\": [\n    {\n      \"type\": \"streamable-http\",\n      \"url\": \"https://forecasts.example.test/mcp\",\n      \"headers\": [\n        {\n          \"name\": \"Authorization\",\n          \"isSecret\": true,\n          \"isRequired\": true,\n          \"description\": \"Supplied by the client.\"\n        }\n      ]\n    }\n  ],\n  \"_meta\": {\n    \"io.example.demo/build\": \"synthetic\"\n  }\n}\n"
+  }
+}

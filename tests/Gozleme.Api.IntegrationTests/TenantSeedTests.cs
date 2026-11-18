@@ -8,7 +8,8 @@ namespace Gozleme.Api.IntegrationTests;
 /// GOZ-0003 US6 (FR-024, FR-025; maintainer decision: seed acts as a seeded member). Two disjoint demo
 /// tenants; seed never reaches an unrelated organization; an organization no seeded member belongs to
 /// cannot be restored; identity operator commands need no tenant context. Own database, because these
-/// tests break the fixed demo organizations on purpose.
+/// tests break the fixed demo organizations on purpose. GOZ-0006 (research R14): the seed also creates the demo
+/// publisher <c>seeded-demo</c> and capability <c>manifest-demo</c> with fixed ids.
 /// </summary>
 public sealed class TenantSeedTests : IAsyncLifetime
 {
@@ -129,6 +130,36 @@ public sealed class TenantSeedTests : IAsyncLifetime
         SELECT string_agg(u.email || ':' || array_to_string(m.roles, ','), ';' ORDER BY u.email)
         FROM gozleme.memberships m JOIN gozleme.users u ON u.id = m.user_id WHERE m.organization_id = '{organizationId}'
         """);
+
+    [Fact]
+    public async Task Seed_creates_the_demo_publisher_and_capability_with_fixed_ids_idempotently()
+    {
+        Assert.Equal(OperatorCommands.Ok, (await SeedAsync()).Code);
+        var row = $"SELECT concat_ws('|', p.id, p.handle, p.organization_id, c.id, c.name, c.created_by, c.created_at) FROM gozleme.capabilities c JOIN gozleme.publishers p ON p.id = c.publisher_id WHERE c.id = '{OperatorCommands.DemoCapabilityId}'";
+        var first = await _db.ScalarAsync<string>(row);
+        Assert.StartsWith($"{OperatorCommands.DemoPublisherId}|seeded-demo|{OperatorCommands.DemoOrganizationId}|{OperatorCommands.DemoCapabilityId}|manifest-demo|{await UserId("carol")}|", first, StringComparison.Ordinal);
+        Assert.Equal(await UserId("alice"), await _db.ScalarAsync<Guid>($"SELECT created_by FROM gozleme.publishers WHERE id = '{OperatorCommands.DemoPublisherId}'"));
+
+        var (code, stdout, _) = await SeedAsync();
+        Assert.Equal(OperatorCommands.Ok, code);
+        Assert.Contains($"Seeded demo capability {OperatorCommands.DemoCapabilityId}", stdout, StringComparison.Ordinal);
+        Assert.Equal(first, await _db.ScalarAsync<string>(row));
+        Assert.Equal(1L, await _db.ScalarAsync<long>("SELECT count(*) FROM gozleme.publishers WHERE handle = 'seeded-demo'"));
+    }
+
+    [Fact]
+    public async Task Seed_fails_clearly_when_the_demo_handle_is_held_elsewhere()
+    {
+        var (stranger, _) = await AuthClient.SignedInAsync(_factory);
+        using var _s = stranger;
+        var org = await OrgClient.CreateAsync(stranger, "Squatter");
+        await OrgClient.RegisterPublisherAsync(stranger, org, OperatorCommands.DemoPublisherHandle);
+
+        var (code, _, stderr) = await SeedAsync();
+        Assert.Equal(OperatorCommands.Failed, code);
+        Assert.Contains(OperatorCommands.DemoHandleHeldMessage, stderr, StringComparison.Ordinal);
+        Assert.Equal(0L, await _db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.publishers WHERE id = '{OperatorCommands.DemoPublisherId}'"));
+    }
 
     private Task<(int Code, string Stdout, string Stderr)> SeedAsync() =>
         RunAsync("seed", [$"--{OperatorCommands.DemoPasswordKey}={DemoPassword}"], withKey: true);

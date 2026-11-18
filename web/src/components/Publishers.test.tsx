@@ -166,6 +166,18 @@ describe("CapabilityList", () => {
     expect(screen.queryByRole("button", { name: "Rename" })).not.toBeInTheDocument();
     expect(screen.getByTestId("suspended-badge")).toBeInTheDocument();
   });
+
+  it("links to manifest validation only for callers holding manifest.validate while active (GOZ-0006)", () => {
+    const { rerender } = render(<CapabilityList organizationId={ORG} publisherId={PUB} capabilities={[capability]} canRename={false} />);
+    expect(screen.queryByTestId("validate-manifest-link")).not.toBeInTheDocument();
+    rerender(<CapabilityList organizationId={ORG} publisherId={PUB} capabilities={[capability]} canRename={false} canValidate />);
+    expect(screen.getByRole("link", { name: "Validate manifest" })).toHaveAttribute(
+      "href",
+      `/organizations/${ORG}/publishers/${PUB}/capabilities/${CAP}/manifest`,
+    );
+    rerender(<CapabilityList organizationId={ORG} publisherId={PUB} capabilities={[{ ...capability, state: "suspended" }]} canRename={false} canValidate />);
+    expect(screen.queryByTestId("validate-manifest-link")).not.toBeInTheDocument();
+  });
 });
 
 describe("RenameDisplayNameForm", () => {

@@ -1,0 +1,32 @@
+{
+  "$id": "lf.a2a.v1.GetTaskPushNotificationConfigRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Represents a request for the `GetTaskPushNotificationConfig` method.",
+  "patternProperties": {
+    "^(task_id)$": {
+      "default": "",
+      "description": "The parent task resource ID.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "id": {
+      "default": "",
+      "description": "The resource ID of the configuration to retrieve.",
+      "type": "string"
+    },
+    "taskId": {
+      "default": "",
+      "description": "The parent task resource ID.",
+      "type": "string"
+    },
+    "tenant": {
+      "default": "",
+      "description": "Optional. Opaque routing identifier. Must match the `tenant` value from\n the selected `AgentInterface` in the Agent Card when that field is set.",
+      "type": "string"
+    }
+  },
+  "title": "Get Task Push Notification Config Request",
+  "type": "object"
+}

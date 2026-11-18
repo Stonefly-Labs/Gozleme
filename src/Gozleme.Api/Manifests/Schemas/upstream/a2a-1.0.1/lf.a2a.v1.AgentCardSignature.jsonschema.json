@@ -1,0 +1,24 @@
+{
+  "$id": "lf.a2a.v1.AgentCardSignature.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "AgentCardSignature represents a JWS signature of an AgentCard.\n This follows the JSON format of an RFC 7515 JSON Web Signature (JWS).",
+  "properties": {
+    "header": {
+      "$ref": "google.protobuf.Struct.jsonschema.json",
+      "description": "The unprotected JWS header values."
+    },
+    "protected": {
+      "default": "",
+      "description": "(-- api-linter: core::0140::reserved-words=disabled\n     aip.dev/not-precedent: Backwards compatibility --)\n Required. The protected JWS header for the signature. This is always a\n base64url-encoded JSON object.",
+      "type": "string"
+    },
+    "signature": {
+      "default": "",
+      "description": "Required. The computed signature, base64url-encoded.",
+      "type": "string"
+    }
+  },
+  "title": "Agent Card Signature",
+  "type": "object"
+}

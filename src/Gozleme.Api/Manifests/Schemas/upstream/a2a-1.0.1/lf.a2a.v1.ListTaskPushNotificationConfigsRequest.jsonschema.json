@@ -1,0 +1,67 @@
+{
+  "$id": "lf.a2a.v1.ListTaskPushNotificationConfigsRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Represents a request for the `ListTaskPushNotificationConfigs` method.",
+  "patternProperties": {
+    "^(page_size)$": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0,
+      "description": "The maximum number of configurations to return."
+    },
+    "^(page_token)$": {
+      "default": "",
+      "description": "A page token received from a previous `ListTaskPushNotificationConfigsRequest` call.",
+      "type": "string"
+    },
+    "^(task_id)$": {
+      "default": "",
+      "description": "The parent task resource ID.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "pageSize": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0,
+      "description": "The maximum number of configurations to return."
+    },
+    "pageToken": {
+      "default": "",
+      "description": "A page token received from a previous `ListTaskPushNotificationConfigsRequest` call.",
+      "type": "string"
+    },
+    "taskId": {
+      "default": "",
+      "description": "The parent task resource ID.",
+      "type": "string"
+    },
+    "tenant": {
+      "default": "",
+      "description": "Optional. Opaque routing identifier. Must match the `tenant` value from\n the selected `AgentInterface` in the Agent Card when that field is set.",
+      "type": "string"
+    }
+  },
+  "title": "List Task Push Notification Configs Request",
+  "type": "object"
+}

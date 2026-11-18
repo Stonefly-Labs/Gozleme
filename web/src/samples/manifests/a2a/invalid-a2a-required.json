@@ -1,0 +1,12 @@
+{
+  "envelopeVersion": 1,
+  "family": "a2a",
+  "capability": "{{capability}}",
+  "version": "1.4.0",
+  "native": {
+    "format": "a2a-agent-card",
+    "formatVersion": "1.0",
+    "encoding": "json",
+    "document": "{\n  \"name\": \"Forecast Agent\",\n  \"description\": \"Synthetic demo agent that forecasts weather.\",\n  \"supportedInterfaces\": [\n    {\n      \"url\": \"https://agent.example.test/a2a\",\n      \"protocolBinding\": \"JSONRPC\",\n      \"protocolVersion\": \"1.0\"\n    }\n  ],\n  \"version\": \"1.4.0\",\n  \"capabilities\": {\n    \"streaming\": true,\n    \"extensions\": [\n      {\n        \"uri\": \"https://example.test/ext/units\",\n        \"description\": \"Unit preferences\",\n        \"required\": false,\n        \"params\": {\n          \"defaultUnit\": \"celsius\"\n        }\n      }\n    ]\n  },\n  \"defaultInputModes\": [\n    \"text/plain\"\n  ],\n  \"defaultOutputModes\": [\n    \"application/json\"\n  ],\n  \"securitySchemes\": {\n    \"apiKey\": {\n      \"apiKeySecurityScheme\": {\n        \"location\": \"header\",\n        \"name\": \"X-Api-Key\"\n      }\n    }\n  }\n}\n"
+  }
+}

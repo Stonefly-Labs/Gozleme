@@ -1,0 +1,27 @@
+{
+  "$id": "lf.a2a.v1.SendMessageRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Represents a request for the `SendMessage` method.",
+  "properties": {
+    "configuration": {
+      "$ref": "lf.a2a.v1.SendMessageConfiguration.jsonschema.json",
+      "description": "Configuration for the send request."
+    },
+    "message": {
+      "$ref": "lf.a2a.v1.Message.jsonschema.json",
+      "description": "The message to send to the agent."
+    },
+    "metadata": {
+      "$ref": "google.protobuf.Struct.jsonschema.json",
+      "description": "A flexible key-value map for passing additional context or parameters."
+    },
+    "tenant": {
+      "default": "",
+      "description": "Optional. Opaque routing identifier. Must match the `tenant` value from\n the selected `AgentInterface` in the Agent Card when that field is set.",
+      "type": "string"
+    }
+  },
+  "title": "Send Message Request",
+  "type": "object"
+}

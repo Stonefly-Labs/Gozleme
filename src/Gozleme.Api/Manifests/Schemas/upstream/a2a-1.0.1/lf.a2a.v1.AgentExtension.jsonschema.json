@@ -1,0 +1,29 @@
+{
+  "$id": "lf.a2a.v1.AgentExtension.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A declaration of a protocol extension supported by an Agent.",
+  "properties": {
+    "description": {
+      "default": "",
+      "description": "A human-readable description of how this agent uses the extension.",
+      "type": "string"
+    },
+    "params": {
+      "$ref": "google.protobuf.Struct.jsonschema.json",
+      "description": "Optional. Extension-specific configuration parameters."
+    },
+    "required": {
+      "default": false,
+      "description": "If true, the client must understand and comply with the extension's requirements.",
+      "type": "boolean"
+    },
+    "uri": {
+      "default": "",
+      "description": "The unique URI identifying the extension.",
+      "type": "string"
+    }
+  },
+  "title": "Agent Extension",
+  "type": "object"
+}

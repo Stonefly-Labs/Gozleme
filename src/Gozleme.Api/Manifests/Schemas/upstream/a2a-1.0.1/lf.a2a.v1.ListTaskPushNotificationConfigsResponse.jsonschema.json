@@ -1,0 +1,29 @@
+{
+  "$id": "lf.a2a.v1.ListTaskPushNotificationConfigsResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Represents a successful response for the `ListTaskPushNotificationConfigs`\n method.",
+  "patternProperties": {
+    "^(next_page_token)$": {
+      "default": "",
+      "description": "A token to retrieve the next page of results, or empty if there are no more results in the list.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "configs": {
+      "description": "The list of push notification configurations.",
+      "items": {
+        "$ref": "lf.a2a.v1.TaskPushNotificationConfig.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "nextPageToken": {
+      "default": "",
+      "description": "A token to retrieve the next page of results, or empty if there are no more results in the list.",
+      "type": "string"
+    }
+  },
+  "title": "List Task Push Notification Configs Response",
+  "type": "object"
+}

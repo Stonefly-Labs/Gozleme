@@ -1,0 +1,17 @@
+{
+  "$id": "lf.a2a.v1.StringList.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A list of strings.",
+  "properties": {
+    "list": {
+      "description": "The individual string values.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "title": "String List",
+  "type": "object"
+}

@@ -34,5 +34,6 @@ export default defineConfig({
     { name: "goz-0003", testMatch: /tenant-rls-demo\.spec\.ts/, dependencies: ["goz-0002"], use: chrome },
     { name: "goz-0004", testMatch: /rbac-demo\.spec\.ts/, dependencies: ["goz-0003"], use: chrome },
     { name: "goz-0005", testMatch: /publisher-demo\.spec\.ts/, dependencies: ["goz-0004"], use: chrome },
+    { name: "goz-0006", testMatch: /manifest-demo\.spec\.ts/, dependencies: ["goz-0005"], use: chrome },
   ],
 });

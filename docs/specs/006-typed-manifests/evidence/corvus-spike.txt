@@ -1,0 +1,41 @@
+# T002 Corvus.Json.Validator 5.8.11 spike — 2026-11-17T19:10:15Z, SDK 10.0.404, macOS arm64, Release
+# Source: tests/Gozleme.Api.Tests/Manifests/CorvusSpikeTests.cs (CORVUS_SPIKE_OUT)
+
+(a) compile asyncapi-3.0.0 FAILED after 11946 ms: Exception, 904 message lines; first: Unable to compile generated code
+    Asyncapi300.AnySchema.Object.cs(1558,119): error CS1056: Unexpected character '\0'
+    Asyncapi300.MultiFormatSchema.Object.cs(1566,119): error CS1056: Unexpected character '\0'
+    Asyncapi300.AnySchema.Object.cs(1559,10): error CS1002: ; expected
+    Asyncapi300.AnySchema.Object.cs(1561,13): error CS1519: Invalid token '{' in a member declaration
+    Asyncapi300.MultiFormatSchema.Object.cs(1567,10): error CS1002: ; expected
+    Asyncapi300.MultiFormatSchema.Object.cs(1569,13): error CS1519: Invalid token '{' in a member declaration
+(a) compile oas-3.1 (first, cold): 7014 ms
+(a) assemblies loaded by compile: Anonymously Hosted DynamicMethods Assembly, Corvus.HighPerformance, Corvus.Json.CodeGeneration.201909, Corvus.Json.CodeGeneration.202012, Corvus.Json.CodeGeneration.4, Corvus.Json.CodeGeneration.6, Corvus.Json.CodeGeneration.7, Corvus.Json.CodeGeneration.CSharp, Corvus.Json.CodeGeneration.CorvusVocabulary, Corvus.Json.CodeGeneration.HttpClientDocumentResolver, Corvus.Json.CodeGeneration.OpenApi20, Corvus.Json.CodeGeneration.OpenApi30, Corvus.Json.JsonReference, Driver.GeneratedTypes_c5fdd683-57d0-427c-a44f-22e496cf0a1a, Microsoft.CodeAnalysis, Microsoft.CodeAnalysis.CSharp, Microsoft.Extensions.DependencyModel, System.Collections.Immutable, System.Globalization, System.IO.Pipelines, System.Linq.Expressions, System.Numerics.Vectors, System.Reflection.Emit.ILGeneration, System.Reflection.Emit.Lightweight, System.Reflection.Metadata, System.Reflection.Primitives, System.Runtime.Intrinsics, System.Runtime.Loader, System.Text.Encoding.Extensions, System.Threading.Tasks.Parallel, System.Web.HttpUtility
+(a) roslyn loaded: True; dynamic assemblies: 1; collectible: 1
+(a) first validate oas-3.1: 14.4 ms valid=True
+(c) 2020-12 overlay over draft-07 server.json defs and 2020-12 MCP defs:
+  [ok] valid=True results=0
+  [extra field on draft-07 remote] valid=False results=1
+    keywordPath=#/properties/remotes/items/unevaluatedProperties/extra schema=overlay.json#/properties/remotes/items/unevaluatedProperties/extra instance=#/remotes/0/extra msg=
+  [extra field on 2020-12 Implementation] valid=False results=1
+    keywordPath=#/properties/serverInfo/unevaluatedProperties/extra schema=overlay.json#/properties/serverInfo/unevaluatedProperties/extra instance=#/serverInfo/extra msg=
+  [wrong type on draft-07 remote] valid=False results=2
+    keywordPath=#/properties/remotes/items/$ref/properties/url/type schema=https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json#/definitions/StreamableHttpTransport/properties/url/type instance=#/remotes/0/url msg=Validation type - should have been 'string' but was 'Number'.
+    keywordPath=#/properties/remotes/items/$ref schema=overlay.json#/properties/remotes/items/$ref instance=#/remotes/0 msg=Validation - $ref failed to validate against the schema.
+(d) draft-04 OAS 3.0:
+  [ok] valid=True results=0
+  [unknown root field] valid=False results=1
+    keywordPath=#/additionalProperties/bogus schema=2024-10-18#/additionalProperties/bogus instance=#/bogus msg=
+(e) unbundled $ref refused: InvalidOperationException: Unable to locate the root document at 'https://example.com/not-bundled.json'
+(b) OAS 3.1 invalid document:
+  [flag] valid=False results=0
+  [basic] valid=False results=3
+    keywordPath= schema= instance= msg=Validation type - should have been 'string'.
+    keywordPath= schema= instance= msg=
+    keywordPath= schema= instance= msg=
+  [detailed] valid=False results=3
+    keywordPath=#/properties/info/$ref/properties/title/type schema=2026-11-05#/$defs/info/properties/title/type instance=#/info/title msg=Validation type - should have been 'string' but was 'Number'.
+    keywordPath=#/properties/info/$ref/unevaluatedProperties/bogus schema=2026-11-05#/$defs/info/unevaluatedProperties/bogus instance=#/info/bogus msg=
+    keywordPath=#/properties/paths/$ref/patternProperties/^~1/$ref/properties/get/$ref/unevaluatedProperties/nope schema=2026-11-05#/$defs/operation/unevaluatedProperties/nope instance=#/paths/~1a/get/nope msg=
+  [verbose] results=27 failing=7
+
+(a) new runtime assemblies in bin/Release (Corvus*, Microsoft.CodeAnalysis*, YamlDotNet, Humanizer): ~20 MB, plus 13 Roslyn satellite resource folders

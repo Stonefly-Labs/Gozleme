@@ -1,0 +1,72 @@
+{
+  "$id": "lf.a2a.v1.SendMessageConfiguration.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Configuration of a send message request.",
+  "patternProperties": {
+    "^(accepted_output_modes)$": {
+      "description": "A list of media types the client is prepared to accept for response parts.\n Agents SHOULD use this to tailor their output.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "^(history_length)$": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "description": "The maximum number of most recent messages from the task's history to retrieve in\n the response. An unset value means the client does not impose any limit. A\n value of zero is a request to not include any messages. The server MUST NOT\n return more messages than the provided value, but MAY apply a lower limit."
+    },
+    "^(return_immediately)$": {
+      "default": false,
+      "description": "If `true`, the operation returns immediately after creating the task,\n even if processing is still in progress.\n If `false` (default), the operation MUST wait until the task reaches a\n terminal (`COMPLETED`, `FAILED`, `CANCELED`, `REJECTED`) or interrupted\n (`INPUT_REQUIRED`, `AUTH_REQUIRED`) state before returning.",
+      "type": "boolean"
+    },
+    "^(task_push_notification_config)$": {
+      "$ref": "lf.a2a.v1.TaskPushNotificationConfig.jsonschema.json",
+      "description": "Configuration for the agent to send push notifications for task updates.\n Task id should be empty when sending this configuration in a `SendMessage` request."
+    }
+  },
+  "properties": {
+    "acceptedOutputModes": {
+      "description": "A list of media types the client is prepared to accept for response parts.\n Agents SHOULD use this to tailor their output.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "historyLength": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "description": "The maximum number of most recent messages from the task's history to retrieve in\n the response. An unset value means the client does not impose any limit. A\n value of zero is a request to not include any messages. The server MUST NOT\n return more messages than the provided value, but MAY apply a lower limit."
+    },
+    "returnImmediately": {
+      "default": false,
+      "description": "If `true`, the operation returns immediately after creating the task,\n even if processing is still in progress.\n If `false` (default), the operation MUST wait until the task reaches a\n terminal (`COMPLETED`, `FAILED`, `CANCELED`, `REJECTED`) or interrupted\n (`INPUT_REQUIRED`, `AUTH_REQUIRED`) state before returning.",
+      "type": "boolean"
+    },
+    "taskPushNotificationConfig": {
+      "$ref": "lf.a2a.v1.TaskPushNotificationConfig.jsonschema.json",
+      "description": "Configuration for the agent to send push notifications for task updates.\n Task id should be empty when sending this configuration in a `SendMessage` request."
+    }
+  },
+  "title": "Send Message Configuration",
+  "type": "object"
+}

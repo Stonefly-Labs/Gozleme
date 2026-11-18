@@ -6,7 +6,7 @@ namespace Gozleme.Api.IntegrationTests;
 /// <summary>
 /// GOZ-0000 boundary (FR-012), narrowed by GOZ-0001 (FR-037, IF-01) and GOZ-0002 (FR-025, IF-10):
 /// catalog, user listing and publishing still do not exist; identity and organizations own exactly
-/// their own tables.
+/// their own tables. GOZ-0006 (FR-021, FR-027) re-asserts them: manifest validation adds no table and no migration.
 /// </summary>
 public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
@@ -38,12 +38,25 @@ public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IA
     }
 
     [Fact]
+    public async Task Manifest_validation_adds_only_its_rate_limit_counter()
+    {
+        // FR-017 as clarified (maintainer decision 2026-11-18, "shared-rate-limit", T099): the one table is the shared
+        // validation counter, holding an account, a window and a count; no manifest, revision or projection is stored.
+        var db = fixture.Database;
+        Assert.Equal("manifest_validation_attempts", await db.ScalarAsync<string>(
+            "SELECT string_agg(tablename, ',' ORDER BY tablename) FROM pg_tables WHERE tablename ~ '(manifest|revision|projection)'"));
+        Assert.Equal("account_id,window_start,attempts", await db.ScalarAsync<string>(
+            "SELECT string_agg(column_name, ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema = 'gozleme' AND table_name = 'manifest_validation_attempts'"));
+        Assert.Equal("20261120000000_ManifestValidationAttempts", await db.ScalarAsync<string>("""SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """));
+    }
+
+    [Fact]
     public async Task Gozleme_schema_holds_exactly_the_identity_and_organization_tables()
     {
         var db = fixture.Database;
         Assert.Equal(1, await db.ScalarAsync<long>("SELECT count(*) FROM pg_namespace WHERE nspname = 'gozleme'"));
         var tables = await db.ScalarAsync<string>("SELECT string_agg(tablename, ',' ORDER BY tablename) FROM pg_tables WHERE schemaname = 'gozleme'");
-        Assert.Equal("alias_reservations,auth_sessions,capabilities,data_protection_keys,handle_claims,invitations,memberships,organizations,publisher_registration_attempts,publishers,registry_origin,user_claims,user_logins,user_tokens,users", tables);
+        Assert.Equal("alias_reservations,auth_sessions,capabilities,data_protection_keys,handle_claims,invitations,manifest_validation_attempts,memberships,organizations,publisher_registration_attempts,publishers,registry_origin,user_claims,user_logins,user_tokens,users", tables);
     }
 
     [Fact]

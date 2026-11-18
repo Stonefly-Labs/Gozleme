@@ -30,7 +30,7 @@ public sealed class OrganizationPermissionContractTests(PgvectorDatabaseFixture 
     public void Every_organization_scoped_endpoint_declares_known_actions()
     {
         var endpoints = _factory.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().ToList();
-        Assert.Equal(17, endpoints.Count(IsScoped)); // read, select, rename, members, remove/leave, roles, invitations ×3, publishers ×4, capabilities ×4
+        Assert.Equal(18, endpoints.Count(IsScoped)); // read, select, rename, members, remove/leave, roles, invitations ×3, publishers ×4, capabilities ×4, manifest validate
         Assert.Empty(Undeclared(endpoints));
 
         var declared = endpoints.Where(IsScoped).SelectMany(e => e.Metadata.GetMetadata<OrgActionAttribute>()!.Actions).Order(StringComparer.Ordinal);

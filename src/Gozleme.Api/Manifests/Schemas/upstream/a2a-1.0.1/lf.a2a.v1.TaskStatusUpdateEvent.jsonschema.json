@@ -1,0 +1,40 @@
+{
+  "$id": "lf.a2a.v1.TaskStatusUpdateEvent.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "An event sent by the agent to notify the client of a change in a task's status.",
+  "patternProperties": {
+    "^(context_id)$": {
+      "default": "",
+      "description": "The ID of the context that the task belongs to.",
+      "type": "string"
+    },
+    "^(task_id)$": {
+      "default": "",
+      "description": "The ID of the task that has changed.",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "contextId": {
+      "default": "",
+      "description": "The ID of the context that the task belongs to.",
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "google.protobuf.Struct.jsonschema.json",
+      "description": "Optional. Metadata associated with the task update."
+    },
+    "status": {
+      "$ref": "lf.a2a.v1.TaskStatus.jsonschema.json",
+      "description": "The new status of the task."
+    },
+    "taskId": {
+      "default": "",
+      "description": "The ID of the task that has changed.",
+      "type": "string"
+    }
+  },
+  "title": "Task Status Update Event",
+  "type": "object"
+}
