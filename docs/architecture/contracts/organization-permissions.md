@@ -20,8 +20,10 @@ this file in their own slice. The broader authorization architecture is `docs/ar
    Publisher registration takes one permit from the caller's hourly budget after the permission check and
    before validation; an exhausted budget answers `429 {"error":"rate_limited"}`, so a non-member never sees `429`.
    For `manifest.validate` (GOZ-0006) the steps after permission are: target (`404`), suspension (`409`), the
-   account's in-memory validation budget (`429 {"error":"rate_limited"}`), media type and size (`415`/`413`), then
-   validation (`200` with an `accepted` or `rejected` outcome). A non-member never sees `403`, `409` or `429`.
+   account's validation budget, shared through PostgreSQL (`429 {"error":"rate_limited"}`), media type and size
+   (`415`/`413`), then validation: `200` when accepted; when rejected, the result body with `400` (malformed), `413`
+   (too large) or `422` (any other problem) (GOZ-0006 maintainer decisions 2026-11-18, "shared-rate-limit" and
+   "result-status-codes"). A non-member never sees `403`, `409` or `429`.
 
 Inputs are exactly `(the caller's roles in this organization, action)`. There are no conditions,
 attributes, per-user or per-resource grants, deny rules or policy documents. A role is held only
