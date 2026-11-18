@@ -493,6 +493,7 @@ test("8. Jaeger shows the publish, verify and operator spans, and nothing secret
       return operatorSpans.length;
     }, { timeout: 60_000, intervals: [3000] })
     .toBeGreaterThanOrEqual(2);
+  expect(operatorSpans.some((s) => Number(s.attributes["gozleme.operator.exit_code"]) === 0)).toBe(true);
   for (const span of operatorSpans) expect(Object.keys(span.attributes).filter((k) => k.startsWith("gozleme."))).toEqual(["gozleme.operator.exit_code"]);
   const publishKeys = ["gozleme.manifest.family", "gozleme.manifest.outcome", "gozleme.organization.id", "gozleme.publisher.id", "gozleme.capability.id", "gozleme.revision.id"];
   for (const span of publishSpans) for (const key of Object.keys(span.attributes)) expect(publishKeys).toContain(key);
@@ -552,7 +553,10 @@ test("8. Jaeger shows the publish, verify and operator spans, and nothing secret
   await shotTrace(uiTraceId!, "gozleme.manifest.publish", "70-manifest-publish-trace-jaeger.png");
   const failed = verifySpans.find((s) => s.attributes["gozleme.manifest.verification_reason"] === "native_digest_mismatch")!;
   await shotTrace(failed.traceId, "gozleme.manifest.verify", "71-manifest-verify-failed-trace-jaeger.png");
-  await shotTrace(operatorSpans[0]!.traceId, "gozleme.operator.signing_key_succession", "72-signing-key-succession-trace-jaeger.png");
+  // A successful succession (exit 0), not step 5's deliberate usage (64) or unknown-publisher (2) runs.
+  const succeeded = operatorSpans.find((s) => Number(s.attributes["gozleme.operator.exit_code"]) === 0);
+  expect(succeeded, "a successful signing_key_succession span").toBeDefined();
+  await shotTrace(succeeded!.traceId, "gozleme.operator.signing_key_succession", "72-signing-key-succession-trace-jaeger.png");
 
   const logs = await storedLogs('{service_name=~"gozleme-.+"}', 20);
   const telemetry = JSON.stringify(publishSpans) + JSON.stringify(verifySpans) + JSON.stringify(operatorSpans) + lines.join("\n") + JSON.stringify(logs.filter((l) => l.at >= suiteStarted));
