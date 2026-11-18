@@ -386,10 +386,10 @@ specs:
   prompt: docs/prompts/spec-0006.md
   dependencies:
   - GOZ-0005
-  status: ready-for-human-merge
-  stage: pr-ready
+  status: complete
+  stage: merged
   branch: feature/goz-0006-typed-manifests
-  pullRequest: null
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/21
   promptRevision: 7
   gates:
     specification: passed
@@ -401,8 +401,8 @@ specs:
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
-    humanReview: pending
-    merge: pending
+    humanReview: passed
+    merge: passed
   blockers: []
   impactFindings:
   - GOZ-0006-IF-01
@@ -434,7 +434,7 @@ specs:
     reviews:
     - docs/specs/006-typed-manifests/reviews/impact-analysis.md
     - docs/specs/006-typed-manifests/reviews/impact-findings.json
-  nextAction: 'Human review and merge of PR #21 (all CI checks pass at 1c88ccd); no open GOZ-0006 impact decisions (IF-05 and IF-13 decided 2026-11-18).'
+  nextAction: 'Complete — merged to main in ffc4112c2f5fc1694f5f6d2a94a07583f985434f (PR #21, verified 2026-11-18); no open GOZ-0006 impact decisions (IF-05 and IF-13 decided 2026-11-18).'
 - id: GOZ-0007
   number: 7
   title: Immutable revisions and signed attestations
@@ -467,7 +467,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Await prerequisites and create allowed working branch
+  nextAction: 'Prerequisite GOZ-0006 merged (PR #21); no open impact decision is due before GOZ-0007 (GOZ-0005-IF-02 before GOZ-0012 plan; IF-04, IF-05, IF-08 before GOZ-0039; suspension semantics for revisions are a GOZ-0007 clarification question); prompt revision 8 carries the typed manifest conventions (GOZ-0006-IF-01 to IF-06, IF-08, IF-13, IF-14); start on feature/goz-0007-*'
 - id: GOZ-0008
   number: 8
   title: Child capability identities and projections
