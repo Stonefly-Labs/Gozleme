@@ -30,7 +30,23 @@ operational-validation spec). PostgreSQL is operator-provided.
    re-provisions it, then the API pods restart). Until both have run, organization data is
    unreachable (fail closed), and `gozleme.tenant.denials{reason="invalid"}` rises.
 
-3. Images `gozleme-api` and `gozleme-web` pushed to a registry you control; set `image.*`.
+3. A Secret with the signing key-encryption key (GOZ-0007), named by `signing.existingSecret`:
+
+   ```bash
+   kubectl create secret generic gozleme-signing \
+     --from-literal=signing-key-encryption-key="$(openssl rand -base64 32)"
+   ```
+
+   It is base64 of exactly 32 random bytes and wraps each publisher's Ed25519 signing key with AES-256-GCM. It is
+   never stored in the database. It is optional for start-up: without it, or with a malformed or wrong value, the
+   API starts and publication answers `503 unavailable`, while reading and verifying revisions keep working.
+   **Changing it** does not re-encrypt existing keys. Run operator key succession for the affected publishers as a
+   one-off Job from the API image, with `ConnectionStrings__GozlemeMigrator`, the new key as
+   `Gozleme__Signing__KeyEncryptionKey`, and the args
+   `signing-key-succession --undecryptable --reason lost` (or `--publisher <id> --reason lost|compromised`).
+   Old keys are never changed or deleted and still verify the revisions they signed.
+
+4. Images `gozleme-api` and `gozleme-web` pushed to a registry you control; set `image.*`.
 
 ## Install
 

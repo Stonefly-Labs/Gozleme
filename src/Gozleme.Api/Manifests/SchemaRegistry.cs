@@ -37,6 +37,12 @@ internal static class SchemaIds
 /// </summary>
 internal sealed partial class SchemaRegistry
 {
+    /// <summary>
+    /// The bundled schema set version recorded on every revision (GOZ-0007 FR-002). Adding, replacing or editing a
+    /// bundled schema is a new bundle version; <c>ManifestSchemaPinTests</c> pins the bundle digests.
+    /// </summary>
+    public const string BundleVersion = "1";
+
     public const string ResourcePrefix = "Manifests/Schemas/";
     public const string LocalBase = "https://schemas.gozleme.invalid/";
 

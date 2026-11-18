@@ -4,13 +4,21 @@ using Npgsql;
 
 namespace Gozleme.Api.Manifests;
 
-/// <summary><c>Gozleme:Manifests</c> options (data-model.md "Configuration").</summary>
+/// <summary><c>Gozleme:Manifests</c> options (data-model.md "Configuration"; GOZ-0007 adds publication and paging).</summary>
 internal sealed class ManifestOptions
 {
     public const string Section = "Gozleme:Manifests";
 
     [Range(1, 10_000)]
     public int ValidatePerMinute { get; set; } = 30;
+
+    /// <summary>Publications per account per clock minute (GOZ-0007 FR-019, research R15).</summary>
+    [Range(1, 10_000)]
+    public int PublishPerMinute { get; set; } = 10;
+
+    /// <summary>Default revisions per list page; a request may ask for at most 100 (GOZ-0007 data-model.md).</summary>
+    [Range(1, 100)]
+    public int RevisionPageSize { get; set; } = 50;
 }
 
 /// <summary>

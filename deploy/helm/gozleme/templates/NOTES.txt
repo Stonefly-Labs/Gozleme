@@ -12,3 +12,10 @@ migrator connection string (key migrator-connection-string of Secret "{{ .Values
 as ConnectionStrings__GozlemeMigrator and the args `handle-reserve --handle <handle> [--organization <id>]`,
 `handle-release --handle <handle>` or `handle-reclaim --handle <handle> [--organization <id>]`.
 See docs/specs/005-publisher-identities/contracts/operator-commands.md in the source repository.
+
+Signing (GOZ-0007): Secret "{{ .Values.signing.existingSecret }}" key signing-key-encryption-key (base64 of 32
+random bytes) wraps publisher signing keys. Without it publication answers 503; reads still work. Operator key
+succession is not a chart hook: run a one-off Job from the API image with the migrator connection string, this
+Secret's key as Gozleme__Signing__KeyEncryptionKey, and the args
+`signing-key-succession --publisher <id> --reason lost|compromised` or `signing-key-succession --undecryptable --reason lost`.
+See docs/specs/007-immutable-revisions/contracts/signing-keys.md in the source repository.

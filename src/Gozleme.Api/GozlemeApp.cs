@@ -4,6 +4,7 @@ using Gozleme.Api.Identity;
 using Gozleme.Api.Manifests;
 using Gozleme.Api.Organizations;
 using Gozleme.Api.Publishers;
+using Gozleme.Api.Revisions;
 using Gozleme.Api.Status;
 using Gozleme.Api.Telemetry;
 using Gozleme.Api.Tenancy;
@@ -12,7 +13,7 @@ using Npgsql;
 
 namespace Gozleme.Api;
 
-/// <summary>Composes the Gözleme API host: status (GOZ-0000), local identity (GOZ-0001), organizations (GOZ-0002), tenant RLS context (GOZ-0003), roles (GOZ-0004), publishers (GOZ-0005) and manifest validation (GOZ-0006).</summary>
+/// <summary>Composes the Gözleme API host: status (GOZ-0000), local identity (GOZ-0001), organizations (GOZ-0002), tenant RLS context (GOZ-0003), roles (GOZ-0004), publishers (GOZ-0005), manifest validation (GOZ-0006) and signed revisions (GOZ-0007).</summary>
 internal static class GozlemeApp
 {
     public const string AppConnectionStringName = "Gozleme";
@@ -46,6 +47,7 @@ internal static class GozlemeApp
         builder.AddGozlemeOrganizations();
         builder.AddGozlemePublishers();
         builder.AddGozlemeManifests();
+        builder.AddGozlemeRevisions();
         builder.AddGozlemeTenancy();
         builder.AddTenantContextSelfCheck();
 
@@ -75,7 +77,7 @@ internal static class GozlemeApp
         }); // FR-021: status data is for signed-in users; probes above stay anonymous
 
         api.MapAuthEndpoints();
-        api.MapOrganizationEndpoints().MapPublisherEndpoints().MapManifestEndpoints();
+        api.MapOrganizationEndpoints().MapPublisherEndpoints().MapManifestEndpoints().MapRevisionEndpoints();
 
         return app;
     }

@@ -42,6 +42,12 @@ organizations:
 registry:
   origin: ""
 
+# Signing (GOZ-0007): name of an existing Secret with key `signing-key-encryption-key`, base64 of exactly 32 random
+# bytes (`openssl rand -base64 32`), which wraps each publisher's Ed25519 signing key. The value never goes in values.
+# Without it the API still starts and publication answers 503 unavailable; reads and verification keep working.
+signing:
+  existingSecret: gozleme-signing
+
 migrate:
   enabled: true
   backoffLimit: 6

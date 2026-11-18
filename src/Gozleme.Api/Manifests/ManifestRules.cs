@@ -27,6 +27,12 @@ internal sealed record ManifestRule(string Id, ProblemCategory Category, string 
 /// </summary>
 internal static class ManifestRules
 {
+    /// <summary>
+    /// The rule catalogue version recorded on every revision (GOZ-0007 FR-002). Any change to a rule's id, category or
+    /// meaning is a new catalogue version; tests pin it with the catalogue.
+    /// </summary>
+    public const string CatalogueVersion = "1";
+
     public static readonly ManifestRule ParseSyntax = new("parse.syntax", ProblemCategory.Malformed, "The text does not parse in its declared encoding.");
     public static readonly ManifestRule ParseDuplicateKey = new("parse.duplicate-key", ProblemCategory.Malformed, "An object has the same member name twice.");
     public static readonly ManifestRule ParseYamlFeature = new("parse.yaml-feature", ProblemCategory.Malformed, "The YAML uses a feature that is not allowed: anchors, aliases, tags, merge keys, complex keys or more than one document.");

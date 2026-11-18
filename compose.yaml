@@ -14,6 +14,12 @@ x-context-key: &context-key
 x-registry-origin: &registry-origin
   Gozleme__Registry__Origin: ${GOZLEME_REGISTRY_ORIGIN:-registry.demo.gozleme.test}
 
+# Signing key-encryption key (GOZ-0007): base64 of exactly 32 bytes; wraps each publisher's Ed25519 signing key.
+# The API boots without it (publication answers 503). Throwaway default: the 32 ASCII bytes
+# "local-dev-signing-kek-not-secret". Never reuse outside local development.
+x-signing-kek: &signing-kek
+  Gozleme__Signing__KeyEncryptionKey: ${GOZLEME_SIGNING_KEK:-bG9jYWwtZGV2LXNpZ25pbmcta2VrLW5vdC1zZWNyZXQ=}
+
 x-db-passwords: &db-passwords
   GOZLEME_MIGRATOR_PASSWORD: ${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
   GOZLEME_APP_PASSWORD: ${GOZLEME_APP_PASSWORD:-local-dev-app}
@@ -47,7 +53,7 @@ services:
         GOZLEME_BUILD: ${GOZLEME_BUILD:-0.1.0-local}
     command: ["migrate"]
     environment:
-      <<: [*otel-grpc, *context-key, *registry-origin]
+      <<: [*otel-grpc, *context-key, *registry-origin, *signing-kek]
       Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
       ConnectionStrings__GozlemeMigrator: Host=postgres;Database=gozleme;Username=gozleme_migrator;Password=${GOZLEME_MIGRATOR_PASSWORD:-local-dev-migrator}
     depends_on:
@@ -58,7 +64,7 @@ services:
   api:
     image: gozleme-api:local
     environment:
-      <<: [*otel-grpc, *context-key, *registry-origin]
+      <<: [*otel-grpc, *context-key, *registry-origin, *signing-kek]
       ConnectionStrings__Gozleme: Host=postgres;Database=gozleme;Username=gozleme_app;Password=${GOZLEME_APP_PASSWORD:-local-dev-app}
       Gozleme__BuildVersion: ${GOZLEME_BUILD:-0.1.0-local}
       # Local identity (GOZ-0001). Plain-HTTP local stack: cookies cannot be Secure here.
