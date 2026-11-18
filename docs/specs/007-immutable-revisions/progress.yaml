@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0007
-stage: specify
+stage: clarify
 status: in-progress
 promptRevision: 8
 branch: feature/goz-0007-immutable-revisions
@@ -11,11 +11,15 @@ decisions:
 - {at: '2026-11-18', by: maintainer, topic: suspension, decision: 'Q3 option A: a suspended publisher''s existing revisions and attestations stay readable by members, verifiable and frozen, shown as suspended; new revisions refused with 409 suspended in the API and write policy (GOZ-0005-IF-08).'}
 - {at: '2026-11-18', by: maintainer, topic: manifest-resource, decision: 'Q4 option A: new manifest resource with manifest.publish (publisher only, held-claim check in write policy), member-level manifest.list and manifest.read; manifest.validate moves from capability to manifest with role and behaviour unchanged (GOZ-0006-IF-03, IF-13).'}
 - {at: '2026-11-18', by: maintainer, topic: key-succession, decision: 'Q5 option A (raised after drafting by a side-agent note: one key for life plus a lost or leaked key-encryption key would block publishing for good): add-only key succession; an operator command (no API route) adds a new publisher signing key and retires the current one with time and reason (lost, compromised); old keys never changed or deleted and still verify their revisions; also recovers a lost key-encryption key; API/UI rotation, signature revocation and cross-registry key replacement stay with GOZ-0033/GOZ-0039; peers must not trust a succession without their own check (GOZ-0029, CR-05).'}
+- {at: '2026-11-18', by: maintainer, topic: identical-replay, decision: 'clarify Q option A: republishing an existing version is always 409 version_exists, even with identical content; no idempotent success and no idempotency key; clients recover by listing.'}
+- {at: '2026-11-18', by: maintainer, topic: version-ordering, decision: 'clarify Q option A: versions may be published in any order, unique only by SemVer 2.0.0 precedence; lists ordered by publication sequence; no latest designation (GOZ-0026, GOZ-0027).'}
+- {at: '2026-11-18', by: maintainer, topic: key-creation, decision: 'clarify Q option A: a publisher signing key is created lazily inside its first publication transaction; publisher registration (GOZ-0005) unchanged; concurrent first publications create exactly one key.'}
 agentChoices: []
 stages:
   specify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', checklist: docs/specs/007-immutable-revisions/checklists/requirements.md}
+  clarify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', questions: 3, checklist: '16/16 passing'}
 attempts: []
 blockers: []
 pullRequest: null
-nextAction: 'Run /speckit-clarify (confirm replay-conflict, version ordering and key-creation defaults), then /speckit-plan.'
+nextAction: 'Clarified 2026-11-18 (replay always 409, any version order, lazy key creation). Next: /speckit-plan.'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}
