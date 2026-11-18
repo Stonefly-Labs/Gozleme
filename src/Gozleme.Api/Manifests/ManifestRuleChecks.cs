@@ -51,8 +51,10 @@ internal static class ManifestRuleChecks
     /// </summary>
     public static List<ManifestProblem> WithoutSecretPointers(List<ManifestProblem> problems)
     {
-        // Memoized per pointer step, so the patterns run once per distinct segment, not once per problem (T074).
+        // Memoized per pointer step and per segment text, so the patterns run once per distinct segment, not once per
+        // problem: pointers parsed from schema results share no steps (T074, T084).
         var carries = new Dictionary<JsonPointer, bool>(ReferenceEqualityComparer.Instance);
+        var matched = new Dictionary<string, bool>(StringComparer.Ordinal);
         bool Carries(JsonPointer at)
         {
             if (at.Parent is null)
@@ -62,7 +64,12 @@ internal static class ManifestRuleChecks
 
             if (!carries.TryGetValue(at, out var result))
             {
-                carries[at] = result = SecretPatterns.IsMatch(at.Segment) || Carries(at.Parent);
+                if (!matched.TryGetValue(at.Segment, out var own))
+                {
+                    matched[at.Segment] = own = SecretPatterns.IsMatch(at.Segment);
+                }
+
+                carries[at] = result = own || Carries(at.Parent);
             }
 
             return result;

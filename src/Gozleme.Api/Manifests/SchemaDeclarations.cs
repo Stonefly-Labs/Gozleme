@@ -38,8 +38,14 @@ internal sealed class SchemaDeclarations
     private readonly Dictionary<string, JsonNode> _anchors = new(StringComparer.Ordinal);
     private readonly Dictionary<JsonNode, string> _baseOf = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<JsonNode, string> _uriOf = new(ReferenceEqualityComparer.Instance);
-    private readonly ConcurrentDictionary<string, (JsonNode? Owner, bool Resolved)> _owners = new(StringComparer.Ordinal);
+    /// <summary>Owners resolved so far, shared across requests and capped (T085): beyond the cap an owner is resolved without being kept.</summary>
+    private const int MaxCachedOwners = 4_096;
+
+    private readonly ConcurrentDictionary<(string Root, string Evaluation), (JsonNode? Owner, bool Resolved)> _owners = new();
     private readonly ConcurrentDictionary<string, Regex?> _patterns = new(StringComparer.Ordinal);
+
+    /// <summary>How many owners are cached (tests: the cache stays bounded across requests).</summary>
+    internal int CachedOwners => _owners.Count;
 
     public SchemaDeclarations(IEnumerable<KeyValuePair<string, byte[]>> documents)
     {
@@ -66,7 +72,16 @@ internal sealed class SchemaDeclarations
             return false;
         }
 
-        var (owner, resolved) = _owners.GetOrAdd(rootUri + " " + evaluation, _ => Owner(rootUri, evaluation));
+        if (!_owners.TryGetValue((rootUri, evaluation), out var found))
+        {
+            found = Owner(rootUri, evaluation);
+            if (_owners.Count < MaxCachedOwners)
+            {
+                _owners.TryAdd((rootUri, evaluation), found);
+            }
+        }
+
+        var (owner, resolved) = found;
         return resolved && owner is not null
             && Declares(owner, Unescape(instance[(slash + 1)..]), matches, new HashSet<JsonNode>(ReferenceEqualityComparer.Instance));
     }

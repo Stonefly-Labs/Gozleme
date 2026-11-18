@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Reflection;
-
 using System.Text.RegularExpressions;
 using Corvus.Text.Json;
 using Corvus.Text.Json.RuntimeEvaluator;
+using Gozleme.Api.Manifests.Parsing;
 using CorvusSchema = Corvus.Text.Json.Validator.JsonSchema;
 
 namespace Gozleme.Api.Manifests;
@@ -107,6 +107,11 @@ internal sealed class SchemaRegistry
             {
                 return [new ManifestProblem(ManifestRules.NativeSchema, ProblemLocation.At(part, string.Empty))];
             }
+            catch (Exception e) when (e is ArgumentException or OutOfMemoryException)
+            {
+                // The validator's result buffer cannot grow past 2 GB; a document that gets there is too large, never a 500 (T084).
+                throw new Parsing.ValidationStop(ManifestRules.BoundResults, null);
+            }
 
             foreach (var result in collector.EnumerateResults())
             {
@@ -161,7 +166,7 @@ internal sealed class SchemaRegistry
 
         // A failure is a leaf when no other failure's evaluation path extends it; one pass over every path's prefixes (T073).
         var extended = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var (evaluation, _) in distinct)
+        foreach (var evaluation in distinct.Select(f => f.Evaluation).Distinct(StringComparer.Ordinal))
         {
             if (evaluation.Length > 0)
             {
@@ -207,11 +212,25 @@ internal sealed class SchemaRegistry
             mapped.Add((keyword, instance));
         }
 
+        // Sibling locations share one parsed parent chain (T084), so many problems under a deep object cost one chain.
+        var parsed = new Dictionary<string, JsonPointer>(StringComparer.Ordinal) { [string.Empty] = JsonPointer.Root };
+        JsonPointer Parse(string text)
+        {
+            if (!parsed.TryGetValue(text, out var pointer))
+            {
+                var slash = text.LastIndexOf('/');
+                var segment = text[(slash + 1)..].Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal);
+                parsed[text] = pointer = Parse(slash > 0 ? text[..slash] : string.Empty).Child(segment);
+            }
+
+            return pointer;
+        }
+
         var problems = new List<ManifestProblem>();
         foreach (var (keyword, instance) in mapped.Distinct())
         {
             var rule = UnknownFieldKeywords.Contains(keyword) ? ManifestRules.NativeUnknownField : ManifestRules.NativeSchema;
-            problems.Add(new ManifestProblem(rule, ProblemLocation.At(part, instance)));
+            problems.Add(new ManifestProblem(rule, ProblemLocation.At(part, Parse(instance))));
         }
 
         return problems;

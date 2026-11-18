@@ -16,6 +16,7 @@ internal sealed class JsonPointer : IEquatable<JsonPointer>
         Parent = parent;
         Segment = segment;
         Depth = depth;
+        Length = parent is null ? 0 : parent.Length + 1 + segment.Length + segment.AsSpan().Count('~') + segment.AsSpan().Count('/');
         _hash = parent is null ? 0 : HashCode.Combine(parent._hash, StringComparer.Ordinal.GetHashCode(segment));
     }
 
@@ -25,6 +26,9 @@ internal sealed class JsonPointer : IEquatable<JsonPointer>
     public string Segment { get; }
 
     public int Depth { get; }
+
+    /// <summary>The length of the RFC 6901 text, known without building it.</summary>
+    public int Length { get; }
 
     public JsonPointer Child(string name) => new(this, name, Depth + 1);
 

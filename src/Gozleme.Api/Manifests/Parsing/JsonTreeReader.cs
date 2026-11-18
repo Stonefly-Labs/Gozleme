@@ -84,6 +84,11 @@ internal static class JsonTreeReader
 
     private static ManifestNode ReadValue(ref Utf8JsonReader reader, State state, JsonPointer pointer, int depth)
     {
+        if (pointer.Length > TreeBounds.MaxLocationLength)
+        {
+            throw new ValidationStop(ManifestRules.BoundLocation, null);
+        }
+
         if (++state.Nodes > TreeBounds.MaxNodes)
         {
             throw new ValidationStop(ManifestRules.BoundNodes, null);

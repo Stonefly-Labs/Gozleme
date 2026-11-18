@@ -19,7 +19,7 @@ public sealed partial class ManifestRuleCatalogueTests
         var expected = TableRow().Matches(table)
             .SelectMany(m => RuleName().Matches(m.Groups["rules"].Value).Select(r => $"{r.Groups[1].Value} {m.Groups["category"].Value}"))
             .ToList();
-        Assert.Equal(38, expected.Count);
+        Assert.Equal(40, expected.Count);
         Assert.Equal(expected, ManifestRules.All.Select(r => $"{r.Id} {ManifestRules.Name(r.Category)}"));
     }
 

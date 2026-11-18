@@ -42,6 +42,8 @@ internal static class ManifestRules
     public static readonly ManifestRule BoundNodes = new("bound.nodes", ProblemCategory.TooLarge, "The document has more than 50,000 values.");
     public static readonly ManifestRule BoundName = new("bound.name", ProblemCategory.TooLarge, "A member name is longer than 1,024 characters.");
     public static readonly ManifestRule BoundNumber = new("bound.number", ProblemCategory.TooLarge, "A number is longer than 1,024 characters.");
+    public static readonly ManifestRule BoundLocation = new("bound.location", ProblemCategory.TooLarge, "A value's location is longer than 4,096 characters.");
+    public static readonly ManifestRule BoundResults = new("bound.results", ProblemCategory.TooLarge, "The document produces more schema results than can be processed.");
     public static readonly ManifestRule BoundEntries = new("bound.entries", ProblemCategory.TooLarge, "The document declares more than 1,000 entries.");
 
     public static readonly ManifestRule EnvelopeVersion = new("envelope.version", ProblemCategory.UnsupportedVersion, "This envelope version is not supported; use envelopeVersion 1.");
@@ -78,7 +80,7 @@ internal static class ManifestRules
     public static readonly IReadOnlyList<ManifestRule> All =
     [
         ParseSyntax, ParseDuplicateKey, ParseYamlFeature, ParseEncoding, ParseNotString, ParseFrontMatter, ParseEmpty,
-        BoundBody, BoundEnvelope, BoundNative, BoundDepth, BoundNodes, BoundName, BoundNumber, BoundEntries,
+        BoundBody, BoundEnvelope, BoundNative, BoundDepth, BoundNodes, BoundName, BoundNumber, BoundLocation, BoundResults, BoundEntries,
         EnvelopeVersion, EnvelopeFamily, EnvelopeFormat, NativeVersionMismatch,
         EnvelopeUnknownField, NativeUnknownField,
         ReservedVocabulary, ReservedA2aSignatures, ReservedMcpRegistryMeta, ReservedMcpNamespace,

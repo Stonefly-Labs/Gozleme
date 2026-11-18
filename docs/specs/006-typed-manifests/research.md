@@ -126,6 +126,8 @@ pinning OpenAPI 3.1.0's 2022-10-07 schema (superseded upstream).
 | Nodes per native tree | 50,000 | problem `too_large` |
 | Member name length | 1,024 characters | problem `too_large` |
 | Number length (JSON and YAML numeric scalars) | 1,024 characters, checked before conversion | problem `too_large`, rule `bound.number` (maintainer decision 2026-11-17, T079) |
+| Location length (RFC 6901 text of any value's pointer, envelope and native) | 4,096 characters, checked while reading | problem `too_large`, rule `bound.location` (maintainer decision 2026-11-17, T084) |
+| Schema results (the validator's result buffer cannot grow) | buffer overflow | problem `too_large`, rule `bound.results`, never a 500 (maintainer decision 2026-11-17, T084) |
 | Entries per family (tools + resources + templates + prompts; skills; operations; channels + operations) | 1,000 | problem `too_large` |
 | Problems returned | 50, in stable order, then `"truncated": true` | — |
 

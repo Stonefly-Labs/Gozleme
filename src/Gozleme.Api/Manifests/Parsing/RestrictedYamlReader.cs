@@ -103,6 +103,11 @@ internal static partial class RestrictedYamlReader
 
     private static ManifestNode ReadNode(IParser parser, State state, JsonPointer pointer, int depth)
     {
+        if (pointer.Length > TreeBounds.MaxLocationLength)
+        {
+            throw new ValidationStop(ManifestRules.BoundLocation, null);
+        }
+
         if (++state.Nodes > TreeBounds.MaxNodes)
         {
             throw new ValidationStop(ManifestRules.BoundNodes, null);

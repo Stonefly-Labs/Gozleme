@@ -168,6 +168,9 @@ internal static class TreeBounds
     public const int MaxNodes = 50_000;
     public const int MaxNameLength = 1_024;
     public const int MaxNumberLength = 1_024;
+
+    /// <summary>The longest RFC 6901 location of any value (maintainer decision 2026-11-17, "new limit + no crash").</summary>
+    public const int MaxLocationLength = 4_096;
 }
 
 /// <summary>A stage that stops processing with exactly one problem (<c>malformed</c>, <c>too_large</c>, or an unsupported envelope version, family, format or encoding).</summary>

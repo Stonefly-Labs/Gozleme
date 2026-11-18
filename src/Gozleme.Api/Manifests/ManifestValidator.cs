@@ -111,11 +111,12 @@ internal sealed class ManifestValidator
     /// segment (indices numerically, names ordinally), category, rule.
     /// </summary>
     internal static List<ManifestProblem> Order(IEnumerable<ManifestProblem> problems) =>
-        [.. problems.Distinct().Order(ProblemComparer.Instance)];
+        [.. problems.Distinct().Order(new ProblemComparer())];
 
+    /// <summary>One per sort: each pointer's escaped segments are built once, not on every comparison (T084).</summary>
     private sealed class ProblemComparer : IComparer<ManifestProblem>
     {
-        public static readonly ProblemComparer Instance = new();
+        private readonly Dictionary<JsonPointer, string[]> _segments = new(ReferenceEqualityComparer.Instance);
 
         public int Compare(ManifestProblem? x, ManifestProblem? y)
         {
@@ -125,7 +126,7 @@ internal sealed class ManifestValidator
             {
                 c = (a.Path, b.Path) switch
                 {
-                    ({ } p, { } q) => ComparePointers(p.Segments(), q.Segments()),
+                    ({ } p, { } q) => ComparePointers(Segments(p), Segments(q)),
                     (null, null) => (a.Line, a.Column).CompareTo((b.Line, b.Column)),
                     (null, _) => 1,
                     _ => -1,
@@ -147,13 +148,23 @@ internal sealed class ManifestValidator
             _ => 2,
         };
 
+        private string[] Segments(JsonPointer pointer)
+        {
+            if (!_segments.TryGetValue(pointer, out var segments))
+            {
+                _segments[pointer] = segments = [.. pointer.Segments().Select(JsonPointer.Escape)];
+            }
+
+            return segments;
+        }
+
         /// <summary>Segment by segment: indices numerically, names ordinally in their RFC 6901 escaped form.</summary>
         private static int ComparePointers(string[] a, string[] b)
         {
             for (var i = 0; i < Math.Min(a.Length, b.Length); i++)
             {
                 var c = int.TryParse(a[i], out var m) && int.TryParse(b[i], out var n) ? m.CompareTo(n)
-                    : string.CompareOrdinal(JsonPointer.Escape(a[i]), JsonPointer.Escape(b[i]));
+                    : string.CompareOrdinal(a[i], b[i]);
                 if (c != 0)
                 {
                     return c;

@@ -179,7 +179,48 @@ public sealed class ManifestBoundsTests
         envelope.Append('[').Append(string.Join(',', Enumerable.Repeat("0", 20_000))).Append(']').Append('}', 62).Append('}');
         before = GC.GetTotalAllocatedBytes(true);
         var result = Assert.IsType<RejectedResult>(Validate(Encoding.UTF8.GetBytes(envelope.ToString())));
-        Assert.Equal("bound.envelope", Assert.Single(result.Problems).Rule);
+        Assert.Equal("bound.location", Assert.Single(result.Problems).Rule); // refused while reading (T084), before the envelope size
         Assert.True(GC.GetTotalAllocatedBytes(true) - before < 64L << 20, "envelope allocated over 64 MiB");
+    }
+
+    /// <summary>T084 (maintainer decision "new limit + no crash"): a location over 4,096 characters is too_large.</summary>
+    [Theory]
+    [InlineData("json", 4, true)] // /x-a plus 4 × 1,001 = 4,008 characters
+    [InlineData("json", 5, false)]
+    [InlineData("yaml", 4, true)]
+    [InlineData("yaml", 5, false)]
+    public void A_location_over_4096_characters_is_too_large(string encoding, int levels, bool accepted)
+    {
+        string doc;
+        if (encoding == "json")
+        {
+            var value = "1";
+            for (var d = 0; d < levels; d++)
+            {
+                value = "{\"" + new string((char)('a' + d), 1000) + "\":" + value + "}";
+            }
+
+            doc = """{"openapi":"3.1.0","info":{"title":"t","version":"1"},"paths":{},"x-a":""" + value + "}";
+        }
+        else
+        {
+            var yaml = new StringBuilder("openapi: 3.1.0\ninfo:\n  title: t\n  version: '1'\npaths: {}\nx-a:\n");
+            for (var d = 0; d < levels; d++)
+            {
+                yaml.Append(' ', 2 * (d + 1)).Append((char)('a' + d), 1000).Append(':').Append(d + 1 == levels ? " 1\n" : "\n");
+            }
+
+            doc = yaml.ToString();
+        }
+
+        var result = Validate("api", "openapi", "3.1", encoding, doc);
+        if (accepted)
+        {
+            Accepted(result);
+        }
+        else
+        {
+            TooLarge(result, "bound.location");
+        }
     }
 }
