@@ -48,7 +48,7 @@ securityReview:
   reviewer: security-reviewer agent (review-security), 2026-11-18, read-only
   result: 'SR1-SR7 pass; no critical or high findings'
   findings:
-  - {id: SEC-1, severity: low, summary: 'published_by, rule/schema versions, family and envelope title/summary are shown beside the Verified badge but are not in statement v1 (FR-008 fixes the members)', status: awaiting-maintainer}
+  - {id: SEC-1, severity: low, summary: 'published_by, rule/schema versions, family and envelope title/summary are shown beside the Verified badge but are not in statement v1 (FR-008 fixes the members)', status: fixed, ruling: 'maintainer 2026-11-18: label unsigned fields; statement v1 unchanged', evidence: 'RevisionDetail "Recorded, not attested" group; RevisionList footnote; RevisionDetail.test.tsx, RevisionList.test.tsx; contracts/attestation-statement-v1.md'}
   - {id: SEC-2, severity: low, summary: 'revision_attestations insert guard accepted a retired key', status: fixed, evidence: 'migration guard now refuses a key with a retirement row; RevisionAtomicityTests.An_attestation_by_a_retired_key_is_refused'}
   - {id: SEC-3, severity: low, summary: 'Helm migrate Job carries the KEK although migrations never read it', status: accepted-per-A9, note: 'A9 ruled the optional secretKeyRef stays on the migrate Job; maintainer may reopen'}
   - {id: SEC-4, severity: low, summary: 'a lone surrogate in the native document might 500 on publish', status: not-reproduced, evidence: 'RevisionPublishTests.A_lone_surrogate_in_the_native_document_is_refused_never_a_server_error (4xx, nothing stored)'}

@@ -541,7 +541,8 @@ test("8. Jaeger shows the publish, verify and operator spans, and nothing secret
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.goto(`${JAEGER_URL}/trace/${traceId}`);
     await expect(page.getByText(span).first()).toBeAttached({ timeout: 15_000 });
-    await page.getByRole("switch", { name: new RegExp(`${span}$`) }).first().click();
+    // The span row ("<service> <span>"), not the trace header ("<service>: <span>") when the span is the root.
+    await page.getByRole("switch", { name: new RegExp(`^gozleme-[\\w-]+ ${span.replaceAll(".", "\\.")}`) }).first().click();
     await expect(page.getByRole("heading", { name: span, level: 2 })).toBeVisible();
     await page.getByText(/^Attributes:?$/).first().click();
     for (const v of privateValues) await expect(page.locator("body")).not.toContainText(v);

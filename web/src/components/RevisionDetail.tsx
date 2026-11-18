@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatUtc } from "@/lib/format";
-import { type RevisionDetail as RevisionDetailData, SUSPENDED_PUBLISHER } from "@/lib/revisions";
+import { type RevisionDetail as RevisionDetailData, SUSPENDED_PUBLISHER, UNATTESTED } from "@/lib/revisions";
 import { AttestationPanel } from "./AttestationPanel";
 import { VerificationBadge } from "./VerificationBadge";
 
@@ -82,6 +82,19 @@ export function RevisionDetail({
             </dd>
           </div>
           <div className="row">
+            <dt>Adapter</dt>
+            <dd>
+              <code>{`${revision.adapter.id}/${revision.adapter.version}`}</code>
+            </dd>
+          </div>
+        </dl>
+      </section>
+      {/* SEC-1: recorded at publication but outside statement v1, so a Verified result says nothing about them. */}
+      <section className="card" aria-labelledby="unattested-heading" data-testid="unattested-fields">
+        <h2 id="unattested-heading">Recorded, not attested</h2>
+        <p className="field-hint">{UNATTESTED}</p>
+        <dl>
+          <div className="row">
             <dt>By account</dt>
             <dd>
               <code data-testid="revision-published-by">{revision.publishedBy}</code>
@@ -90,7 +103,7 @@ export function RevisionDetail({
           <div className="row">
             <dt>Validated with</dt>
             <dd>
-              <code>{`${revision.adapter.id}/${revision.adapter.version} · rules v${revision.ruleCatalogueVersion} · schemas v${revision.schemaBundleVersion}`}</code>
+              <code>{`rules v${revision.ruleCatalogueVersion} · schemas v${revision.schemaBundleVersion}`}</code>
             </dd>
           </div>
         </dl>

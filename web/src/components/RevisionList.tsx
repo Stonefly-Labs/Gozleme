@@ -40,7 +40,9 @@ export function RevisionList({
                 <th scope="col">#</th>
                 <th scope="col">Version</th>
                 <th scope="col">Published</th>
-                <th scope="col">By account</th>
+                <th scope="col">
+                  By account<span aria-hidden="true">*</span>
+                </th>
                 <th scope="col">Native digest</th>
                 <th scope="col">Verification</th>
               </tr>
@@ -70,6 +72,11 @@ export function RevisionList({
               ))}
             </tbody>
           </table>
+        )}
+        {list.revisions.length > 0 && (
+          <p className="field-hint" data-testid="unattested-note">
+            * By account is recorded by the registry and is not covered by the attestation.
+          </p>
         )}
         {list.next !== null && (
           <p className="form-inline">

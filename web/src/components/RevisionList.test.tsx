@@ -18,6 +18,11 @@ const renderList = (overrides: Partial<Parameters<typeof RevisionList>[0]["list"
   );
 
 describe("RevisionList (GOZ-0007 US1, US2)", () => {
+  it("notes that the account column is not covered by the attestation (SEC-1)", () => {
+    renderList();
+    expect(screen.getByTestId("unattested-note")).toHaveTextContent("By account is recorded by the registry and is not covered by the attestation.");
+  });
+
   it("lists revisions in publication order with their records and no latest label", () => {
     const { container } = renderList();
     const rows = screen.getAllByTestId("revision-row");

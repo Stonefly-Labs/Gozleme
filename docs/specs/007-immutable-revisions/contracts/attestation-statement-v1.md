@@ -15,6 +15,12 @@ subset below. Research R2–R5 and R14.
 cross-registry authority. Statement v1 has **no field** for any of them. A verifier MUST refuse any statement that
 carries an unknown member, statement version or algorithm, or a key that is not the revision publisher's key (CR-05).
 
+**Recorded but not attested** (SEC-1, maintainer ruling 2026-11-18): the revision record also carries the publishing
+account (`publishedBy`), the rule catalogue and schema bundle versions, the family and the envelope title and summary.
+They are outside statement v1, so a Verified result says nothing about them. The UI shows them in a separate group
+labelled "Recorded, not attested" and footnotes the list's account column; statement v1 is unchanged. Signing them
+belongs to a later statement version.
+
 ## Statement members (exactly these; all required)
 
 | Member | Type | Value |

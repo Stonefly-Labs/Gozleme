@@ -138,6 +138,8 @@ export const REVISION_MESSAGES = {
   rejected: "The manifest was rejected when publishing. Validate it again to see the problems.",
 } as const;
 
+/** SEC-1: fields the registry records beside a revision that statement v1 does not sign. */
+export const UNATTESTED = "The registry recorded these values at publication. The attestation does not cover them, so a Verified result says nothing about them.";
 export const SUSPENDED_PUBLISHER = "This publisher is suspended. Its revisions stay readable and verifiable, and no new revision can be published.";
 
 export const COMPROMISED_KEY =
