@@ -6,7 +6,7 @@ namespace Gozleme.Api.Manifests.Rules;
 
 /// <summary>
 /// The reserved vocabulary (research R6, FR-007/FR-009) applied to name positions only: envelope member names, names
-/// inside a format's extension mechanism and adapter-listed fields. A name matches when its normalized form, or a
+/// inside a format's extension mechanism, adapter-listed fields, and member names of closed native objects (T076, T086). A name matches when its normalized form, or a
 /// trailing run of its words (<see cref="Words"/>), is in the list, so <c>x-gozleme-verified</c>,
 /// <c>io.example/trust-level</c>, <c>x-isVerified</c> and <c>Approved</c> all match. Changing the list is a security review item.
 /// </summary>
@@ -24,13 +24,10 @@ internal static class ReservedClaims
     private static readonly FrozenSet<string> Set = Vocabulary.ToFrozenSet(StringComparer.Ordinal);
 
     /// <summary>
-    /// The normalized whole name, or any trailing run of its words, is in the list. The trailing runs make
-    /// <c>x-gozleme-verified</c> match as R6's rationale requires (maintainer decision 2026-11-17, "trailing words").
-    /// </summary>
-    /// <summary>
     /// Reserved when a trailing run of the words after the namespace cut, or of the whole name's words (dots and
-    /// slashes as separators), is in the vocabulary (maintainer decision 2026-11-17, "check whole name too"), so
-    /// <c>x-trust.level</c> and <c>x-verified.</c> match as <c>x-trust-level</c> and <c>x-verified</c> do.
+    /// slashes as separators), is in the vocabulary. Trailing runs make <c>x-gozleme-verified</c> match as R6's rationale
+    /// requires ("trailing words"); the whole name makes <c>x-trust.level</c> and <c>x-verified.</c> match as
+    /// <c>x-trust-level</c> and <c>x-verified</c> do ("check whole name too"; maintainer decisions 2026-11-17).
     /// </summary>
     public static bool IsReserved(string name) => EndsReserved(Words(name)) || EndsReserved(Words(name, cutNamespace: false));
 

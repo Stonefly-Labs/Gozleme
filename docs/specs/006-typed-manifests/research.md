@@ -296,7 +296,7 @@ Anything else is `identity_mismatch` at `/capability`, rule `identity.capability
 `adapter: "<family>/<n>"`, separate from `envelopeVersion` and `native.formatVersion`. The common fields
 are `family`, `kind`, `nativeName`, `title`, `description` and `declaredVersion` (from the envelope), plus:
 - `attributes`: a closed per-family set;
-- `entries[]`: `{kind, nativeName, title?}`, in native document order;
+- `entries[]`: `{kind, nativeName, title?}`: from arrays in native document order, from maps in a fixed sorted order (maintainer decision 2026-11-17, T087; `contracts/projection-v1.md`);
 - `derived[]`: JSON Pointers into the projection that mark derived or defaulted values.
 
 | Family | `kind` | `attributes` | `entries[].kind` |

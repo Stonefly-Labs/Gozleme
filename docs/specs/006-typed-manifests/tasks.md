@@ -246,3 +246,12 @@ Task: "Route handler in web/src/app/api/.../manifests/validate/route.ts"
 - [X] T089 Remove all default-ignorable code points (incl. Hangul fillers) in reserved-name matching and add Latin-script TR39 look-alikes to the generated fold table, with tests, per FR-009, research R6, maintainer decision lookalike-fillers-latin (partial)
 - [X] T090 Amend FR-012, `contracts/manifest-validation.md` and research R9 so `parse.not-string` and the encoding-mismatch `parse.syntax` are located by envelope pointer, and list YAML-comment secrets among line/column locations, per maintainer decision malformed-envelope-locations (contradicts)
 - [X] T091 Check each location's joined RFC 6901 text against the secret patterns: report `secret.name` at the deepest parent whose location is clean, and drop every other problem whose location's joined text matches, with tests (incl. `https:` → `` → `u:pw@host`) and a cost check at the tree bounds, per FR-012 ("never echo submitted values"), contracts/secret-patterns.md, maintainer decision joined-name-credentials (partial)
+
+## Phase 10: Convergence
+
+- [ ] T092 Check joined locations only with the patterns that need names joined (url-userinfo, azure-connection-secret), match anchors exactly as the patterns do (Kelvin sign U+212A), include array items when finding the deepest clean parent, and add a cost test at the tree bounds, per maintainer decisions joined-name-credentials and joined-names-patterns, confirmation reviews (partial)
+- [ ] T093 Treat Callback object entries as a map and draft-07 `dependencies` as a schema map in `Rules/DataPositions.cs`, with tests, per maintainer decision data-positions-gaps (partial)
+- [ ] T094 Treat an OpenAPI Link's `requestBody` and `parameters` values as literal data, and an object-valued `examples` in a bare JSON Schema as data, with tests, per maintainer decision data-positions-literal (contradicts)
+- [ ] T095 Apply the reserved vocabulary to the model card's closed nested objects (`modalities`, `limits`) beside `unknown_field`, amend native-formats.md and R6, with tests, per maintainer decision model-card-nested-reserved (partial)
+- [ ] T096 Narrow the validator overflow catch to the result-buffer overflow, log a warning without content, and let any other exception fail as a 500, with tests, per maintainer decision results-overflow-catch (partial)
+- [X] T097 Text fixes: research R12 entry order, manifest-validation.md bounds rows (number, location, results), ReservedClaims summaries, per confirmation convergence F4, F5, F7 (contradicts)

@@ -105,6 +105,9 @@ exist.
 | Nesting depth (each part) | 64 | `too_large` |
 | Nodes per native tree | 50,000 | `too_large` |
 | Member name length | 1,024 characters | `too_large` |
+| Number length (JSON and YAML numeric scalars) | 1,024 characters, checked before conversion | `too_large` (`bound.number`) |
+| Location length (RFC 6901 text of any value's pointer) | 4,096 characters, checked while reading | `too_large` (`bound.location`) |
+| Schema results (the validator's result buffer cannot grow further) | overflow | `too_large` (`bound.results`), never a 500 |
 | Entries per family | 1,000 | `too_large` |
 | Problems returned | 50 | `truncated: true` |
 
