@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0006",
-  "commit": "1a8b782fa4ca9c8c68f40fefa295dfec250b53a2",
+  "commit": "ed71f64eb038557b48e45b6d156732fb47b59398",
   "branch": "feature/goz-0006-typed-manifests",
   "workingTreeCleanAtStart": false,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-17T23:35:21Z",
-  "finishedAt": "2026-11-17T23:42:17Z",
-  "stackStartupSeconds": 5,
+  "startedAt": "2026-11-18T00:46:35Z",
+  "finishedAt": "2026-11-18T00:53:40Z",
+  "stackStartupSeconds": 21,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -232,8 +232,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 226 ms",
-    "sign-in\u2192dashboard 167 ms"
+    "register\u2192dashboard 224 ms",
+    "sign-in\u2192dashboard 168 ms"
   ],
   "evidence": [
     "docs/specs/006-typed-manifests/evidence/screenshots/01-accepted-valid-stateless-2026-07-28.png",
@@ -259,12 +259,13 @@
     "docs/specs/006-typed-manifests/evidence/screenshots/32-rejected-invalid-secret-pattern.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/33-rejected-invalid-secret-skill-body.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/34-rejected-invalid-secret-openapi-example.png",
-    "docs/specs/006-typed-manifests/evidence/screenshots/35-rejected-invalid-identity.png",
-    "docs/specs/006-typed-manifests/evidence/screenshots/36-rejected-invalid-external-ref.png",
-    "docs/specs/006-typed-manifests/evidence/screenshots/37-rejected-invalid-skill-name.png",
-    "docs/specs/006-typed-manifests/evidence/screenshots/38-rejected-invalid-model-modality.png",
-    "docs/specs/006-typed-manifests/evidence/screenshots/39-rejected-invalid-mcp-consistency.png",
-    "docs/specs/006-typed-manifests/evidence/screenshots/40-rejected-invalid-a2a-required.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/35-rejected-invalid-secret-yaml-comment.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/36-rejected-invalid-identity.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/37-rejected-invalid-external-ref.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/38-rejected-invalid-skill-name.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/39-rejected-invalid-model-modality.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/40-rejected-invalid-mcp-consistency.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/41-rejected-invalid-a2a-required.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/60-admin-without-publisher-forbidden.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/61-suspended-publisher.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/70-manifest-validate-trace-jaeger.png",

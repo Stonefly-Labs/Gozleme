@@ -311,6 +311,18 @@ test("roles, non-members, suspension and the validation budget answer in the con
   expect((await setRoles(dave, PARTNER_ORG.id, daveId, ["admin", "publisher"])).status).toBe(200);
   const squat = JSON.parse((await api(dave, "POST", `${PARTNER_API}/publishers`, JSON.stringify({ handle: SQUATTED, displayName: "Squat" }))).text) as { id: string };
   const squatCapability = JSON.parse((await api(dave, "POST", `${PARTNER_API}/publishers/${squat.id}/capabilities`, JSON.stringify({ name: "forecast", displayName: "F" }))).text) as { id: string };
+
+  // FR-026: carol (a Seeded Demo Org publisher) posting Partner Org's publisher and capability IDs under the Demo Org
+  // path gets the identical empty 404 as for IDs that exist nowhere.
+  const crossOrg = await api(carol, "POST", `${ORG_API}/publishers/${squat.id}/capabilities/${squatCapability.id}/manifests/validate`, sampleText(valid[0]!));
+  const crossCapability = await api(carol, "POST", `${ORG_API}/publishers/${PUBLISHER.id}/capabilities/${squatCapability.id}/manifests/validate`, sampleText(valid[0]!));
+  const nowhere = await api(carol, "POST", `${ORG_API}/publishers/0193a000-0000-7000-8000-0000000000ef/capabilities/0193a000-0000-7000-8000-0000000000ed/manifests/validate`, "{}");
+  for (const r of [crossOrg, crossCapability]) {
+    expect(`${r.status}|${r.text}|${r.cache}`).toBe(`${nowhere.status}|${nowhere.text}|${nowhere.cache}`);
+  }
+  expect(nowhere.status).toBe(404);
+  expect(nowhere.text).toBe("");
+
   const reclaim = migrate(["handle-reclaim", "--handle", SQUATTED, "--organization", DEMO_ORG.id]);
   expect(reclaim.exit, reclaim.stderr).toBe(0);
   const suspendedUrl = `${PARTNER_API}/publishers/${squat.id}/capabilities/${squatCapability.id}/manifests/validate`;
@@ -344,6 +356,7 @@ test("roles, non-members, suspension and the validation budget answer in the con
     adminWithoutPublisher: "403 forbidden, no control shown",
     roleMatrix: matrix,
     nonMemberAndUnknownOrganization: "404 (identical, empty, no-store)",
+    crossOrganizationIds: "404 (Partner Org publisher/capability under Demo Org path, identical to unknown IDs)",
     suspendedByHandleReclaim: "409 suspended (body not read)",
     rateLimit: { allowed: 30, thirty_first: 429, retryAfterSeconds: Number(limited!.retryAfter) },
   });
