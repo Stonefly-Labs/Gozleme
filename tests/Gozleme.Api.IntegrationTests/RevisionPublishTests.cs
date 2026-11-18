@@ -156,6 +156,20 @@ public sealed class RevisionPublishTests(PgvectorDatabaseFixture fixture) : IAsy
     }
 
     [Fact]
+    public async Task A_lone_surrogate_in_the_native_document_is_refused_never_a_server_error()
+    {
+        var (capabilityId, canonical) = await NewCapabilityAsync();
+        var envelope = System.Text.Json.Nodes.JsonNode.Parse(RevisionClient.Envelope(canonical, "1.0.0"))!;
+        var document = envelope["native"]!["document"]!.GetValue<string>().Replace("\"title\": \"Forecasts\"", "\"title\": \"Fore\\ud800casts\"", StringComparison.Ordinal);
+        Assert.Contains("\\ud800", document, StringComparison.Ordinal);
+        envelope["native"]!["document"] = document;
+        var body = Encoding.UTF8.GetBytes(envelope.ToJsonString());
+        var (status, _) = await ManifestClient.SendAsync(_carol, RevisionClient.Revisions(_org, _publisherId, capabilityId), body);
+        Assert.True((int)status is >= 400 and < 500, $"{status}");
+        Assert.Equal(0, await Db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.manifest_revisions WHERE capability_id = '{capabilityId}'", Db.SuperuserConnectionString));
+    }
+
+    [Fact]
     public async Task Concurrent_first_publications_create_exactly_one_key()
     {
         var publisherId = (await OrgClient.RegisterPublisherAsync(_alice, _org, OrgClient.NewHandle("rk"))).GetProperty("id").GetString()!;

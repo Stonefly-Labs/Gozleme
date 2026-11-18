@@ -32,7 +32,9 @@ Generate one with `openssl rand -base64 32`.
 
 The command is run like `migrate` (Compose: `docker compose run --rm migrate signing-key-succession …`; Helm: a
 one-off Job from the migrate image). It has **no HTTP route**. It connects as the owner with no account context (the
-operator), and it needs the current KEK.
+operator), and it needs the current KEK. Supply the KEK only through the environment (Compose
+`GOZLEME_SIGNING_KEK`, Helm Secret); never as a `--Gozleme:Signing:KeyEncryptionKey=…` argument, which would put it in
+the process list and the Job spec.
 
 ```text
 signing-key-succession --publisher <uuid> --reason lost|compromised

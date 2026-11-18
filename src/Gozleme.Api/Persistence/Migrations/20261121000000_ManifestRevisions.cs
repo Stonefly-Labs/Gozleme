@@ -187,7 +187,9 @@ internal sealed partial class ManifestRevisions : Migration
             BEGIN
               IF NOT EXISTS (SELECT 1 FROM gozleme.manifest_revisions r JOIN gozleme.publisher_signing_keys k
                                ON k.publisher_id = r.publisher_id AND k.organization_id = r.organization_id
-                             WHERE r.id = NEW.revision_id AND r.organization_id = NEW.organization_id AND k.id = NEW.signing_key_id) THEN
+                             WHERE r.id = NEW.revision_id AND r.organization_id = NEW.organization_id AND k.id = NEW.signing_key_id)
+                 -- A retired key never signs again (FR-007a), whatever path inserts the attestation.
+                 OR EXISTS (SELECT 1 FROM gozleme.signing_key_retirements x WHERE x.key_id = NEW.signing_key_id) THEN
                 RAISE EXCEPTION 'revision attestation refused' USING ERRCODE = 'insufficient_privilege';
               END IF;
               NEW.created_at := now();

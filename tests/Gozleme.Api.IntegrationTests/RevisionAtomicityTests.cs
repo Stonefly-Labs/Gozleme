@@ -7,7 +7,8 @@ namespace Gozleme.Api.IntegrationTests;
 /// GOZ-0007 T047 (FR-005, research R8): the database refuses what the publication transaction must never produce,
 /// even through direct SQL as a publisher member. A revision without an attestation cannot commit (deferred
 /// constraint trigger), a sequence other than <c>max + 1</c> and a <c>version_key</c> other than the version without
-/// <c>+build</c> are refused, and a failure after the key insert leaves neither the key nor the revision.
+/// <c>+build</c> are refused, a failure after the key insert leaves neither the key nor the revision, and an
+/// attestation by a retired key is refused (security review finding 2).
 /// </summary>
 public sealed class RevisionAtomicityTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
@@ -72,6 +73,23 @@ public sealed class RevisionAtomicityTests(PgvectorDatabaseFixture fixture) : IA
         // Another publisher's capability cannot be named either.
         var (other, _) = await _s.NewPublisherAsync();
         Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, await CommitAsCarolAsync(InsertRevision(capabilityId, other, sequence: 2, version: "2.0.0")));
+        Assert.Equal(1, await CountAsync($"SELECT count(*) FROM gozleme.manifest_revisions WHERE capability_id = '{capabilityId}'"));
+    }
+
+    [Fact]
+    public async Task An_attestation_by_a_retired_key_is_refused()
+    {
+        var (publisherId, _) = await _s.NewPublisherAsync();
+        var (capabilityId, _, _) = await _s.PublishedAsync("1.0.0", publisherId);
+        var retired = (await RevisionClient.GetAsync(_s.Erin, RevisionClient.Keys(_s.OrgA, publisherId))).Body.GetProperty("keys")[0].GetProperty("id").GetString();
+        Assert.Equal(0, (await _s.SuccessionAsync(null, null, "--publisher", publisherId, "--reason", "compromised")).Code);
+        var revision = Guid.CreateVersion7();
+        var insert = InsertRevision(capabilityId, publisherId, sequence: 2, version: "2.0.0").Replace("VALUES (gen_random_uuid(),", $"VALUES ('{revision}',", StringComparison.Ordinal);
+        var attest = $"""
+            INSERT INTO gozleme.revision_attestations (revision_id, organization_id, signing_key_id, statement_version, statement, signature, created_at)
+            VALUES ('{revision}', '{_s.OrgA}', '{retired}', 1, convert_to('{"{}"}', 'UTF8'), decode(repeat('00', 64), 'hex'), now())
+            """;
+        Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, await CommitAsCarolAsync(insert, attest));
         Assert.Equal(1, await CountAsync($"SELECT count(*) FROM gozleme.manifest_revisions WHERE capability_id = '{capabilityId}'"));
     }
 
