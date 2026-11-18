@@ -175,6 +175,14 @@ public sealed class RevisionAuthorizationTests(PgvectorDatabaseFixture fixture) 
         await using var limited = await RevisionScenario.CreateAsync(_s.Db, new Dictionary<string, string?> { ["Gozleme:Manifests:PublishPerMinute"] = "10" });
         var (capabilityId, canonical) = await limited.NewCapabilityAsync();
         var path = limited.Revisions(capabilityId);
+
+        // The budget is per clock minute (R15): start with at least 15 s left, so all 11 requests share one window.
+        var second = await _s.Db.ScalarAsync<double>("SELECT extract(second FROM now())::float8", _s.Db.SuperuserConnectionString);
+        if (second > 45)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(61 - second), TestContext.Current.CancellationToken);
+        }
+
         for (var i = 0; i < 10; i++)
         {
             // Refusals spend the budget too: it is taken before the body is read.

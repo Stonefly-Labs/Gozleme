@@ -5,7 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { API_URL } from "../playwright.config";
 import { repoRoot, secretStrings } from "./compose";
-import { attempt, execute, tamper } from "./db";
+import { attempt, execute, psql, tamper } from "./db";
 import { DEMO, DEMO_ORG, DEMO_PASSWORD, PARTNER_ORG, evidenceDir, shotsDir } from "./evidence";
 import { operator, reclaim, succession } from "./operator";
 import { JAEGER_URL, METRICS_URL, recentSpans, storedLogs } from "./telemetry";
@@ -458,6 +458,9 @@ test("7. roles match the contract, non-members get the empty 404 and the 11th pu
 
   // The budget (10 a minute per account): alice holds publisher briefly, so her budget is untouched by earlier steps.
   expect((await setRoles(alice, DEMO_ORG.id, aliceId, ["admin", "publisher"])).status).toBe(200);
+  // The budget is per clock minute: start with at least 15 s left, so all requests share one window.
+  const second = Number(psql("postgres", "SELECT extract(second FROM now())").out);
+  if (second > 45) await alice.waitForTimeout((61 - second) * 1000);
   const statuses: number[] = [];
   for (let i = 0; i < 11; i++) statuses.push((await api(alice, "POST", REVISIONS, "{not json")).status);
   const limited = await api(alice, "POST", REVISIONS, "{not json");
