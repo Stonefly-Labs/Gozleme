@@ -113,6 +113,13 @@ async function published(page: Page, body: string, url = REVISIONS) {
   return r.json();
 }
 
+/** alice registers a run-unique publisher; registration has its own hourly budget per account (GOZ-0005). */
+async function registerPublisher(handle: string, displayName: string) {
+  const r = await api(alice, "POST", `${ORG_API}/publishers`, JSON.stringify({ handle, displayName }));
+  expect(r.status, r.status === 429 ? "alice's hourly publisher-registration budget is spent; rerun after the hour" : r.text).toBe(201);
+  return r.json().id as string;
+}
+
 const setRoles = (page: Page, org: string, userId: string, roles: string[]) => api(page, "PUT", `${orgApi(org)}/members/${userId}/roles`, JSON.stringify({ roles }));
 const userId = async (page: Page) => String((await (await page.request.get(`${API_URL}/api/v1/auth/session`)).json()).userId);
 const sha256 = (bytes: Buffer) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
@@ -318,9 +325,7 @@ test("3. every family's downloads verify independently with Node", async () => {
 
 test("4. a rename and a reclaim leave earlier revisions verified under a suspended publisher", async () => {
   test.setTimeout(240_000);
-  const registered = await api(alice, "POST", `${ORG_API}/publishers`, JSON.stringify({ handle: PROVENANCE, displayName: "Revision Demo Tools" }));
-  expect(registered.status).toBe(201);
-  const publisherId = registered.json().id as string;
+  const publisherId = await registerPublisher(PROVENANCE, "Revision Demo Tools");
   const capability = (await api(carol, "POST", `${ORG_API}/publishers/${publisherId}/capabilities`, JSON.stringify({ name: "revision-forecast", displayName: "Revision Forecast" }))).json();
   secrets.names.push("revision-forecast");
   const url = `${capApi(publisherId, capability.id)}/revisions`;
@@ -353,7 +358,7 @@ test("4. a rename and a reclaim leave earlier revisions verified under a suspend
 
 test("5. operator key succession retires a key that still verifies what it signed", async () => {
   test.setTimeout(240_000);
-  const publisherId = (await api(alice, "POST", `${ORG_API}/publishers`, JSON.stringify({ handle: KEYS, displayName: "Key Demo Tools" }))).json().id as string;
+  const publisherId = await registerPublisher(KEYS, "Key Demo Tools");
   const capability = (await api(carol, "POST", `${ORG_API}/publishers/${publisherId}/capabilities`, JSON.stringify({ name: "key-forecast", displayName: "Key Forecast" }))).json();
   secrets.names.push("key-forecast");
   const url = `${capApi(publisherId, capability.id)}/revisions`;
@@ -391,7 +396,8 @@ test("5. operator key succession retires a key that still verifies what it signe
   await carol.goto(`${pagePath(publisherId, capability.id)}/revisions/${rev2.id}`);
   await carol.getByTestId("tab-attestation").click();
   await expect(carol.getByTestId("compromised-banner")).toBeVisible();
-  await expect(carol.getByTestId("verification-badge")).toHaveAttribute("data-status", "verified");
+  // The Attestation tab repeats the header's badge; both show the same computed result.
+  await expect(carol.getByTestId("verification-badge").first()).toHaveAttribute("data-status", "verified");
   await shot(carol, "33-succession-compromised-revision.png");
 
   const usage = operator(["signing-key-succession", "--publisher", publisherId]);
@@ -434,10 +440,11 @@ test("7. roles match the contract, non-members get the empty 404 and the 11th pu
     expect((await setRoles(alice, DEMO_ORG.id, carolId, [role])).status).toBe(200);
     const row: Record<string, number> = {};
     for (const url of reads) row[`GET ${url.replace(ORG_API, "")}`] = (await api(carol, "GET", url)).status;
-    // A malformed body: 400 proves the request passed authorization; it creates nothing.
+    // A body GOZ-0006 rejects (400/422) proves the request passed authorization; it creates nothing.
     row.publish = (await publish(carol, "{not json")).status;
     expect(Object.values(row).slice(0, reads.length).every((s) => s === 200), role).toBe(true);
-    expect(row.publish, role).toBe(role === "publisher" ? 400 : 403);
+    if (role === "publisher") expect([400, 422], role).toContain(row.publish);
+    else expect(row.publish, role).toBe(403);
     matrix[role] = row;
   }
   expect((await setRoles(alice, DEMO_ORG.id, carolId, ["publisher"])).status).toBe(200);
@@ -454,7 +461,7 @@ test("7. roles match the contract, non-members get the empty 404 and the 11th pu
   const statuses: number[] = [];
   for (let i = 0; i < 11; i++) statuses.push((await api(alice, "POST", REVISIONS, "{not json")).status);
   const limited = await api(alice, "POST", REVISIONS, "{not json");
-  expect(statuses.slice(0, 10)).toEqual(Array(10).fill(400));
+  for (const status of statuses.slice(0, 10)) expect([400, 422]).toContain(status);
   expect(statuses[10]).toBe(429);
   expect(Number(limited.headers["retry-after"])).toBeGreaterThan(0);
   expect((await setRoles(alice, DEMO_ORG.id, aliceId, ["admin"])).status).toBe(200);
