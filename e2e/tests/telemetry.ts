@@ -56,8 +56,11 @@ export interface TraceSpan {
 type AnyValue = { stringValue?: string; intValue?: string; boolValue?: boolean; doubleValue?: number };
 type Attr = { key: string; value: AnyValue };
 
+/** Span attributes as sent. Jaeger's own query-time notes (`@jaeger@warnings`, e.g. clock skew between containers) are not emitted by any service, so they are left out. */
 const flat = (attrs: Attr[] = []) =>
-  Object.fromEntries(attrs.map((a) => [a.key, a.value.stringValue ?? a.value.intValue ?? a.value.boolValue ?? a.value.doubleValue]));
+  Object.fromEntries(
+    attrs.filter((a) => !a.key.startsWith("@jaeger@")).map((a) => [a.key, a.value.stringValue ?? a.value.intValue ?? a.value.boolValue ?? a.value.doubleValue]),
+  );
 
 /**
  * All spans (any service) of traces that include `service`, within the last few minutes. Pass
