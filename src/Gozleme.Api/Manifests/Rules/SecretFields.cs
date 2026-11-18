@@ -43,6 +43,23 @@ internal static class SecretFields
         }
     }
 
+    /// <summary>
+    /// YAML comments (OpenAPI/AsyncAPI YAML and SKILL.md front matter): a pattern hit is <c>secret.pattern</c> at its
+    /// line and column, never the value (maintainer decision 2026-11-17, "scan raw text", T078).
+    /// </summary>
+    public static IEnumerable<ManifestProblem> YamlComments(string yaml, int lineOffset, string part)
+    {
+        var comments = RestrictedYamlReader.Comments(yaml, lineOffset, out var columns).ToList();
+        for (var i = 0; i < comments.Count; i++)
+        {
+            if (SecretPatterns.Match(comments[i].Text) is { } match)
+            {
+                var (_, offset) = TextPositions.Of(comments[i].Text, match.Index);
+                yield return new ManifestProblem(ManifestRules.SecretPattern, ProblemLocation.At(part, comments[i].Number, columns[i] + offset - 1));
+            }
+        }
+    }
+
     /// <summary>Whether an RFC 6901 pointer has a segment that matches the patterns (such a pointer is never returned).</summary>
     public static bool CarriesSecret(string pointer) =>
         pointer.Split('/').Any(s => s.Length > 0 && SecretPatterns.IsMatch(s.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal)));

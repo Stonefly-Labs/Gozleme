@@ -55,6 +55,14 @@ internal sealed class ManifestValidator
 
             adapter.Validate(tree, new NativeContext(envelope, _schemas, problems));
             ManifestRuleChecks.Native(adapter, tree, skill, problems);
+            if (envelope.Encoding == NativeEncoding.Yaml)
+            {
+                problems.AddRange(Rules.SecretFields.YamlComments(envelope.Document.StartsWith('\uFEFF') ? envelope.Document[1..] : envelope.Document, 0, ManifestPart.Native));
+            }
+            else if (skill is not null)
+            {
+                problems.AddRange(Rules.SecretFields.YamlComments(skill.FrontMatterText, 1, ManifestPart.Native));
+            }
 
             if (problems.Count == 0)
             {

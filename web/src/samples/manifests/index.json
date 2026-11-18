@@ -391,6 +391,26 @@
       }
     },
     {
+      "id": "invalid-secret-yaml-comment",
+      "family": "api",
+      "title": "Credential in a YAML comment",
+      "file": "api/invalid-secret-yaml-comment.json",
+      "expected": {
+        "outcome": "rejected",
+        "problems": [
+          {
+            "category": "secret_value",
+            "rule": "secret.pattern",
+            "location": {
+              "part": "native",
+              "line": 6,
+              "column": 34
+            }
+          }
+        ]
+      }
+    },
+    {
       "id": "invalid-identity",
       "family": "event",
       "title": "Foreign capability claim",

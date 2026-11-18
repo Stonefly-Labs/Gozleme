@@ -111,6 +111,31 @@ public sealed class SecretPatternTests
         Assert.Equal(["secret_value secret.pattern native 6:10"], Problems(Validate("skill", "agent-skills", "2026-11-17", "markdown", skill)));
     }
 
+    /// <summary>T078 (maintainer decision 2026-11-17): YAML comments are scanned and located by line and column, never echoed.</summary>
+    [Fact]
+    public void A_yaml_comment_secret_is_located_by_line_and_column()
+    {
+        var key = "ghp_" + new string('A', 36);
+        var yaml = "openapi: 3.1.0\ninfo:\n  title: t\n  version: '1'\npaths: {}  # deploy with " + key + "\n# key: " + key + "\n";
+        var result = Validate("api", "openapi", "3.1", "yaml", yaml);
+        Assert.Equal(["secret_value secret.pattern native 5:26", "secret_value secret.pattern native 6:8"], Problems(result));
+        Assert.DoesNotContain(key, Json(result), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_skill_front_matter_comment_secret_is_located_in_the_document()
+    {
+        var skill = "---\nname: demo\n# token " + "ghp_" + new string('A', 36) + "\ndescription: d\n---\nbody\n";
+        Assert.Equal(["secret_value secret.pattern native 3:9"], Problems(Validate("skill", "agent-skills", "2026-11-17", "markdown", skill)));
+    }
+
+    [Fact]
+    public void A_hash_inside_a_yaml_string_is_not_a_comment()
+    {
+        var yaml = "openapi: 3.1.0\ninfo:\n  title: 'a # ghp_" + new string('A', 36) + "'\n  version: '1'\npaths: {}\n";
+        Assert.Equal(["secret_value secret.pattern native /info/title"], Problems(Validate("api", "openapi", "3.1", "yaml", yaml)));
+    }
+
     [Fact]
     public void Envelope_strings_are_scanned_too()
     {

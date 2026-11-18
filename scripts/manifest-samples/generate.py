@@ -196,6 +196,10 @@ add("invalid-secret-skill-body", "skill", "Private key in a SKILL.md body",
 add("invalid-secret-openapi-example", "api", "Credential example on an Authorization header",
     envelope("api", "openapi", "3.0", "json", dump(with_(OAS30, ["paths", "/forecasts", "get", "parameters", 0], {"name": "Authorization", "in": "header", "schema": {"type": "string"}, "example": SECRETS["aws"]}))),
     rej("secret_value", "secret.field", "native", "/paths/~1forecasts/get/parameters/0/example", ("secret_value", "secret.pattern")))
+_COMMENT_LINE = "  x-audience: internal  # rotate "
+add("invalid-secret-yaml-comment", "api", "Credential in a YAML comment",
+    envelope("api", "openapi", "3.1", "yaml", OAS31_YAML.replace("  x-audience: internal\n", _COMMENT_LINE + SECRETS["github"] + "\n")),
+    rej("secret_value", "secret.pattern", "native", (6, len(_COMMENT_LINE) + 1)))
 add("invalid-identity", "event", "Foreign capability claim",
     envelope("event", "asyncapi", "3.0.0", "json", dump(ASYNC), capability=FOREIGN), rej("identity_mismatch", "identity.capability", "envelope", "/capability"))
 add("invalid-external-ref", "event", "External $ref",

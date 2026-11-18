@@ -8,6 +8,7 @@ is a contract change and a **security review item**. There is no randomness (ent
 
 - Every string value and every member name, in the envelope and in the native tree.
 - The unparsed `SKILL.md` body, one line at a time.
+- Every YAML comment (OpenAPI/AsyncAPI YAML and `SKILL.md` front matter), from `#` to the end of its line, located by line and column (maintainer decision 2026-11-17).
 
 A match is `secret_value`. Its rule is `secret.pattern` for a value, or `secret.name` for a member name, in
 which case the location is the parent object (see [manifest-validation.md](./manifest-validation.md)).

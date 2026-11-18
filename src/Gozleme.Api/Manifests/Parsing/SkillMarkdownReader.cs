@@ -25,7 +25,7 @@ internal static class SkillMarkdownReader
         var yaml = string.Join("\n", lines.Skip(1).Take(close - 1).Select(l => l.Text));
         var frontMatter = RestrictedYamlReader.Read(yaml, part, lineOffset: 1)
             ?? ManifestNode.Object(string.Empty, 2, 1, []);
-        return new SkillDocument(frontMatter, [.. lines.Skip(close + 1)]);
+        return new SkillDocument(frontMatter, [.. lines.Skip(close + 1)], yaml);
     }
 
     private static ValidationStop FrontMatter(string part) => new(ManifestRules.ParseFrontMatter, ProblemLocation.At(part, 1, 1));
@@ -56,6 +56,7 @@ internal static class SkillMarkdownReader
 }
 
 /// <summary>A parsed <c>SKILL.md</c>: the front matter tree and the unparsed body lines.</summary>
-internal sealed record SkillDocument(ManifestNode FrontMatter, IReadOnlyList<BodyLine> Body);
+/// <summary>A parsed SKILL.md: the front matter tree, the body lines, and the raw front matter text (its line 1 is the document's line 2).</summary>
+internal sealed record SkillDocument(ManifestNode FrontMatter, IReadOnlyList<BodyLine> Body, string FrontMatterText);
 
 internal sealed record BodyLine(int Number, string Text);

@@ -57,6 +57,37 @@ internal static partial class RestrictedYamlReader
         }
     }
 
+    /// <summary>
+    /// The comments of YAML text that has already been read, each from its <c>#</c> to the end of its line, with the
+    /// 1-based line and column of the <c>#</c> (shifted by <paramref name="lineOffset"/> lines). Comments are not parser
+    /// events, so the tree never holds them; the secret scan reads them here (maintainer decision 2026-11-17, T078).
+    /// </summary>
+    public static IEnumerable<BodyLine> Comments(string text, int lineOffset, out List<int> columns)
+    {
+        var comments = new List<BodyLine>();
+        columns = [];
+        var scanner = new Scanner(new StringReader(text), skipComments: false);
+        while (scanner.MoveNext())
+        {
+            if (scanner.Current is YamlDotNet.Core.Tokens.Comment comment)
+            {
+                var start = (int)Math.Min(comment.Start.Index, text.Length);
+                var hash = text.IndexOf('#', start);
+                if (hash < 0)
+                {
+                    continue;
+                }
+
+                var end = text.IndexOfAny(['\r', '\n'], hash);
+                var (line, column) = TextPositions.Of(text, hash);
+                comments.Add(new BodyLine(line + lineOffset, text[hash..(end < 0 ? text.Length : end)]));
+                columns.Add(column);
+            }
+        }
+
+        return comments;
+    }
+
     /// <summary>A control character other than TAB, LF and CR is <c>parse.encoding</c> (contracts/manifest-validation.md "Invalid text").</summary>
     internal static void CheckControlCharacters(string text, string part, int lineOffset = 0)
     {

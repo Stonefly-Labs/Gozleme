@@ -23,12 +23,13 @@ import s19 from "./mcp/invalid-secret-header.json";
 import s20 from "./model/invalid-secret-pattern.json";
 import s21 from "./skill/invalid-secret-skill-body.json";
 import s22 from "./api/invalid-secret-openapi-example.json";
-import s23 from "./event/invalid-identity.json";
-import s24 from "./event/invalid-external-ref.json";
-import s25 from "./skill/invalid-skill-name.json";
-import s26 from "./model/invalid-model-modality.json";
-import s27 from "./mcp/invalid-mcp-consistency.json";
-import s28 from "./a2a/invalid-a2a-required.json";
+import s23 from "./api/invalid-secret-yaml-comment.json";
+import s24 from "./event/invalid-identity.json";
+import s25 from "./event/invalid-external-ref.json";
+import s26 from "./skill/invalid-skill-name.json";
+import s27 from "./model/invalid-model-modality.json";
+import s28 from "./mcp/invalid-mcp-consistency.json";
+import s29 from "./a2a/invalid-a2a-required.json";
 
 export const sampleIndex = index;
 export const sampleFiles: Record<string, unknown> = {
@@ -55,10 +56,11 @@ export const sampleFiles: Record<string, unknown> = {
   "model/invalid-secret-pattern.json": s20,
   "skill/invalid-secret-skill-body.json": s21,
   "api/invalid-secret-openapi-example.json": s22,
-  "event/invalid-identity.json": s23,
-  "event/invalid-external-ref.json": s24,
-  "skill/invalid-skill-name.json": s25,
-  "model/invalid-model-modality.json": s26,
-  "mcp/invalid-mcp-consistency.json": s27,
-  "a2a/invalid-a2a-required.json": s28,
+  "api/invalid-secret-yaml-comment.json": s23,
+  "event/invalid-identity.json": s24,
+  "event/invalid-external-ref.json": s25,
+  "skill/invalid-skill-name.json": s26,
+  "model/invalid-model-modality.json": s27,
+  "mcp/invalid-mcp-consistency.json": s28,
+  "a2a/invalid-a2a-required.json": s29,
 };
