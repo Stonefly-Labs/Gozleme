@@ -102,7 +102,7 @@ versions (`1.0.0-r<runid>`, `1.1.0-r<runid>`), because revisions are never delet
    - 11 publications in a minute give `429`.
 8. **Telemetry**.
    - Jaeger shows `gozleme.manifest.publish` and `gozleme.manifest.verify` spans, and the operator span
-     `gozleme.operator.signing-key-succession`. The trace screenshots go into the PR.
+     `gozleme.operator.signing_key_succession`. The trace screenshots go into the PR.
    - The metrics show `gozleme.manifest.publications` and `gozleme.manifest.verifications`.
    - A no-secret scan of Jaeger, Loki and API logs finds none of the following: the KEK, the run's statement or
      signature (base64 and hex), the native digest, the version string, or the capability name.

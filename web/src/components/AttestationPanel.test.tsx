@@ -67,9 +67,11 @@ describe("AttestationPanel (GOZ-0007 US3, US4)", () => {
     expect(screen.getByTestId("statement-unreadable")).toBeInTheDocument();
   });
 
-  it("renders the fixed wording whatever proof text the API sent", () => {
-    renderPanel(detail());
-    expect(screen.queryByText(/ignored/)).not.toBeInTheDocument();
+  it("renders the API's proof text, which is the fixed R17 wording", () => {
+    const revision = detail();
+    expect(revision.attestation.proof).toBe(PROOF);
+    renderPanel({ ...revision, attestation: { ...revision.attestation, proof: "text from the API" } });
+    expect(screen.getByTestId("attestation-proof").textContent).toBe("text from the API");
   });
 
   // T061: the wording guard for every state the panel and detail can render.

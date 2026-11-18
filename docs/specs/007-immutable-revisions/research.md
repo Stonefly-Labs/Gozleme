@@ -285,7 +285,7 @@ conflicts with the spec. Facts about the existing code were read from the branch
   - `gozleme.manifest.publish`, with tags for family, outcome and organization/publisher/capability/revision IDs after
     membership;
   - `gozleme.manifest.verify`, with outcome and reason;
-  - the operator span `gozleme.operator.signing-key-succession`, through `PublisherTelemetry.StartOperator`.
+  - the operator span `gozleme.operator.signing_key_succession`, through `PublisherTelemetry.StartOperator`.
 - **Counters**:
   - `gozleme.manifest.publications` {family, outcome}, where outcome is one of `published`, `rejected`,
     `version_exists`, `forbidden`, `not_found`, `suspended`, `rate_limited`, `too_large`, `unsupported_media_type`,

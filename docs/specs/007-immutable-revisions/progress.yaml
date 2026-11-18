@@ -24,6 +24,18 @@ agentChoices:
 - {at: '2026-11-18', topic: key-read-action, choice: 'A5: signing-key list and public-key download use manifest.read; no signing-key resource (R13); ratified by maintainer 2026-11-18.'}
 - {at: '2026-11-18', topic: no-verify-endpoint, choice: 'A6: no public endpoint verifies arbitrary submitted statements; US4 refusals are proven on the pure verifier in unit tests and on superuser-tampered stored rows (R13); ratified by maintainer 2026-11-18.'}
 - {at: '2026-11-18', topic: seed-no-revision, choice: 'A7: the seed creates no revision and needs no KEK (ratified); maintainer ruled 2026-11-18 that stories 1, 2 and 4 publish to the seeded capability manifest-demo with run-unique pre-release versions (1.0.0-r<runid>), not a run-unique capability, matching US1; rename, reclaim and succession keep run-unique publishers (R18).'}
+- {at: '2026-11-18', topic: operator-span-name, choice: 'A8: maintainer ruled 2026-11-18 that the succession span is gozleme.operator.signing_key_succession, through PublisherTelemetry.StartOperator like the GOZ-0005 handle spans; research.md, quickstart.md and tasks.md corrected from the hyphenated spelling.'}
+- {at: '2026-11-18', topic: helm-kek-optional, choice: 'A9: maintainer ruled 2026-11-18 that the KEK secretKeyRef stays optional on both the API and the migrate Job; a succession Job without the KEK exits 1 and commits nothing.'}
+- {at: '2026-11-18', topic: proof-source, choice: 'A10: maintainer ruled 2026-11-18 that the revision page renders the API attestation.proof (single source); the web copy of the R17 wording exists only for the wording tests.'}
+disclosures:
+- 'List paging: the contract allows limit 1-100 (default 50) and after >= 0 and defines no 400 for the list, so an out-of-range or non-integer limit is clamped or defaulted and an invalid after is treated as 0.'
+- 'signing-key-succession --undecryptable succeeds every undecryptable publisher in one transaction, so exit 1 commits nothing (contract exit table); each succession is still under its own per-publisher exclusive lock.'
+- 'RlsCatalog is unchanged: its existing definer and PUBLIC-execute checks already cover is_operator() and the new guard functions (The_migrated_database_has_no_violations passes).'
+- 'The shared RLS matrix expects the owner login without an account context to see the four revision tables (is_operator select branch); RevisionIsolationTests pins is_operator() exactly.'
+- 'ActiveKeyForSigningAsync also excludes retired keys (defence in depth; the guards already make the highest generation the unretired one); a retired-only key set fails closed with 503.'
+- 'The independent openssl pkeyutl -rawin check in RevisionDownloadTests runs only where OpenSSL 3 is installed (CI ubuntu); LibreSSL on macOS lacks -rawin and the check is skipped there; NSec PEM import + verify always runs.'
+- 'Route matching is case-insensitive (ASP.NET Core), so /Native serves the native part like /native; any other part name answers 404.'
+- 'UI copy other than the fixed R17 proof wording (reason and error messages, banners, "No key yet") is implementation wording, not pinned in the contracts.'
 stages:
   specify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', checklist: docs/specs/007-immutable-revisions/checklists/requirements.md}
   clarify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', questions: 3, checklist: '16/16 passing'}

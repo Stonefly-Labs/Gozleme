@@ -1,5 +1,5 @@
 /** Test data for the GOZ-0007 revision components (imported only by tests). */
-import type { RevisionDetail, RevisionSummary, SigningKey, Verification } from "@/lib/revisions";
+import { proofWording, type RevisionDetail, type RevisionSummary, type SigningKey, type Verification } from "@/lib/revisions";
 
 export const ORG = "0193a000-0000-7000-8000-000000000002";
 export const PUB = "0193a000-0000-7000-8000-000000000010";
@@ -70,7 +70,7 @@ export const detail = (overrides: Partial<RevisionDetail> = {}): RevisionDetail 
     },
     algorithm: "Ed25519",
     keyId: KEY_ID,
-    proof: "ignored: the UI renders the fixed wording",
+    proof: proofWording(ORIGIN, CANONICAL_PUB),
   },
   ...overrides,
 });

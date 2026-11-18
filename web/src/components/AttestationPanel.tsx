@@ -4,8 +4,6 @@ import {
   DOWNLOAD_PARTS,
   type DownloadPart,
   downloadPath,
-  originOf,
-  proofWording,
   publicKeyPath,
   type RevisionDetail,
 } from "@/lib/revisions";
@@ -57,7 +55,7 @@ export function AttestationPanel({
         </div>
       )}
       <p className="proof" data-testid="attestation-proof">
-        {proofWording(originOf(revision.publisherId), revision.publisherId)}
+        {attestation.proof}
       </p>
       <dl>
         <div className="row">

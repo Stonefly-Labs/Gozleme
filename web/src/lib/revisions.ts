@@ -100,10 +100,10 @@ export interface SigningKeyList {
   keys: SigningKey[];
 }
 
-/** The origin of a `gz://<origin>/…` canonical ID. */
-export const originOf = (canonicalId: string) => canonicalId.replace(/^gz:\/\//, "").split("/")[0] ?? "";
-
-/** What an attestation proves and does not prove: fixed wording, never composed from the statement (R17, FR-013). */
+/**
+ * What an attestation proves and does not prove (R17, FR-013). The page shows the API's `attestation.proof`, its single
+ * source (maintainer ruling 2026-11-18); this copy of the fixed wording is what the wording tests hold it to.
+ */
 export const proofWording = (origin: string, publisherCanonicalId: string) =>
   `Signed by registry ${origin} for publisher ${publisherCanonicalId} with a registry-held key. ` +
   "This shows that this registry accepted the revision from an authorized publisher member. It is not a signature made by the publisher.";
