@@ -255,3 +255,9 @@ Task: "Route handler in web/src/app/api/.../manifests/validate/route.ts"
 - [X] T095 Apply the reserved vocabulary to the model card's closed nested objects (`modalities`, `limits`) beside `unknown_field`, amend native-formats.md and R6, with tests, per maintainer decision model-card-nested-reserved (partial)
 - [X] T096 Narrow the validator overflow catch to the result-buffer overflow, log a warning without content, and let any other exception fail as a 500, with tests, per maintainer decision results-overflow-catch (partial)
 - [X] T097 Text fixes: research R12 entry order, manifest-validation.md bounds rows (number, location, results), ReservedClaims summaries, per confirmation convergence F4, F5, F7 (contradicts)
+
+## Phase 11: Maintainer rulings on agent choices
+
+- [ ] T098 Answer 400 for a malformed document, 413 for a too-large document and 422 for any other rejection, each with the rejected result body; accepted stays 200 and a body over 1 MiB keeps 413 {"error":"too_large"}; update the API contract, web page, tests and demo, per maintainer decision result-status-codes (contradicts)
+- [ ] T099 Share the validation rate limit across API instances with a PostgreSQL counter table (account, window, count) and migration, keep the rate_limited operation and Retry-After, amend FR-017 and the no-table test for this one table, with tests, per maintainer decision shared-rate-limit (contradicts)
+- [ ] T100 Write the missing-member location rule into contracts/manifest-validation.md and record the ratified choices and the GOZ-0007 manifest resource type in the impact report and GOZ-0007 prompt, per maintainer decisions agent-choices-ratified and stored-text-projection-only (partial)
