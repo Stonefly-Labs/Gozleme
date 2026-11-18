@@ -101,5 +101,5 @@ blockers:
   resolvedAt: '2026-11-17'
   summary: 'A2A generation needed a container; maintainer approved it. Generated bundle is byte-identical to the published a2a.json v1.0.1; AgentCard/AgentCapabilities/AgentCardSignature closed.'
   evidence: [src/Gozleme.Api/Manifests/Schemas/SOURCES.md, docs/specs/006-typed-manifests/research.md#r1]
-nextAction: 'Phase 11 (T098-T100) done; demo passed (51 tests, 81 screenshots); impact analysis and roadmap sync done. Next: PR marked ready-for-human-merge; the maintainer merges.'
+nextAction: 'Ready for human merge: PR #21, all CI checks pass at 1c88ccd. Mark complete only after the maintainer merges.'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}
