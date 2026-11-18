@@ -444,14 +444,14 @@ specs:
   dependencies:
   - GOZ-0006
   status: in-progress
-  stage: plan
+  stage: tasks
   branch: feature/goz-0007-immutable-revisions
   pullRequest: null
   promptRevision: 8
   gates:
     specification: done
     plan: passed
-    tasks: pending
+    tasks: passed
     implementation: pending
     tests: pending
     demo: pending
@@ -467,7 +467,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Planned 2026-11-18 (maintainer P1-P2 and agent choices A1-A7 in docs/specs/007-immutable-revisions/progress.yaml); next /speckit-tasks.'
+  nextAction: 'Tasks generated 2026-11-18 (74 tasks in docs/specs/007-immutable-revisions/tasks.md; vendoring stop rule T001-T002; A1-A7 open for veto); next /speckit-implement.'
 - id: GOZ-0008
   number: 8
   title: Child capability identities and projections

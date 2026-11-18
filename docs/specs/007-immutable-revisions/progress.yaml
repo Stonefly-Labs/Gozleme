@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0007
-stage: plan
+stage: tasks
 status: in-progress
 promptRevision: 8
 branch: feature/goz-0007-immutable-revisions
@@ -28,8 +28,9 @@ stages:
   specify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', checklist: docs/specs/007-immutable-revisions/checklists/requirements.md}
   clarify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', questions: 3, checklist: '16/16 passing'}
   plan: {status: done, at: '2026-11-18', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [P1, P2], agentChoices: [A1, A2, A3, A4, A5, A6, A7], verifyAtVendoring: ['libsodium native load in aspnet:10.0 runtime image and CI (RFC 8032 test 1 sign/verify smoke test)', 'NSec raw private key import/export policy for AES-GCM wrapping']}
+  tasks: {status: done, at: '2026-11-18', artifact: docs/specs/007-immutable-revisions/tasks.md, total: 74, perPhase: {setup: 6, foundational: 25, us1: 12, us2: 6, us3: 9, us4: 4, us5: 4, polish: 8}, stopRule: 'T001-T002 verify-at-vendoring gate; any failure is a blocker for maintainer review'}
 attempts: []
 blockers: []
 pullRequest: null
-nextAction: 'Planned 2026-11-18 (maintainer P1 NSec Ed25519, P2 raw signature over JCS; agent choices A1-A7 disclosed for veto). Next: /speckit-tasks.'
+nextAction: 'Tasks generated 2026-11-18 (74 tasks; T001-T002 vendoring stop rule; agent choices A1-A7 still open for maintainer veto). Next: /speckit-implement.'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}
