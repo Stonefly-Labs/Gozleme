@@ -467,7 +467,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Spec drafted 2026-11-18 with maintainer Q1-Q4 (registry-held per-publisher key; native+projection digest; suspended revisions readable and frozen; manifest resource). Next: /speckit-clarify, then /speckit-plan.'
+  nextAction: 'Spec drafted 2026-11-18 with maintainer Q1-Q4 (registry-held per-publisher key; native+projection digest; suspended revisions readable and frozen; manifest resource) and Q5 (add-only operator key succession). Next: /speckit-clarify, then /speckit-plan.'
 - id: GOZ-0008
   number: 8
   title: Child capability identities and projections
