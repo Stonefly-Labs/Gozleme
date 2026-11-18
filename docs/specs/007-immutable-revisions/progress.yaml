@@ -53,6 +53,9 @@ securityReview:
   - {id: SEC-3, severity: low, summary: 'Helm migrate Job carries the KEK although migrations never read it', status: accepted-per-A9, note: 'A9 ruled the optional secretKeyRef stays on the migrate Job; maintainer may reopen'}
   - {id: SEC-4, severity: low, summary: 'a lone surrogate in the native document might 500 on publish', status: not-reproduced, evidence: 'RevisionPublishTests.A_lone_surrogate_in_the_native_document_is_refused_never_a_server_error (4xx, nothing stored)'}
   - {id: SEC-5, severity: info, summary: 'the KEK could be passed as a --Key=Value argument', status: documented, evidence: 'contracts/signing-keys.md operator section'}
+maintainerRulings:
+- {finding: GOZ-0007-IF-14, date: 2026-11-18, ruling: 'accept second owner-login operator command for MVP; GOZ-0005-IF-04 stays open until GOZ-0039 clarification'}
+- {finding: GOZ-0007-IF-15, date: 2026-11-18, ruling: 'approve additive decision-register entries and architecture-baseline MVP wording (registry-held attestations, stated limit, SEC-1)'}
 stages:
   specify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', checklist: docs/specs/007-immutable-revisions/checklists/requirements.md}
   clarify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', questions: 3, checklist: '16/16 passing'}

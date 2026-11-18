@@ -16,7 +16,7 @@ PostgreSQL full-text search, trigram, JSONB metadata, taxonomy and relationship 
 
 ## Supported MVP vs future protocol
 
-MVP: authenticated publisher identity/signatures, revision integrity, source trust enrollment, verifiable snapshot and incremental sync with cursor continuity, revocation/security freshness, private grant withdrawal and quarantine, policy and approved-use decisions, sandbox execution, hybrid optional semantic search. Complex cross-registry authority transfer and disaster recovery ceremonies, global transparency witnesses/gossip, rich cross-provider engines and advanced policy conveniences are architecturally specified but post-MVP unless a security review establishes them as a prerequisite for an advertised claim. The v1 security profile explicitly rejects unsupported delegation claims rather than trusting them.
+MVP: authenticated publisher identity with registry-held revision attestations (not publisher-held signatures; see decision register GOZ-0007-IF-15), revision integrity, source trust enrollment, verifiable snapshot and incremental sync with cursor continuity, revocation/security freshness, private grant withdrawal and quarantine, policy and approved-use decisions, sandbox execution, hybrid optional semantic search. Complex cross-registry authority transfer and disaster recovery ceremonies, global transparency witnesses/gossip, rich cross-provider engines and advanced policy conveniences are architecturally specified but post-MVP unless a security review establishes them as a prerequisite for an advertised claim. The v1 security profile explicitly rejects unsupported delegation claims rather than trusting them.
 
 ## Human and agent delivery boundary
 
