@@ -443,13 +443,13 @@ specs:
   prompt: docs/prompts/spec-0007.md
   dependencies:
   - GOZ-0006
-  status: not-started
-  stage: null
-  branch: null
+  status: in-progress
+  stage: specify
+  branch: feature/goz-0007-immutable-revisions
   pullRequest: null
   promptRevision: 8
   gates:
-    specification: pending
+    specification: done
     plan: pending
     tasks: pending
     implementation: pending
@@ -467,7 +467,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Prerequisite GOZ-0006 merged (PR #21); no open impact decision is due before GOZ-0007 (GOZ-0005-IF-02 before GOZ-0012 plan; IF-04, IF-05, IF-08 before GOZ-0039; suspension semantics for revisions are a GOZ-0007 clarification question); prompt revision 8 carries the typed manifest conventions (GOZ-0006-IF-01 to IF-06, IF-08, IF-13, IF-14); start on feature/goz-0007-*'
+  nextAction: 'Spec drafted 2026-11-18 with maintainer Q1-Q4 (registry-held per-publisher key; native+projection digest; suspended revisions readable and frozen; manifest resource). Next: /speckit-clarify, then /speckit-plan.'
 - id: GOZ-0008
   number: 8
   title: Child capability identities and projections

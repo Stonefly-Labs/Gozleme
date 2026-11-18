@@ -1,0 +1,20 @@
+schemaVersion: '1.0'
+specId: GOZ-0007
+stage: specify
+status: in-progress
+promptRevision: 8
+branch: feature/goz-0007-immutable-revisions
+featureDirectory: docs/specs/007-immutable-revisions
+decisions:
+- {at: '2026-11-18', by: maintainer, topic: key-custody, decision: 'Q1 option A: registry-held signing key per publisher; Gozleme signs on the publisher''s behalf when an authorized publisher member publishes; private keys encrypted under a key-encryption key from a Secret reference (never database-only or Data Protection); stated limit: proves registry origin accepted the revision from publisher P, not publisher-held key; GOZ-0029 pins these per-publisher public keys.'}
+- {at: '2026-11-18', by: maintainer, topic: attestation-coverage, decision: 'Q2 option A: statement covers canonical capability and publisher IDs, origin, version, native sha256 digest and byteLength, adapter id and version, projectionVersion, and sha256 of the projection canonical byte-deterministic serialization (GOZ-0006-IF-08).'}
+- {at: '2026-11-18', by: maintainer, topic: suspension, decision: 'Q3 option A: a suspended publisher''s existing revisions and attestations stay readable by members, verifiable and frozen, shown as suspended; new revisions refused with 409 suspended in the API and write policy (GOZ-0005-IF-08).'}
+- {at: '2026-11-18', by: maintainer, topic: manifest-resource, decision: 'Q4 option A: new manifest resource with manifest.publish (publisher only, held-claim check in write policy), member-level manifest.list and manifest.read; manifest.validate moves from capability to manifest with role and behaviour unchanged (GOZ-0006-IF-03, IF-13).'}
+agentChoices: []
+stages:
+  specify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', checklist: docs/specs/007-immutable-revisions/checklists/requirements.md}
+attempts: []
+blockers: []
+pullRequest: null
+nextAction: 'Run /speckit-clarify (confirm replay-conflict, version ordering and key-creation defaults), then /speckit-plan.'
+evidence: {tests: [], demos: [], screenshots: [], reviews: []}
