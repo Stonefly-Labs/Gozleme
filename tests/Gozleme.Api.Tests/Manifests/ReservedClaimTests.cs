@@ -41,6 +41,12 @@ public sealed class ReservedClaimTests
     [InlineData("x-v\u00E9rified", true)] // é
     [InlineData("x-ⓥerified", true)] // enclosed
     [InlineData("x-gözleme-verified", true)]
+    [InlineData("x-v\u0435rified", true)] // Cyrillic ie
+    [InlineData("x-\u043Ew\u043D\u0435r", false)] // Cyrillic о, н, е: "owHer" — н is not confusable with n
+    [InlineData("x-\u043Ewn\u0435r", true)] // Cyrillic о and е
+    [InlineData("x-\u03BDerified", true)] // Greek nu
+    [InlineData("x-\u0410pproved", true)] // Cyrillic capital A
+    [InlineData("x-\u043F\u043E\u0433\u043E\u0434\u0430", false)] // an honest Cyrillic name ("weather")
     [InlineData("x-verifiedBy", false)] // "verified" is not a trailing word
     [InlineData("readOnlyHint", false)]
     [InlineData("x-owner-team", false)]
