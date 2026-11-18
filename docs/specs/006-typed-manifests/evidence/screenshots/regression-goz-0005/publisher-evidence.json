@@ -1,18 +1,18 @@
 {
   "spec": "GOZ-0005",
-  "capturedAt": "2026-11-18T00:51:23.566Z",
+  "capturedAt": "2026-11-18T01:14:04.738Z",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": {
-    "id": "01a1ec22-d47d-7700-a87c-180881db292d",
-    "handle": "demo-907671"
+    "id": "01a1ec37-8cf3-7d76-b6dd-0de144fea343",
+    "handle": "demo-721348"
   },
   "capability": {
-    "id": "01a1ec22-d777-76ef-a145-27c1fc2de249",
-    "canonicalId": "gz://registry.demo.gozleme.test/cap/01a1ec22-d777-76ef-a145-27c1fc2de249",
-    "alias": "demo-907671/weather-lookup"
+    "id": "01a1ec37-905b-7a27-bf7a-13148b1fea32",
+    "canonicalId": "gz://registry.demo.gozleme.test/cap/01a1ec37-905b-7a27-bf7a-13148b1fea32",
+    "alias": "demo-721348/weather-lookup"
   },
-  "us1ElapsedSeconds": 1.458,
+  "us1ElapsedSeconds": 1.622,
   "handleUnavailableIdenticalForForeignAndOwner": true,
   "apiMatrixForCarol": {
     "member": {
@@ -132,29 +132,29 @@
   "containerInit": "pid 1 is tini, dotnet its child",
   "reclaim": {
     "handles": {
-      "earmarked": "acme-907671",
-      "blocked": "blocked-907671",
-      "squatted": "squat-907671"
+      "earmarked": "acme-721348",
+      "blocked": "blocked-721348",
+      "squatted": "squat-721348"
     },
     "operator": {
       "reserve earmarked": {
         "exit": 0,
-        "stdout": "Reserved handle claim 01a1ec23-129c-707f-8560-366210e1d6b9 (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
+        "stdout": "Reserved handle claim 01a1ec37-da8e-7407-aef8-5c20bd9fa452 (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
       },
       "reserve blocked": {
         "exit": 0,
-        "stdout": "Reserved handle claim 01a1ec23-14d3-7fa4-b4b8-4d077d6c08eb (blocked)"
+        "stdout": "Reserved handle claim 01a1ec37-dd9f-775f-917b-db7484dc598d (blocked)"
       },
       "reclaim": {
         "exit": 0,
-        "stdout": "Reclaimed handle claim 01a1ec23-1668-70be-ac73-08e3239d89e5; publisher 01a1ec23-1668-7438-a065-05293cff297f of organization 0193a000-0000-7000-8000-000000000003 suspended / Reserved handle claim 01a1ec23-17ff-7187-bef5-c3716b7036a6 (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
+        "stdout": "Reclaimed handle claim 01a1ec37-df89-7922-b49d-4fb38c212c9b; publisher 01a1ec37-df89-79ff-b56a-6ae8a24b84a3 of organization 0193a000-0000-7000-8000-000000000003 suspended / Reserved handle claim 01a1ec37-e1f7-7a1c-86be-1df42de550c3 (earmarked for organization 0193a000-0000-7000-8000-000000000002)"
       }
     },
     "squatterPublisher": {
-      "id": "01a1ec23-1668-7438-a065-05293cff297f",
+      "id": "01a1ec37-df89-79ff-b56a-6ae8a24b84a3",
       "state": "suspended",
-      "canonicalId": "gz://registry.demo.gozleme.test/pub/01a1ec23-1668-7438-a065-05293cff297f",
-      "capability": "gz://registry.demo.gozleme.test/cap/01a1ec23-1673-79fd-bdd5-53af7c59b6ad"
+      "canonicalId": "gz://registry.demo.gozleme.test/pub/01a1ec37-df89-79ff-b56a-6ae8a24b84a3",
+      "capability": "gz://registry.demo.gozleme.test/cap/01a1ec37-df98-77cc-b6b0-ea2cf806a8d1"
     },
     "reRegisteredBy": "0193a000-0000-7000-8000-000000000002",
     "retiredAliasRefused": "409 conflict"

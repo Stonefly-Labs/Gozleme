@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0006",
-  "commit": "ed71f64eb038557b48e45b6d156732fb47b59398",
+  "commit": "9ad0b934a5523f8100c99fe2a5f588ed45938da5",
   "branch": "feature/goz-0006-typed-manifests",
   "workingTreeCleanAtStart": false,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-18T00:46:35Z",
-  "finishedAt": "2026-11-18T00:53:40Z",
-  "stackStartupSeconds": 21,
+  "startedAt": "2026-11-18T01:09:24Z",
+  "finishedAt": "2026-11-18T01:16:21Z",
+  "stackStartupSeconds": 4,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -232,8 +232,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 224 ms",
-    "sign-in\u2192dashboard 168 ms"
+    "register\u2192dashboard 344 ms",
+    "sign-in\u2192dashboard 196 ms"
   ],
   "evidence": [
     "docs/specs/006-typed-manifests/evidence/screenshots/01-accepted-valid-stateless-2026-07-28.png",
@@ -269,6 +269,8 @@
     "docs/specs/006-typed-manifests/evidence/screenshots/60-admin-without-publisher-forbidden.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/61-suspended-publisher.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/70-manifest-validate-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/71-manifest-rejected-trace-jaeger.png",
+    "docs/specs/006-typed-manifests/evidence/screenshots/72-manifest-not-found-trace-jaeger.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/01-healthy.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/02-database-down-degraded.png",
     "docs/specs/006-typed-manifests/evidence/screenshots/regression-goz-0000/03-recovered-healthy.png",

@@ -401,8 +401,13 @@ test("observability: validations are traced and counted with bounded labels and 
   for (const span of spans) for (const key of Object.keys(span.attributes)) expect(allowedKeys).toContain(key);
   const accepted = spans.find((s) => s.attributes["gozleme.manifest.outcome"] === "accepted" && s.attributes["gozleme.capability.id"] === CAPABILITY.id)!;
   expect(accepted.attributes["gozleme.organization.id"]).toBe(DEMO_ORG.id);
-  const notFound = spans.find((s) => s.attributes["gozleme.manifest.outcome"] === "not_found")!;
-  expect(notFound.attributes["gozleme.organization.id"]).toBeUndefined();
+  // R16: IDs are recorded only once membership is confirmed. dave's 404 (no membership) carries none; carol's
+  // cross-organization 404 (a Demo Org member naming Partner Org IDs) carries only the Demo Org she belongs to.
+  const notFoundSpans = spans.filter((s) => s.attributes["gozleme.manifest.outcome"] === "not_found");
+  const notFound = notFoundSpans.find((s) => s.attributes["gozleme.organization.id"] === undefined)!;
+  expect(notFound, "a non-member 404 span with no organization").toBeDefined();
+  for (const span of notFoundSpans) expect([undefined, DEMO_ORG.id]).toContain(span.attributes["gozleme.organization.id"]);
+  expect(notFoundSpans.some((s) => s.attributes["gozleme.organization.id"] === DEMO_ORG.id)).toBe(true);
 
   let metrics = "";
   await expect
@@ -425,16 +430,29 @@ test("observability: validations are traced and counted with bounded labels and 
   // The rate limit is recorded on the manifest span and counter, never as an auth failure.
   const authLimited = metrics.split("\n").filter((l) => l.startsWith("gozleme_auth") && l.includes('="rate_limited"'));
   const logs = await storedLogs('{service_name=~"gozleme-.+"}', 20);
-  const page = await alice.context().newPage();
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.goto(`${JAEGER_URL}/trace/${uiTraceId}`);
-  await expect(page.getByText("gozleme.manifest.validate").first()).toBeAttached({ timeout: 15_000 });
-  await page.getByRole("switch", { name: "gozleme-api gozleme.manifest.validate" }).first().click();
-  await expect(page.getByRole("heading", { name: "gozleme.manifest.validate", level: 2 })).toBeVisible();
   const privateValues = [CAPABILITY.name, ALIAS, ...NATIVE_NAMES, ...syntheticSecrets, ...secretStrings, DEMO.alice, DEMO.carol, DEMO.dave, DEMO_PASSWORD, "/tools/0/execution", "/remotes/0/headers/0/value"];
-  for (const v of privateValues) await expect(page.locator("body")).not.toContainText(v);
-  await page.screenshot({ path: `${shots}/70-manifest-validate-trace-jaeger.png`, fullPage: true });
-  await page.close();
+  // One Jaeger shot per flow: the accepted browser → API → PostgreSQL trace, a rejected validation and a 404.
+  const shotTrace = async (traceId: string, file: string) => {
+    const page = await alice.context().newPage();
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await page.goto(`${JAEGER_URL}/trace/${traceId}`);
+    await expect(page.getByText("gozleme.manifest.validate").first()).toBeAttached({ timeout: 15_000 });
+    await page.getByRole("switch", { name: "gozleme-api gozleme.manifest.validate" }).first().click();
+    await expect(page.getByRole("heading", { name: "gozleme.manifest.validate", level: 2 })).toBeVisible();
+    // Expand the attribute table so every recorded value (family, outcome, problem count, IDs) is legible.
+    await page.getByText(/^Attributes:?$/).first().click();
+    await expect(page.getByText("gozleme.manifest.problem_count").first()).toBeVisible();
+    for (const v of privateValues) await expect(page.locator("body")).not.toContainText(v);
+    await page.screenshot({ path: `${shots}/${file}`, fullPage: true });
+    await page.close();
+  };
+  await shotTrace(uiTraceId!, "70-manifest-validate-trace-jaeger.png");
+  const rejected = spans.find(
+    (s) => s.attributes["gozleme.manifest.outcome"] === "rejected" && s.attributes["gozleme.manifest.family"] !== "unknown" && Number(s.attributes["gozleme.manifest.problem_count"]) > 0,
+  )!;
+  expect(rejected, "a rejected validation of a known family").toBeDefined();
+  await shotTrace(rejected.traceId, "71-manifest-rejected-trace-jaeger.png");
+  await shotTrace(notFound.traceId, "72-manifest-not-found-trace-jaeger.png");
 
   const digests = Object.values((record.validFamilies as { digests: Record<string, string> }).digests).map((d) => d.slice("sha256:".length));
   const telemetry = JSON.stringify(spans) + lines.join("\n") + JSON.stringify(logs.filter((l) => l.at >= suiteStarted));
