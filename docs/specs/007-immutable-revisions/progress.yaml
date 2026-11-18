@@ -68,6 +68,6 @@ stages:
   roadmapSync: {status: done, at: '2026-11-18', promptRevisions: 'GOZ-0008..0039 8->9, GOZ-0040..0041 6->7', commit: 1557796}
 attempts: []
 blockers: []
-pullRequest: null
-nextAction: 'Ready for human merge (PR pending link). Maintainer reviews and merges; agents never merge.'
+pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/23
+nextAction: 'Ready for human merge: PR #23 (https://github.com/Stonefly-Labs/Gozleme/pull/23). Maintainer reviews and merges; agents never merge.'
 evidence: {tests: [tests/Gozleme.Api.Tests/Revisions/, tests/Gozleme.Api.IntegrationTests/, web/src/components/], demos: [docs/specs/007-immutable-revisions/evidence/demo-run.json, docs/specs/007-immutable-revisions/evidence/revision-evidence.json], screenshots: [docs/specs/007-immutable-revisions/evidence/screenshots/], reviews: [docs/specs/007-immutable-revisions/reviews/impact-analysis.md]}

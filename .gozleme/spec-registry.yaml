@@ -446,7 +446,7 @@ specs:
   status: ready-for-human-merge
   stage: pr-ready
   branch: feature/goz-0007-immutable-revisions
-  pullRequest: null
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/23
   promptRevision: 8
   gates:
     specification: done
