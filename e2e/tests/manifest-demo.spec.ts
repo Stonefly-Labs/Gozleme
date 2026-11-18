@@ -364,13 +364,18 @@ test("roles, non-members, suspension and the validation budget answer in the con
 
 test("observability: validations are traced and counted with bounded labels and no content", async ({ request }) => {
   test.setTimeout(240_000);
+  // One fresh rejection of a known family, so it is among the newest traces Jaeger returns whatever ran before.
+  const knownFamily = invalid.find((s) => s.expected.problems?.every((p) => !["malformed", "too_large"].includes(p.category)))!;
+  expect((await validate(carol, sampleText(knownFamily))).status).toBe(200);
+  const isKnownRejection = (s: Awaited<ReturnType<typeof recentSpans>>[number]) =>
+    s.attributes["gozleme.manifest.outcome"] === "rejected" && s.attributes["gozleme.manifest.family"] !== "unknown" && Number(s.attributes["gozleme.manifest.problem_count"]) > 0;
   let spans: Awaited<ReturnType<typeof recentSpans>> = [];
   await expect
     .poll(
       async () => {
         spans = (await recentSpans("gozleme-api", 20, "gozleme.manifest.validate")).filter((s) => s.name === "gozleme.manifest.validate");
         const outcomes = new Set(spans.map((s) => String(s.attributes["gozleme.manifest.outcome"])));
-        return ["accepted", "rejected", "forbidden", "not_found", "suspended", "rate_limited"].every((o) => outcomes.has(o));
+        return ["accepted", "rejected", "forbidden", "not_found", "suspended", "rate_limited"].every((o) => outcomes.has(o)) && spans.some(isKnownRejection);
       },
       { timeout: 90_000, intervals: [3000] },
     )
@@ -447,9 +452,7 @@ test("observability: validations are traced and counted with bounded labels and 
     await page.close();
   };
   await shotTrace(uiTraceId!, "70-manifest-validate-trace-jaeger.png");
-  const rejected = spans.find(
-    (s) => s.attributes["gozleme.manifest.outcome"] === "rejected" && s.attributes["gozleme.manifest.family"] !== "unknown" && Number(s.attributes["gozleme.manifest.problem_count"]) > 0,
-  )!;
+  const rejected = spans.find(isKnownRejection)!;
   expect(rejected, "a rejected validation of a known family").toBeDefined();
   await shotTrace(rejected.traceId, "71-manifest-rejected-trace-jaeger.png");
   await shotTrace(notFound.traceId, "72-manifest-not-found-trace-jaeger.png");

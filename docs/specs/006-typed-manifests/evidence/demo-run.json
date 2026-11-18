@@ -1,17 +1,17 @@
 {
   "specId": "GOZ-0006",
-  "commit": "f35cddc4c95289f8eff76f93db0397890caae2fc",
+  "commit": "7391ed1fcc5c4b35f05c07e3fc1664e466cf5f12",
   "branch": "feature/goz-0006-typed-manifests",
-  "workingTreeCleanAtStart": true,
+  "workingTreeCleanAtStart": false,
   "environment": {
     "os": "Darwin 25.5.0 arm64",
     "docker": "29.8.2",
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-18T02:18:12Z",
-  "finishedAt": "2026-11-18T02:25:11Z",
-  "stackStartupSeconds": 14,
+  "startedAt": "2026-11-18T03:08:47Z",
+  "finishedAt": "2026-11-18T03:15:53Z",
+  "stackStartupSeconds": 5,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -232,8 +232,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 224 ms",
-    "sign-in\u2192dashboard 163 ms"
+    "register\u2192dashboard 882 ms",
+    "sign-in\u2192dashboard 341 ms"
   ],
   "evidence": [
     "docs/specs/006-typed-manifests/evidence/screenshots/01-accepted-valid-stateless-2026-07-28.png",
