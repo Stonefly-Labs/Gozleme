@@ -17,14 +17,8 @@ public sealed class RevisionAtomicityTests(PgvectorDatabaseFixture fixture) : IA
 
     public ValueTask DisposeAsync() => _s.DisposeAsync();
 
-    private string InsertRevision(string capabilityId, string publisherId, int sequence = 1, string version = "1.0.0", string? versionKey = null) => $"""
-        INSERT INTO gozleme.manifest_revisions (id, organization_id, publisher_id, capability_id, sequence, version, version_key, family, envelope_summary,
-          native_format, native_format_version, native_encoding, native_document, native_digest, native_byte_length, projection, projection_version,
-          projection_digest, adapter_id, adapter_version, rule_catalogue_version, schema_bundle_version, published_by, published_at)
-        VALUES (gen_random_uuid(), '{_s.OrgA}', '{publisherId}', '{capabilityId}', {sequence}, '{version}', '{versionKey ?? version.Split('+')[0]}', 'mcp', '{"{}"}',
-          'mcp-server-manifest', '1', 'json', convert_to('{"{}"}', 'UTF8'), 'sha256:' || encode(sha256(convert_to('{"{}"}', 'UTF8')), 'hex'), 2,
-          convert_to('{"{}"}', 'UTF8'), '1', 'sha256:' || encode(sha256(convert_to('{"{}"}', 'UTF8')), 'hex'), 'mcp', '1', '1', '1', '{_s.CarolId}', now())
-        """;
+    private string InsertRevision(string capabilityId, string publisherId, int sequence = 1, string version = "1.0.0", string? versionKey = null) =>
+        RevisionScenario.InsertRevisionSql(_s.OrgA, publisherId, capabilityId, _s.CarolId, sequence, version, versionKey);
 
     /// <summary>Runs <paramref name="statements"/> as carol through <c>gozleme_app</c> and commits; returns the commit's SQLSTATE, or null.</summary>
     private async Task<string?> CommitAsCarolAsync(params string[] statements)

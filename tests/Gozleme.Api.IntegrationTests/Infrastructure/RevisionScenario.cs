@@ -99,6 +99,16 @@ public sealed class RevisionScenario : IAsyncDisposable
         return (code, stdout.ToString(), stderr.ToString());
     }
 
+    /// <summary>A direct SQL insert of a minimal revision row (no attestation), for the database-enforcement suites.</summary>
+    public static string InsertRevisionSql(string org, string publisherId, string capabilityId, Guid account, int sequence = 1, string version = "1.0.0", string? versionKey = null) => $"""
+        INSERT INTO gozleme.manifest_revisions (id, organization_id, publisher_id, capability_id, sequence, version, version_key, family, envelope_summary,
+          native_format, native_format_version, native_encoding, native_document, native_digest, native_byte_length, projection, projection_version,
+          projection_digest, adapter_id, adapter_version, rule_catalogue_version, schema_bundle_version, published_by, published_at)
+        VALUES (gen_random_uuid(), '{org}', '{publisherId}', '{capabilityId}', {sequence}, '{version}', '{versionKey ?? version.Split('+')[0]}', 'mcp', '{"{}"}',
+          'mcp-server-manifest', '1', 'json', convert_to('{"{}"}', 'UTF8'), 'sha256:' || encode(sha256(convert_to('{"{}"}', 'UTF8')), 'hex'), 2,
+          convert_to('{"{}"}', 'UTF8'), '1', 'sha256:' || encode(sha256(convert_to('{"{}"}', 'UTF8')), 'hex'), 'mcp', '1', '1', '1', '{account}', now())
+        """;
+
     public static string Context(Guid account) => GozlemeDatabase.Establish(GozlemeDatabase.SignContext(account));
 
     /// <summary>The SQLSTATE of <paramref name="sql"/> run in a rolled-back transaction after <paramref name="setup"/>.</summary>
