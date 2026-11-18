@@ -1,0 +1,438 @@
+{
+ "sourceSpec": "GOZ-0006",
+ "implementationRevision": "b492064 (feature/goz-0006-typed-manifests), after Phase 10 confirmation-review fixes (T092-T097). Demo 51 tests / 81 screenshots recorded by drive-speckit in evidence/demo-run.json; tests not re-run by the analyst.",
+ "analyzedAt": "2026-11-17",
+ "findings": [
+  {
+   "id": "GOZ-0006-IF-01",
+   "severity": "high",
+   "title": "Manifest validation contract v1 facts every downstream spec builds on (endpoint, order, closed envelope v1, family/adapter matrix, result shape, projection v1, 11 categories and 40 rules, locations, bounds, determinism, statelessness)",
+   "evidence": [
+    "src/Gozleme.Api/Manifests/ManifestEndpoints.cs: route and check order 503→404→403→404→409→429→415→413→200",
+    "src/Gozleme.Api/Manifests/ManifestContracts.cs: AcceptedResult/RejectedResult, ProblemLocation converter, ManifestJson deterministic serializer",
+    "src/Gozleme.Api/Manifests/ManifestRules.cs: 40 rules, pinned by ManifestRuleCatalogueTests",
+    "src/Gozleme.Api/Manifests/Schemas/gozleme/envelope-1.json and projection-1.json (closed)",
+    "docs/specs/006-typed-manifests/contracts/manifest-validation.md, native-formats.md, projection-v1.md",
+    "progress.yaml decisions Q1-Q4, clarify Q1-Q4, P1-P4, problems-per-location, projection-map-order, deep-document-bound, results-overflow-catch"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039"
+   ],
+   "recommendation": "Record the contract facts in every dependent prompt; any change is a new envelope/projection/adapter/catalogue version.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-02",
+   "severity": "high",
+   "title": "Pins, seed and demo after GOZ-0006: no migration; new BootstrapBoundaryTests no-table/no-migration pin; 18 scoped endpoints / 19 actions; product endpoints still 404; fixed seeded-demo publisher and manifest-demo capability; goz-0006 Playwright project",
+   "evidence": [
+    "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs Manifest_validation_adds_no_table_and_no_migration",
+    "tests/Gozleme.Api.IntegrationTests/OrganizationPermissionContractTests.cs Assert.Equal(18, …)",
+    "src/Gozleme.Api/Identity/OperatorCommands.cs SeedCapabilityAsync (DemoPublisherId …0010, DemoCapabilityId …0011); TenantSeedTests",
+    "e2e/playwright.config.ts goz-0006 depends on goz-0005; e2e/tests/evidence.ts specDirs"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Supersede the GOZ-0005 count; every new migration updates the new pin; GOZ-0007 narrows the table assertion.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-03",
+   "severity": "medium",
+   "title": "Telemetry, audit and limiter facts: span gozleme.manifest.validate, counters gozleme.manifest.validations/problems, bounded outcomes incl. unavailable, opaque IDs after membership; no audit event so 1501-1510 still free; in-memory per-instance budget",
+   "evidence": [
+    "src/Gozleme.Api/Manifests/ManifestTelemetry.cs",
+    "src/Gozleme.Api/Manifests/ManifestValidationLimiter.cs (Gozleme:Manifests:ValidatePerMinute=30)",
+    "web/src/telemetry/ui.ts manifest_validate",
+    "progress.yaml agentChoices no-audit, rate-limit, unavailable-outcome"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Record names and the free audit range; attach the limiter to the open GOZ-0005-IF-05 multi-replica decision.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-04",
+   "severity": "high",
+   "title": "Reserved vocabulary: manifests can never assert signatures, attestations, provenance, trust, approval, visibility, grants, ownership, lifecycle or revocation; these are registry-side records only; vocabulary change is a security review item",
+   "evidence": [
+    "src/Gozleme.Api/Manifests/Rules/ReservedClaims.cs Vocabulary, trailing-word and whole-name matching",
+    "src/Gozleme.Api/Manifests/Rules/ReservedClaimFolds.cs (TR39 18.0.0 subset)",
+    "native-formats.md reserved.a2a-signatures, reserved.mcp-namespace, reserved.mcp-registry-meta",
+    "progress.yaml decisions Q4, reserved-matching, reserved-name-hardening, lookalike-*, reserved-closed-objects, reserved-dotted-names, native-deprecated-A1"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039"
+   ],
+   "recommendation": "State in each consumer that these claims are registry-side; a manifest-borne claim needs a maintainer decision.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-05",
+   "severity": "high",
+   "title": "Secret detection is deterministic and best-effort: pattern list v1 (14 patterns) plus secret-bearing fields; joined-name check only for url-userinfo and azure-connection-secret; Bearer/Basic/Digest token split across member names is not detected (maintainer joined-names-patterns). Specs that persist, index, embed, export or federate manifest text inherit this residual risk",
+   "evidence": [
+    "src/Gozleme.Api/Manifests/Rules/SecretPatterns.cs, SecretFields.cs",
+    "docs/specs/006-typed-manifests/contracts/secret-patterns.md 'auth-header is not checked on joined locations'",
+    "progress.yaml decisions joined-name-credentials, joined-names-patterns, yaml-comment-secrets"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0013",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0028",
+    "GOZ-0031",
+    "GOZ-0032"
+   ],
+   "recommendation": "Prompts now say validation is not a no-credential guarantee. Maintainer decides, after security review and before the GOZ-0007 plan, whether persisting/indexing/egressing manifest text accepts this residual risk or requires an extra control (re-scan at egress, index only projection, or restore a narrowed joined auth-header check).",
+   "disposition": "needs-human-decision (limit recorded in prompts; per-spec questions routed to clarification)",
+   "status": "open",
+   "decideBefore": "GOZ-0007 plan"
+  },
+  {
+   "id": "GOZ-0006-IF-06",
+   "severity": "high",
+   "title": "GOZ-0007 starts storage: reuse ManifestValidator, store native string verbatim with digest, record adapter and projectionVersion, own SemVer ordering/uniqueness, narrow the publish and no-table pins, attestations registry-side",
+   "evidence": [
+    "spec.md FR-003, FR-017, FR-021, FR-027",
+    "ManifestEndpoints.cs: no write; BootstrapBoundaryTests pins",
+    "progress.yaml decision Q1"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007"
+   ],
+   "recommendation": "Spec-specific alignment in GOZ-0007 with clarification questions (publish status for rejected, action name).",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-07",
+   "severity": "medium",
+   "title": "Projection entry (kind, nativeName) uniqueness is enforced only by mcp/1; a2a/1 skill ids, api/1 operationIds (and derived METHOD path names) and event/1 keys across maps are not checked, which matters for child identity keys",
+   "evidence": [
+    "src/Gozleme.Api/Manifests/Adapters/McpAdapter.cs Unique(...)",
+    "A2aAdapter.cs builder.Entry('skill', id) without uniqueness",
+    "OpenApiAdapter.cs operationId ?? METHOD path"
+   ],
+   "affectedSpecs": [
+    "GOZ-0008",
+    "GOZ-0021"
+   ],
+   "recommendation": "Route to GOZ-0008 clarification: uniqueness rule and whether it is a new adapter version or a publish-time rule.",
+   "disposition": "applied (routed to clarification)",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-08",
+   "severity": "medium",
+   "title": "Projection v1 has no digest; only the native digest exists. An extension-only change alters the native digest but not the projection. GOZ-0028 'projection digests' and GOZ-0022 materiality need a defined canonical form",
+   "evidence": [
+    "projection-v1.md Boundary guarantees",
+    "ManifestContracts.cs NativeResult.Digest; ManifestProjection has no digest",
+    "ManifestJson byte-deterministic serializer"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0022",
+    "GOZ-0028",
+    "GOZ-0036"
+   ],
+   "recommendation": "Clarification question in GOZ-0007; consumers note it.",
+   "disposition": "applied (routed to clarification)",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-09",
+   "severity": "medium",
+   "title": "Envelope v1 is closed and has no dependency/relationship/compatibility field; extension members are never projected",
+   "evidence": [
+    "Schemas/gozleme/envelope-1.json",
+    "spec.md FR-001, FR-008"
+   ],
+   "affectedSpecs": [
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027"
+   ],
+   "recommendation": "Clarification in GOZ-0024: registry-side API or new envelope/projection version; never read extension members.",
+   "disposition": "applied (routed to clarification)",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-10",
+   "severity": "medium",
+   "title": "Identity check accepts only the local target canonical ID or alias; a foreign-origin claim is identity_mismatch, so re-validating imported manifests needs an origin-qualified target",
+   "evidence": [
+    "src/Gozleme.Api/Manifests/ManifestEndpoints.cs ManifestTarget(CanonicalId.Capability(origin, …), handle/name)",
+    "spec.md FR-011"
+   ],
+   "affectedSpecs": [
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0036"
+   ],
+   "recommendation": "Record in GOZ-0030; ties to GOZ-0005-IF-11.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-11",
+   "severity": "low",
+   "title": "Reusable restricted YAML/JSON readers, RFC 6901 locations and fixed-message catalogue pattern; skill/1 does not enforce the name-equals-directory rule",
+   "evidence": [
+    "src/Gozleme.Api/Manifests/Parsing/RestrictedYamlReader.cs, JsonTreeReader.cs, JsonPointer.cs",
+    "native-formats.md skill/1 Directory rule"
+   ],
+   "affectedSpecs": [
+    "GOZ-0009",
+    "GOZ-0018"
+   ],
+   "recommendation": "Recommend reuse in GOZ-0018; route the directory rule to GOZ-0009 clarification.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-12",
+   "severity": "medium",
+   "title": "Declared content is advisory: MCP primitive lists are publisher-declared, A2A provider never the owner, nothing is executed",
+   "evidence": [
+    "native-formats.md mcp/1 Advisory, a2a/1 provider",
+    "progress.yaml decision a2a-provider"
+   ],
+   "affectedSpecs": [
+    "GOZ-0008",
+    "GOZ-0019",
+    "GOZ-0037",
+    "GOZ-0038"
+   ],
+   "recommendation": "Record in consumers; trusted facts and playground never treat declarations as verified.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-13",
+   "severity": "high",
+   "title": "Disclosed GOZ-0006 agent choices that were offered for veto but never explicitly ratified by the maintainer become permanent stored data once GOZ-0007 persists manifests: secretref:<provider>/<key> form (A2), 200 for rejected (A3), markdown encoding value, lifecycle claims reserved, manifest.validate on the capability resource, in-memory per-instance limiter, unavailable outcome, missing-member location, YAML .inf/.nan kept as strings, A2A required overlay, _meta on MCP serverInfo",
+   "evidence": [
+    "docs/specs/006-typed-manifests/progress.yaml agentChoices (each 'disclosed to the maintainer for veto')"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0016"
+   ],
+   "recommendation": "Maintainer ratifies or vetoes each before the GOZ-0007 plan; not decided by the analyst.",
+   "disposition": "needs-human-decision",
+   "status": "open",
+   "decideBefore": "GOZ-0007 plan"
+  },
+  {
+   "id": "GOZ-0006-IF-14",
+   "severity": "low",
+   "title": "Process: Corvus.Text.Json analyzer loads only in container/CI restore; CTJ analyzers removed in Directory.Build.targets; schema digests pinned; validation reuses PublisherStore lookups without reading alias_reservations",
+   "evidence": [
+    "progress.yaml agentChoices release-analyzer, corvus-analyzers",
+    "Directory.Build.targets",
+    "ManifestSchemaPinTests, Schemas/SOURCES.md"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Build images before every demo.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0006-IF-15",
+   "severity": "medium",
+   "title": "Search and embeddings should use projection fields; never-projected native text (extensions, examples, URLs, bodies) must not be indexed or embedded by default",
+   "evidence": [
+    "projection-v1.md Never projected",
+    "IF-05 limit"
+   ],
+   "affectedSpecs": [
+    "GOZ-0013",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017"
+   ],
+   "recommendation": "Default recorded; indexing native text beyond the projection is a clarification/security question.",
+   "disposition": "applied (routed to clarification)",
+   "status": "applied"
+  }
+ ]
+}
