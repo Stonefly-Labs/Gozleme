@@ -10,7 +10,7 @@
     "limitMs": 2000,
     "environment": "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)"
   },
-  "capturedAt": "2026-11-18T01:16:21.388Z",
+  "capturedAt": "2026-11-18T02:25:11.535Z",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": "0193a000-0000-7000-8000-000000000010",
