@@ -443,8 +443,8 @@ specs:
   prompt: docs/prompts/spec-0007.md
   dependencies:
   - GOZ-0006
-  status: in-progress
-  stage: converge
+  status: ready-for-human-merge
+  stage: pr-ready
   branch: feature/goz-0007-immutable-revisions
   pullRequest: null
   promptRevision: 8
@@ -453,8 +453,8 @@ specs:
     plan: passed
     tasks: passed
     implementation: passed
-    tests: pending
-    demo: pending
+    tests: passed
+    demo: passed
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
@@ -483,13 +483,16 @@ specs:
   evidence:
     tests:
     - docs/specs/007-immutable-revisions/progress.yaml
-    demos: []
-    screenshots: []
+    demos:
+    - docs/specs/007-immutable-revisions/evidence/demo-run.json
+    - docs/specs/007-immutable-revisions/evidence/revision-evidence.json
+    screenshots:
+    - docs/specs/007-immutable-revisions/evidence/screenshots/
     reviews:
     - docs/specs/007-immutable-revisions/reviews/impact-analysis.md
     - docs/specs/007-immutable-revisions/reviews/impact-findings.json
     - docs/specs/007-immutable-revisions/progress.yaml
-  nextAction: 'Implemented on feature/goz-0007-immutable-revisions (T001-T072, T074; security review SR1-SR7 pass, SEC-1/SEC-2 fixed, SEC-3 accepted per A9); impact analysis done (GOZ-0007-IF-01..13 applied, IF-14 and IF-15 decided by the maintainer 2026-11-18); living prompts GOZ-0008..0041 revised (6b17c9c). Next: T073 final cumulative demo goz-0000..goz-0007 plus test/lint/build/validate, record tests/demo gates and demo evidence, then open the PR for human review and merge. Not merged.'
+  nextAction: 'Ready for human merge: T001-T074 done; make test (944 backend, 254 web), lint, build, validate and the cumulative demo GOZ-0000..GOZ-0007 (59 tests, 60 assertions, 97 screenshots, commit 1557796) pass; security review SR1-SR7 pass, SEC-1/2 fixed; impact analysis IF-01..IF-15 (IF-14, IF-15 decided). Maintainer reviews and merges; not merged.'
 - id: GOZ-0008
   number: 8
   title: Child capability identities and projections

@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0007
-stage: tasks
+stage: pr-ready
 status: in-progress
 promptRevision: 8
 branch: feature/goz-0007-immutable-revisions
@@ -61,8 +61,13 @@ stages:
   clarify: {status: done, artifact: docs/specs/007-immutable-revisions/spec.md, at: '2026-11-18', questions: 3, checklist: '16/16 passing'}
   plan: {status: done, at: '2026-11-18', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [P1, P2], agentChoices: [A1, A2, A3, A4, A5, A6, A7], verifyAtVendoring: ['libsodium native load in aspnet:10.0 runtime image and CI (RFC 8032 test 1 sign/verify smoke test)', 'NSec raw private key import/export policy for AES-GCM wrapping']}
   tasks: {status: done, at: '2026-11-18', artifact: docs/specs/007-immutable-revisions/tasks.md, total: 74, perPhase: {setup: 6, foundational: 25, us1: 12, us2: 6, us3: 9, us4: 4, us5: 4, polish: 8}, stopRule: 'T001-T002 verify-at-vendoring gate; any failure is a blocker for maintainer review'}
+  implement: {status: done, at: '2026-11-18', done: T001-T074, commits: [a1edb3a, 1ef3d38, a911fe9, 68b797b, 4aa12a4, 5fb7ca3, a753974, 85fb2d7, 9da6bbb, 20d4a62, 8d5ec9b, b035614, cae3eee, c41905c, 78f4cfc]}
+  verify: {status: done, at: '2026-11-18', tests: 'make test: backend 944/944, web 254/254', lint: passed, build: passed, validate: passed, demo: {result: passed, commit: 1557796, suites: goz-0000..goz-0007, tests: 59, assertions: 60, screenshots: 97, record: docs/specs/007-immutable-revisions/evidence/demo-run.json}, timings: 'SC-007 publish median 75 ms, verify median 23 ms'}
+  converge: {status: done, at: '2026-11-18', review: 'review-security (security-reviewer agent): SR1-SR7 pass; SEC-1 fixed per maintainer ruling, SEC-2 fixed, SEC-3 accepted per A9, SEC-4 not reproduced, SEC-5 documented', commits: [b035614, cae3eee]}
+  impactAnalysis: {status: done, at: '2026-11-18', artifact: docs/specs/007-immutable-revisions/reviews/impact-analysis.md, findings: GOZ-0007-IF-01..IF-15, applied: 13, decidedByMaintainer: [GOZ-0007-IF-14, GOZ-0007-IF-15], commit: 6b17c9c}
+  roadmapSync: {status: done, at: '2026-11-18', promptRevisions: 'GOZ-0008..0039 8->9, GOZ-0040..0041 6->7', commit: 1557796}
 attempts: []
 blockers: []
 pullRequest: null
-nextAction: 'Tasks generated 2026-11-18 (74 tasks; T001-T002 vendoring stop rule); agent choices A1-A7 ruled on by the maintainer 2026-11-18 (A1-A6 ratified, A7 demo moved to the seeded capability). Next: /speckit-implement.'
-evidence: {tests: [], demos: [], screenshots: [], reviews: []}
+nextAction: 'Ready for human merge (PR pending link). Maintainer reviews and merges; agents never merge.'
+evidence: {tests: [tests/Gozleme.Api.Tests/Revisions/, tests/Gozleme.Api.IntegrationTests/, web/src/components/], demos: [docs/specs/007-immutable-revisions/evidence/demo-run.json, docs/specs/007-immutable-revisions/evidence/revision-evidence.json], screenshots: [docs/specs/007-immutable-revisions/evidence/screenshots/], reviews: [docs/specs/007-immutable-revisions/reviews/impact-analysis.md]}
