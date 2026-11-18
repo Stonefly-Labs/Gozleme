@@ -14,7 +14,19 @@ import unicodedata
 CONFUSABLES_URL = "https://www.unicode.org/Public/18.0.0/security/confusables.txt"
 CONFUSABLES_VERSION = "18.0.0"
 CONFUSABLES_SHA256 = "6ed3ee967c9dfdf6677d563c9985182fbc50a2efb7d6059cd57b2e2ce18f5b92"
-CONFUSABLE_SCRIPTS = [(0x0370, 0x03FF, "Greek and Coptic"), (0x0400, 0x052F, "Cyrillic and Cyrillic Supplement"), (0x1F00, 0x1FFF, "Greek Extended")]
+CONFUSABLE_SCRIPTS = [
+    (0x0080, 0x024F, "Latin-1 Supplement, Latin Extended-A/B"),
+    (0x0250, 0x02AF, "IPA Extensions"),
+    (0x0370, 0x03FF, "Greek and Coptic"),
+    (0x0400, 0x052F, "Cyrillic and Cyrillic Supplement"),
+    (0x1D00, 0x1DBF, "Phonetic Extensions and Supplement"),
+    (0x1E00, 0x1EFF, "Latin Extended Additional"),
+    (0x1F00, 0x1FFF, "Greek Extended"),
+    (0x2C60, 0x2C7F, "Latin Extended-C"),
+    (0xA720, 0xA7FF, "Latin Extended-D"),
+    (0xAB30, 0xAB6F, "Latin Extended-E"),
+    (0x1DF00, 0x1DFFF, "Latin Extended-G"),
+]
 
 RANGES = [
     (0x00C0, 0x024F, "Latin-1 Supplement, Latin Extended-A/B"),
@@ -58,10 +70,12 @@ def confusables(path):
 
 if len(sys.argv) != 2:
     sys.exit(__doc__)
-pairs = [(cp, f) for lo, hi, _ in RANGES for cp in range(lo, hi + 1) if (f := fold(cp))]
-pairs += list(confusables(sys.argv[1]))
-pairs.append((0x0131, "i"))
-pairs = sorted(set(pairs))
+# The NFKC fold wins; a TR39 confusable only fills a code point the fold leaves unmapped (one entry per code point).
+table = {cp: f for lo, hi, _ in RANGES for cp in range(lo, hi + 1) if (f := fold(cp))}
+table[0x0131] = "i"
+for cp, f in confusables(sys.argv[1]):
+    table.setdefault(cp, f)
+pairs = sorted(table.items())
 lines = []
 for i in range(0, len(pairs), 8):
     lines.append("        " + " ".join(f'[0x{cp:X}] = "{f}",' for cp, f in pairs[i:i + 8]))
@@ -75,8 +89,8 @@ namespace Gozleme.Api.Manifests.Rules;
 /// <summary>
 /// Look-alike characters folded to ASCII letters and digits for reserved-name matching (maintainer decision
 /// 2026-11-17, "built-in fold table"): each code point below whose NFKC form, without combining marks, is ASCII
-/// alphanumeric, and each Cyrillic or Greek letter Unicode TR39 lists as confusable with ASCII letters or digits. Not
-/// full NFKC, and other scripts' look-alikes are not folded (research R6).
+/// alphanumeric, and each Latin, Cyrillic or Greek letter Unicode TR39 lists as confusable with ASCII letters or digits
+/// (maintainer decisions 2026-11-17). Not full NFKC, and other scripts' look-alikes are not folded (research R6).
 /// <list type="bullet">
 {ranges}
 /// </list>

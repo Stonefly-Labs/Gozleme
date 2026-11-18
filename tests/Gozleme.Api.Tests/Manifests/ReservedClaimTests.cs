@@ -19,7 +19,14 @@ public sealed class ReservedClaimTests
     [InlineData("Approved", true)]
     [InlineData("x-Signature", true)]
     [InlineData("delegated_by", true)]
-    [InlineData("x-owned.by", false)] // the namespace cut keeps "by" only
+    [InlineData("x-owned.by", true)] // the whole name is checked too (maintainer decision 2026-11-17)
+    [InlineData("x-trust.level", true)]
+    [InlineData("x-verified.", true)] // nothing after the cut: the whole name
+    [InlineData("x-verified.v2", false)] // like x-verified-v2: not a trailing run
+    [InlineData("x-veri\u3164fied", true)] // Hangul filler
+    [InlineData("x-veri\uFFA0fied", true)] // halfwidth Hangul filler
+    [InlineData("x-\u1D20erified", true)] // Latin small capital v
+    [InlineData("x-\u0251pproved", true)] // IPA alpha
     [InlineData("x-audience", false)]
     [InlineData("x-trustworthy-hint", false)]
     [InlineData("summary", false)]

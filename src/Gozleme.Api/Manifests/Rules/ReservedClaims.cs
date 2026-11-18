@@ -27,9 +27,15 @@ internal static class ReservedClaims
     /// The normalized whole name, or any trailing run of its words, is in the list. The trailing runs make
     /// <c>x-gozleme-verified</c> match as R6's rationale requires (maintainer decision 2026-11-17, "trailing words").
     /// </summary>
-    public static bool IsReserved(string name)
+    /// <summary>
+    /// Reserved when a trailing run of the words after the namespace cut, or of the whole name's words (dots and
+    /// slashes as separators), is in the vocabulary (maintainer decision 2026-11-17, "check whole name too"), so
+    /// <c>x-trust.level</c> and <c>x-verified.</c> match as <c>x-trust-level</c> and <c>x-verified</c> do.
+    /// </summary>
+    public static bool IsReserved(string name) => EndsReserved(Words(name)) || EndsReserved(Words(name, cutNamespace: false));
+
+    private static bool EndsReserved(List<string> words)
     {
-        var words = Words(name);
         for (var i = 0; i < words.Count; i++)
         {
             if (Set.Contains(string.Concat(words.Skip(i))))
@@ -51,7 +57,7 @@ internal static class ReservedClaims
     /// <c>x-</c> removed; split at every character that is not a letter or digit and at camelCase boundaries; lower-cased.
     /// So <c>x-gozlemeVerified</c>, <c>x-ⅴerified</c>, <c>x-ve&#x200B;rified</c> and <c>x-trust:level</c> all match.
     /// </summary>
-    internal static List<string> Words(string name)
+    internal static List<string> Words(string name, bool cutNamespace = true)
     {
         var folded = new StringBuilder(name.Length);
         foreach (var rune in name.EnumerateRunes())
@@ -72,7 +78,7 @@ internal static class ReservedClaims
         }
 
         var text = folded.ToString();
-        var cut = text.LastIndexOfAny(['/', '.']);
+        var cut = cutNamespace ? text.LastIndexOfAny(['/', '.']) : -1;
         if (cut >= 0)
         {
             text = text[(cut + 1)..];
@@ -117,7 +123,14 @@ internal static class ReservedClaims
         }
     }
 
-    /// <summary>Format characters (zero-width space and joiners, soft hyphen, bidi marks) and variation selectors.</summary>
+    /// <summary>
+    /// Unicode default-ignorable code points (DerivedCoreProperties <c>Default_Ignorable_Code_Point</c>): format
+    /// characters, variation selectors, the combining grapheme joiner, and the blank Hangul fillers U+115F, U+1160,
+    /// U+3164 and U+FFA0 (maintainer decision 2026-11-17, "both").
+    /// </summary>
     private static bool IsIgnorable(Rune r) =>
-        Rune.GetUnicodeCategory(r) == UnicodeCategory.Format || r.Value is (>= 0xFE00 and <= 0xFE0F) or 0x034F or (>= 0xE0100 and <= 0xE01EF);
+        Rune.GetUnicodeCategory(r) == UnicodeCategory.Format || r.Value is 0x00AD or 0x034F or 0x061C or 0x115F or 0x1160
+            or (>= 0x17B4 and <= 0x17B5) or (>= 0x180B and <= 0x180F) or (>= 0x200B and <= 0x200F) or (>= 0x202A and <= 0x202E)
+            or (>= 0x2060 and <= 0x206F) or 0x3164 or (>= 0xFE00 and <= 0xFE0F) or 0xFEFF or 0xFFA0 or (>= 0xFFF0 and <= 0xFFF8)
+            or (>= 0x1BCA0 and <= 0x1BCA3) or (>= 0x1D173 and <= 0x1D17A) or (>= 0xE0000 and <= 0xE0FFF);
 }
