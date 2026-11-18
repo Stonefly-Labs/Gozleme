@@ -9,6 +9,9 @@ switch (args.FirstOrDefault())
     case var command when HandleOperatorCommands.Handles(command):
         // Operator-only handle namespace: handle-reserve | handle-release | handle-reclaim (GOZ-0005, owner login).
         return await HandleOperatorCommands.RunAsync(command!, args[1..], Console.Out, Console.Error);
+    case var command when Gozleme.Api.Revisions.SigningKeyOperatorCommands.Handles(command):
+        // Operator-only signing-key succession: --publisher <uuid> | --undecryptable (GOZ-0007, owner login + KEK).
+        return await Gozleme.Api.Revisions.SigningKeyOperatorCommands.RunAsync(args[1..], Console.Out, Console.Error);
     case var command when OperatorCommands.Handles(command):
         // Operator-only account maintenance: seed | reset-password | unlock (never exposed over HTTP).
         return await OperatorCommands.RunAsync(command!, args[1..], Console.In, Console.Out, Console.Error);
