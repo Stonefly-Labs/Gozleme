@@ -116,4 +116,28 @@ public sealed class ProjectionBoundaryTests
         Assert.DoesNotContain("operationId: post", sample.Document, StringComparison.Ordinal);
         Assert.Equal(sample.Document, result["native"]!["document"]!.GetValue<string>());
     }
+
+    private static JsonNode Projection(string family, string format, string version, string document) =>
+        JsonNode.Parse(Json(Accepted(Validate(family, format, version, "json", document))))!["projection"]!;
+
+    private static string[] EntryNames(JsonNode projection) =>
+        [.. projection["entries"]!.AsArray().Select(e => $"{e!["kind"]} {e["nativeName"]}")];
+
+    /// <summary>T087 (maintainer decision "spec wins: sort", SC-003, US3/AC2): map key order never changes the projection.</summary>
+    [Fact]
+    public void Reordering_map_keys_never_changes_the_projection()
+    {
+        const string Head = "{\"openapi\":\"3.1.0\",\"info\":{\"title\":\"t\",\"version\":\"1\"},\"paths\":";
+        const string Ok = "{\"responses\":{\"200\":{\"description\":\"ok\"}}}";
+        var forward = Projection("api", "openapi", "3.1", Head + "{\"/a\":{\"get\":" + Ok + ",\"post\":" + Ok + "},\"/b\":{\"get\":" + Ok + "}}}");
+        var backward = Projection("api", "openapi", "3.1", Head + "{\"/b\":{\"get\":" + Ok + "},\"/a\":{\"post\":" + Ok + ",\"get\":" + Ok + "}}}");
+        Assert.Equal(["operation GET /a", "operation POST /a", "operation GET /b"], EntryNames(forward));
+        Assert.True(JsonNode.DeepEquals(forward, backward));
+
+        const string Event = "{\"asyncapi\":\"3.0.0\",\"info\":{\"title\":\"t\",\"version\":\"1\"},";
+        var events = Projection("event", "asyncapi", "3.0.0", Event + "\"channels\":{\"a\":{},\"b\":{}},\"operations\":{\"x\":{\"action\":\"send\",\"channel\":{\"$ref\":\"#/channels/a\"}},\"y\":{\"action\":\"receive\",\"channel\":{\"$ref\":\"#/channels/b\"}}}}");
+        var reversed = Projection("event", "asyncapi", "3.0.0", Event + "\"operations\":{\"y\":{\"action\":\"receive\",\"channel\":{\"$ref\":\"#/channels/b\"}},\"x\":{\"action\":\"send\",\"channel\":{\"$ref\":\"#/channels/a\"}}},\"channels\":{\"b\":{},\"a\":{}}}");
+        Assert.Equal(["channel a", "channel b", "operation x", "operation y"], EntryNames(events));
+        Assert.True(JsonNode.DeepEquals(events, reversed));
+    }
 }

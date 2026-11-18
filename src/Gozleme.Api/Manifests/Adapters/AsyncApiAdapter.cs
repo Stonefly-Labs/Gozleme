@@ -47,12 +47,13 @@ internal sealed class AsyncApiAdapter : IProtocolAdapter
         {
             Attributes = new ProjectionAttributes { AsyncapiVersion = tree.StringOf("asyncapi") },
         };
-        foreach (var (key, channel) in Members(tree["channels"]))
+        // Map keys in ordinal order: the key order of the document never changes the projection (SC-003, T087).
+        foreach (var (key, channel) in Members(tree["channels"]).OrderBy(m => m.Key, StringComparer.Ordinal))
         {
             builder.Entry("channel", key, channel.StringOf("title"));
         }
 
-        foreach (var (key, operation) in Members(tree["operations"]))
+        foreach (var (key, operation) in Members(tree["operations"]).OrderBy(m => m.Key, StringComparer.Ordinal))
         {
             builder.Entry("operation", key, operation.StringOf("title"));
         }

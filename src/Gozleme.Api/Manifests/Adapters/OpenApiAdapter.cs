@@ -63,16 +63,23 @@ internal sealed partial class OpenApiAdapter : IProtocolAdapter
         return builder.Build(title, title, info.StringOf("description"));
     }
 
-    /// <summary>Path operations then webhook operations (3.1), in source order.</summary>
+    /// <summary>
+    /// Path operations then webhook operations (3.1). Map keys are in ordinal order and methods in the fixed
+    /// <see cref="Methods"/> order, so the key order of the document never changes the projection (maintainer
+    /// decision 2026-11-17, "spec wins: sort", SC-003, T087).
+    /// </summary>
     private static IEnumerable<(string Kind, string Key, string Method, ManifestNode Operation)> Operations(ManifestNode tree)
     {
         foreach (var (kind, map) in new[] { ("operation", tree["paths"]), ("webhook", tree["webhooks"]) })
         {
-            foreach (var (key, item) in Members(map))
+            foreach (var (key, item) in Members(map).OrderBy(m => m.Key, StringComparer.Ordinal))
             {
-                foreach (var (method, operation) in Members(item).Where(m => Methods.Contains(m.Key, StringComparer.Ordinal) && m.Value.IsObject))
+                foreach (var method in Methods)
                 {
-                    yield return (kind, key, method, operation);
+                    if (item[method] is { IsObject: true } operation)
+                    {
+                        yield return (kind, key, method, operation);
+                    }
                 }
             }
         }
