@@ -9,6 +9,7 @@ namespace Gozleme.Api.Tests.Manifests;
 /// GOZ-0006 FR-016 (contracts/manifest-validation.md "Bounds"): each bound accepts its limit and refuses one past it as
 /// <c>too_large</c> with its rule and a null location; <c>too_large</c> and <c>malformed</c> stop with one problem.
 /// </summary>
+[Collection(TimedTests.Name)]
 public sealed class ManifestBoundsTests
 {
     private const string ModelHead = """{"name":"m","description":"d","modalities":{"input":["text"],"output":["text"]},"x-pad":""";

@@ -7,6 +7,7 @@ namespace Gozleme.Api.Tests.Manifests;
 /// Maintainer decision 2026-11-17 ("separate real from false"): an invalid value never hides a real unknown member
 /// beside it, and the members its failed subschema declares are not reported as unknown.
 /// </summary>
+[Collection(TimedTests.Name)]
 public sealed class SchemaNoiseTests
 {
     [Fact]

@@ -9,6 +9,7 @@ namespace Gozleme.Api.Tests.Manifests;
 /// GOZ-0006 contracts/secret-patterns.md (research R7, FR-010): one synthetic positive per pattern, near misses, the
 /// accepted forms in secret-bearing fields, <c>secret.name</c> at the parent pointer, and a timeout as a match.
 /// </summary>
+[Collection(TimedTests.Name)]
 public sealed class SecretPatternTests
 {
     // Prefixes are concatenated so the repository's own secret scan never sees a contiguous credential shape.
