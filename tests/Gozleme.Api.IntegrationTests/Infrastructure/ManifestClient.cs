@@ -40,9 +40,21 @@ public static class ManifestClient
         return [.. index["samples"]!.AsArray().Select(s => new Sample(s!["id"]!.GetValue<string>(), s["family"]!.GetValue<string>(), s["file"]!.GetValue<string>(), s["expected"]!.AsObject()))];
     }
 
+    /// <summary>200 accepted; a rejection is 400 when malformed, 413 when too large and 422 otherwise (T098).</summary>
+    public static HttpStatusCode StatusOfCategories(IEnumerable<string> categories)
+    {
+        var all = categories.ToList();
+        return all.Contains("malformed") ? HttpStatusCode.BadRequest
+            : all.Contains("too_large") ? HttpStatusCode.RequestEntityTooLarge
+            : HttpStatusCode.UnprocessableEntity;
+    }
+
     public sealed record Sample(string Id, string Family, string File, JsonObject Expected)
     {
         public bool Valid => Expected["outcome"]!.GetValue<string>() == "accepted";
+
+        /// <summary>The status the sample's expected result is answered with (maintainer decision "result-status-codes", T098).</summary>
+        public HttpStatusCode Status => Valid ? HttpStatusCode.OK : StatusOfCategories(Expected["problems"]!.AsArray().Select(p => p!["category"]!.GetValue<string>()));
 
         public string Raw => System.IO.File.ReadAllText(Path.Combine(SampleDirectory, File));
 

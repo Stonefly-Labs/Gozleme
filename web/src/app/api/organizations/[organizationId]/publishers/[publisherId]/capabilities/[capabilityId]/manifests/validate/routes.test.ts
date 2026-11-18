@@ -21,7 +21,7 @@ describe("manifest validate route handler (GOZ-0006)", () => {
   });
 
   it.each([
-    [200, '{"outcome":"rejected","problems":[],"truncated":false}'],
+    [422, '{"outcome":"rejected","problems":[],"truncated":false}'],
     [403, '{"error":"forbidden"}'],
     [404, ""],
     [409, '{"error":"suspended"}'],

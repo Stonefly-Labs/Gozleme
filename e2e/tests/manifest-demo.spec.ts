@@ -296,7 +296,7 @@ test("roles, non-members, suspension and the validation budget answer in the con
     expect((await setRoles(alice, DEMO_ORG.id, carolId, [role])).status).toBe(200);
     const r = role === "publisher" ? await validate(carol, "{}") : await api(carol, "POST", VALIDATE, "{not json");
     matrix[role] = r.status;
-    expect(r.status, role).toBe(role === "publisher" ? 200 : 403);
+    expect(r.status, role).toBe(role === "publisher" ? 422 : 403); // "{}" is a rejection (T098)
   }
   expect((await setRoles(alice, DEMO_ORG.id, carolId, ["publisher"])).status).toBe(200);
 
@@ -346,7 +346,7 @@ test("roles, non-members, suspension and the validation budget answer in the con
   }
 
   expect((await setRoles(alice, DEMO_ORG.id, aliceId, ["admin"])).status).toBe(200);
-  expect(statuses.slice(0, 30).every((s) => s === 200)).toBe(true);
+  expect(statuses.slice(0, 30).every((s) => s === 422)).toBe(true); // "{}" is a rejection (T098)
   expect(statuses[30]).toBe(429);
   expect(limited!.text).toBe('{"error":"rate_limited"}');
   expect(Number(limited!.retryAfter)).toBeGreaterThan(0);
@@ -366,7 +366,7 @@ test("observability: validations are traced and counted with bounded labels and 
   test.setTimeout(240_000);
   // One fresh rejection of a known family, so it is among the newest traces Jaeger returns whatever ran before.
   const knownFamily = invalid.find((s) => s.expected.problems?.every((p) => !["malformed", "too_large"].includes(p.category)))!;
-  expect((await validate(carol, sampleText(knownFamily))).status).toBe(200);
+  expect((await validate(carol, sampleText(knownFamily))).status).toBe(422);
   const isKnownRejection = (s: Awaited<ReturnType<typeof recentSpans>>[number]) =>
     s.attributes["gozleme.manifest.outcome"] === "rejected" && s.attributes["gozleme.manifest.family"] !== "unknown" && Number(s.attributes["gozleme.manifest.problem_count"]) > 0;
   let spans: Awaited<ReturnType<typeof recentSpans>> = [];

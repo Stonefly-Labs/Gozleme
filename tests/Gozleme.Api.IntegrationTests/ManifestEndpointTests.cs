@@ -148,7 +148,7 @@ public sealed class ManifestEndpointTests(PgvectorDatabaseFixture fixture) : IAs
         foreach (var claim in claims)
         {
             var (status, body) = await ManifestClient.SendAsync(_carol, Path, ManifestClient.Envelope(claim, "model", "gozleme-model-card", "1", "json", document));
-            Assert.Equal(HttpStatusCode.OK, status);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, status);
             answers.Add(body);
         }
 
@@ -226,7 +226,7 @@ public sealed class ManifestEndpointTests(PgvectorDatabaseFixture fixture) : IAs
     {
         Assert.Equal((HttpStatusCode.UnsupportedMediaType, """{"error":"unsupported_media_type"}"""), await ManifestClient.SendAsync(_carol, Path, "{}"u8.ToArray(), "text/plain"));
         Assert.Equal(HttpStatusCode.Forbidden, (await ManifestClient.SendAsync(_erin, Path, "{}"u8.ToArray(), "text/plain")).Status);
-        Assert.Equal(HttpStatusCode.OK, (await ManifestClient.SendAsync(_carol, Path, "{}"u8.ToArray(), "Application/JSON; charset=utf-8")).Status);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await ManifestClient.SendAsync(_carol, Path, "{}"u8.ToArray(), "Application/JSON; charset=utf-8")).Status);
 
         var huge = new byte[(1024 * 1024) + 1];
         Array.Fill(huge, (byte)' ');
@@ -262,8 +262,8 @@ public sealed class ManifestEndpointTests(PgvectorDatabaseFixture fixture) : IAs
         var capability = await OrgClient.CreateCapabilityAsync(carol, org, publisherId, "budget");
         var path = ManifestClient.Validate(org, publisherId, capability.GetProperty("id").GetString()!);
 
-        Assert.Equal(HttpStatusCode.OK, (await ManifestClient.SendAsync(carol, path, "{}"u8.ToArray())).Status);
-        Assert.Equal(HttpStatusCode.OK, (await ManifestClient.SendAsync(carol, path, "{}"u8.ToArray())).Status);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await ManifestClient.SendAsync(carol, path, "{}"u8.ToArray())).Status);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await ManifestClient.SendAsync(carol, path, "{}"u8.ToArray())).Status);
         var (status, body, response) = await ManifestClient.PostAsync(carol, path, "{}"u8.ToArray(), "text/plain");
         using (response)
         {
@@ -271,7 +271,7 @@ public sealed class ManifestEndpointTests(PgvectorDatabaseFixture fixture) : IAs
             Assert.True(int.Parse(response.Headers.GetValues("Retry-After").Single(), System.Globalization.CultureInfo.InvariantCulture) is > 0 and <= 60);
         }
 
-        Assert.Equal(HttpStatusCode.OK, (await ManifestClient.SendAsync(dave, path, "{}"u8.ToArray())).Status); // another account's budget
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await ManifestClient.SendAsync(dave, path, "{}"u8.ToArray())).Status); // another account's budget
         Assert.Equal(HttpStatusCode.Forbidden, (await ManifestClient.SendAsync(alice, path, "{}"u8.ToArray())).Status); // no permission, no permit
         for (var i = 0; i < 3; i++)
         {
@@ -286,7 +286,7 @@ public sealed class ManifestEndpointTests(PgvectorDatabaseFixture fixture) : IAs
         foreach (var sample in ManifestClient.Samples.Where(s => !s.Valid))
         {
             var (status, body) = await ManifestClient.SendAsync(_carol, Path, sample.Body(_canonical));
-            Assert.Equal(HttpStatusCode.OK, status);
+            Assert.Equal(sample.Status, status);
             foreach (var secret in secrets)
             {
                 Assert.DoesNotContain(JsonEncodedText.Encode(secret).ToString(), body, StringComparison.Ordinal);

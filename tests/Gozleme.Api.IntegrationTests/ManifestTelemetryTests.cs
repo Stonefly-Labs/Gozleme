@@ -59,7 +59,7 @@ public sealed class ManifestTelemetryTests(PgvectorDatabaseFixture fixture) : IA
         foreach (var sample in ManifestClient.Samples)
         {
             var (status, body) = await ManifestClient.SendAsync(carol, path, sample.Body(canonical));
-            Assert.Equal(HttpStatusCode.OK, status);
+            Assert.Equal(sample.Status, status);
             if (JsonNode.Parse(body)!["native"]?["digest"] is { } digest)
             {
                 digests.Add(digest.GetValue<string>()["sha256:".Length..]);

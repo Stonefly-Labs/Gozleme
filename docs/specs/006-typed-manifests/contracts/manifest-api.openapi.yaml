@@ -30,21 +30,30 @@ paths:
             schema: { $ref: './manifest-envelope-v1.schema.json' }
       responses:
         '200':
-          description: Validation ran. outcome is accepted or rejected.
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/Accepted'
-                  - $ref: '#/components/schemas/Rejected'
+          description: Validation ran and the manifest is accepted.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Accepted' } } }
+        '400':
+          description: Validation ran and the document is malformed (one malformed problem; maintainer decision result-status-codes, T098).
+          content: { application/json: { schema: { $ref: '#/components/schemas/Rejected' } } }
+        '422':
+          description: Validation ran and the manifest is rejected for any reason other than malformed or too large.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Rejected' } } }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { description: 'Unknown, malformed, non-member or foreign organization, publisher or capability. Empty body.' }
         '409':
           description: The capability's publisher is suspended.
           content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: suspended } } }
         '413':
-          description: Request body over 1 MiB.
-          content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: too_large } } }
+          description: >-
+            Request body over 1 MiB (Error body, read before parsing), or validation ran and a bound was exceeded
+            (Rejected body with one too_large problem).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - $ref: '#/components/schemas/Rejected'
+              example: { error: too_large }
         '415':
           description: Content-Type is not application/json.
           content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: unsupported_media_type } } }

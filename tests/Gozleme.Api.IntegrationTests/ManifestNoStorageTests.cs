@@ -44,7 +44,7 @@ public sealed class ManifestNoStorageTests : IAsyncLifetime
         var denials = _factory.Logs.Count(IsDenial);
         foreach (var sample in ManifestClient.Samples)
         {
-            Assert.Equal(HttpStatusCode.OK, (await ManifestClient.SendAsync(carol, path, sample.Body(canonical))).Status);
+            Assert.Equal(sample.Status, (await ManifestClient.SendAsync(carol, path, sample.Body(canonical))).Status);
         }
 
         Assert.Equal(HttpStatusCode.Forbidden, (await ManifestClient.SendAsync(alice, path, "{}"u8.ToArray())).Status);

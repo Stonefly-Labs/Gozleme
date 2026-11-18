@@ -111,7 +111,20 @@ export const MANIFEST_MESSAGES = {
 
 const isMessageCode = (code: unknown): code is keyof typeof MANIFEST_MESSAGES => typeof code === "string" && Object.hasOwn(MANIFEST_MESSAGES, code);
 
-/** The message for a non-200 answer, from its status and error body. */
+/**
+ * A validation result: 200 accepted, or a rejection answered 400 (malformed), 413 (too large) or 422 (any other
+ * problem) with the result body (GOZ-0006 maintainer decision "result-status-codes"). A 413 without a result body is
+ * the 1 MiB request limit.
+ */
+export function resultOf(status: number, json: unknown): ValidationResult | null {
+  if (!json || typeof json !== "object" || !("outcome" in json)) return null;
+  const outcome = (json as { outcome: unknown }).outcome;
+  if (status === 200 && outcome === "accepted") return json as ValidationResult;
+  if ([400, 413, 422].includes(status) && outcome === "rejected") return json as ValidationResult;
+  return null;
+}
+
+/** The message for an answer that is not a validation result, from its status and error body. */
 export function errorMessage(status: number, json: unknown): string {
   if (status === 404) return MANIFEST_MESSAGES.not_found;
   const code = (json as { error?: unknown } | null)?.error;

@@ -254,7 +254,7 @@ Anything else is `identity_mismatch` at `/capability`, rule `identity.capability
 ## R9 — Problem and result shape (FR-012, FR-013)
 
 **Decision** ([contracts/manifest-validation.md](./contracts/manifest-validation.md)):
-- **Both outcomes** answer `200`, with `{"outcome":"accepted", …}` or `{"outcome":"rejected","problems":[…],"truncated":false}` (disclosed agent choice A3). A rejection is a successful validation, and authorization failures keep their own statuses, so clients can tell "you may not" from "this is invalid".
+- **Status by outcome** (maintainer decision 2026-11-18, "result-status-codes", replacing agent choice A3): an accepted manifest answers `200` with `{"outcome":"accepted", …}`. A rejection answers with the body `{"outcome":"rejected","problems":[…],"truncated":false}` and status `400` when the document is malformed, `413` when it is too large and `422` otherwise. A request body over 1 MiB, refused before parsing, keeps `413 {"error":"too_large"}`. Authorization failures keep their own statuses and error bodies, so clients can tell "you may not" from "this is invalid".
 - **Problem**: `{category, rule, location, message}`.
   - `location` is `{"part":"envelope"|"native","pointer":"…"}`, or `{"part":…,"line":n,"column":n}` for `malformed` (except `parse.not-string` and an encoding the format does not allow, which carry the envelope pointer; maintainer decision 2026-11-17), `SKILL.md` body secrets and YAML-comment secrets, or `null` for `too_large`.
   - `rule` and `message` come from one fixed catalogue (`ManifestRules.cs`, pinned by `ManifestRuleCatalogueTests`). No message is built from input.

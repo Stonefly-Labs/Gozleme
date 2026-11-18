@@ -88,8 +88,21 @@ internal static class ManifestEndpoints
         var target = new ManifestTarget(CanonicalId.Capability(origin, capability.Id), $"{publisher.Handle}/{capability.Name}");
         var run = validator.Validate(body, target);
         ManifestTelemetry.Record(activity, run);
+        http.Response.StatusCode = StatusOf(run.Result);
         return TypedResults.Bytes(ManifestJson.Serialize(run.Result), "application/json; charset=utf-8");
     }
+
+    /// <summary>
+    /// 200 accepted; a rejection answers 400 when the document is malformed, 413 when it is too large and 422 otherwise,
+    /// always with the result body (maintainer decision 2026-11-18, "result-status-codes", T098).
+    /// </summary>
+    internal static int StatusOf(ValidationResult result) => result switch
+    {
+        RejectedResult { Problems: var problems } when problems.Any(p => p.Category == ManifestRules.Name(ProblemCategory.Malformed)) => StatusCodes.Status400BadRequest,
+        RejectedResult { Problems: var problems } when problems.Any(p => p.Category == ManifestRules.Name(ProblemCategory.TooLarge)) => StatusCodes.Status413PayloadTooLarge,
+        RejectedResult => StatusCodes.Status422UnprocessableEntity,
+        _ => StatusCodes.Status200OK,
+    };
 
     /// <summary><c>application/json</c>, with or without parameters (case-insensitive media type).</summary>
     internal static bool IsJson(string? contentType) =>

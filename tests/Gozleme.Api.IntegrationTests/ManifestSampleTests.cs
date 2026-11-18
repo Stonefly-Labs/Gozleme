@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json.Nodes;
 using Gozleme.Api.IntegrationTests.Infrastructure;
 
@@ -53,7 +52,7 @@ public sealed class ManifestSampleTests(PgvectorDatabaseFixture fixture) : IAsyn
     {
         var sample = ManifestClient.SampleById(id);
         var (status, body) = await ManifestClient.SendAsync(_carol, _path, sample.Body(_canonical));
-        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Equal(sample.Status, status);
         var json = JsonNode.Parse(body)!;
         Assert.Equal(sample.Expected["outcome"]!.GetValue<string>(), json["outcome"]!.GetValue<string>());
         if (sample.Valid)

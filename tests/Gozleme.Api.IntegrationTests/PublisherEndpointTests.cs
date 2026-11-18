@@ -490,7 +490,7 @@ public sealed partial class PublisherEndpointTests(PgvectorDatabaseFixture fixtu
         OrgAction.CapabilityRead => (HttpMethod.Get, OrgClient.Capability(_orgA, publisherId, capabilityId), null, HttpStatusCode.OK),
         OrgAction.CapabilityCreate => (HttpMethod.Post, OrgClient.Capabilities(_orgA, publisherId), new { name = $"by-{role}", displayName = role }, HttpStatusCode.Created),
         OrgAction.CapabilityRename => (HttpMethod.Patch, OrgClient.Capability(_orgA, publisherId, capabilityId), new { displayName = role }, HttpStatusCode.OK),
-        OrgAction.ManifestValidate => (HttpMethod.Post, ManifestClient.Validate(_orgA, publisherId, capabilityId), new { }, HttpStatusCode.OK), // GOZ-0006
+        OrgAction.ManifestValidate => (HttpMethod.Post, ManifestClient.Validate(_orgA, publisherId, capabilityId), new { }, HttpStatusCode.UnprocessableEntity), // GOZ-0006: "{}" is a rejection (T098)
         _ => throw new InvalidOperationException(action),
     };
 

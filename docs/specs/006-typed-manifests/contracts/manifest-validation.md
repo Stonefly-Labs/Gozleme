@@ -42,7 +42,7 @@ The body is `application/json`, at most 1 MiB, and is a manifest envelope v1:
 5. `409 {"error":"suspended"}`: the capability's publisher holds no handle claim.
 6. `429 {"error":"rate_limited"}` with `Retry-After`: the account's validation budget is spent (30 per minute by default, `Gozleme:Manifests:ValidatePerMinute`; in memory, per API instance).
 7. `415 {"error":"unsupported_media_type"}` unless `Content-Type` is `application/json`; `413 {"error":"too_large"}` over 1 MiB.
-8. `200` with the validation result.
+8. The validation result: `200` when accepted; when rejected, `400` for a malformed document, `413` for a too-large one and `422` otherwise, always with the result body (maintainer decision 2026-11-18, "result-status-codes", T098).
 
 The body is not read before step 7, and it is never parsed before step 8.
 

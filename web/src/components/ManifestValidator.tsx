@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { errorMessage, type Family, postManifest, sampleText, samplesFor, type ValidationResult, validatePath } from "@/lib/manifests";
+import { errorMessage, type Family, postManifest, resultOf, sampleText, samplesFor, type ValidationResult, validatePath } from "@/lib/manifests";
 import { traced } from "@/telemetry/ui";
 import { FamilyPicker } from "./FamilyPicker";
 import { ManifestResult } from "./ManifestResult";
@@ -51,10 +51,11 @@ export function ManifestValidator({
     const { status, json } = await traced(
       "manifest_validate",
       () => postManifest(validatePath(organizationId, publisherId, capabilityId), text),
-      (r) => r.status === 200,
+      (r) => resultOf(r.status, r.json) !== null,
     );
     setBusy(false);
-    if (status === 200 && json && typeof json === "object" && "outcome" in json) setResult(json as ValidationResult);
+    const result = resultOf(status, json);
+    if (result) setResult(result);
     else setError(errorMessage(status, json));
   }
 

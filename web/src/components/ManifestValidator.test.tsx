@@ -70,12 +70,25 @@ describe("ManifestValidator (GOZ-0006 US1)", () => {
     expect(within(screen.getByTestId("attribute-mode")).getByTestId("derived-marker")).toBeInTheDocument();
   });
 
-  it("renders the problem list for a rejection", async () => {
-    respond(200, { outcome: "rejected", problems: [{ category: "identity_mismatch", rule: "identity.capability", location: { part: "envelope", pointer: "/capability" }, message: "M." }], truncated: false });
+  // A rejection is 400 (malformed), 413 (too large) or 422 (anything else), always with the result body (T098).
+  it.each([
+    [422, "identity_mismatch", "identity.capability"],
+    [400, "malformed", "parse.syntax"],
+    [413, "too_large", "bound.native-size"],
+  ])("renders the problem list for a rejection answered %i", async (status, category, rule) => {
+    respond(status, { outcome: "rejected", problems: [{ category, rule, location: { part: "envelope", pointer: "/capability" }, message: "M." }], truncated: false });
     renderValidator();
     fireEvent.change(screen.getByTestId("manifest-text"), { target: { value: "{}" } });
     fireEvent.click(screen.getByTestId("validate"));
-    expect(await screen.findByTestId("problem-list")).toHaveTextContent("identity_mismatch");
+    expect(await screen.findByTestId("problem-list")).toHaveTextContent(category);
+  });
+
+  it("does not show a rejection body answered 200 as a result", async () => {
+    respond(200, { outcome: "rejected", problems: [], truncated: false });
+    renderValidator();
+    fireEvent.change(screen.getByTestId("manifest-text"), { target: { value: "{}" } });
+    fireEvent.click(screen.getByTestId("validate"));
+    expect(await screen.findByText(MANIFEST_MESSAGES.unavailable)).toBeInTheDocument();
   });
 
   it.each([
