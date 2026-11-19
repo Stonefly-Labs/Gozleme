@@ -20,3 +20,7 @@ stages:
   converge: {status: pending}
   impactAnalysis: {status: pending}
   roadmapSync: {status: pending}
+attempts: []
+blockers: []
+nextAction: 'Run /speckit-clarify: pre-existing revisions with duplicate kind + native name entries (FR-016 vs Q2); byte-identical re-projection behaviour (Q3)'
+evidence: {tests: [], demos: [], screenshots: [], reviews: []}
