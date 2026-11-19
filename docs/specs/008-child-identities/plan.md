@@ -89,17 +89,35 @@ install step runs in the existing `migrate` service and Job.
 **Constraints**:
 - **Never recorded**: names, titles, native names, digests and documents never appear in URLs, spans, metrics or logs
   (FR-019, SC-007).
-- **Publication unchanged except**: the duplicate refusal and the rollout-gap `503` (R6); the `201` body, statement,
-  signature and verification are unchanged (FR-021).
+- **Publication unchanged except**: the duplicate refusal and the rollout-gap `503` (R6), and the convergence rulings
+  below (`publish.nul_character`, the child-refusal `503`); the `201` body, statement, signature and verification are
+  unchanged (FR-021).
 - **Validation unchanged**: GOZ-0006 validation, envelope v1, projection v1, the adapters and the GOZ-0006 rule
   catalogue are unchanged.
 - **Boundary pins**: `POST /api/v1/publish`, `GET /api/v1/capabilities`, `/catalog` and `/search` still answer `404`.
 
 **Scale/Scope**:
 - **API**: 5 endpoints, no new action, a `Children/` module (assigner, duplicate rule, store, endpoints, contracts,
-  install step, regenerate command, telemetry), 1 migration and 3 audit events (1601–1603).
+  install step, regenerate command, telemetry), 1 migration and 4 audit events (1601–1604; 1604 from the convergence
+  rulings below).
 - **Web**: 2 pages, 2 sections on the revision page, about 4 route handlers (GET only), about 4 components.
 - **e2e**: 1 Playwright suite plus an operator helper entry.
+
+**Convergence rulings** (maintainer, 2026-11-19; recorded as `decisions` in `progress.yaml`, topics in brackets). These
+supersede the plan where they differ:
+- **`publish.nul_character`** [nul-character F3, nul-pointer, envelope-nul]: a second rule in publish rule catalogue v1
+  (`422`, validate unchanged): one problem per projection string (`part: projection`) and per stored envelope string
+  (`part: envelope`) holding U+0000, at the string's exact pointer, after the duplicate problems, in one body capped at
+  50 (contracts/publish-delta.md).
+- **Child-refusal `503`** [child-refusal-status F4]: a database refusal of a child row at publication (insert, or the
+  completeness checks that publication runs with `SET CONSTRAINTS … IMMEDIATE`), and text the database cannot hold
+  (`22P05`, `22021`), answer `503 {"error":"unavailable"}` with nothing stored; span outcome `unavailable`.
+- **Audit 1604** [nul-character F3]: the install step skips a revision whose projection holds U+0000,
+  audits `gozleme.audit.children_install_skipped` with the revision ID only, and continues.
+- **`not_installed`** [regenerate-not-installed F14]: `projection-regenerate` on a known revision without generation 1
+  exits `3` with the fixed word `not_installed` and audit 1602 (research R7).
+- **Member insert branch** [child-insert-policy F2]: also requires the revision published in this transaction
+  (data-model.md).
 
 ## Constitution Check
 

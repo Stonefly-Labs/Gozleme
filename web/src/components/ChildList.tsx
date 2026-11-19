@@ -6,7 +6,8 @@ import { DeclaredNotice } from "./DeclaredNotice";
 
 /**
  * A capability's children in creation order (GOZ-0008 User Story 1): kind, child ID (linked to its history), and the
- * native name and title in the latest revision that declares it. Children are declared, not verified, so no approval,
+ * native name and title in the latest revision that declares it, and how many revisions it appears in (linked to the
+ * child's history, which lists them). Children are declared, not verified, so no approval,
  * trust, safety, lifecycle or verification badge is shown (FR-014).
  */
 export function ChildList({ organizationId, publisherId, capabilityId, list }: { organizationId: string; publisherId: string; capabilityId: string; list: ChildListData }) {
@@ -26,6 +27,7 @@ export function ChildList({ organizationId, publisherId, capabilityId, list }: {
               <th scope="col">Native name</th>
               <th scope="col">Title</th>
               <th scope="col">Child ID</th>
+              <th scope="col">Appears in</th>
               <th scope="col">Last declared in</th>
             </tr>
           </thead>
@@ -43,6 +45,11 @@ export function ChildList({ organizationId, publisherId, capabilityId, list }: {
                 </td>
                 <td className="cell-wrap">
                   <CanonicalId value={c.canonicalId} label={`child ID ${c.ordinal}`} testId="child-canonical-id" />
+                </td>
+                <td>
+                  <Link href={childPage(organizationId, publisherId, capabilityId, c.id)} data-testid="child-present-in">
+                    {c.presentIn} {c.presentIn === 1 ? "revision" : "revisions"}
+                  </Link>
                 </td>
                 <td>
                   <Link href={revisionPage(organizationId, publisherId, capabilityId, c.latest.revisionId)} data-testid="child-latest">

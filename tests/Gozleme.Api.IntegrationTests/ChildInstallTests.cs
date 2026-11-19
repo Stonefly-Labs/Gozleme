@@ -7,6 +7,9 @@ using Gozleme.Api.Publishers;
 using Gozleme.Api.Revisions;
 using Gozleme.Api.Revisions.Signing;
 using Gozleme.Api.Tenancy;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -23,10 +26,14 @@ namespace Gozleme.Api.IntegrationTests;
 /// (maintainer-approved A7): while a capability has a revision without generation 1, a publication answers
 /// <c>503 {"error":"unavailable"}</c> and stores nothing. T069 (ruling F3): a stored revision with U+0000 is skipped,
 /// audited by ID (1604) and keeps its capability's rollout gap. T070 (ruling F4): a commit-time child refusal at
-/// publication answers the same 503. The class owns its database: the install step spans every capability.
+/// publication answers the same 503. T093: the real upgrade path, from the GOZ-0007 schema (<c>ManifestRevisions</c>)
+/// through the <c>ChildIdentities</c> migration and the install step. The class owns its database: the install step
+/// spans every capability.
 /// </summary>
 public sealed class ChildInstallTests : IAsyncLifetime
 {
+    private const string ManifestRevisions = "20261121000000_ManifestRevisions";
+
     private GozlemeDatabase _db = null!;
     private RevisionScenario _s = null!;
 
@@ -162,6 +169,27 @@ public sealed class ChildInstallTests : IAsyncLifetime
         return revision.Id.ToString();
     }
 
+    /// <summary>
+    /// Per revision by sequence: generation count, and whether generation 1 is the revision's own projection (no copy,
+    /// FR-009) with the revision's adapter and projection version.
+    /// </summary>
+    private Task<string> GenerationOneAsync(string capabilityId) => _db.ScalarAsync<string>($"""
+        SELECT coalesce(string_agg(r.sequence || ':' || (SELECT count(*) FROM gozleme.projection_generations g WHERE g.revision_id = r.id) || ':'
+          || EXISTS (SELECT 1 FROM gozleme.projection_generations g WHERE g.revision_id = r.id AND g.generation = 1 AND g.projection IS NULL
+                     AND g.projection_digest IS NULL AND g.adapter_id = r.adapter_id AND g.adapter_version = r.adapter_version
+                     AND g.projection_version = r.projection_version),
+          ',' ORDER BY r.sequence), '')
+        FROM gozleme.manifest_revisions r WHERE r.capability_id = '{capabilityId}'
+        """)!;
+
+    private async Task MigrateToAsync(string migration)
+    {
+        // Named, so Npgsql metrics label the pool by name and never by connection string.
+        await using var dataSource = new NpgsqlDataSourceBuilder(_db.MigratorConnectionString) { Name = "integration-test-fixture" }.Build();
+        await using var context = new GozlemeDbContext((DbContextOptions<GozlemeDbContext>)GozlemeDbContext.Configure(new DbContextOptionsBuilder<GozlemeDbContext>(), dataSource).Options);
+        await context.GetService<IMigrator>().MigrateAsync(migration, TestContext.Current.CancellationToken);
+    }
+
     private async Task<string> VerificationAsync(string capabilityId, string revisionId) =>
         (await RevisionClient.GetAsync(_s.Erin, _s.Revision(capabilityId, revisionId))).Body.GetProperty("verification").GetRawText();
 
@@ -263,6 +291,94 @@ public sealed class ChildInstallTests : IAsyncLifetime
         var (_, history) = await RevisionClient.GetAsync(_s.Erin, ChildClient.Child(_s.OrgA, _s.PublisherId, agentId, duplicate.GetProperty("childId").GetString()!));
         Assert.True(history.GetProperty("child").GetProperty("duplicate").GetBoolean());
         Assert.Equal([false, true, false], history.GetProperty("history").EnumerateArray().Select(h => h.GetProperty("present").GetBoolean()));
+    }
+
+    [Fact]
+    public async Task The_upgrade_from_the_GOZ_0007_schema_installs_children_like_publication_with_the_feature()
+    {
+        // T093 (FR-016, FR-016a, US5/AC1-AC4): the same sequence twice, once published with the feature (the reference)
+        // and once stored on the GOZ-0007 schema, then migrated to latest; both must end with the same children.
+        (string, string, string?)[][] sequence =
+        [
+            [("tool", "a", null), ("tool", "b", null), ("prompt", "p", null)],
+            [("tool", "b", "B"), ("tool", "c", null)],
+            [("prompt", "p", null), ("tool", "a", null), ("resource", "r", null)],
+        ];
+        string[] versions = ["2.0.0", "1.0.0", "3.0.0"];
+        var (reference, referenceCanonical) = await _s.NewCapabilityAsync();
+        var referenceRevisions = new List<string>();
+        for (var i = 0; i < sequence.Length; i++)
+        {
+            referenceRevisions.Add((await RevisionClient.PublishedAsync(_s.Carol, _s.Revisions(reference), ChildClient.Mcp(referenceCanonical, versions[i], sequence[i]))).GetProperty("id").GetString()!);
+        }
+
+        var (referenceAgent, referenceAgentCanonical) = await _s.NewCapabilityAsync();
+        await RevisionClient.PublishedAsync(_s.Carol, _s.Revisions(referenceAgent), ManifestClient.SampleById("valid-agent-card").Body(referenceAgentCanonical));
+        var (refused, refusal) = await ManifestClient.SendAsync(_s.Carol, _s.Revisions(referenceAgent), ChildClient.A2aWithDuplicateSkill(referenceAgentCanonical, "2.0.0"));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, refused);
+        Assert.Contains("publish.duplicate_entry", refusal, StringComparison.Ordinal); // with the feature the duplicate is refused
+        var expected = await MappingAsync(reference);
+        var expectedAgent = await MappingAsync(referenceAgent);
+        var referenceVerifications = new Dictionary<string, string>();
+        foreach (var revision in referenceRevisions)
+        {
+            referenceVerifications[revision] = await VerificationAsync(reference, revision);
+        }
+
+        var (upgraded, upgradedCanonical) = await _s.NewCapabilityAsync();
+        var (agent, agentCanonical) = await _s.NewCapabilityAsync();
+
+        // Back to the GOZ-0007 schema (data kept): the child tables are gone; revisions are stored as GOZ-0007 stored them.
+        await MigrateToAsync(ManifestRevisions);
+        Assert.Equal(0, await CountAsync("SELECT count(*) FROM pg_tables WHERE schemaname = 'gozleme' AND tablename IN ('capability_children', 'revision_children', 'projection_generations')"));
+        var upgradedRevisions = new List<string>();
+        for (var i = 0; i < sequence.Length; i++)
+        {
+            upgradedRevisions.Add(await LegacyRevisionAsync(upgraded, ChildClient.Mcp(upgradedCanonical, versions[i], sequence[i]), i + 1));
+        }
+
+        var agentFirst = await LegacyRevisionAsync(agent, ManifestClient.SampleById("valid-agent-card").Body(agentCanonical), 1);
+        var agentDuplicate = await LegacyRevisionAsync(agent, ChildClient.A2aWithDuplicateSkill(agentCanonical, "2.0.0"), 2);
+
+        // migrate to latest: the ChildIdentities migration, then the install step.
+        var logs = new ConcurrentQueue<string>();
+        using (var provider = new GozlemeApiFactory.CapturingLoggerProvider(logs))
+        {
+            Assert.Equal(0, await MigrateWithLogsAsync(provider));
+        }
+
+        // Children: the same ordinal, kind and name mapping as publication with the feature, for both capabilities.
+        Assert.Equal(expected, await MappingAsync(upgraded));
+        Assert.Equal(expected, await MappingAsync(reference));
+        var agentMapping = await MappingAsync(agent); // revision 1 as with the feature; revision 2 was refused there
+        Assert.Equal(expectedAgent, string.Join(',', agentMapping.Split(',').Where(r => r.StartsWith("1:", StringComparison.Ordinal))));
+
+        // Generation 1: exactly one per revision, the revision's stored projection.
+        Assert.Equal("1:1:true,2:1:true,3:1:true", await GenerationOneAsync(upgraded));
+        Assert.Equal("1:1:true,2:1:true,3:1:true", await GenerationOneAsync(reference));
+        Assert.Equal("1:1:true,2:1:true", await GenerationOneAsync(agent));
+
+        // Duplicate marking: the first entry with the repeated skill id keeps the key; the other is a duplicate child.
+        var items = ChildClient.Items((await RevisionClient.GetAsync(_s.Erin, ChildClient.RevisionChildren(_s.OrgA, _s.PublisherId, agent, agentDuplicate))).Body);
+        var duplicate = Assert.Single(items, i => i.GetProperty("duplicate").GetBoolean());
+        var keeper = items.First(i => i.GetProperty("nativeName").GetString() == duplicate.GetProperty("nativeName").GetString());
+        Assert.True(keeper.GetProperty("entryIndex").GetInt32() < duplicate.GetProperty("entryIndex").GetInt32());
+        Assert.False(keeper.GetProperty("duplicate").GetBoolean());
+        Assert.Contains(keeper.GetProperty("childId").GetString(),
+            ChildClient.Ids((await RevisionClient.GetAsync(_s.Erin, ChildClient.RevisionChildren(_s.OrgA, _s.PublisherId, agent, agentFirst))).Body));
+
+        // Verification: the reference revisions verify exactly as before the round trip; the upgraded ones verify.
+        foreach (var revision in referenceRevisions)
+        {
+            Assert.Equal(referenceVerifications[revision], await VerificationAsync(reference, revision));
+        }
+
+        foreach (var (capability, revision) in upgradedRevisions.Select(r => (upgraded, r)).Append((agent, agentFirst)).Append((agent, agentDuplicate)))
+        {
+            Assert.Contains("\"verified\"", await VerificationAsync(capability, revision), StringComparison.Ordinal);
+        }
+
+        Assert.Equal(4, logs.Count(l => l.Contains("Gozleme.Security.Audit", StringComparison.Ordinal) && l.Contains("children installed", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]

@@ -378,12 +378,25 @@ test("5. every earlier revision has generation 1 and its children, and still ver
     ),
   ).toBe(0);
 
-  // The GOZ-0007 suite's revisions of the seeded capability verify as before (its deliberately tampered ones excepted).
-  const list = (await api(carol, "GET", `${REVISIONS}?limit=100`)).json().revisions as { id: string; version: string; verification: { status: string } }[];
-  const earlier = list.filter((r) => !r.version.includes("tamper") && !r.version.endsWith(`r${run}`));
+  // Every revision of the seeded capability, all pages (US5/AC3): the earlier ones verify as before. Excluded, and
+  // recorded with the reason: the GOZ-0007 suite's deliberately tampered revisions, and this run's own revisions.
+  type Listed = { id: string; version: string; verification: { status: string } };
+  const list: Listed[] = [];
+  for (let after: number | null = 0; after !== null; ) {
+    const page = (await api(carol, "GET", `${REVISIONS}?limit=100&after=${after}`)).json() as { revisions: Listed[]; next: number | null };
+    list.push(...page.revisions);
+    after = page.next;
+  }
+  expect(new Set(list.map((r) => r.id)).size).toBe(list.length);
+  const excluded = list.flatMap((r) =>
+    r.version.includes("tamper") ? [{ id: r.id, reason: "tampered" }] : r.version.endsWith(`r${run}`) ? [{ id: r.id, reason: "current run" }] : [],
+  );
+  const earlier = list.filter((r) => !excluded.some((e) => e.id === r.id));
   expect(earlier.length).toBeGreaterThan(0);
   for (const r of earlier) expect(r.verification.status, r.version).toBe("verified");
-  Object.assign(record, { install: { revisions, withoutGeneration1: 0, withMismatchedChildCount: 0, earlierVerified: earlier.length } });
+  Object.assign(record, {
+    install: { revisions, withoutGeneration1: 0, withMismatchedChildCount: 0, seededCapabilityRevisions: list.length, earlierVerified: earlier.length, excluded },
+  });
 });
 
 test("6. Jaeger shows the assign, generation and operator spans, and no name or digest reaches telemetry", async ({ request }) => {

@@ -49,4 +49,5 @@ version_exists` → `503 unavailable` (no usable signing key, an earlier revisio
   (`SET CONSTRAINTS … IMMEDIATE`), so a refusal is answered there and never surfaces as a `500` at commit. Text the
   database cannot hold (`22P05`, `22021`) answers the same `503`; `publish.nul_character` refuses it first. These are
   defence in depth: an assignment computed by publication always satisfies the checks.
-- The span outcome for the refusal is `rejected`.
+- The span outcome for the refusal is `unavailable` (`PublishOutcome.Unavailable`, the same as every other publish
+  `503`).

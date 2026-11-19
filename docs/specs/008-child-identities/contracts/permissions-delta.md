@@ -20,7 +20,7 @@ Applied to `docs/architecture/contracts/organization-permissions.md` during impl
 
 | Write | Enforced by |
 |---|---|
-| record children and generation 1 of a published revision | `capability_children_insert`, `revision_children_insert` and `projection_generations_insert` admit `publisher` holders while the publisher holds its handle claim; members insert non-duplicate children and generation 1 only; the operator (`is_operator()`) inserts install-step children and later generations |
+| record children and generation 1 of a published revision | `capability_children_insert`, `revision_children_insert` and `projection_generations_insert` admit `publisher` holders while the publisher holds its handle claim, and only for the revision the caller publishes in this transaction (`published_by = current_account_id() AND published_at = now()`, maintainer ruling F2); members insert non-duplicate children and generation 1 only; the operator (`is_operator()`) inserts install-step children and later generations |
 
 ## Order
 

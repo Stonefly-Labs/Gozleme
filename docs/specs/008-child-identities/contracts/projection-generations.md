@@ -65,6 +65,11 @@ docker compose run --rm migrate projection-regenerate --revision <revision-uuid>
 `not_installed` (maintainer ruling F14, 2026-11-19): the revision is known but has no generation 1, because the install
 step has not given it one (for example a revision skipped for U+0000, below). Audit 1602 carries the same word.
 
+Run without the owner login (for example with the application login `gozleme_app`, US3/AC6), `is_operator()` is false
+and there is no account context, so row-level security shows no revision: the command exits `2` with exactly
+`unknown_target` on stderr and records nothing. The application login also cannot insert a generation directly
+(`42501`).
+
 stdout on success (opaque IDs only):
 
 ```text

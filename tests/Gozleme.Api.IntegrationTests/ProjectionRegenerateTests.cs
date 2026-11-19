@@ -236,7 +236,8 @@ public sealed partial class ProjectionRegenerateTests(PgvectorDatabaseFixture fi
     {
         var (_, revisionId, _, _) = await PublishedAsync();
         var asApp = await _s.RegenerateAsync(null, _s.Db.AppConnectionString, "--revision", revisionId);
-        Assert.NotEqual(ProjectionOperatorCommands.Ok, asApp.Code);
+        // The app login is not the operator and has no account context, so RLS shows no revision (contracts/projection-generations.md).
+        Assert.Equal((ProjectionOperatorCommands.UnknownTarget, "unknown_target"), (asApp.Code, asApp.Stderr.Trim()));
         Assert.Equal(1, await GenerationCountAsync(revisionId));
 
         var insert = $"""

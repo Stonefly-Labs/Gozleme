@@ -31,6 +31,21 @@ public sealed class ChildImmutabilityTests(PgvectorDatabaseFixture fixture) : IA
         }
     }
 
+    /// <summary>
+    /// T092 (US4/AC1, FR-017): <c>TRUNCATE</c> is refused with <c>42501</c>. The owner and the superuser reach
+    /// <c>immutable_row_guard</c> itself; <c>gozleme_app</c> holds no <c>TRUNCATE</c> grant, so the privilege check
+    /// refuses it first with the same SQLSTATE.
+    /// </summary>
+    private static async Task AssertTruncateRefusedAsync(string connection, string? setup, string table, bool reachesGuard)
+    {
+        var refused = await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(connection, setup, $"TRUNCATE gozleme.{table} CASCADE"));
+        Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, refused.SqlState);
+        if (reachesGuard)
+        {
+            Assert.StartsWith("TRUNCATE refused on ", refused.MessageText, StringComparison.Ordinal);
+        }
+    }
+
     [Fact]
     public async Task No_login_changes_deletes_or_truncates_a_child_record_or_generation()
     {
@@ -53,23 +68,25 @@ public sealed class ChildImmutabilityTests(PgvectorDatabaseFixture fixture) : IA
             ("projection_generations", "generation = generation + 10", $"revision_id = '{revisionId}'"),
         };
         var withContext = RevisionScenario.Context(_s.CarolId);
-        foreach (var (login, setup) in new[] { (_s.Db.AppConnectionString, withContext), (_s.Db.MigratorConnectionString, withContext), (_s.Db.MigratorConnectionString, (string?)null) })
+        foreach (var (login, setup, owner) in new[] { (_s.Db.AppConnectionString, withContext, false), (_s.Db.MigratorConnectionString, withContext, true), (_s.Db.MigratorConnectionString, (string?)null, true) })
         {
             foreach (var (table, set, where) in cases)
             {
                 await AssertChangesNothingAsync(login, setup, $"UPDATE gozleme.{table} SET {set} WHERE {where}");
                 await AssertChangesNothingAsync(login, setup, $"DELETE FROM gozleme.{table} WHERE {where}");
-                await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(login, setup, $"TRUNCATE gozleme.{table} CASCADE"));
+                await AssertTruncateRefusedAsync(login, setup, table, reachesGuard: owner);
             }
         }
 
         // T073 (US4/AC1, FR-017): the superuser bypasses RLS, so every attempt reaches the guard and is refused outright.
         foreach (var (table, set, where) in cases)
         {
-            foreach (var sql in new[] { $"UPDATE gozleme.{table} SET {set} WHERE {where}", $"DELETE FROM gozleme.{table} WHERE {where}", $"TRUNCATE gozleme.{table} CASCADE" })
+            foreach (var sql in new[] { $"UPDATE gozleme.{table} SET {set} WHERE {where}", $"DELETE FROM gozleme.{table} WHERE {where}" })
             {
                 await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(_s.Db.SuperuserConnectionString, null, sql));
             }
+
+            await AssertTruncateRefusedAsync(_s.Db.SuperuserConnectionString, null, table, reachesGuard: true);
         }
 
         Assert.Equal(before, Snapshot());

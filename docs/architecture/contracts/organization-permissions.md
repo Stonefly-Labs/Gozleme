@@ -27,8 +27,11 @@ this file in their own slice. The broader authorization architecture is `docs/ar
    For `manifest.publish` (GOZ-0007) the steps after permission are: target (`404`), suspension (`409
    {"error":"suspended"}`), the account's publication budget (`429`), media type and size (`415`/`413`), GOZ-0006
    validation unchanged (a rejection answers exactly as validate), version uniqueness by SemVer precedence (`409
-   {"error":"version_exists"}`), signing key available (`503`), then `201`; GOZ-0008 adds the publish-time rule
-   `publish.duplicate_entry` (`422`) after validation and before version uniqueness. Reads (`manifest.list`,
+   {"error":"version_exists"}`), signing key available (`503`), then `201`; GOZ-0008 adds the publish-time rules
+   `publish.duplicate_entry` and `publish.nul_character` (`422`, one body: duplicates, then projection U+0000, then
+   envelope U+0000) after validation and before version uniqueness, and two more `503 {"error":"unavailable"}` causes
+   after version uniqueness: the rollout gap (an earlier revision of the capability without generation 1, maintainer
+   ruling A7) and a child-table refusal at insert or in the completeness checks (maintainer ruling F4). Reads (`manifest.list`,
    `manifest.read`) check the target (`404`: publisher, capability, revision, child or generation), then answer `200`.
 
 Inputs are exactly `(the caller's roles in this organization, action)`. There are no conditions,
@@ -144,7 +147,7 @@ The `DELETE …/members/{userId}` endpoint declares both actions and picks one f
 | reserve, release or reclaim a handle | the owner login only, through the operator commands; `handle_claims_guard` limits it to one-way transitions |
 | publish a revision (revision, attestation, first signing key) | `manifest_revisions_insert`, `revision_attestations_insert` and `publisher_signing_keys_insert` admit `publisher` holders, only while the publisher holds its handle claim; a member inserts key generation 1 only |
 | add a successor signing key; retire a key | `is_operator()` only (the owner login with no account context), through `signing-key-succession` |
-| record children and generation 1 of a published revision | `capability_children_insert`, `revision_children_insert` and `projection_generations_insert` admit `publisher` holders while the publisher holds its handle claim; members insert non-duplicate children and generation 1 only; the operator (`is_operator()`) inserts install-step children and later generations (`projection-regenerate`) |
+| record children and generation 1 of a published revision | `capability_children_insert`, `revision_children_insert` and `projection_generations_insert` admit `publisher` holders while the publisher holds its handle claim, and only for the revision the caller publishes in this transaction (`published_by = current_account_id() AND published_at = now()`, maintainer ruling F2); members insert non-duplicate children and generation 1 only; the operator (`is_operator()`) inserts install-step children and later generations (`projection-regenerate`) |
 | change or delete a child, child record or projection generation | refused for every login, including the owner (`immutable_row_guard`); `gozleme_app` holds `SELECT, INSERT` only |
 | change or delete a revision, attestation, signing key or retirement | refused for every login, including the owner (`immutable_row_guard`); `gozleme_app` holds `SELECT, INSERT` only |
 

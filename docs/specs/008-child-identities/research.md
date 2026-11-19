@@ -168,13 +168,25 @@ Steps, in one transaction:
 Output (stdout): `<revision-uuid> generation <n> <generation-uuid> digest equals generation <n-1>: yes|no|not_comparable`.
 No digest, name or document is printed.
 
-Exit codes: `0` recorded, `1` failed (connection, configuration), `2` unknown revision, `3` refused (reason on stderr
-as a fixed word), `64` usage. Span `gozleme.operator.projection_regenerate`; audit 1601 on success and 1602 on refusal,
+Exit codes: `0` recorded, `1` failed (connection, configuration; stderr `failed`), `2` unknown revision (stderr
+`unknown_target`), `3` refused (reason on stderr as a fixed word: `native_digest_mismatch`, `adapter_unavailable`,
+`projection_failed`, `entries_changed`, or `not_installed` for a known revision without generation 1, maintainer
+ruling F14), `64` usage. Span `gozleme.operator.projection_regenerate`; audit 1601 on success and 1602 on refusal,
 after commit, opaque IDs only. A suspended publisher's revision can be re-projected: a generation never changes which
 children the revision declares, so the revision stays frozen.
 
 In this slice the adapters never change (GOZ-0006 FR-005), so generation 2 is normally byte-identical to generation 1;
 the command exists so a future adapter version can re-project without breaking child IDs.
+
+**Convergence rulings** (maintainer, 2026-11-19; `progress.yaml` decisions nul-character, nul-pointer, envelope-nul,
+child-refusal-status, regenerate-not-installed). They extend R3, R6 and R7:
+- R3: publish rule catalogue v1 also holds `publish.nul_character` (projection and envelope strings holding U+0000, `422`,
+  exact string pointer; duplicates first). PostgreSQL `text` and `jsonb` cannot hold U+0000, which validate accepts.
+- R6: the install step skips a revision whose projection holds U+0000, audits 1604 (`gozleme.audit.children_install_skipped`, revision
+  ID only) and continues.
+- Publication: a child-table refusal (insert or completeness, `23505`, `42501`, `23000`) and `22P05`/`22021` answer
+  `503 unavailable`, nothing stored (contracts/publish-delta.md).
+- R7: `not_installed` (exit `3`, audit 1602) as above.
 
 ## R8 — Child identifier form (maintainer Q1)
 

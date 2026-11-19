@@ -20,6 +20,13 @@ describe("ChildList (GOZ-0008 US1)", () => {
     expect(within(rows[0]!).getByTestId("child-link")).toHaveAttribute("href", `/organizations/${ORG}/publishers/${PUB}/capabilities/${CAP}/children/${childId(1)}`);
   });
 
+  it("shows how many revisions each child appears in, linked to its history (US1)", () => {
+    renderList([childSummary(1, "tool", "search", "Search", { presentIn: 3 }), childSummary(2, "prompt", "summarize")]);
+    const rows = screen.getAllByTestId("child-row");
+    expect(rows.map((r) => within(r).getByTestId("child-present-in").textContent)).toEqual(["3 revisions", "1 revision"]);
+    expect(within(rows[0]!).getByTestId("child-present-in")).toHaveAttribute("href", `/organizations/${ORG}/publishers/${PUB}/capabilities/${CAP}/children/${childId(1)}`);
+  });
+
   it("shows the fixed notice and no badge", () => {
     const { container } = renderList();
     expect(screen.getByTestId("declared-notice")).toHaveTextContent(DECLARED_NOT_VERIFIED);

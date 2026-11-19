@@ -14,8 +14,13 @@ All three new tables are **tenant-owned**:
 **Read policies** (all three tables): `CASE WHEN gozleme.is_operator() THEN true ELSE organization_id IN (SELECT
 gozleme.account_organizations()) END`.
 
-**Member insert branch** (all three tables, FR-018), the same as `manifest_revisions_insert`:
-`gozleme.account_has_role(organization_id, 'publisher')` and a `held` claim for the capability's publisher.
+**Member insert branch** (all three tables, FR-018), as in `20261122000000_ChildIdentities.cs`:
+`gozleme.account_has_role(organization_id, 'publisher')`, a `held` claim for the capability's publisher, and the
+revision is the one the caller publishes in this transaction: `published_by = gozleme.current_account_id() AND
+published_at = now()` on the revision (`first_revision_id` for `capability_children`, `revision_id` for the other two;
+`published_at` is set by trigger, maintainer ruling F2). In addition `capability_children` requires `NOT is_duplicate`
+and `projection_generations` requires `generation = 1`. The operator branch (`gozleme.is_operator()`) admits any row
+(install step, `projection-regenerate`).
 
 ## Entities
 
