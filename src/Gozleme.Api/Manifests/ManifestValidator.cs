@@ -84,7 +84,7 @@ internal sealed class ManifestValidator
     }
 
     /// <summary>Stage 4: encoding dispatch. An empty or whitespace-only document is <c>parse.empty</c>; failures stop.</summary>
-    private static (ManifestNode Tree, SkillDocument? Skill) ParseNative(ManifestEnvelope envelope, byte[] nativeBytes)
+    internal static (ManifestNode Tree, SkillDocument? Skill) ParseNative(ManifestEnvelope envelope, byte[] nativeBytes)
     {
         var text = envelope.Document.StartsWith('﻿') ? envelope.Document[1..] : envelope.Document;
         if (string.IsNullOrWhiteSpace(text))

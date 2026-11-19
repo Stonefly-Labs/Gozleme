@@ -99,6 +99,17 @@ public sealed class RevisionScenario : IAsyncDisposable
         return (code, stdout.ToString(), stderr.ToString());
     }
 
+    /// <summary>Runs <c>projection-regenerate</c> (GOZ-0008) in-process, as the owner login unless <paramref name="connection"/> overrides it.</summary>
+    public async Task<(int Code, string Stdout, string Stderr)> RegenerateAsync(ConcurrentQueue<string>? logs, string? connection, params string[] args)
+    {
+        using var stdout = new StringWriter();
+        using var stderr = new StringWriter();
+        using var provider = logs is null ? null : new GozlemeApiFactory.CapturingLoggerProvider(logs);
+        var code = await Gozleme.Api.Children.ProjectionOperatorCommands.RunAsync(
+            [.. args, $"--ConnectionStrings:GozlemeMigrator={connection ?? Db.MigratorConnectionString}"], stdout, stderr, provider);
+        return (code, stdout.ToString(), stderr.ToString());
+    }
+
     /// <summary>A direct SQL insert of a minimal revision row (no attestation), for the database-enforcement suites.</summary>
     public static string InsertRevisionSql(string org, string publisherId, string capabilityId, Guid account, int sequence = 1, string version = "1.0.0", string? versionKey = null) => $"""
         INSERT INTO gozleme.manifest_revisions (id, organization_id, publisher_id, capability_id, sequence, version, version_key, family, envelope_summary,
