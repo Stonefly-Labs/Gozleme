@@ -502,7 +502,7 @@ specs:
   dependencies:
   - GOZ-0007
   status: in-progress
-  stage: clarify
+  stage: plan
   branch: feature/goz-0008-child-identities
   pullRequest: null
   promptRevision: 9
@@ -525,7 +525,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Specify complete (maintainer Q1 A, Q2 A, Q3 B, 2026-11-19); run /speckit-clarify for pre-existing duplicate entries and byte-identical re-projection'
+  nextAction: 'Clarify complete (maintainer clarify Q1 A, Q2 A, 2026-11-19); run /speckit-plan'
 - id: GOZ-0009
   number: 9
   title: Filesystem artifact publication

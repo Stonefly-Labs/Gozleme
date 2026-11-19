@@ -18,6 +18,11 @@ Maintainer decisions taken at specify (2026-11-19, verbatim reply "1: A, 2: A, 3
 - Q2: How is a later revision's entry matched to an existing child, and what happens to duplicate kind + native name within one revision? → A: **Match by kind + native name.** A renamed entry is a new child, and the old child is shown as absent from that revision. Publishing refuses a revision whose projection has two entries with the same kind and native name, through a new publish-time rule. GOZ-0006 validation, envelope v1, projection v1 and the adapters are unchanged, so validate can accept a manifest that publish then refuses; this is a documented contract delta.
 - Q3: How far do projection generations go? → A: **Generation 1 plus an operator re-projection command.** Every revision records generation 1 (the attested publication projection). One operator command, run like `migrate` and `signing-key-succession` with no API route, re-projects a stored revision into an additive, unattested generation N+1 that keeps every child ID.
 
+Clarify session (2026-11-19, maintainer):
+
+- Q: When this feature is installed, how should the one-time child assignment (FR-016) handle a revision that was already published and has two or more entries with the same kind and native name? → A: **Option A.** The first duplicate entry, by position in the stored projection, takes the kind + native name child. Each further duplicate gets its own new child marked as a duplicate. Later revisions never match a marked duplicate, so it shows as absent from every later revision.
+- Q: If the operator re-projection command produces output that is byte-for-byte identical to the revision's latest generation, should it still record a new generation? → A: **Option A.** Always record generation N+1, even when it is identical. The output reports that its digest equals the previous generation's, and the command exits 0.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Browse a server's independent child identities (Priority: P1)
@@ -73,7 +78,8 @@ Each revision's projection is recorded as a projection generation: the first gen
 3. **Given** a child ID, **When** it is used where a projection generation is expected (or the reverse), **Then** it is not found: the identifiers are never interchangeable.
 4. **Given** a later projection generation, **When** it is shown, **Then** it is labelled as not attested, since statement v1 covers only the publication projection (GOZ-0007-IF-01).
 5. **Given** the re-projection command, **When** its re-projection would add, drop or change the kind or native name of any entry compared with generation 1, **Then** it refuses and records nothing, because a generation never changes which children a revision declares; it may differ only in fields that are not child keys.
-6. **Given** the re-projection command, **When** it targets an unknown revision or runs without the owner login, **Then** it exits with a documented non-zero code and records nothing. (What it does when its output equals the latest generation byte for byte is an open clarification, see Assumptions.)
+6. **Given** the re-projection command, **When** it targets an unknown revision or runs without the owner login, **Then** it exits with a documented non-zero code and records nothing.
+7. **Given** the re-projection command, **When** its output is byte-for-byte identical to the latest generation, **Then** it still records generation N+1, reports that its digest equals the previous generation's, and exits 0.
 
 ---
 
@@ -108,10 +114,11 @@ Revisions that already exist when this feature is installed, such as those the G
 1. **Given** revisions published before the feature, **When** it is installed, **Then** each has generation 1 and its children, assigned in publication sequence per capability.
 2. **Given** the step that assigns them, **When** it is repeated, **Then** it changes nothing (idempotent).
 3. **Given** those revisions, **When** they are verified, **Then** every one verifies exactly as before.
+4. **Given** an existing revision whose stored projection has two entries with the same kind and native name, **When** the feature is installed, **Then** the first entry by position takes the kind + native name child, the second gets a new child marked as a duplicate, both appear in that revision, and no later revision ever matches the duplicate-marked child.
 
 ### Edge Cases
 
-- A projection whose entries share a kind and native name within one revision (possible for `a2a` skills and `api` operations, GOZ-0006-IF-07): publication is refused (FR-005a). An `event` channel and an `event` operation with the same key differ in kind and are two children.
+- A projection whose entries share a kind and native name within one revision (possible for `a2a` skills and `api` operations, GOZ-0006-IF-07): publication is refused (FR-005a). A revision published before this feature with such entries is never refused; it is assigned per FR-016a (first by position keeps the key, the rest become duplicate-marked children). An `event` channel and an `event` operation with the same key differ in kind and are two children.
 - An `api` operation whose derived name `"<METHOD> <path>"` equals another operation's `operationId`: two entries of the same kind and native name, so publication is refused.
 - Entries reordered between revisions: order is never part of a child key, so IDs do not change (GOZ-0006-IF-01).
 - A renamed entry (same tool, new native name): a new child; the old child is absent from that revision.
@@ -148,7 +155,7 @@ Revisions that already exist when this feature is installed, such as those the G
 - **FR-009**: The system MUST record each revision's publication projection as projection generation 1, referencing exactly the stored, attested projection bytes and digest, with no copy that could diverge.
 - **FR-010**: A projection generation MUST have its own identifier, distinct from and never derived from any child identifier, and the reverse. No API field, route parameter or telemetry attribute may carry one in place of the other.
 - **FR-011**: Projection generations MUST be additive and immutable. A later generation MUST never replace, rewrite or re-attest generation 1 (GOZ-0007-IF-01), MUST be compared only within one adapter ID, adapter version and projection version (GOZ-0007-IF-09), and MUST be labelled "not attested".
-- **FR-011a**: The only way to add a later generation MUST be an operator command run with the owner login and no account context (no API route, pattern GOZ-0007-IF-06), with a bounded span, after-commit audit with opaque IDs, documented exit codes, refusal of an unknown revision, and refusal when the output's set of entry kinds and native names differs from generation 1.
+- **FR-011a**: The only way to add a later generation MUST be an operator command run with the owner login and no account context (no API route, pattern GOZ-0007-IF-06), with a bounded span, after-commit audit with opaque IDs, documented exit codes, refusal of an unknown revision, and refusal when the output's set of entry kinds and native names differs from generation 1. Output byte-identical to the latest generation MUST still be recorded as generation N+1 (exit 0), with the command reporting that the digest equals the previous generation's.
 - **FR-012**: A child's identity MUST be the same in every projection generation of a revision in which it appears.
 
 **Browsing**
@@ -160,6 +167,7 @@ Revisions that already exist when this feature is installed, such as those the G
 **Existing revisions**
 
 - **FR-016**: Revisions that exist when the feature is installed MUST receive generation 1 and their children by the same continuity rule, in publication sequence per capability, through an idempotent step that changes no revision or attestation.
+- **FR-016a**: When an existing revision's stored projection has two or more entries with the same kind and native name, the install step MUST NOT refuse or skip it. The first such entry, by position in the stored projection, MUST take (or match) the kind + native name child. Each further duplicate MUST get its own new child identity, permanently marked as a duplicate. Matching (FR-005) MUST never select a duplicate-marked child, so it is absent from every later revision. Every entry still has exactly one child revision record (SC-002).
 
 **Isolation and immutability**
 
@@ -178,7 +186,7 @@ Revisions that already exist when this feature is installed, such as those the G
 
 ### Key Entities
 
-- **Child identity**: A permanent identity of one declared element (tool, resource, resource template, prompt, skill, operation, webhook or channel) of one capability. Has a kind that never changes. Is never deleted.
+- **Child identity**: A permanent identity of one declared element (tool, resource, resource template, prompt, skill, operation, webhook or channel) of one capability. Has a kind that never changes. Is never deleted. May carry a permanent duplicate marker (only from FR-016a), which excludes it from matching.
 - **Child revision record**: The appearance of one child in one revision: the revision, the child, and the kind, native name and title projected in that revision. Immutable.
 - **Projection generation**: One recorded projection of one revision, numbered from 1. Generation 1 is the publication projection covered by the attestation. Has its own identifier, unrelated to child identifiers.
 - **Capability, revision, attestation** (existing, GOZ-0005, GOZ-0007): unchanged.
@@ -203,5 +211,4 @@ Revisions that already exist when this feature is installed, such as those the G
 - Child status beyond "present in revision" or "absent from revision" (deprecation, withdrawal, approvals, visibility) is out of scope (GOZ-0021, GOZ-0012).
 - Canonical public visibility, search indexing of children and portable child references in lockfiles or federation are out of scope (GOZ-0012, GOZ-0013, GOZ-0028, GOZ-0030); this slice only keeps child identities anchored on the canonical capability ID so they can become portable (GOZ-0007-IF-08).
 - Child identities are publisher-declared and advisory; live discovery of a running server's tools is out of scope.
-- **Open for `/speckit-clarify`** (not decided here): (1) how FR-016 treats a revision published before this feature whose projection already has duplicate kind + native name entries, which Q2 refuses for new publications but which an immutable existing revision cannot be refused; (2) what the re-projection command does when its output equals the latest generation byte for byte, which is always the case while only one version of each adapter exists.
 - The demo publishes to the seeded `manifest-demo` capability with run-unique versions and never expects it to have no revisions or children (GOZ-0007-IF-02).

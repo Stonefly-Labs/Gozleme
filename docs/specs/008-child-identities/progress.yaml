@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0008
-stage: clarify
+stage: plan
 status: in-progress
 promptRevision: 9
 branch: feature/goz-0008-child-identities
@@ -9,10 +9,12 @@ decisions:
 - {at: '2026-11-19', by: maintainer, topic: child-id-form, decision: 'Q1 option A: hierarchical gz://<origin>/cap/<capability-uuid>/<kind>/<child-uuid>; only the child uuid stored; no aliases or alias reservations for children; namespace contract change (GOZ-0005-IF-12).'}
 - {at: '2026-11-19', by: maintainer, topic: continuity-rule, decision: 'Q2 option A: match by exact kind + native name; rename is a new child, old child shown absent; publish refuses duplicate kind + native name in one projection via a new publish-time rule; validate, envelope v1, projection v1 and adapters unchanged (documented contract delta) (GOZ-0006-IF-07).'}
 - {at: '2026-11-19', by: maintainer, topic: generation-scope, decision: 'Q3 option B: generation 1 recorded for every revision plus an owner-login operator re-projection command (no API route) adding additive unattested generation N+1 that keeps child IDs.'}
+- {at: '2026-11-19', by: maintainer, topic: preexisting-duplicates, decision: 'Clarify Q1 option A: at install, first duplicate entry by stored-projection position takes the kind + native name child; each further duplicate gets a new duplicate-marked child that matching never selects (FR-016a).'}
+- {at: '2026-11-19', by: maintainer, topic: identical-reprojection, decision: 'Clarify Q2 option A: byte-identical re-projection still records generation N+1, reports digest equal to previous generation, exits 0 (FR-011a, US3 scenario 7).'}
 agentChoices: []
 stages:
   specify: {status: complete, at: '2026-11-19', note: 'maintainer Q1-Q3 decided (verbatim "1: A, 2: A, 3: B"); two follow-up questions deferred to clarify'}
-  clarify: {status: pending}
+  clarify: {status: complete, at: '2026-11-19', note: '2 questions asked and answered (verbatim "A", "A"); spec FR-011a, FR-016a, US3, US5, edge cases, key entities updated'}
   plan: {status: pending}
   tasks: {status: pending}
   implement: {status: pending}
@@ -22,5 +24,5 @@ stages:
   roadmapSync: {status: pending}
 attempts: []
 blockers: []
-nextAction: 'Run /speckit-clarify: pre-existing revisions with duplicate kind + native name entries (FR-016 vs Q2); byte-identical re-projection behaviour (Q3)'
+nextAction: 'Run /speckit-plan'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}
