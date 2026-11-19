@@ -1,0 +1,22 @@
+schemaVersion: '1.0'
+specId: GOZ-0008
+stage: clarify
+status: in-progress
+promptRevision: 9
+branch: feature/goz-0008-child-identities
+featureDirectory: docs/specs/008-child-identities
+decisions:
+- {at: '2026-11-19', by: maintainer, topic: child-id-form, decision: 'Q1 option A: hierarchical gz://<origin>/cap/<capability-uuid>/<kind>/<child-uuid>; only the child uuid stored; no aliases or alias reservations for children; namespace contract change (GOZ-0005-IF-12).'}
+- {at: '2026-11-19', by: maintainer, topic: continuity-rule, decision: 'Q2 option A: match by exact kind + native name; rename is a new child, old child shown absent; publish refuses duplicate kind + native name in one projection via a new publish-time rule; validate, envelope v1, projection v1 and adapters unchanged (documented contract delta) (GOZ-0006-IF-07).'}
+- {at: '2026-11-19', by: maintainer, topic: generation-scope, decision: 'Q3 option B: generation 1 recorded for every revision plus an owner-login operator re-projection command (no API route) adding additive unattested generation N+1 that keeps child IDs.'}
+agentChoices: []
+stages:
+  specify: {status: complete, at: '2026-11-19', note: 'maintainer Q1-Q3 decided (verbatim "1: A, 2: A, 3: B"); two follow-up questions deferred to clarify'}
+  clarify: {status: pending}
+  plan: {status: pending}
+  tasks: {status: pending}
+  implement: {status: pending}
+  demo: {status: pending}
+  converge: {status: pending}
+  impactAnalysis: {status: pending}
+  roadmapSync: {status: pending}

@@ -501,13 +501,13 @@ specs:
   prompt: docs/prompts/spec-0008.md
   dependencies:
   - GOZ-0007
-  status: not-started
-  stage: null
-  branch: null
+  status: in-progress
+  stage: clarify
+  branch: feature/goz-0008-child-identities
   pullRequest: null
   promptRevision: 9
   gates:
-    specification: pending
+    specification: passed
     plan: pending
     tasks: pending
     implementation: pending
@@ -525,7 +525,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Prerequisite GOZ-0007 merged (PR #23); no open impact decision is due before GOZ-0008 (GOZ-0005-IF-02 before GOZ-0012 plan; IF-04, IF-05, IF-08 before GOZ-0039); prompt revision 9 carries the immutable revision conventions (GOZ-0007-IF-01..IF-06, IF-08, IF-11); start on feature/goz-0008-*'
+  nextAction: 'Specify complete (maintainer Q1 A, Q2 A, Q3 B, 2026-11-19); run /speckit-clarify for pre-existing duplicate entries and byte-identical re-projection'
 - id: GOZ-0009
   number: 9
   title: Filesystem artifact publication
