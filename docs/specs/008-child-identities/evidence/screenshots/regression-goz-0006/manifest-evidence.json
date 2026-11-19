@@ -1,6 +1,6 @@
 {
   "spec": "GOZ-0006",
-  "capturedAt": "2026-11-19T21:52:11.496Z",
+  "capturedAt": "2026-11-19T23:04:48.116Z",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": "0193a000-0000-7000-8000-000000000010",
@@ -20,7 +20,7 @@
         "valid-skill",
         "valid-model-card"
       ],
-      "elapsedSeconds": 2,
+      "elapsedSeconds": 3,
       "limitSeconds": 180,
       "digests": {
         "valid-stateless-2026-07-28": "sha256:2570f7c5c88085fbcba4cbffeb0d59521bd3d15d9efed79fda0d2cdf91b2d05f",

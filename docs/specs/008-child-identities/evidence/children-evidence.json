@@ -12,8 +12,8 @@
     "limitMs": 3000,
     "environment": "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)"
   },
-  "capturedAt": "2026-11-19T21:55:09.219Z",
-  "runId": "214431",
+  "capturedAt": "2026-11-19T23:07:11.140Z",
+  "runId": "145850",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": "0193a000-0000-7000-8000-000000000010",
@@ -23,23 +23,23 @@
   },
   "demo": {
     "browse": {
-      "revision": "01a1f5cd-658f-78bb-8032-a38cb8ecac93",
+      "revision": "01a1f60f-5098-7853-a486-58f0814943d4",
       "children": [
-        "01a1f5cd-6597-7eb3-9184-bb9ba36521c1",
-        "01a1f5cd-6597-7f72-83ea-68e66c3da124",
-        "01a1f5cd-6597-7632-bc77-25ef0cb6cc70",
-        "01a1f5cd-6597-7bf8-b291-059de465c31c"
+        "01a1f60f-50a8-7ad5-b09d-b454f29c9ece",
+        "01a1f60f-50a8-77b0-b111-13adecbf0182",
+        "01a1f60f-50a8-7d57-9d4a-be62fca5efd9",
+        "01a1f60f-50a8-7cf1-a64b-a84a3deb9c69"
       ]
     },
     "continuity": {
-      "revision": "01a1f5cd-6b72-77e7-a350-62e78bd30909",
+      "revision": "01a1f60f-5836-79a6-9411-f1d6c0707129",
       "kept": [
-        "01a1f5cd-6597-7eb3-9184-bb9ba36521c1",
-        "01a1f5cd-6597-7f72-83ea-68e66c3da124",
-        "01a1f5cd-6597-7632-bc77-25ef0cb6cc70"
+        "01a1f60f-50a8-7ad5-b09d-b454f29c9ece",
+        "01a1f60f-50a8-77b0-b111-13adecbf0182",
+        "01a1f60f-50a8-7d57-9d4a-be62fca5efd9"
       ],
-      "added": "01a1f5cd-6b80-7782-a5a1-2c4c7ea41df8",
-      "absent": "01a1f5cd-6597-7bf8-b291-059de465c31c"
+      "added": "01a1f60f-5853-70b4-b7d7-c57e048fc7ba",
+      "absent": "01a1f60f-50a8-7cf1-a64b-a84a3deb9c69"
     },
     "duplicate": {
       "validate": 200,
@@ -51,20 +51,20 @@
       "stored": 0
     },
     "regenerate": {
-      "revision": "01a1f5cd-658f-78bb-8032-a38cb8ecac93",
-      "generation": "01a1f5ce-526a-705f-aa9d-a4162220fe66",
+      "revision": "01a1f60f-5098-7853-a486-58f0814943d4",
+      "generation": "01a1f610-3e97-7ffc-b091-ca5076232ca2",
       "exit": 0,
       "identical": true,
       "unknownExit": 2,
       "usageExit": 64
     },
     "swappedIds": {
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f5ce-526a-705f-aa9d-a4162220fe66": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f5cd-658f-78bb-8032-a38cb8ecac93": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cd-658f-78bb-8032-a38cb8ecac93/projections/01a1f5cd-6597-7eb3-9184-bb9ba36521c1": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cd-658f-78bb-8032-a38cb8ecac93/projections/01a1f5cd-658f-78bb-8032-a38cb8ecac93": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cd-6b72-77e7-a350-62e78bd30909/projections/01a1f5cd-659b-7580-b71f-5546a6cdd510": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cd-6597-7eb3-9184-bb9ba36521c1/children": 404
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f610-3e97-7ffc-b091-ca5076232ca2": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f60f-5098-7853-a486-58f0814943d4": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f60f-5098-7853-a486-58f0814943d4/projections/01a1f60f-50a8-7ad5-b09d-b454f29c9ece": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f60f-5098-7853-a486-58f0814943d4/projections/01a1f60f-5098-7853-a486-58f0814943d4": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f60f-5836-79a6-9411-f1d6c0707129/projections/01a1f60f-50af-7a06-acee-a46f4a89d65e": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f60f-50a8-7ad5-b09d-b454f29c9ece/children": 404
     },
     "immutability": {
       "sql": {
@@ -118,10 +118,101 @@
       "signedOutPage": "redirect to sign in"
     },
     "install": {
-      "revisions": 68,
+      "revisions": 85,
       "withoutGeneration1": 0,
       "withMismatchedChildCount": 0,
-      "earlierVerified": 38
+      "seededCapabilityRevisions": 70,
+      "earlierVerified": 48,
+      "excluded": [
+        {
+          "id": "01a1f52c-7d72-755a-8196-248b3ea5d8db",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f52c-7dd9-71ff-a63e-9959346d5e9b",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f52c-7e42-7866-b7b0-faf79401be23",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f52c-7eb8-7be2-9855-39a856fda9b9",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f535-8d55-71f1-9ccf-32c9dd7edf37",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f535-8dbe-7d86-b524-a703458718b2",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f535-8e30-7bdc-a8b2-086ccfd12ff4",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f535-8eb1-7c7e-929d-d3d30656f84c",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f53f-acb4-75e7-910d-56cd3e1fa4bb",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f53f-ad68-7bbb-a418-08726fc508db",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f53f-ae1a-7da5-93cc-3dfde1e68f84",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f53f-ae9f-7796-97f5-93abd96b8cf4",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f5cb-cd8f-7bc4-bc5d-2dc04f838fe9",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f5cb-ce00-7e21-9f0a-9674cce5e0e5",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f5cb-ce6a-7716-bd38-716a714de9b2",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f5cb-ced7-713c-90d0-0126da5a6fdd",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f60e-5888-712e-a665-96bb6f84893a",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f60e-591f-748f-9c10-edb492e39dac",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f60e-59b6-7c21-813d-5473e734431e",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f60e-5a50-7215-a171-8026dc398308",
+          "reason": "tampered"
+        },
+        {
+          "id": "01a1f60f-5098-7853-a486-58f0814943d4",
+          "reason": "current run"
+        },
+        {
+          "id": "01a1f60f-5836-79a6-9411-f1d6c0707129",
+          "reason": "current run"
+        }
+      ]
     },
     "observability": {
       "spans": [
@@ -133,7 +224,7 @@
         "declared": 4,
         "created": 1,
         "matched": 3,
-        "absent": 24
+        "absent": 29
       },
       "counters": [
         "gozleme_children_assignments_total",
