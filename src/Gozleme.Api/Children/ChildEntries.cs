@@ -36,14 +36,14 @@ internal static class ChildEntries
     public static IReadOnlyList<ProjectionEntry> FromProjection(ReadOnlySpan<byte> projection)
     {
         using var document = JsonDocument.Parse(projection.ToArray());
-        if (!document.RootElement.TryGetProperty("entries", out var entries) || entries.ValueKind != JsonValueKind.Array)
+        if (!document.RootElement.TryGetProperty("entries"u8, out var entries) || entries.ValueKind != JsonValueKind.Array)
         {
             return [];
         }
 
         return [.. entries.EnumerateArray().Select(e => new ProjectionEntry(
-            e.GetProperty("kind").GetString()!,
-            e.GetProperty("nativeName").GetString()!,
-            e.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String ? title.GetString() : null))];
+            e.GetProperty("kind"u8).GetString()!,
+            e.GetProperty("nativeName"u8).GetString()!,
+            e.TryGetProperty("title"u8, out var title) && title.ValueKind == JsonValueKind.String ? title.GetString() : null))];
     }
 }

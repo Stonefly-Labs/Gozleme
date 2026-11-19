@@ -61,11 +61,11 @@ internal static class ProjectionRegenerator
     {
         using var summary = JsonDocument.Parse(revision.EnvelopeSummary);
         var root = summary.RootElement;
-        var native = root.GetProperty("native");
+        var native = root.GetProperty("native"u8);
         string? Optional(string name) => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
         return new ManifestEnvelope(
-            root.GetProperty("family").GetString()!, Optional("capability"), Optional("version"), Optional("title"), Optional("summary"),
-            native.GetProperty("format").GetString()!, native.GetProperty("formatVersion").GetString()!, native.GetProperty("encoding").GetString()!,
+            root.GetProperty("family"u8).GetString()!, Optional("capability"), Optional("version"), Optional("title"), Optional("summary"),
+            native.GetProperty("format"u8).GetString()!, native.GetProperty("formatVersion"u8).GetString()!, native.GetProperty("encoding"u8).GetString()!,
             new UTF8Encoding(false, true).GetString(revision.NativeDocument));
     }
 

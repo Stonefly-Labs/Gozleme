@@ -1,0 +1,28 @@
+{
+  "specId": "GOZ-0008",
+  "commit": "723f47eef7f79756439e77c90a64936c49b4fb6e",
+  "branch": "feature/goz-0008-child-identities",
+  "workingTreeCleanAtStart": true,
+  "environment": {
+    "os": "Darwin 25.5.0 arm64",
+    "docker": "29.8.2",
+    "compose": "5.5.0",
+    "node": "v24.10.0"
+  },
+  "startedAt": "2026-11-19T15:59:15Z",
+  "finishedAt": "2026-11-19T15:59:30Z",
+  "stackStartupSeconds": 14,
+  "commands": [
+    "docker compose up -d --build --wait",
+    "docker compose logs --no-color"
+  ],
+  "result": "blocked",
+  "assertions": [
+    {
+      "name": "secret scan of compose logs and status evidence",
+      "result": "passed"
+    }
+  ],
+  "timings": [],
+  "evidence": []
+}
