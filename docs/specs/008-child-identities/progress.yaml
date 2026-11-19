@@ -16,6 +16,10 @@ decisions:
 - {at: '2026-11-19', by: maintainer, topic: rollout-gap, decision: 'A7 approved: publication to a capability with a revision lacking generation 1 answers 503 unavailable under the capability lock and stores nothing.'}
 - {at: '2026-11-19', by: maintainer, topic: generation-titles, decision: 'A8 approved: child revision records and child views use generation 1 titles; later-generation titles appear only in that generation bytes.'}
 - {at: '2026-11-19', by: maintainer, topic: native-name-bound, decision: 'Implement-time question (verbatim choice "No bound; hashed index (Recommended)"): native_name has no length CHECK (validate bounds neither value names nor derived "<METHOD> <path>" names to 1,024 and does not guarantee non-empty); the partial unique match index keys on (capability_id, kind, native_name_digest), a sha256 of the UTF-8 name set by the insert guard; the entry check still compares the full native_name exactly; publication accepts everything validate accepts except duplicate keys.'}
+- {at: '2026-11-19', by: maintainer, topic: child-insert-policy, decision: 'Convergence F2 (security, verbatim choice "Tighten policy (Recommended)"): member insert branches of the three child tables also require the revision published in this transaction (published_by = current account and published_at = now()); operator branch unchanged.'}
+- {at: '2026-11-19', by: maintainer, topic: nul-character, decision: 'Convergence F3 (verbatim choice "Publish rule + skip (Recommended)"): if a test confirms \\u0000 breaks publication or install, add publish rule publish.nul_character (422, validate unchanged); install step skips such a revision, audits it by ID only and continues; map 22P05/22021 to unavailable.'}
+- {at: '2026-11-19', by: maintainer, topic: child-refusal-status, decision: 'Convergence F4 (verbatim choice "503, documented (Recommended)"): a database refusal of a child row at publication (insert or commit-time completeness) answers 503 unavailable with nothing stored; documented in publish-delta.md.'}
+- {at: '2026-11-19', by: maintainer, topic: regenerate-not-installed, decision: 'Convergence F14 (verbatim choice "Exit 3 not_installed (Recommended)"): projection-regenerate on a revision without generation 1 exits 3 with fixed word not_installed and audit 1602.'}
 agentChoices:
 - {at: '2026-11-19', topic: assignment-layer, choice: 'A1: matching runs in C# (ChildAssigner) inside the publication transaction under the existing per-capability lock; the database verifies it with a partial unique index, a statement-level entry check and deferred completeness triggers (research R1, R4); disclosed for veto.'}
 - {at: '2026-11-19', topic: install-step, choice: 'A2 (approved by maintainer 2026-11-19): existing revisions get children and generation 1 in the last step of migrate, as the operator; adds an is_operator() read branch to manifest_revisions_select (research R6; security-review item).'}
@@ -32,12 +36,12 @@ stages:
   tasks: {status: done, at: '2026-11-19', artifacts: [tasks.md], note: '66 tasks (Setup 2, Foundational 22, US1 10, US2 5, US3 10, US4 7, US5 3, Polish 7); A2, A4, A7, A8 approved by maintainer before tasks'}
   implement: {status: done, at: '2026-11-19', note: 'T001-T065 done; disclosed agent choices for veto: child-table guard refusals at publication answer 503 unavailable (fail closed); publish.duplicate_entry runs in the endpoint after validation, before version uniqueness, and spends the publication budget; absent counts include earlier duplicate children; non-GET methods answer 405 through default routing; MigrationRunner.RunAsync takes an optional test log provider'}
   demo: {status: done, at: '2026-11-19', note: 'make demo GOZ-0008: 65 passed (goz-0000 to goz-0008), result passed, 106 screenshots; earlier runs fixed in the spec only (history paging from the run sequence, absent count on a capability with earlier runs)'}
-  converge: {status: pending}
+  converge: {status: tasks_appended, at: '2026-11-19', note: 'pass 1: 18 findings (1 HIGH, 9 MEDIUM, 8 LOW; 16 partial, 2 contradicts); review-security on T066 items: 5 of 6 pass, SEC-1 (F2) and SEC-2 (F3, unconfirmed) raised; maintainer ruled F2, F3, F4, F14; Phase 9 T067-T081 appended'}
   impactAnalysis: {status: pending}
   roadmapSync: {status: pending}
 attempts: []
 blockers: []
-nextAction: 'Run /speckit-converge, with review-security on the T066 items'
+nextAction: 'Run /speckit-implement for Phase 9 Convergence (T067-T081), then re-run /speckit-converge'
 evidence:
   tests:
   - {suite: Gozleme.Api.Tests, result: '513 passed, 0 failed'}
@@ -51,6 +55,8 @@ evidence:
   demos: [docs/specs/008-child-identities/evidence/demo-run.json, docs/specs/008-child-identities/evidence/children-evidence.json]
   screenshots: [docs/specs/008-child-identities/evidence/screenshots/]
   reviews: []
+  convergence:
+  - {pass: 1, result: tasks_appended, tasks: T067-T081, securityReview: '6 items: 5 pass; SEC-1 member insert policies not bound to the publishing transaction (F2); SEC-2 escaped U+0000 (F3, unconfirmed); SEC-3 test gaps (F15)'}
 securityReviewItems:
 - {item: 'is_operator() read branch on manifest_revisions_select', evidence: 'ChildIsolationTests (operator sees B, members do not); RevisionIsolationTests is_operator exactness'}
 - {item: 'statement-level entry check and partial unique index as the matching guarantee', evidence: 'ChildIntegrityTests (42501 on kind/name/title/range/foreign child; 23505 on a second matchable key; 23000 completeness)'}
