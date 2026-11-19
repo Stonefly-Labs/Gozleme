@@ -502,7 +502,7 @@ specs:
   dependencies:
   - GOZ-0007
   status: in-progress
-  stage: converge
+  stage: impact-analysis
   branch: feature/goz-0008-child-identities
   pullRequest: null
   promptRevision: 9
@@ -513,7 +513,7 @@ specs:
     implementation: passed
     tests: passed
     demo: passed
-    convergence: in-progress
+    convergence: passed
     impactAnalysis: pending
     roadmapSync: pending
     humanReview: pending
@@ -529,7 +529,7 @@ specs:
     screenshots:
     - docs/specs/008-child-identities/evidence/screenshots/
     reviews: []
-  nextAction: 'Phase 11 T086-T096 implemented (make test/lint/build/validate/demo pass at a98b4f6); run /speckit-converge (pass 4)'
+  nextAction: 'Converged at pass 4 (e867590, 0 findings); run analyze-spec-impact'
 - id: GOZ-0009
   number: 9
   title: Filesystem artifact publication
