@@ -1,0 +1,487 @@
+{
+ "sourceSpec": "GOZ-0008",
+ "implementationRevision": "a1b3e66 (feature/goz-0008-child-identities), converged at pass 4 with 0 findings; security review items 1-9 pass. Tests and demo were not re-run by the analyst (T096 evidence in progress.yaml); make validate passed after the prompt edits.",
+ "analyzedAt": "2026-11-19",
+ "promptEdits": {
+  "revisionBump": {
+   "GOZ-0009..GOZ-0039": "9 -> 10",
+   "GOZ-0040, GOZ-0041": "7 -> 8"
+  },
+  "sections": "'### Child identity conventions (GOZ-0008-...)' in GOZ-0009..GOZ-0041; '### Implementation alignment (GOZ-0008-...)' in 0009, 0012, 0013, 0014, 0015, 0017, 0019, 0021, 0022, 0024, 0026, 0027, 0028, 0030, 0031, 0032, 0034, 0036, 0038, 0039"
+ },
+ "findings": [
+  {
+   "id": "GOZ-0008-IF-01",
+   "severity": "high",
+   "title": "Child identity contract v1: gz://<origin>/cap/<capability-uuid>/<kind>/<child-uuid>, no aliases, exact kind+nativeName match in publication sequence, install-only duplicate-marked children never matched, present/absent only, FR-014 declared-not-verified notice and no badges, gap-free per-capability ordinal, random UUIDv7 (matching deterministic, IDs not reproducible), not in statement v1",
+   "evidence": [
+    "src/Gozleme.Api/Publishers/RegistryOrigin.cs (CanonicalId.Child)",
+    "src/Gozleme.Api/Children/ChildAssigner.cs (ChildKey ordinal compare, ExistingChildren.Matchable excludes duplicates, Guid.CreateVersion7)",
+    "src/Gozleme.Api/Children/ChildContracts.cs",
+    "web/src/lib/children.ts:24 (DECLARED_NOT_VERIFIED)",
+    "docs/specs/008-child-identities/contracts/child-identity.md",
+    "docs/specs/005-publisher-identities/contracts/namespace.md (Child IDs section)",
+    "tests/Gozleme.Api.Tests/Children/ChildAssignerTests.cs"
+   ],
+   "affectedSpecs": [
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Record the contract in every dependent prompt (and the publishing prompts 0009-0011); any change to form, key or duplicate rule is a contract change and a maintainer decision.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-02",
+   "severity": "high",
+   "title": "Projection generations: generation 1 is the stored attested projection (no copy); later generations additive, immutable, unattested, only via owner-login projection-regenerate (exit 0/1/2/3/64), same (kind,nativeName) multiset, compared within adapter/projection version; child views use generation 1 titles (A8); generation and child IDs never interchangeable",
+   "evidence": [
+    "src/Gozleme.Api/Persistence/Migrations/20261122000000_ChildIdentities.cs (ck_projection_generations_first, projection_generations_insert_guard)",
+    "src/Gozleme.Api/Children/ProjectionOperatorCommands.cs:22-33",
+    "src/Gozleme.Api/Children/ChildEndpoints.cs (Bytes, Compare)",
+    "docs/specs/008-child-identities/contracts/projection-generations.md",
+    "tests/Gozleme.Api.IntegrationTests/ProjectionRegenerateTests.cs"
+   ],
+   "affectedSpecs": [
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011"
+   ],
+   "recommendation": "Only generation 1 / statement v1 projection.digest may be called attested; specific notes in 0013, 0015, 0017, 0022, 0028, 0031, 0032.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-03",
+   "severity": "high",
+   "title": "Publication delta: separate publish rule catalogue v1 (publish.duplicate_entry, publish.nul_character; 422 after validation, before version_exists; validate unchanged), extra 503 causes (rollout gap A7, child-table refusal F4), atomic revision+generation 1+children, deferred completeness triggers make any manifest_revisions insert without generation 1 and full child records uncommittable for every login",
+   "evidence": [
+    "src/Gozleme.Api/Revisions/RevisionEndpoints.cs (publish rules block)",
+    "src/Gozleme.Api/Children/PublishRules.cs",
+    "src/Gozleme.Api/Children/ChildEntries.cs",
+    "src/Gozleme.Api/Revisions/RevisionPublisher.cs (HasUninstalledRevisionAsync, RecordAsync, CheckCompleteAsync, Classify)",
+    "20261122000000_ChildIdentities.cs (manifest_revisions_children, capability_children_recorded DEFERRABLE INITIALLY DEFERRED)",
+    "docs/specs/008-child-identities/contracts/publish-delta.md",
+    "docs/architecture/contracts/organization-permissions.md (GOZ-0008 publish order)",
+    "tests/Gozleme.Api.IntegrationTests/ChildPublishTests.cs, ChildInstallTests.cs, ChildIntegrityTests.cs"
+   ],
+   "affectedSpecs": [
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Every new publication path and every revision-creating test fixture goes through RevisionPublisher/ChildStore; new publish-time rules extend the versioned publish rule catalogue. Specific note in 0009.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-04",
+   "severity": "high",
+   "title": "Pins after GOZ-0008: migration 20261122000000_ChildIdentities (3 tables, is_operator() read branch on manifest_revisions_select), 9 migrations, LATEST_MIGRATION /_ChildIdentities$/, StatusEndpointTests schemaVersion, BootstrapBoundary 6 matching tables, RlsCatalogTests 12 tenant-owned, 32 scoped endpoints (manifest.read 11, manifest.list 2, 22 actions/6 resources), Playwright goz-0008, ChildPageSize, install step in migrate, demo accumulates children and generations on manifest-demo",
+   "evidence": [
+    "tests/Gozleme.Api.IntegrationTests/MigrationAndRoleTests.cs",
+    "tests/Gozleme.Api.IntegrationTests/BootstrapBoundaryTests.cs",
+    "tests/Gozleme.Api.IntegrationTests/RlsCatalogTests.cs",
+    "tests/Gozleme.Api.IntegrationTests/OrganizationPermissionContractTests.cs",
+    "tests/Gozleme.Api.IntegrationTests/StatusEndpointTests.cs",
+    "e2e/tests/bootstrap-demo.spec.ts:29",
+    "e2e/playwright.config.ts:39",
+    "src/Gozleme.Api/appsettings.json (ChildPageSize)",
+    "src/Gozleme.Api/Persistence/MigrationRunner.cs (ChildInstaller.RunAsync)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Supersede the GOZ-0007 counts and pins in every prompt.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-05",
+   "severity": "medium",
+   "title": "Telemetry and audit: spans gozleme.children.assign / gozleme.projection.generation.record / gozleme.children.install / gozleme.operator.projection_regenerate, counters gozleme.children.assignments and gozleme.projection.generations (after commit), audit 1601-1604 (range 1601-1610 held; next module 1701); no names, titles, native names or digests anywhere",
+   "evidence": [
+    "src/Gozleme.Api/Children/ChildTelemetry.cs:8-107",
+    "src/Gozleme.Api/Identity/SecurityAudit.cs:124-136",
+    "src/Gozleme.Api/Publishers/PublisherTelemetry.cs:51-52",
+    "tests/Gozleme.Api.IntegrationTests/ChildTelemetryTests.cs"
+   ],
+   "affectedSpecs": [
+    "GOZ-0009",
+    "GOZ-0010",
+    "GOZ-0011",
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Supersede 'the next module takes 1601'; record span, counter and audit names.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-06",
+   "severity": "medium",
+   "title": "Access: five org-private GET endpoints on manifest.list/manifest.read (no new action), GOZ-0007 read order, 405 on writes, no re-projection route; is_operator() read-all branches must never back a public/peer path; child presentIn/history/ordinal/latest/absent and revision children are computed over all revisions (count/facet leak if visibility is finer than capability)",
+   "evidence": [
+    "src/Gozleme.Api/Children/ChildEndpoints.cs:27-35",
+    "src/Gozleme.Api/Children/ChildStore.cs:113-125 (PresenceAsync over all revisions)",
+    "20261122000000_ChildIdentities.cs:232-267 (select policies)",
+    "tests/Gozleme.Api.IntegrationTests/EndpointAuthorizationTests.cs",
+    "tests/Gozleme.Api.IntegrationTests/ChildAuthorizationTests.cs, ChildIsolationTests.cs"
+   ],
+   "affectedSpecs": [
+    "GOZ-0012",
+    "GOZ-0013",
+    "GOZ-0014",
+    "GOZ-0015",
+    "GOZ-0016",
+    "GOZ-0017",
+    "GOZ-0018",
+    "GOZ-0019",
+    "GOZ-0020",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0023",
+    "GOZ-0024",
+    "GOZ-0025",
+    "GOZ-0026",
+    "GOZ-0027",
+    "GOZ-0028",
+    "GOZ-0029",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0033",
+    "GOZ-0034",
+    "GOZ-0035",
+    "GOZ-0036",
+    "GOZ-0037",
+    "GOZ-0038",
+    "GOZ-0039"
+   ],
+   "recommendation": "Recorded in conventions; clarification questions routed to GOZ-0012 (visibility granularity) and GOZ-0034 (child-level grants).",
+   "disposition": "applied (clarification routed to 0012, 0034)",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-07",
+   "severity": "high",
+   "title": "Child IDs are local, random and unattested: SC-003 makes matching deterministic but not UUIDs, statement v1 has no child member, so approvals, lockfiles, imports and cross-registry references cannot carry local child UUIDs as portable identity; the contract defers portability to GOZ-0012/0028/0030",
+   "evidence": [
+    "src/Gozleme.Api/Children/ChildAssigner.cs (doc: 'only the child UUIDs differ'; Guid.CreateVersion7)",
+    "src/Gozleme.Api/Revisions/AttestationStatement.cs (closed member set)",
+    "docs/specs/008-child-identities/contracts/child-identity.md (Portability)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0021",
+    "GOZ-0024",
+    "GOZ-0028",
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0036"
+   ],
+   "recommendation": "Route a clarification question (portable child key such as canonical capability ID + version + kind + nativeName, or source child UUID as recorded-not-attested) to 0021, 0024, 0028, 0030; do not decide here.",
+   "disposition": "applied (routed to clarification in 0021, 0024, 0028, 0030)",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-08",
+   "severity": "medium",
+   "title": "Approval and materiality boundary: contract v1 forbids approval/trust/safety/lifecycle/verification badges on child views and gives a child only present/absent; projection entries carry only kind/nativeName/title, so schema/description changes show only as native.digest; per-child approval needs a versioned contract change and must bind child ID + revision + both digests; a later generation is not a material change",
+   "evidence": [
+    "docs/specs/008-child-identities/spec.md FR-014, Assumptions",
+    "src/Gozleme.Api/Children/ChildContracts.cs (no state member)",
+    "web/src/components/DeclaredNotice.tsx",
+    "20261122000000_ChildIdentities.cs (revision_children holds kind, native_name, title only)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0019",
+    "GOZ-0021",
+    "GOZ-0022",
+    "GOZ-0038"
+   ],
+   "recommendation": "Specific alignment sections in 0019, 0021, 0022, 0038.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-09",
+   "severity": "medium",
+   "title": "Search and embeddings over children: index from revision_children (generation 1 titles, A8); which generation is indexed is a clarification; later-generation text is unattested; projection generations are unrelated to embedding index generations",
+   "evidence": [
+    "src/Gozleme.Api/Children/ChildStore.cs (RecordAsync copies generation 1 entries)",
+    "docs/specs/008-child-identities/progress.yaml decision generation-titles (A8)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0013",
+    "GOZ-0015",
+    "GOZ-0017"
+   ],
+   "recommendation": "Specific alignment in 0013, 0015, 0017; clarification routed to 0013.",
+   "disposition": "applied (clarification routed to 0013)",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-10",
+   "severity": "medium",
+   "title": "Federation import, snapshot, feed and conflict: imported revisions cannot enter the local revision tables (completeness triggers, child guards); source duplicate keys or U+0000 are refused only for local publication; later generations are local additive records on immutable revisions (feed event question); child-UUID divergence between registries is not an authority conflict",
+   "evidence": [
+    "20261122000000_ChildIdentities.cs (capability_children_insert_guard, manifest_revisions_children)",
+    "docs/specs/008-child-identities/contracts/publish-delta.md",
+    "src/Gozleme.Api/Children/ProjectionRegenerator.cs"
+   ],
+   "affectedSpecs": [
+    "GOZ-0030",
+    "GOZ-0031",
+    "GOZ-0032",
+    "GOZ-0036"
+   ],
+   "recommendation": "Specific alignment and clarification questions in 0030, 0031, 0032, 0036.",
+   "disposition": "applied (clarifications routed)",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-11",
+   "severity": "high",
+   "title": "Recovery, upgrade and operator surface: child insert guards and deferred completeness triggers bind restores (restore with triggers disabled, as GOZ-0007-IF-07); migrate runs the install step every time; a pre-GOZ-0008 revision with U+0000 is skipped (1604 every run) and its capability answers 503 to publication permanently with no remedy command (accepted F3 consequence); rollout-gap 503; third owner-login command and is_operator() read-all branch (A2/A4) keep GOZ-0005-IF-04 open at GOZ-0039; optional log_error_verbosity=terse",
+   "evidence": [
+    "20261122000000_ChildIdentities.cs:96-208",
+    "src/Gozleme.Api/Children/ChildInstaller.cs",
+    "src/Gozleme.Api/Persistence/MigrationRunner.cs",
+    "docs/specs/008-child-identities/contracts/projection-generations.md (U+0000 skip)",
+    "docs/specs/008-child-identities/progress.yaml (converge pass 4 informational note; decisions A2, A4, nul-character)",
+    "tests/Gozleme.Api.IntegrationTests/ChildInstallTests.cs"
+   ],
+   "affectedSpecs": [
+    "GOZ-0039",
+    "GOZ-0040",
+    "GOZ-0041"
+   ],
+   "recommendation": "Release procedure restores with triggers disabled and proves SC-002 and verification after restore; release notes report 1604; GOZ-0039 clarify decides GOZ-0005-IF-04. Restore impact inferred from the migration code, not reproduced.",
+   "disposition": "applied (routed to 0039)",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-12",
+   "severity": "medium",
+   "title": "Relationship graph and overlays: edges and overlays reference children by canonical child ID and revision, never write child tables; absent children still resolve; cross-registry child references need a portable key (IF-07)",
+   "evidence": [
+    "20261122000000_ChildIdentities.cs (write-once grants and guards)",
+    "docs/specs/008-child-identities/contracts/child-identity.md"
+   ],
+   "affectedSpecs": [
+    "GOZ-0014",
+    "GOZ-0024"
+   ],
+   "recommendation": "Specific alignment in 0014 and 0024.",
+   "disposition": "applied",
+   "status": "applied"
+  },
+  {
+   "id": "GOZ-0008-IF-13",
+   "severity": "low",
+   "title": "Question: the child summary member `latest` ('the latest revision (highest sequence) in which the child is present', API and ChildList 'child-latest') may read as a latest-revision designation, which GOZ-0007's maintainer ruling excludes (owned by GOZ-0026/0027)",
+   "evidence": [
+    "docs/specs/008-child-identities/contracts/children-api.openapi.yaml:195-205",
+    "src/Gozleme.Api/Children/ChildStore.cs:113-125",
+    "web/src/components/ChildList.tsx:55",
+    "docs/specs/007-immutable-revisions/progress.yaml decision version-ordering"
+   ],
+   "affectedSpecs": [
+    "GOZ-0008",
+    "GOZ-0012",
+    "GOZ-0026",
+    "GOZ-0027"
+   ],
+   "recommendation": "Maintainer to choose: (a) accept as a per-child display and document it as 'last declared in' (no code change), or (b) rename the member before merge (API, web, tests; a GOZ-0008 code change through drive-speckit). Downstream guard note added to 0012, 0026, 0027 either way.",
+   "disposition": "needs-human (question; guard note applied)",
+   "status": "open"
+  },
+  {
+   "id": "GOZ-0008-IF-14",
+   "severity": "medium",
+   "title": "The decision register does not record the GOZ-0008 maintainer rulings that change contracts or security posture: Q1 child ID form (namespace contract change), A2 is_operator() read-all branch on manifest_revisions_select and child tables, A4 third owner-login operator command (beyond the GOZ-0007-IF-14 acceptance of the second), publish rule catalogue v1 / validate-publish delta (Q2), F3 U+0000 skip with permanent 503, F4 child-refusal 503",
+   "evidence": [
+    "docs/decisions/decision-register.md:112-118",
+    "docs/specs/008-child-identities/progress.yaml decisions"
+   ],
+   "affectedSpecs": [
+    "GOZ-0008",
+    "GOZ-0012",
+    "GOZ-0021",
+    "GOZ-0028",
+    "GOZ-0030",
+    "GOZ-0039"
+   ],
+   "recommendation": "Approve an additive set of rows in 'Maintainer rulings from spec delivery' (proposed text in the impact analysis). The analyst does not edit the decision register.",
+   "disposition": "needs-human",
+   "status": "open"
+  },
+  {
+   "id": "GOZ-0008-IF-15",
+   "severity": "low",
+   "title": "The completed GOZ-0007 contract docs/specs/007-immutable-revisions/contracts/revision-api.openapi.yaml (publish description) and permissions-delta.md predate the GOZ-0008 422 publish rules and the two new 503 causes; the living architecture contract and the GOZ-0008 publish delta carry them",
+   "evidence": [
+    "docs/specs/007-immutable-revisions/contracts/revision-api.openapi.yaml:30",
+    "docs/specs/007-immutable-revisions/contracts/permissions-delta.md:34",
+    "docs/architecture/contracts/organization-permissions.md:27-35"
+   ],
+   "affectedSpecs": [
+    "GOZ-0007",
+    "GOZ-0009"
+   ],
+   "recommendation": "Optional: approve a one-line pointer note in the two GOZ-0007 contract files to docs/specs/008-child-identities/contracts/publish-delta.md. Downstream prompts already cite the delta.",
+   "disposition": "needs-human (optional)",
+   "status": "open"
+  }
+ ]
+}
