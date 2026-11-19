@@ -86,8 +86,14 @@ public sealed class ChildInstallTests : IAsyncLifetime
             Assert.True(await reader.ReadAsync(TestContext.Current.CancellationToken));
             key = new PublisherSigningKey
             {
-                Id = reader.GetGuid(0), OrganizationId = reader.GetGuid(1), PublisherId = reader.GetGuid(2), Generation = reader.GetInt32(3), KeyId = reader.GetString(4),
-                Algorithm = reader.GetString(5), PublicKey = reader.GetFieldValue<byte[]>(6), EncryptedPrivateKey = reader.GetFieldValue<byte[]>(7),
+                Id = reader.GetGuid(0),
+                OrganizationId = reader.GetGuid(1),
+                PublisherId = reader.GetGuid(2),
+                Generation = reader.GetInt32(3),
+                KeyId = reader.GetString(4),
+                Algorithm = reader.GetString(5),
+                PublicKey = reader.GetFieldValue<byte[]>(6),
+                EncryptedPrivateKey = reader.GetFieldValue<byte[]>(7),
             };
         }
 
@@ -98,13 +104,30 @@ public sealed class ChildInstallTests : IAsyncLifetime
         var publishedAt = now.AddTicks(-(now.Ticks % 10)); // PostgreSQL keeps microseconds
         var revision = new ManifestRevision
         {
-            Id = Guid.CreateVersion7(publishedAt), OrganizationId = Guid.Parse(_s.OrgA), PublisherId = Guid.Parse(_s.PublisherId), CapabilityId = Guid.Parse(capabilityId),
-            Sequence = sequence, Version = accepted.Envelope.Version, VersionKey = VersionKey.From(accepted.Envelope.Version), Family = accepted.Envelope.Family,
-            EnvelopeSummary = ManifestJson.SummaryJson(accepted.Envelope), NativeFormat = accepted.Native.Format, NativeFormatVersion = accepted.Native.FormatVersion,
-            NativeEncoding = accepted.Native.Encoding, NativeDocument = native, NativeDigest = RevisionVerifier.Digest(native), NativeByteLength = native.Length,
-            Projection = projection, ProjectionVersion = accepted.Projection.ProjectionVersion, ProjectionDigest = RevisionVerifier.Digest(projection),
-            AdapterId = adapterId, AdapterVersion = adapterVersion, RuleCatalogueVersion = ManifestRules.CatalogueVersion, SchemaBundleVersion = SchemaRegistry.BundleVersion,
-            PublishedBy = _s.CarolId, PublishedAt = publishedAt,
+            Id = Guid.CreateVersion7(publishedAt),
+            OrganizationId = Guid.Parse(_s.OrgA),
+            PublisherId = Guid.Parse(_s.PublisherId),
+            CapabilityId = Guid.Parse(capabilityId),
+            Sequence = sequence,
+            Version = accepted.Envelope.Version,
+            VersionKey = VersionKey.From(accepted.Envelope.Version),
+            Family = accepted.Envelope.Family,
+            EnvelopeSummary = ManifestJson.SummaryJson(accepted.Envelope),
+            NativeFormat = accepted.Native.Format,
+            NativeFormatVersion = accepted.Native.FormatVersion,
+            NativeEncoding = accepted.Native.Encoding,
+            NativeDocument = native,
+            NativeDigest = RevisionVerifier.Digest(native),
+            NativeByteLength = native.Length,
+            Projection = projection,
+            ProjectionVersion = accepted.Projection.ProjectionVersion,
+            ProjectionDigest = RevisionVerifier.Digest(projection),
+            AdapterId = adapterId,
+            AdapterVersion = adapterVersion,
+            RuleCatalogueVersion = ManifestRules.CatalogueVersion,
+            SchemaBundleVersion = SchemaRegistry.BundleVersion,
+            PublishedBy = _s.CarolId,
+            PublishedAt = publishedAt,
         };
         var statement = AttestationStatement.For(revision, GozlemeDatabase.Origin, key.KeyId).ToCanonicalBytes();
         Assert.True(services.GetRequiredService<SigningKeyVault>().TrySign(key, statement, out var signature));

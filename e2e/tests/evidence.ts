@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { repoRoot } from "./compose";
 
 /** Demo suite → its spec's working directory (registry `docs/specs/NNN-*`). */
-const specDirs = { "goz-0000": "000-repository-bootstrap", "goz-0001": "001-local-identity", "goz-0002": "002-organizations", "goz-0003": "003-tenant-rls", "goz-0004": "004-scoped-rbac", "goz-0005": "005-publisher-identities", "goz-0006": "006-typed-manifests", "goz-0007": "007-immutable-revisions" } as const;
+const specDirs = { "goz-0000": "000-repository-bootstrap", "goz-0001": "001-local-identity", "goz-0002": "002-organizations", "goz-0003": "003-tenant-rls", "goz-0004": "004-scoped-rbac", "goz-0005": "005-publisher-identities", "goz-0006": "006-typed-manifests", "goz-0007": "007-immutable-revisions", "goz-0008": "008-child-identities" } as const;
 export type Suite = keyof typeof specDirs;
 
 /**

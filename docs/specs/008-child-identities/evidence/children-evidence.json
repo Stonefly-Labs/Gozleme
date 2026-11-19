@@ -1,0 +1,15 @@
+{
+  "spec": "GOZ-0008",
+  "performance": {
+    "criterion": "SC-006",
+    "entries": 1000,
+    "format": "mcp-server-manifest 2026-07-28 json",
+    "runs": 3,
+    "createMedianMs": 517,
+    "createWorstMs": 538,
+    "matchMedianMs": 256,
+    "matchWorstMs": 274,
+    "limitMs": 3000,
+    "environment": "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)"
+  }
+}

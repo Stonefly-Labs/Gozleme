@@ -69,7 +69,7 @@ catalogue (would change validate, against FR-005a); a new category (a larger con
 
 **Decision**: the database enforces that a child assignment is consistent, whatever path inserted it:
 
-- **One matchable child per key**: a partial unique index `(capability_id, kind, native_name) WHERE NOT is_duplicate`
+- **One matchable child per key**: a partial unique index `(capability_id, kind, native_name_digest) WHERE NOT is_duplicate` (the guard-set SHA-256 of the name; maintainer decision 2026-11-19)
   on `capability_children`. Together with the entry check below, a non-duplicate entry has exactly one possible child, so
   a wrong reuse or a second child for one key cannot commit.
 - **Duplicates only from the install step**: the insert policy admits `is_duplicate = true` only for the operator

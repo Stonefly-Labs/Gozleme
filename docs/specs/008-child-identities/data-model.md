@@ -27,7 +27,8 @@ gozleme.account_organizations()) END`.
 | `organization_id` | uuid | FK (`capability_id`, `organization_id`) → `capabilities` `ON DELETE RESTRICT` |
 | `capability_id` | uuid | the owning capability; never changes |
 | `kind` | text | `CHECK (kind IN ('tool','resource','resource-template','prompt','skill','operation','webhook','channel'))`; never changes |
-| `native_name` | text | the match key with `kind` (R2); `CHECK (length BETWEEN 1 AND 1024)` (the GOZ-0006 name bound); never in an ID, URL, span or log |
+| `native_name` | text | the match key with `kind` (R2); no length `CHECK` (maintainer decision 2026-11-19 "native-name-bound": validation guarantees no bound, so the table adds none); never in an ID, URL, span or log |
+| `native_name_digest` | bytea | `sha256` of the UTF-8 `native_name`, set by the insert guard (not by the caller); the indexed match key, so a long name never exceeds a btree entry |
 | `is_duplicate` | boolean | `false` except for install-step duplicates (FR-016a); never matched |
 | `ordinal` | integer | ≥ 1, gap-free per capability (`UNIQUE (capability_id, ordinal)`, guard `max + 1`); order and paging only |
 | `first_revision_id` | uuid | FK (`first_revision_id`, `organization_id`) → `manifest_revisions`; the revision that created it |
@@ -35,8 +36,9 @@ gozleme.account_organizations()) END`.
 
 **Indexes**:
 - `ak_capability_children_id_organization_id UNIQUE (id, organization_id)`;
-- the partial unique index `ix_capability_children_match UNIQUE (capability_id, kind, native_name) WHERE NOT
-  is_duplicate`, so there is one matchable child per key (R4).
+- the partial unique index `ix_capability_children_match UNIQUE (capability_id, kind, native_name_digest) WHERE NOT
+  is_duplicate`, so there is one matchable child per key (R4). A guard-set column rather than an expression index, because
+  `convert_to` is not immutable (maintainer decision 2026-11-19, "No bound; hashed index").
 
 **Insert policy**: the member branch with `is_duplicate = false`, or `is_operator()` (install step, duplicates
 allowed).
