@@ -1,6 +1,6 @@
 {
   "spec": "GOZ-0007",
-  "capturedAt": "2026-11-19T19:20:10.486Z",
+  "capturedAt": "2026-11-19T21:53:11.551Z",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": "0193a000-0000-7000-8000-000000000010",
@@ -11,12 +11,12 @@
   "demo": {
     "publish": {
       "revisions": [
-        "01a1f53f-98bf-7606-93b8-388a6f14ca9b",
-        "01a1f53f-9a6a-7dc1-926b-6d821480fb64"
+        "01a1f5cb-be91-73fc-8dd2-2e48053ed5b3",
+        "01a1f5cb-bfc8-7fb6-9f1a-2c62bfa76027"
       ],
       "sequences": [
-        29,
-        30
+        43,
+        44
       ],
       "elapsedSeconds": 1,
       "keyId": "sha256:d1986779a28d7d3e1045506e483102b441d16ee6e10f502d3aeb24d3b5120474"
@@ -58,22 +58,22 @@
       }
     },
     "tamper": {
-      "runId": "181525",
+      "runId": "153355",
       "revisions": {
         "native": {
-          "revision": "01a1f53f-acb4-75e7-910d-56cd3e1fa4bb",
+          "revision": "01a1f5cb-cd8f-7bc4-bc5d-2dc04f838fe9",
           "reason": "native_digest_mismatch"
         },
         "projection": {
-          "revision": "01a1f53f-ad68-7bbb-a418-08726fc508db",
+          "revision": "01a1f5cb-ce00-7e21-9f0a-9674cce5e0e5",
           "reason": "projection_digest_mismatch"
         },
         "statement": {
-          "revision": "01a1f53f-ae1a-7da5-93cc-3dfde1e68f84",
+          "revision": "01a1f5cb-ce6a-7716-bd38-716a714de9b2",
           "reason": "signature_invalid"
         },
         "signature": {
-          "revision": "01a1f53f-ae9f-7796-97f5-93abd96b8cf4",
+          "revision": "01a1f5cb-ced7-713c-90d0-0126da5a6fdd",
           "reason": "signature_invalid"
         }
       }
@@ -82,43 +82,43 @@
       "verifier": "node:crypto Ed25519 + sha256 + RFC 8785 re-canonicalization",
       "families": {
         "model": {
-          "revision": "01a1f53f-afb0-71d6-8fde-6f7a1d896613",
+          "revision": "01a1f5cb-cfca-7f20-92a6-906c136a72bd",
           "keyId": "sha256:d1986779a28d7d3e1045506e483102b441d16ee6e10f502d3aeb24d3b5120474"
         },
         "skill": {
-          "revision": "01a1f540-679f-735a-8b9d-bac8e4b1bbfd",
+          "revision": "01a1f5cc-7be6-7ddf-9082-a5a674495389",
           "keyId": "sha256:d1986779a28d7d3e1045506e483102b441d16ee6e10f502d3aeb24d3b5120474"
         },
         "event": {
-          "revision": "01a1f540-6815-73c8-b06e-2a2da7b9e958",
+          "revision": "01a1f5cc-7c29-709c-9b8e-b5cd0670324f",
           "keyId": "sha256:d1986779a28d7d3e1045506e483102b441d16ee6e10f502d3aeb24d3b5120474"
         },
         "api": {
-          "revision": "01a1f540-688a-7215-82fe-9892e6e8e964",
+          "revision": "01a1f5cc-7c52-76e4-939f-d5d6f2b827a4",
           "keyId": "sha256:d1986779a28d7d3e1045506e483102b441d16ee6e10f502d3aeb24d3b5120474"
         },
         "a2a": {
-          "revision": "01a1f540-68e2-7be5-a1a0-165847b2cf11",
+          "revision": "01a1f5cc-7c7d-72d9-8a28-8bc251697c26",
           "keyId": "sha256:d1986779a28d7d3e1045506e483102b441d16ee6e10f502d3aeb24d3b5120474"
         },
         "mcp": {
-          "revision": "01a1f540-6919-767d-b806-0e23c8355b16",
+          "revision": "01a1f5cc-7ca7-7c58-b624-48646a9fdb52",
           "keyId": "sha256:d1986779a28d7d3e1045506e483102b441d16ee6e10f502d3aeb24d3b5120474"
         }
       }
     },
     "provenance": {
-      "publisher": "01a1f540-6985-7b1f-95e8-fd97fc72ad74",
-      "capability": "01a1f540-698f-777c-ad3f-89cfa2705b20",
-      "revision": "01a1f540-6995-7b63-b653-ccf7a1ec0d62",
+      "publisher": "01a1f5cc-7cdf-77a4-aed1-b598054cd83a",
+      "capability": "01a1f5cc-7ce6-7215-8b52-5a55f0a9ac18",
+      "revision": "01a1f5cc-7ceb-7cbd-82d6-63d2ff320d0d",
       "reclaimExit": 0,
       "suspendedPublish": 409
     },
     "succession": {
-      "runId": "181525",
-      "publisher": "01a1f540-6f1c-75aa-a8fe-48b98aee2858",
-      "lost": "{\"EventId\":1503,\"LogLevel\":\"Warning\",\"Category\":\"Gozleme.Security.Audit\",\"Message\":\"Operator retired signing key 01a1f540-6f55-700e-822e-6586ca38a970 of 01a1f540-6f1c-75aa-a8fe-48b98aee2858 (lost); successor 01a1f540-7174-7d15-9ff4-ea58c10cd581\",\"State\":{\"RetiredKeyId\":\"01a1f540-6f55-700e-822e-6586ca38a970\",\"SuccessorKeyId\":\"01a1f540-7174-7d15-9ff4-ea58c10cd581\",\"PublisherId\":\"01a1f540-6f1c-75aa-a8fe-48b98aee2858\",\"Reason\":\"lost\",\"{OriginalFormat}\":\"Operator retired signing key {RetiredKeyId} of {PublisherId} ({Reason}); successor {SuccessorKeyId}\"}}\n01a1f540-6f1c-75aa-a8fe-48b98aee2858 retired 01a1f540-6f55-700e-822e-6586ca38a970 successor 01a1f540-7174-7d15-9ff4-ea58c10cd581",
-      "compromised": "{\"EventId\":1503,\"LogLevel\":\"Warning\",\"Category\":\"Gozleme.Security.Audit\",\"Message\":\"Operator retired signing key 01a1f540-7174-7d15-9ff4-ea58c10cd581 of 01a1f540-6f1c-75aa-a8fe-48b98aee2858 (compromised); successor 01a1f540-7698-7c89-b8c5-e284fa5411ee\",\"State\":{\"RetiredKeyId\":\"01a1f540-7174-7d15-9ff4-ea58c10cd581\",\"SuccessorKeyId\":\"01a1f540-7698-7c89-b8c5-e284fa5411ee\",\"PublisherId\":\"01a1f540-6f1c-75aa-a8fe-48b98aee2858\",\"Reason\":\"compromised\",\"{OriginalFormat}\":\"Operator retired signing key {RetiredKeyId} of {PublisherId} ({Reason}); successor {SuccessorKeyId}\"}}\n01a1f540-6f1c-75aa-a8fe-48b98aee2858 retired 01a1f540-7174-7d15-9ff4-ea58c10cd581 successor 01a1f540-7698-7c89-b8c5-e284fa5411ee",
+      "runId": "153355",
+      "publisher": "01a1f5cc-811a-7dc1-a29c-6f631679a9de",
+      "lost": "{\"EventId\":1503,\"LogLevel\":\"Warning\",\"Category\":\"Gozleme.Security.Audit\",\"Message\":\"Operator retired signing key 01a1f5cc-814f-7967-ac7c-dba4b7a95d09 of 01a1f5cc-811a-7dc1-a29c-6f631679a9de (lost); successor 01a1f5cc-82d4-7fd6-954d-bc65dbc401c2\",\"State\":{\"RetiredKeyId\":\"01a1f5cc-814f-7967-ac7c-dba4b7a95d09\",\"SuccessorKeyId\":\"01a1f5cc-82d4-7fd6-954d-bc65dbc401c2\",\"PublisherId\":\"01a1f5cc-811a-7dc1-a29c-6f631679a9de\",\"Reason\":\"lost\",\"{OriginalFormat}\":\"Operator retired signing key {RetiredKeyId} of {PublisherId} ({Reason}); successor {SuccessorKeyId}\"}}\n01a1f5cc-811a-7dc1-a29c-6f631679a9de retired 01a1f5cc-814f-7967-ac7c-dba4b7a95d09 successor 01a1f5cc-82d4-7fd6-954d-bc65dbc401c2",
+      "compromised": "{\"EventId\":1503,\"LogLevel\":\"Warning\",\"Category\":\"Gozleme.Security.Audit\",\"Message\":\"Operator retired signing key 01a1f5cc-82d4-7fd6-954d-bc65dbc401c2 of 01a1f5cc-811a-7dc1-a29c-6f631679a9de (compromised); successor 01a1f5cc-86b8-76bb-8c43-c38d32174791\",\"State\":{\"RetiredKeyId\":\"01a1f5cc-82d4-7fd6-954d-bc65dbc401c2\",\"SuccessorKeyId\":\"01a1f5cc-86b8-76bb-8c43-c38d32174791\",\"PublisherId\":\"01a1f5cc-811a-7dc1-a29c-6f631679a9de\",\"Reason\":\"compromised\",\"{OriginalFormat}\":\"Operator retired signing key {RetiredKeyId} of {PublisherId} ({Reason}); successor {SuccessorKeyId}\"}}\n01a1f5cc-811a-7dc1-a29c-6f631679a9de retired 01a1f5cc-82d4-7fd6-954d-bc65dbc401c2 successor 01a1f5cc-86b8-76bb-8c43-c38d32174791",
       "exits": {
         "ok": 0,
         "usage": 64,
@@ -167,41 +167,41 @@
     "roles": {
       "admin": {
         "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/native": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/signature": 200,
         "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
         "publish": 403
       },
       "approver": {
         "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/native": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/signature": 200,
         "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
         "publish": 403
       },
       "member": {
         "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/native": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/signature": 200,
         "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
         "publish": 403
       },
       "publisher": {
         "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/native": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/signature": 200,
         "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
         "publish": 422
       },
       "reviewer": {
         "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/native": 200,
-        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f53f-98bf-7606-93b8-388a6f14ca9b/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f5cb-be91-73fc-8dd2-2e48053ed5b3/signature": 200,
         "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
         "publish": 403
       }

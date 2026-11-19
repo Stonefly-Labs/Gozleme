@@ -529,7 +529,7 @@ specs:
     screenshots:
     - docs/specs/008-child-identities/evidence/screenshots/
     reviews: []
-  nextAction: 'Converge pass 2 appended Phase 10 (T082-T085; maintainer ruled envelope-nul 2026-11-19); run /speckit-implement, then re-run /speckit-converge'
+  nextAction: 'Phase 10 T082-T085 implemented and demo passed (65/65 at 7b8576f); re-run /speckit-converge (pass 3)'
 - id: GOZ-0009
   number: 9
   title: Filesystem artifact publication
