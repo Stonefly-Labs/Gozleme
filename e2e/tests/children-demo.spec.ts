@@ -76,7 +76,7 @@ let carol: Page;
 let dave: Page;
 let carolId: string;
 const record: Record<string, unknown> = {};
-let first: { id: string; children: Record<string, string> };
+let first: { id: string; sequence: number; children: Record<string, string> };
 let second: { id: string; children: Record<string, string> };
 let generation2: string;
 
@@ -179,7 +179,7 @@ test("1. a member browses a revision's four children, the Children view and a ch
 
   const items = await revisionChildren(revisionId);
   expect(items.map((i) => i.canonicalId)).toEqual(await rows.getByTestId("revision-child-canonical-id").allTextContents());
-  first = { id: revisionId, children: byName(items as any) };
+  first = { id: revisionId, sequence: (await api(carol, "GET", `${REVISIONS}/${revisionId}`)).json().sequence, children: byName(items as any) };
   expect(new Set(Object.values(first.children)).size).toBe(4);
 
   // The capability's Children view (from the revisions list), with the fixed notice and no badge.
@@ -232,7 +232,8 @@ test("2. kept and retitled children keep their IDs, a dropped one is absent, and
   expect(Object.values(first.children)).not.toContain(second.children[N.index]);
   expect((await revisionChildren(first.id)).map((i) => i.childId).sort()).toEqual(Object.values(first.children).sort());
 
-  await carol.goto(`${pagePath}/children/${first.children[N.summarize]}`);
+  // History pages follow publication order; the seeded capability already holds earlier suites' revisions.
+  await carol.goto(`${pagePath}/children/${first.children[N.summarize]}?after=${first.sequence - 1}`);
   const history = carol.getByTestId("history-row");
   const presence = await history.getByTestId("history-presence").allTextContents();
   const versions = await history.getByTestId("history-version").allTextContents();
@@ -383,8 +384,9 @@ test("6. Jaeger shows the assign, generation and operator spans, and no name or 
     .poll(
       async () => {
         traces = await recentSpans("gozleme-api", 20, "gozleme.children.assign");
-        const assign = traces.find((s) => s.name === "gozleme.children.assign" && Number(s.attributes["gozleme.children.declared"]) === 4 && Number(s.attributes["gozleme.children.absent"]) === 1);
-        assignTrace = assign && traces.some((s) => s.traceId === assign.traceId && s.name === "gozleme.manifest.publish") ? assign.traceId : undefined;
+        // The second revision's publication: found by its revision ID, since the seeded capability keeps every run's children.
+        const publish = traces.find((s) => s.name === "gozleme.manifest.publish" && s.attributes["gozleme.revision.id"] === second.id);
+        assignTrace = publish && traces.some((s) => s.traceId === publish.traceId && s.name === "gozleme.children.assign") ? publish.traceId : undefined;
         return assignTrace !== undefined;
       },
       { timeout: 90_000, intervals: [3000] },
@@ -394,7 +396,10 @@ test("6. Jaeger shows the assign, generation and operator spans, and no name or 
   expect(Object.keys(assign.attributes).filter((k) => k.startsWith("gozleme.")).sort()).toEqual(
     ["gozleme.children.absent", "gozleme.children.created", "gozleme.children.declared", "gozleme.children.matched", "gozleme.manifest.family"].sort(),
   );
-  expect([assign.attributes["gozleme.children.created"], assign.attributes["gozleme.children.matched"]].map(Number)).toEqual([1, 3]);
+  expect([assign.attributes["gozleme.children.declared"], assign.attributes["gozleme.children.created"], assign.attributes["gozleme.children.matched"]].map(Number)).toEqual([4, 1, 3]);
+  // Absent counts every earlier child of the capability this revision does not declare: this run's prompt and earlier runs' children.
+  const absent = Number(assign.attributes["gozleme.children.absent"]);
+  expect(absent).toBeGreaterThanOrEqual(1);
   expect(traces.some((s) => s.traceId === assignTrace && s.name === "gozleme.projection.generation.record")).toBe(true);
 
   let operatorSpans: Awaited<ReturnType<typeof recentSpans>> = [];
@@ -450,7 +455,7 @@ test("6. Jaeger shows the assign, generation and operator spans, and no name or 
     ...record,
     observability: {
       spans: ["gozleme.children.assign", "gozleme.projection.generation.record", "gozleme.operator.projection_regenerate"],
-      assignCounts: { declared: 4, created: 1, matched: 3, absent: 1 },
+      assignCounts: { declared: 4, created: 1, matched: 3, absent },
       counters: ["gozleme_children_assignments_total", "gozleme_projection_generations_total"],
       noNamesInSpansMetricsOrLogs: true,
     },

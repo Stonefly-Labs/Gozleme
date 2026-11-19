@@ -502,7 +502,7 @@ specs:
   dependencies:
   - GOZ-0007
   status: in-progress
-  stage: implement
+  stage: converge
   branch: feature/goz-0008-child-identities
   pullRequest: null
   promptRevision: 9
@@ -510,9 +510,9 @@ specs:
     specification: passed
     plan: passed
     tasks: passed
-    implementation: pending
-    tests: pending
-    demo: pending
+    implementation: passed
+    tests: passed
+    demo: passed
     convergence: pending
     impactAnalysis: pending
     roadmapSync: pending
@@ -521,9 +521,13 @@ specs:
   blockers: []
   impactFindings: []
   evidence:
-    tests: []
-    demos: []
-    screenshots: []
+    tests:
+    - docs/specs/008-child-identities/progress.yaml
+    demos:
+    - docs/specs/008-child-identities/evidence/demo-run.json
+    - docs/specs/008-child-identities/evidence/children-evidence.json
+    screenshots:
+    - docs/specs/008-child-identities/evidence/screenshots/
     reviews: []
   nextAction: 'Tasks complete 2026-11-19 (66 tasks; A2, A4, A7, A8 approved by maintainer); run /speckit-implement'
 - id: GOZ-0009

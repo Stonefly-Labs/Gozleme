@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0008
-stage: implement
+stage: converge
 status: in-progress
 promptRevision: 9
 branch: feature/goz-0008-child-identities
@@ -30,12 +30,31 @@ stages:
   clarify: {status: complete, at: '2026-11-19', note: '2 questions asked and answered (verbatim "A", "A"); spec FR-011a, FR-016a, US3, US5, edge cases, key entities updated'}
   plan: {status: done, at: '2026-11-19', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [Q1, Q2, Q3, clarify-Q1, clarify-Q2], agentChoices: [A1, A2, A3, A4, A5, A6, A7, A8], securityReviewItems: ['is_operator() read branch on manifest_revisions_select', 'statement-level entry check and partial unique index as the matching guarantee', 'operator-only duplicate children', 'rollout gap 503', 'no-name scan of spans, logs and command output', 'projection-regenerate without validation rules']}
   tasks: {status: done, at: '2026-11-19', artifacts: [tasks.md], note: '66 tasks (Setup 2, Foundational 22, US1 10, US2 5, US3 10, US4 7, US5 3, Polish 7); A2, A4, A7, A8 approved by maintainer before tasks'}
-  implement: {status: pending}
-  demo: {status: pending}
+  implement: {status: done, at: '2026-11-19', note: 'T001-T065 done; disclosed agent choices for veto: child-table guard refusals at publication answer 503 unavailable (fail closed); publish.duplicate_entry runs in the endpoint after validation, before version uniqueness, and spends the publication budget; absent counts include earlier duplicate children; non-GET methods answer 405 through default routing; MigrationRunner.RunAsync takes an optional test log provider'}
+  demo: {status: done, at: '2026-11-19', note: 'make demo GOZ-0008: 65 passed (goz-0000 to goz-0008), result passed, 106 screenshots; earlier runs fixed in the spec only (history paging from the run sequence, absent count on a capability with earlier runs)'}
   converge: {status: pending}
   impactAnalysis: {status: pending}
   roadmapSync: {status: pending}
 attempts: []
 blockers: []
-nextAction: 'Run /speckit-implement'
-evidence: {tests: [], demos: [], screenshots: [], reviews: []}
+nextAction: 'Run /speckit-converge, with review-security on the T066 items'
+evidence:
+  tests:
+  - {suite: Gozleme.Api.Tests, result: '513 passed, 0 failed'}
+  - {suite: Gozleme.Api.IntegrationTests, result: '511 total; combined run 507 passed, 4 failed: DatabaseOutageTests (stale latest-migration pin, fixed and passing), PublisherIsolationTests TRUNCATE case, TelemetryTests outage and RegistryOriginTests different-origin (all three pass in isolation; load in the combined run)'}
+  - {suite: web vitest, result: '279 passed'}
+  - {suite: 'make lint (dotnet format, eslint, e2e tsc)', result: passed}
+  - {suite: make build, result: passed}
+  - {suite: 'Release build (CTJ001 analyzer)', result: passed}
+  - {suite: make validate, result: passed}
+  - {suite: RevisionChildrenPerformanceTests, result: 'SC-006: 1,000 entries, worst 538 ms vs 3,000 ms limit'}
+  demos: [docs/specs/008-child-identities/evidence/demo-run.json, docs/specs/008-child-identities/evidence/children-evidence.json]
+  screenshots: [docs/specs/008-child-identities/evidence/screenshots/]
+  reviews: []
+securityReviewItems:
+- {item: 'is_operator() read branch on manifest_revisions_select', evidence: 'ChildIsolationTests (operator sees B, members do not); RevisionIsolationTests is_operator exactness'}
+- {item: 'statement-level entry check and partial unique index as the matching guarantee', evidence: 'ChildIntegrityTests (42501 on kind/name/title/range/foreign child; 23505 on a second matchable key; 23000 completeness)'}
+- {item: 'operator-only duplicate children', evidence: 'ChildIntegrityTests A_member_cannot_insert_a_duplicate_child; ChildInstallTests'}
+- {item: 'rollout gap 503', evidence: 'ChildInstallTests A_publication_while_a_revision_has_no_generation_1_answers_503_and_stores_nothing'}
+- {item: 'no-name scan of spans, logs and command output', evidence: 'ChildTelemetryTests; ProjectionRegenerateTests opaque-ID output; children-demo step 6 (Jaeger, Prometheus, Loki, compose logs)'}
+- {item: 'projection-regenerate without validation rules', evidence: 'ProjectionRegeneratorTests Validation_rules_are_not_called; refusals native_digest_mismatch, adapter_unavailable, projection_failed, entries_changed'}

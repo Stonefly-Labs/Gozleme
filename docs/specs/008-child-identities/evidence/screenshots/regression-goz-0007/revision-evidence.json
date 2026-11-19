@@ -1,0 +1,242 @@
+{
+  "spec": "GOZ-0007",
+  "capturedAt": "2026-11-19T16:28:49.856Z",
+  "origin": "registry.demo.gozleme.test",
+  "organization": "0193a000-0000-7000-8000-000000000002",
+  "publisher": "0193a000-0000-7000-8000-000000000010",
+  "capability": {
+    "id": "0193a000-0000-7000-8000-000000000011",
+    "canonicalId": "gz://registry.demo.gozleme.test/cap/0193a000-0000-7000-8000-000000000011"
+  },
+  "demo": {
+    "publish": {
+      "revisions": [
+        "01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2",
+        "01a1f4a2-ceea-79a2-8aff-4a880b5f7635"
+      ],
+      "sequences": [
+        101,
+        102
+      ],
+      "elapsedSeconds": 1,
+      "keyId": "sha256:0fb5f7abe39a7dc8fd78df045d471adb990ee7b0bd5ce6aaeeb0b1c503b1d7d9"
+    },
+    "immutability": {
+      "republish": {
+        "different": "409 {\"error\":\"version_exists\"}",
+        "identical": "409 {\"error\":\"version_exists\"}",
+        "build": "409 {\"error\":\"version_exists\"}",
+        "PUT": "405",
+        "PATCH": "405",
+        "DELETE": "405"
+      },
+      "sql": {
+        "gozleme_app update manifest_revisions": "42501",
+        "gozleme_app delete manifest_revisions": "42501",
+        "gozleme_app truncate manifest_revisions": "42501",
+        "gozleme_app update revision_attestations": "42501",
+        "gozleme_app delete revision_attestations": "42501",
+        "gozleme_app truncate revision_attestations": "42501",
+        "gozleme_app update publisher_signing_keys": "42501",
+        "gozleme_app delete publisher_signing_keys": "42501",
+        "gozleme_app truncate publisher_signing_keys": "42501",
+        "gozleme_app update signing_key_retirements": "42501",
+        "gozleme_app delete signing_key_retirements": "42501",
+        "gozleme_app truncate signing_key_retirements": "42501",
+        "gozleme_migrator update manifest_revisions": "0 row(s)",
+        "gozleme_migrator delete manifest_revisions": "0 row(s)",
+        "gozleme_migrator truncate manifest_revisions": "42501",
+        "gozleme_migrator update revision_attestations": "0 row(s)",
+        "gozleme_migrator delete revision_attestations": "0 row(s)",
+        "gozleme_migrator truncate revision_attestations": "42501",
+        "gozleme_migrator update publisher_signing_keys": "0 row(s)",
+        "gozleme_migrator delete publisher_signing_keys": "0 row(s)",
+        "gozleme_migrator truncate publisher_signing_keys": "42501",
+        "gozleme_migrator update signing_key_retirements": "0 row(s)",
+        "gozleme_migrator delete signing_key_retirements": "0 row(s)",
+        "gozleme_migrator truncate signing_key_retirements": "42501"
+      }
+    },
+    "tamper": {
+      "runId": "543531",
+      "revisions": {
+        "native": {
+          "revision": "01a1f4a2-ddaa-7ac0-8251-0a0e72842db4",
+          "reason": "native_digest_mismatch"
+        },
+        "projection": {
+          "revision": "01a1f4a2-de17-7e6d-a211-2467149c6924",
+          "reason": "projection_digest_mismatch"
+        },
+        "statement": {
+          "revision": "01a1f4a2-de88-73dc-a4bf-d6eaaddafcba",
+          "reason": "signature_invalid"
+        },
+        "signature": {
+          "revision": "01a1f4a2-df0a-74fe-a095-0f95cf109acd",
+          "reason": "signature_invalid"
+        }
+      }
+    },
+    "independentVerification": {
+      "verifier": "node:crypto Ed25519 + sha256 + RFC 8785 re-canonicalization",
+      "families": {
+        "model": {
+          "revision": "01a1f4a2-e009-7f87-8501-e395229ca18a",
+          "keyId": "sha256:0fb5f7abe39a7dc8fd78df045d471adb990ee7b0bd5ce6aaeeb0b1c503b1d7d9"
+        },
+        "skill": {
+          "revision": "01a1f4a2-efe4-757a-884f-4421b77904c2",
+          "keyId": "sha256:0fb5f7abe39a7dc8fd78df045d471adb990ee7b0bd5ce6aaeeb0b1c503b1d7d9"
+        },
+        "event": {
+          "revision": "01a1f4a2-f01d-706b-8f08-9b2159a31ca8",
+          "keyId": "sha256:0fb5f7abe39a7dc8fd78df045d471adb990ee7b0bd5ce6aaeeb0b1c503b1d7d9"
+        },
+        "api": {
+          "revision": "01a1f4a2-f042-7094-aae9-12fccdeb29af",
+          "keyId": "sha256:0fb5f7abe39a7dc8fd78df045d471adb990ee7b0bd5ce6aaeeb0b1c503b1d7d9"
+        },
+        "a2a": {
+          "revision": "01a1f4a2-f06d-7dd5-b90c-60b336a88504",
+          "keyId": "sha256:0fb5f7abe39a7dc8fd78df045d471adb990ee7b0bd5ce6aaeeb0b1c503b1d7d9"
+        },
+        "mcp": {
+          "revision": "01a1f4a2-f09d-7c9b-96c7-20c56b78e7d8",
+          "keyId": "sha256:0fb5f7abe39a7dc8fd78df045d471adb990ee7b0bd5ce6aaeeb0b1c503b1d7d9"
+        }
+      }
+    },
+    "provenance": {
+      "publisher": "01a1f4a2-f0dc-745b-aaab-1964846e72d9",
+      "capability": "01a1f4a2-f0e6-7c55-852a-921f810d0a78",
+      "revision": "01a1f4a2-f0ed-7eb0-9a23-bb1b6ec1f4c2",
+      "reclaimExit": 0,
+      "suspendedPublish": 409
+    },
+    "succession": {
+      "runId": "543531",
+      "publisher": "01a1f4a2-f6af-79d1-8e9e-ed78ac0c6aa9",
+      "lost": "{\"EventId\":1503,\"LogLevel\":\"Warning\",\"Category\":\"Gozleme.Security.Audit\",\"Message\":\"Operator retired signing key 01a1f4a2-f6ef-741f-a8a7-b8d36f2f83dc of 01a1f4a2-f6af-79d1-8e9e-ed78ac0c6aa9 (lost); successor 01a1f4a2-f8cd-7d99-a50c-415bd892dac2\",\"State\":{\"RetiredKeyId\":\"01a1f4a2-f6ef-741f-a8a7-b8d36f2f83dc\",\"SuccessorKeyId\":\"01a1f4a2-f8cd-7d99-a50c-415bd892dac2\",\"PublisherId\":\"01a1f4a2-f6af-79d1-8e9e-ed78ac0c6aa9\",\"Reason\":\"lost\",\"{OriginalFormat}\":\"Operator retired signing key {RetiredKeyId} of {PublisherId} ({Reason}); successor {SuccessorKeyId}\"}}\n01a1f4a2-f6af-79d1-8e9e-ed78ac0c6aa9 retired 01a1f4a2-f6ef-741f-a8a7-b8d36f2f83dc successor 01a1f4a2-f8cd-7d99-a50c-415bd892dac2",
+      "compromised": "{\"EventId\":1503,\"LogLevel\":\"Warning\",\"Category\":\"Gozleme.Security.Audit\",\"Message\":\"Operator retired signing key 01a1f4a2-f8cd-7d99-a50c-415bd892dac2 of 01a1f4a2-f6af-79d1-8e9e-ed78ac0c6aa9 (compromised); successor 01a1f4a2-fd53-77c8-8107-37b3f16d5f33\",\"State\":{\"RetiredKeyId\":\"01a1f4a2-f8cd-7d99-a50c-415bd892dac2\",\"SuccessorKeyId\":\"01a1f4a2-fd53-77c8-8107-37b3f16d5f33\",\"PublisherId\":\"01a1f4a2-f6af-79d1-8e9e-ed78ac0c6aa9\",\"Reason\":\"compromised\",\"{OriginalFormat}\":\"Operator retired signing key {RetiredKeyId} of {PublisherId} ({Reason}); successor {SuccessorKeyId}\"}}\n01a1f4a2-f6af-79d1-8e9e-ed78ac0c6aa9 retired 01a1f4a2-f8cd-7d99-a50c-415bd892dac2 successor 01a1f4a2-fd53-77c8-8107-37b3f16d5f33",
+      "exits": {
+        "ok": 0,
+        "usage": 64,
+        "unknown": 2
+      }
+    },
+    "boundary": {
+      "GET /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/rotate": 404,
+      "POST /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/rotate": 404,
+      "PUT /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/rotate": 404,
+      "PATCH /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/rotate": 404,
+      "DELETE /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/rotate": 404,
+      "GET /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/replace": 404,
+      "POST /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/replace": 404,
+      "PUT /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/replace": 404,
+      "PATCH /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/replace": 404,
+      "DELETE /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/replace": 404,
+      "GET /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/transfer": 404,
+      "POST /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/transfer": 404,
+      "PUT /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/transfer": 404,
+      "PATCH /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/transfer": 404,
+      "DELETE /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/transfer": 404,
+      "GET /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/delegate": 404,
+      "POST /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/delegate": 404,
+      "PUT /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/delegate": 404,
+      "PATCH /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/delegate": 404,
+      "DELETE /api/v1/organizations/0193a000-0000-7000-8000-000000000002/publishers/0193a000-0000-7000-8000-000000000010/signing-keys/delegate": 404,
+      "GET /api/v1/publish": 404,
+      "POST /api/v1/publish": 404,
+      "PUT /api/v1/publish": 404,
+      "PATCH /api/v1/publish": 404,
+      "DELETE /api/v1/publish": 404
+    },
+    "reservedClaim": 422,
+    "wordingScan": {
+      "pages": 13,
+      "responses": 4,
+      "banned": [
+        "delegat",
+        "transfer",
+        "chain of trust",
+        "transparency",
+        "publisher-held"
+      ]
+    },
+    "roles": {
+      "admin": {
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
+        "publish": 403
+      },
+      "approver": {
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
+        "publish": 403
+      },
+      "member": {
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
+        "publish": 403
+      },
+      "publisher": {
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
+        "publish": 422
+      },
+      "reviewer": {
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/native": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a2-cdab-72c5-bf5b-c5dce27ee6a2/signature": 200,
+        "GET /publishers/0193a000-0000-7000-8000-000000000010/signing-keys": 200,
+        "publish": 403
+      }
+    },
+    "nonMember": 404,
+    "rateLimit": {
+      "allowed": 10,
+      "eleventh": 429
+    },
+    "observability": {
+      "spans": [
+        "gozleme.manifest.publish",
+        "gozleme.manifest.verify",
+        "gozleme.operator.signing_key_succession"
+      ],
+      "publishOutcomes": [
+        "forbidden",
+        "not_found",
+        "published",
+        "rate_limited",
+        "rejected",
+        "suspended",
+        "version_exists"
+      ],
+      "verificationReasons": [
+        "native_digest_mismatch",
+        "none",
+        "projection_digest_mismatch",
+        "signature_invalid"
+      ],
+      "counters": [
+        "gozleme_manifest_publications_total",
+        "gozleme_manifest_verifications_total"
+      ],
+      "noSecretsInSpansMetricsOrLogs": true
+    }
+  }
+}

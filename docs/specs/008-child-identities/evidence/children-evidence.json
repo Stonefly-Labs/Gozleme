@@ -11,5 +11,117 @@
     "matchWorstMs": 274,
     "limitMs": 3000,
     "environment": "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)"
+  },
+  "capturedAt": "2026-11-19T16:30:07.970Z",
+  "runId": "450716",
+  "origin": "registry.demo.gozleme.test",
+  "organization": "0193a000-0000-7000-8000-000000000002",
+  "publisher": "0193a000-0000-7000-8000-000000000010",
+  "capability": {
+    "id": "0193a000-0000-7000-8000-000000000011",
+    "canonicalId": "gz://registry.demo.gozleme.test/cap/0193a000-0000-7000-8000-000000000011"
+  },
+  "demo": {
+    "browse": {
+      "revision": "01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237",
+      "children": [
+        "01a1f4a3-d9ae-7e5d-bb42-feab706554bf",
+        "01a1f4a3-d9ae-73f6-8293-bf7489fdb867",
+        "01a1f4a3-d9ae-728c-9e24-f44dd99956b1",
+        "01a1f4a3-d9ae-734a-b470-734c4902d21c"
+      ]
+    },
+    "continuity": {
+      "revision": "01a1f4a3-df7a-76c8-a8a7-56b92ba4ad1a",
+      "kept": [
+        "01a1f4a3-d9ae-7e5d-bb42-feab706554bf",
+        "01a1f4a3-d9ae-73f6-8293-bf7489fdb867",
+        "01a1f4a3-d9ae-728c-9e24-f44dd99956b1"
+      ],
+      "added": "01a1f4a3-df90-744f-b7c1-e59fdfcefb0d",
+      "absent": "01a1f4a3-d9ae-734a-b470-734c4902d21c"
+    },
+    "duplicate": {
+      "validate": 200,
+      "publish": 422,
+      "pointers": [
+        "/entries/0",
+        "/entries/2"
+      ],
+      "stored": 0
+    },
+    "regenerate": {
+      "revision": "01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237",
+      "generation": "01a1f4a4-c6be-7729-af80-ca53d559e752",
+      "exit": 0,
+      "identical": true,
+      "unknownExit": 2,
+      "usageExit": 64
+    },
+    "swappedIds": {
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f4a4-c6be-7729-af80-ca53d559e752": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237/projections/01a1f4a3-d9ae-7e5d-bb42-feab706554bf": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237/projections/01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a3-df7a-76c8-a8a7-56b92ba4ad1a/projections/01a1f4a3-d9b2-7e29-bf55-35cf672b0432": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a3-d9ae-7e5d-bb42-feab706554bf/children": 404
+    },
+    "immutability": {
+      "sql": {
+        "gozleme_app update capability_children": "42501",
+        "gozleme_app delete capability_children": "42501",
+        "gozleme_app truncate capability_children": "42501",
+        "gozleme_app update revision_children": "42501",
+        "gozleme_app delete revision_children": "42501",
+        "gozleme_app truncate revision_children": "42501",
+        "gozleme_app update projection_generations": "42501",
+        "gozleme_app delete projection_generations": "42501",
+        "gozleme_app truncate projection_generations": "42501",
+        "gozleme_migrator update capability_children": "0 row(s)",
+        "gozleme_migrator delete capability_children": "0 row(s)",
+        "gozleme_migrator truncate capability_children": "42501",
+        "gozleme_migrator update revision_children": "0 row(s)",
+        "gozleme_migrator delete revision_children": "0 row(s)",
+        "gozleme_migrator truncate revision_children": "42501",
+        "gozleme_migrator update projection_generations": "0 row(s)",
+        "gozleme_migrator delete projection_generations": "0 row(s)",
+        "gozleme_migrator truncate projection_generations": "42501"
+      },
+      "methods": {
+        "DELETE": 405,
+        "PUT": 405,
+        "PATCH": 405,
+        "POST": 405
+      }
+    },
+    "privacy": {
+      "nonMember": 404,
+      "signedOutApi": 401,
+      "signedOutPage": "redirect to sign in"
+    },
+    "install": {
+      "revisions": 139,
+      "withoutGeneration1": 0,
+      "withMismatchedChildCount": 0,
+      "earlierVerified": 68
+    },
+    "observability": {
+      "spans": [
+        "gozleme.children.assign",
+        "gozleme.projection.generation.record",
+        "gozleme.operator.projection_regenerate"
+      ],
+      "assignCounts": {
+        "declared": 4,
+        "created": 1,
+        "matched": 3,
+        "absent": 19
+      },
+      "counters": [
+        "gozleme_children_assignments_total",
+        "gozleme_projection_generations_total"
+      ],
+      "noNamesInSpansMetricsOrLogs": true
+    }
   }
 }
