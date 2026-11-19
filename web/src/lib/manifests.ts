@@ -15,7 +15,10 @@ export const FAMILIES: { id: Family; label: string; format: string }[] = [
   { id: "model", label: "Model card", format: "gozleme-model-card 1" },
 ];
 
-export type ProblemLocation = { part: "envelope" | "native"; pointer: string } | { part: "envelope" | "native"; line: number; column: number } | null;
+/** `projection` locations come from the GOZ-0008 publish-time rule `publish.duplicate_entry` (an `/entries/<i>` pointer). */
+export type ProblemPart = "envelope" | "native" | "projection";
+
+export type ProblemLocation = { part: ProblemPart; pointer: string } | { part: ProblemPart; line: number; column: number } | null;
 
 export interface Problem {
   category: string;

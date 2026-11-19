@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { childrenPage } from "@/lib/children";
 import { formatUtc } from "@/lib/format";
 import { type RevisionList as RevisionListData, revisionPage, revisionsPage, SUSPENDED_PUBLISHER } from "@/lib/revisions";
 import { ShortDigest } from "./ShortDigest";
@@ -8,6 +9,7 @@ import { VerificationBadge } from "./VerificationBadge";
  * A capability's revisions in publication order (GOZ-0007 User Story 1, R17): sequence, version, publication time,
  * the publishing account's opaque ID, the shortened native digest and the verification badge. Order is by
  * publication, not by version precedence, and no revision is labelled "latest". Paging follows the API's `next`.
+ * **Children** opens the capability's children (GOZ-0008).
  */
 export function RevisionList({
   organizationId,
@@ -29,6 +31,11 @@ export function RevisionList({
       )}
       <section className="card" aria-labelledby="revisions-heading" data-testid="revision-list">
         <h2 id="revisions-heading">Revisions</h2>
+        <p className="form-inline">
+          <Link href={childrenPage(organizationId, publisherId, capabilityId)} data-testid="revisions-children-link">
+            Children
+          </Link>
+        </p>
         {list.revisions.length === 0 ? (
           <p className="muted" data-testid="no-revisions">
             No revisions yet.

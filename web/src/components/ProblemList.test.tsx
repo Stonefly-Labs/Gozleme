@@ -23,6 +23,18 @@ describe("ProblemList (GOZ-0006 US2)", () => {
     expect(screen.queryByTestId("problems-truncated")).not.toBeInTheDocument();
   });
 
+  it("renders a projection location as a pointer, without echoing a name (GOZ-0008)", () => {
+    const duplicate: Problem = {
+      category: "invalid_value",
+      rule: "publish.duplicate_entry",
+      location: { part: "projection", pointer: "/entries/2" },
+      message: "Two or more projection entries have the same kind and native name.",
+    };
+    const { container } = render(<ProblemList problems={[duplicate]} truncated={false} />);
+    expect(screen.getByTestId("problem-location")).toHaveTextContent("projection /entries/2");
+    expect(container.textContent).toBe(`Rejected: 1 probleminvalid_valuepublish.duplicate_entryprojection /entries/2${duplicate.message}`);
+  });
+
   it("notes that more problems exist when truncated", () => {
     render(<ProblemList problems={problems.slice(0, 1)} truncated />);
     expect(screen.getByTestId("problems-truncated")).toHaveTextContent("More problems exist");

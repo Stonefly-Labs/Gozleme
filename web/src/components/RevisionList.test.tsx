@@ -18,6 +18,11 @@ const renderList = (overrides: Partial<Parameters<typeof RevisionList>[0]["list"
   );
 
 describe("RevisionList (GOZ-0007 US1, US2)", () => {
+  it("links the capability's children (GOZ-0008)", () => {
+    renderList();
+    expect(screen.getByTestId("revisions-children-link")).toHaveAttribute("href", `/organizations/${ORG}/publishers/${PUB}/capabilities/${CAP}/children`);
+  });
+
   it("notes that the account column is not covered by the attestation (SEC-1)", () => {
     renderList();
     expect(screen.getByTestId("unattested-note")).toHaveTextContent("By account is recorded by the registry and is not covered by the attestation.");

@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { postManifest } from "@/lib/manifests";
+import { type Problem, postManifest } from "@/lib/manifests";
 import { createdRevision, publishErrorMessage, revisionPage, revisionsPage, revisionsPath } from "@/lib/revisions";
 import { traced } from "@/telemetry/ui";
+import { ProblemList } from "./ProblemList";
 
 /**
  * **Publish revision** (GOZ-0007 User Story 1): shown after an accepted validation, and only to members holding
  * `manifest.publish`. It posts exactly the body that was validated; on `201` it opens the new revision. A
- * `version_exists` refusal points to the **Revisions** list, where clients recover by listing.
+ * `version_exists` refusal points to the **Revisions** list, where clients recover by listing. A publish-time rejection
+ * (GOZ-0008 `publish.duplicate_entry`, which validation accepts) shows its problem list.
  */
 export function PublishRevision({
   organizationId,
@@ -27,7 +29,7 @@ export function PublishRevision({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<{ message: string; listLink: boolean } | null>(null);
+  const [error, setError] = useState<{ message: string; listLink: boolean; problems: Problem[] | null; truncated: boolean } | null>(null);
   if (!canPublish) return null;
 
   async function publish() {
@@ -46,7 +48,9 @@ export function PublishRevision({
 
     setBusy(false);
     const code = (json as { error?: unknown } | null)?.error;
-    setError({ message: publishErrorMessage(status, json), listLink: status === 409 && code === "version_exists" });
+    const rejected = json as { outcome?: unknown; problems?: unknown; truncated?: unknown } | null;
+    const problems = rejected?.outcome === "rejected" && Array.isArray(rejected.problems) && rejected.problems.length > 0 ? (rejected.problems as Problem[]) : null;
+    setError({ message: publishErrorMessage(status, json), listLink: status === 409 && code === "version_exists", problems, truncated: rejected?.truncated === true });
   }
 
   return (
@@ -73,6 +77,7 @@ export function PublishRevision({
           )}
         </p>
       )}
+      {error?.problems && <ProblemList problems={error.problems} truncated={error.truncated} />}
     </section>
   );
 }
