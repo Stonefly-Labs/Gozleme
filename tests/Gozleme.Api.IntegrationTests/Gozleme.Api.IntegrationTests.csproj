@@ -19,6 +19,9 @@
   <ItemGroup>
     <!-- GOZ-0006 research R15: the web samples are the single source for API, browser and e2e checks -->
     <None Include="../../web/src/samples/manifests/**" LinkBase="samples/manifests" CopyToOutputDirectory="PreserveNewest" />
+    <!-- GOZ-0008 T067: every class shares one database and many start their own containers; a quarter of the cores keeps
+         the combined run free of load timeouts on a busy host -->
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

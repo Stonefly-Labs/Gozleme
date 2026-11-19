@@ -9,9 +9,9 @@ namespace Gozleme.Api.IntegrationTests;
 /// children with distinct child IDs and kinds, listed by capability, child and revision, paged, with one child record
 /// per entry (SC-002). US2 (T035, T036): continuity by exact (kind, native name) in publication sequence, renames and
 /// drops shown absent, children of different capabilities distinct, the publish-time duplicate refusal while validate
-/// accepts (FR-005a) with nothing stored, the 201 body unchanged (FR-021) and a deterministic assignment (SC-003). US3
-/// (T042): generation 1 is the stored, attested projection, and child, generation and revision IDs are never
-/// interchangeable (FR-010).
+/// accepts (FR-005a) with nothing stored, likewise U+0000 strings (T069, ruling F3), the 201 body unchanged (FR-021)
+/// and a deterministic assignment (SC-003). US3 (T042): generation 1 is the stored, attested projection, and child,
+/// generation and revision IDs are never interchangeable (FR-010).
 /// </summary>
 public sealed class ChildPublishTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
@@ -209,6 +209,43 @@ public sealed class ChildPublishTests(PgvectorDatabaseFixture fixture) : IAsyncL
         Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.manifest_revisions WHERE capability_id = '{capabilityId}'"));
         Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.capability_children WHERE capability_id = '{capabilityId}'"));
         Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.projection_generations g JOIN gozleme.manifest_revisions r ON r.id = g.revision_id WHERE r.capability_id = '{capabilityId}'"));
+    }
+
+    [Fact]
+    public async Task U0000_strings_are_accepted_by_validate_and_refused_by_publish_at_their_pointers_with_nothing_stored()
+    {
+        // T069 (maintainer ruling F3): PostgreSQL text and jsonb cannot hold U+0000; without the rule this answered 500.
+        var (capabilityId, canonical) = await _s.NewCapabilityAsync();
+        var envelope = System.Text.Json.Nodes.JsonNode.Parse(ChildClient.Mcp(canonical, "1.0.0", ("tool", "ok", null), ("tool", "a\0b", "T\0")))!.AsObject();
+        var document = System.Text.Json.Nodes.JsonNode.Parse(envelope["native"]!["document"]!.GetValue<string>())!.AsObject();
+        document["serverInfo"]!["description"] = "D\0";
+        envelope["native"]!["document"] = document.ToJsonString();
+        var body = System.Text.Encoding.UTF8.GetBytes(envelope.ToJsonString());
+        Assert.Contains("\\u0000", envelope.ToJsonString(), StringComparison.Ordinal);
+
+        var (validateStatus, validated) = await ManifestClient.SendAsync(_s.Carol, ManifestClient.Validate(_s.OrgA, _s.PublisherId, capabilityId), body);
+        Assert.Equal((HttpStatusCode.OK, "accepted"), (validateStatus, ManifestClient.Json(validated).GetProperty("outcome").GetString()));
+
+        var (status, text) = await ManifestClient.SendAsync(_s.Carol, _s.Revisions(capabilityId), body);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, status);
+        var problems = ManifestClient.Json(text).GetProperty("problems").EnumerateArray().ToArray();
+        Assert.Equal(["/description", "/entries/1/nativeName", "/entries/1/title"], problems.Select(p => p.GetProperty("location").GetProperty("pointer").GetString()));
+        Assert.All(problems, p => Assert.Equal(("invalid_value", "publish.nul_character", "projection"),
+            (p.GetProperty("category").GetString(), p.GetProperty("rule").GetString(), p.GetProperty("location").GetProperty("part").GetString())));
+        Assert.DoesNotContain("\\u0000", text, StringComparison.Ordinal);
+
+        // Together with a duplicate (an A2A card whose repeated skill's name holds U+0000): duplicates first, then U+0000 strings.
+        var card = System.Text.Json.Nodes.JsonNode.Parse(ChildClient.A2aWithDuplicateSkill(canonical, "1.0.0"))!.AsObject();
+        var native = System.Text.Json.Nodes.JsonNode.Parse(card["native"]!["document"]!.GetValue<string>())!.AsObject();
+        native["skills"]![native["skills"]!.AsArray().Count - 1]!["name"] = "Repeated\0";
+        card["native"]!["document"] = native.ToJsonString();
+        var (bothStatus, both) = await ManifestClient.SendAsync(_s.Carol, _s.Revisions(capabilityId), System.Text.Encoding.UTF8.GetBytes(card.ToJsonString()));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, bothStatus);
+        Assert.Equal(["publish.duplicate_entry", "publish.duplicate_entry", "publish.nul_character"],
+            ManifestClient.Json(both).GetProperty("problems").EnumerateArray().Select(p => p.GetProperty("rule").GetString()));
+
+        Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.manifest_revisions WHERE capability_id = '{capabilityId}'"));
+        Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.capability_children WHERE capability_id = '{capabilityId}'"));
     }
 
     [Fact]

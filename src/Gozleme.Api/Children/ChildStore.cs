@@ -1,3 +1,4 @@
+using Gozleme.Api.Manifests.Projection;
 using Gozleme.Api.Persistence;
 using Gozleme.Api.Publishers;
 using Gozleme.Api.Revisions;
@@ -28,8 +29,38 @@ internal sealed class ChildStore(GozlemeDbContext db)
             1 + (children.Count == 0 ? 0 : children.Max(c => c.Ordinal)));
     }
 
-    /// <summary>Inserts the new children, the revision's child records and generation 1 (no bytes: it is the stored projection, FR-009).</summary>
-    public async Task<Guid> InsertAsync(ManifestRevision revision, Assignment assignment, CancellationToken ct)
+    /// <summary>
+    /// Assigns the revision's entries against the capability's children and inserts the new children and the revision's
+    /// child records, all inside the assignment span; then generation 1 inside the generation span (T076). Counters are
+    /// the caller's, after commit.
+    /// </summary>
+    public async Task<Assignment> RecordAsync(ManifestRevision revision, IReadOnlyList<ProjectionEntry> entries, AssignMode mode, ExistingChildren? existing, CancellationToken ct)
+    {
+        Assignment assignment;
+        using (var span = ChildTelemetry.StartAssign())
+        {
+            assignment = ChildAssigner.Assign(existing ?? await ExistingAsync(revision.CapabilityId, revision.OrganizationId, ct), entries, mode);
+            await InsertChildrenAsync(revision, assignment, ct);
+            ChildTelemetry.Assigned(span, revision.Family, assignment, mode);
+        }
+
+        using (ChildTelemetry.StartGeneration(1))
+        {
+            await InsertGenerationAsync(revision, ct);
+        }
+
+        return assignment;
+    }
+
+    /// <summary>
+    /// Runs the deferred completeness checks now (F4): a refusal surfaces inside publication, where it answers
+    /// <c>unavailable</c>, instead of at the request's commit.
+    /// </summary>
+    public Task CheckCompleteAsync(CancellationToken ct) =>
+        db.Database.ExecuteSqlRawAsync("SET CONSTRAINTS gozleme.capability_children_recorded, gozleme.manifest_revisions_children IMMEDIATE", ct);
+
+    /// <summary>Inserts the new children and the revision's child records.</summary>
+    private async Task InsertChildrenAsync(ManifestRevision revision, Assignment assignment, CancellationToken ct)
     {
         if (assignment.Created.Count > 0)
         {
@@ -56,12 +87,15 @@ internal sealed class ChildStore(GozlemeDbContext db)
                 """, ct);
         }
 
-        var generation = Guid.CreateVersion7();
+    }
+
+    /// <summary>Inserts generation 1 (no bytes: it is the stored projection, FR-009).</summary>
+    private async Task InsertGenerationAsync(ManifestRevision revision, CancellationToken ct)
+    {
         await db.Database.ExecuteSqlAsync($"""
             INSERT INTO gozleme.projection_generations (id, organization_id, revision_id, generation, adapter_id, adapter_version, projection_version, projection, projection_digest, created_at)
-            VALUES ({generation}, {revision.OrganizationId}, {revision.Id}, 1, {revision.AdapterId}, {revision.AdapterVersion}, {revision.ProjectionVersion}, NULL, NULL, now())
+            VALUES ({Guid.CreateVersion7()}, {revision.OrganizationId}, {revision.Id}, 1, {revision.AdapterId}, {revision.AdapterVersion}, {revision.ProjectionVersion}, NULL, NULL, now())
             """, ct);
-        return generation;
     }
 
     /// <summary>A page of the capability's children by ordinal.</summary>

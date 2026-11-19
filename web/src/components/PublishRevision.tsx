@@ -12,7 +12,7 @@ import { ProblemList } from "./ProblemList";
  * **Publish revision** (GOZ-0007 User Story 1): shown after an accepted validation, and only to members holding
  * `manifest.publish`. It posts exactly the body that was validated; on `201` it opens the new revision. A
  * `version_exists` refusal points to the **Revisions** list, where clients recover by listing. A publish-time rejection
- * (GOZ-0008 `publish.duplicate_entry`, which validation accepts) shows its problem list.
+ * (GOZ-0008 `publish.duplicate_entry` or `publish.nul_character`, which validation accepts) shows its problem list.
  */
 export function PublishRevision({
   organizationId,
@@ -77,7 +77,7 @@ export function PublishRevision({
           )}
         </p>
       )}
-      {error?.problems && <ProblemList problems={error.problems} truncated={error.truncated} />}
+      {error?.problems && <ProblemList problems={error.problems} truncated={error.truncated} context="publish" />}
     </section>
   );
 }

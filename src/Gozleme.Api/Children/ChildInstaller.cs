@@ -10,8 +10,9 @@ namespace Gozleme.Api.Children;
 /// <c>migrate</c> run, as the operator (the owner login with no account context). Revisions without generation 1 get
 /// their children and generation 1 by the same rule as publication, capability by capability in sequence order under
 /// the publication lock <c>gozleme.revisions:&lt;capability&gt;</c>, one transaction per capability. Duplicate keys are
-/// recorded as duplicate children instead of refused. Revisions and attestations are only read, so every revision
-/// verifies as before. A repeat run finds nothing to do.
+/// recorded as duplicate children instead of refused. A revision whose projection holds U+0000 is skipped and audited
+/// by ID (maintainer ruling F3). Revisions and attestations are only read, so every revision verifies as before. A
+/// repeat run finds nothing to do but the skipped revisions, audited again.
 /// </summary>
 internal static class ChildInstaller
 {
@@ -34,20 +35,35 @@ internal static class ChildInstaller
                 continue;
             }
 
+            // F3: PostgreSQL text and jsonb cannot hold U+0000, so such a revision is skipped, audited by ID, and left
+            // without generation 1 (its capability keeps answering the rollout-gap 503); the others are installed.
+            var skipped = pending.Where(r => ChildEntries.HasNulCharacter(r.Projection)).Select(r => r.Id).ToList();
             var existing = await children.ExistingAsync(capability, pending[0].OrganizationId, ct);
-            foreach (var revision in pending)
+            var recorded = new List<(string Family, Assignment Assignment)>();
+            foreach (var revision in pending.Where(r => !skipped.Contains(r.Id)))
             {
-                var assignment = ChildAssigner.Assign(existing, ChildEntries.FromProjection(revision.Projection), AssignMode.Install);
-                await children.InsertAsync(revision, assignment, ct);
-                ChildTelemetry.RecordAssign(revision.Family, assignment, AssignMode.Install);
-                ChildTelemetry.RecordGeneration(revision.Family, 1, ChildOutcome.Recorded);
+                var assignment = await children.RecordAsync(revision, ChildEntries.FromProjection(revision.Projection), AssignMode.Install, existing, ct);
+                recorded.Add((revision.Family, assignment));
                 existing = existing.Then(assignment);
             }
 
             await tx.CommitAsync(ct);
-            audit.ChildrenInstalled(capability, pending.Count);
-            revisions += pending.Count;
-            installed++;
+            foreach (var id in skipped)
+            {
+                audit.ChildrenInstallSkipped(id);
+            }
+
+            foreach (var (family, assignment) in recorded)
+            {
+                ChildTelemetry.RecordCommitted(family, assignment);
+            }
+
+            if (recorded.Count > 0)
+            {
+                audit.ChildrenInstalled(capability, recorded.Count);
+                revisions += recorded.Count;
+                installed++;
+            }
         }
 
         ChildTelemetry.Installed(activity, revisions, installed);

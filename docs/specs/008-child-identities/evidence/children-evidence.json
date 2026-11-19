@@ -5,15 +5,15 @@
     "entries": 1000,
     "format": "mcp-server-manifest 2026-07-28 json",
     "runs": 3,
-    "createMedianMs": 517,
-    "createWorstMs": 538,
-    "matchMedianMs": 256,
-    "matchWorstMs": 274,
+    "createMedianMs": 258,
+    "createWorstMs": 306,
+    "matchMedianMs": 120,
+    "matchWorstMs": 120,
     "limitMs": 3000,
     "environment": "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)"
   },
-  "capturedAt": "2026-11-19T16:30:07.970Z",
-  "runId": "450716",
+  "capturedAt": "2026-11-19T19:22:10.828Z",
+  "runId": "788863",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": "0193a000-0000-7000-8000-000000000010",
@@ -23,23 +23,23 @@
   },
   "demo": {
     "browse": {
-      "revision": "01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237",
+      "revision": "01a1f541-5272-7d61-8d97-55220cfdc596",
       "children": [
-        "01a1f4a3-d9ae-7e5d-bb42-feab706554bf",
-        "01a1f4a3-d9ae-73f6-8293-bf7489fdb867",
-        "01a1f4a3-d9ae-728c-9e24-f44dd99956b1",
-        "01a1f4a3-d9ae-734a-b470-734c4902d21c"
+        "01a1f541-5280-7fdd-a756-af1df74727b6",
+        "01a1f541-5280-776b-be94-facddbc1fa2e",
+        "01a1f541-5280-7c4b-8fae-09a8d75fdd67",
+        "01a1f541-5280-7f36-b9cd-cad361693e50"
       ]
     },
     "continuity": {
-      "revision": "01a1f4a3-df7a-76c8-a8a7-56b92ba4ad1a",
+      "revision": "01a1f541-58c7-7b05-ae8b-7186f864d8af",
       "kept": [
-        "01a1f4a3-d9ae-7e5d-bb42-feab706554bf",
-        "01a1f4a3-d9ae-73f6-8293-bf7489fdb867",
-        "01a1f4a3-d9ae-728c-9e24-f44dd99956b1"
+        "01a1f541-5280-7fdd-a756-af1df74727b6",
+        "01a1f541-5280-776b-be94-facddbc1fa2e",
+        "01a1f541-5280-7c4b-8fae-09a8d75fdd67"
       ],
-      "added": "01a1f4a3-df90-744f-b7c1-e59fdfcefb0d",
-      "absent": "01a1f4a3-d9ae-734a-b470-734c4902d21c"
+      "added": "01a1f541-58d6-7965-af1f-5f2f29083154",
+      "absent": "01a1f541-5280-7f36-b9cd-cad361693e50"
     },
     "duplicate": {
       "validate": 200,
@@ -51,20 +51,20 @@
       "stored": 0
     },
     "regenerate": {
-      "revision": "01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237",
-      "generation": "01a1f4a4-c6be-7729-af80-ca53d559e752",
+      "revision": "01a1f541-5272-7d61-8d97-55220cfdc596",
+      "generation": "01a1f542-3ff1-74a4-a5ea-076f1e54a475",
       "exit": 0,
       "identical": true,
       "unknownExit": 2,
       "usageExit": 64
     },
     "swappedIds": {
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f4a4-c6be-7729-af80-ca53d559e752": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237/projections/01a1f4a3-d9ae-7e5d-bb42-feab706554bf": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237/projections/01a1f4a3-d9a6-7e70-8b7c-aa78ced3d237": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a3-df7a-76c8-a8a7-56b92ba4ad1a/projections/01a1f4a3-d9b2-7e29-bf55-35cf672b0432": 404,
-      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f4a3-d9ae-7e5d-bb42-feab706554bf/children": 404
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f542-3ff1-74a4-a5ea-076f1e54a475": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/children/01a1f541-5272-7d61-8d97-55220cfdc596": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f541-5272-7d61-8d97-55220cfdc596/projections/01a1f541-5280-7fdd-a756-af1df74727b6": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f541-5272-7d61-8d97-55220cfdc596/projections/01a1f541-5272-7d61-8d97-55220cfdc596": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f541-58c7-7b05-ae8b-7186f864d8af/projections/01a1f541-5284-75a4-9db9-10fa2b2b34b2": 404,
+      "/publishers/0193a000-0000-7000-8000-000000000010/capabilities/0193a000-0000-7000-8000-000000000011/revisions/01a1f541-5280-7fdd-a756-af1df74727b6/children": 404
     },
     "immutability": {
       "sql": {
@@ -85,7 +85,25 @@
         "gozleme_migrator truncate revision_children": "42501",
         "gozleme_migrator update projection_generations": "0 row(s)",
         "gozleme_migrator delete projection_generations": "0 row(s)",
-        "gozleme_migrator truncate projection_generations": "42501"
+        "gozleme_migrator truncate projection_generations": "42501",
+        "gozleme_migrator operator update capability_children": "0 row(s)",
+        "gozleme_migrator operator delete capability_children": "0 row(s)",
+        "gozleme_migrator operator truncate capability_children": "42501",
+        "gozleme_migrator operator update revision_children": "0 row(s)",
+        "gozleme_migrator operator delete revision_children": "0 row(s)",
+        "gozleme_migrator operator truncate revision_children": "42501",
+        "gozleme_migrator operator update projection_generations": "0 row(s)",
+        "gozleme_migrator operator delete projection_generations": "0 row(s)",
+        "gozleme_migrator operator truncate projection_generations": "42501",
+        "superuser update capability_children": "42501",
+        "superuser delete capability_children": "42501",
+        "superuser truncate capability_children": "42501",
+        "superuser update revision_children": "42501",
+        "superuser delete revision_children": "42501",
+        "superuser truncate revision_children": "42501",
+        "superuser update projection_generations": "42501",
+        "superuser delete projection_generations": "42501",
+        "superuser truncate projection_generations": "42501"
       },
       "methods": {
         "DELETE": 405,
@@ -100,10 +118,10 @@
       "signedOutPage": "redirect to sign in"
     },
     "install": {
-      "revisions": 139,
+      "revisions": 51,
       "withoutGeneration1": 0,
       "withMismatchedChildCount": 0,
-      "earlierVerified": 68
+      "earlierVerified": 28
     },
     "observability": {
       "spans": [

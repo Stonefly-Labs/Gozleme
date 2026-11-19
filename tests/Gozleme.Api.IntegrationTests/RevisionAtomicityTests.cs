@@ -24,7 +24,8 @@ public sealed class RevisionAtomicityTests(PgvectorDatabaseFixture fixture) : IA
     /// <summary>Runs <paramref name="statements"/> as carol through <c>gozleme_app</c> and commits; returns the commit's SQLSTATE, or null.</summary>
     private async Task<string?> CommitAsCarolAsync(params string[] statements)
     {
-        await using var dataSource = NpgsqlDataSource.Create(_s.Db.AppConnectionString);
+        // Named: the process-wide Npgsql meter must not label pools with a connection string (TelemetryTests, T067).
+        await using var dataSource = new NpgsqlDataSourceBuilder(_s.Db.AppConnectionString) { Name = "integration-test-fixture" }.Build();
         await using var connection = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
         await using var tx = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
         try

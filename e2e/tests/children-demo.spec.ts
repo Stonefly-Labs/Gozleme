@@ -271,11 +271,13 @@ test("3. projection-regenerate adds an unattested generation and IDs never stand
   test.setTimeout(240_000);
   const regenerated = projectionRegenerate(first.id);
   expect(regenerated.exit, regenerated.stderr).toBe(0);
-  const line = new RegExp(`^${first.id} generation 2 (${UUID.source}) digest equals generation 1: yes$`).exec(regenerated.stdout.split("\n").pop()!);
+  // The JSON console log shares stdout and is written asynchronously, so the result line is found, not assumed last.
+  const result = new RegExp(`^${first.id} generation 2 (${UUID.source}) digest equals generation 1: yes$`);
+  const line = regenerated.stdout.split("\n").map((l) => result.exec(l)).find((m) => m !== null) ?? null;
   expect(line, regenerated.stdout).not.toBeNull();
   generation2 = line![1]!;
   const unknown = projectionRegenerate("0193a000-0000-7000-8000-00000000ffff");
-  expect([unknown.exit, unknown.stderr.split("\n").pop()]).toEqual([2, "unknown_target"]);
+  expect([unknown.exit, unknown.stderr.split("\n").includes("unknown_target")]).toEqual([2, true]);
   expect(projectionRegenerate("not-a-uuid").exit).toBe(64);
 
   await carol.goto(`${pagePath}/revisions/${first.id}`);
@@ -319,19 +321,27 @@ test("4. children are immutable and private", async ({ browser }) => {
     projection_generations: `revision_id = '${first.id}'`,
   };
   const set: Record<string, string> = { capability_children: "native_name = native_name", revision_children: "title = title", projection_generations: "generation = generation" };
-  for (const role of ["gozleme_app", "gozleme_migrator"]) {
+  // Forced RLS has no UPDATE or DELETE policy on these tables, so for every login with RLS (Carol's context, or the
+  // operator: owner, no context) UPDATE/DELETE reach no row; TRUNCATE is not row-filtered and reaches the guard. The
+  // superuser bypasses RLS, so its UPDATE/DELETE reach the immutability guard itself and its SQLSTATE is captured.
+  for (const [role, account, label] of [
+    ["gozleme_app", carolId, "gozleme_app"],
+    ["gozleme_migrator", carolId, "gozleme_migrator"],
+    ["gozleme_migrator", null, "gozleme_migrator operator"],
+    ["postgres", null, "superuser"],
+  ] as const) {
     for (const table of TABLES) {
       for (const [op, statement] of [
         ["update", `UPDATE gozleme.${table} SET ${set[table]} WHERE ${where[table]}`],
         ["delete", `DELETE FROM gozleme.${table} WHERE ${where[table]}`],
       ] as const) {
-        const outcome = attempt(role, carolId, statement);
-        expect(["0 row(s)", "42501", "P0001"], `${role} ${op} ${table}`).toContain(outcome);
-        sql[`${role} ${op} ${table}`] = outcome;
+        const outcome = attempt(role, account, statement);
+        expect(role === "postgres" ? ["42501", "P0001"] : ["0 row(s)", "42501", "P0001"], `${label} ${op} ${table}`).toContain(outcome);
+        sql[`${label} ${op} ${table}`] = outcome;
       }
-      const truncate = execute(role, carolId, `TRUNCATE gozleme.${table} CASCADE`);
-      expect(truncate, `${role} truncate ${table}`).not.toBe("ok");
-      sql[`${role} truncate ${table}`] = truncate;
+      const truncate = execute(role, account, `TRUNCATE gozleme.${table} CASCADE`);
+      expect(truncate, `${label} truncate ${table}`).not.toBe("ok");
+      sql[`${label} truncate ${table}`] = truncate;
     }
   }
 
@@ -424,8 +434,11 @@ test("6. Jaeger shows the assign, generation and operator spans, and no name or 
     expect(labels).toEqual(line.startsWith("gozleme_children") ? ["gozleme_child_kind", "gozleme_children_outcome", "gozleme_manifest_family"] : ["gozleme_manifest_family", "gozleme_projection_outcome"]);
   }
 
-  const digests = ((await api(carol, "GET", `${REVISIONS}/${first.id}/projections`)).json().items as { digest: string }[]).map((g) => g.digest.slice("sha256:".length));
-  const privateValues = [...Object.values(N), ...Object.values(T), ...digests, V1, V2, DEMO.carol, DEMO.dave, DEMO_PASSWORD, ...secretStrings];
+  const digests: string[] = [];
+  for (const revision of [first.id, second.id]) {
+    digests.push(...((await api(carol, "GET", `${REVISIONS}/${revision}/projections`)).json().items as { digest: string }[]).map((g) => g.digest.slice("sha256:".length)));
+  }
+  const privateValues = [...Object.values(N), ...Object.values(T), ...digests, `Repeated skill ${run}`, V1, V2, DEMO.carol, DEMO.dave, DEMO_PASSWORD, ...secretStrings];
   const shotTrace = async (traceId: string, span: string, file: string) => {
     const page = await alice.context().newPage();
     await page.setViewportSize({ width: 1600, height: 1000 });

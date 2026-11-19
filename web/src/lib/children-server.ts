@@ -43,8 +43,10 @@ export const listRevisionChildren = (
   publisherId: string,
   capabilityId: string,
   revisionId: string,
+  cursor: string | null,
   fetchImpl: typeof fetch = fetch,
-): Promise<Fetched<RevisionChildList>> => get(`${apiRevisionChildrenPath(organizationId, publisherId, capabilityId, revisionId)}?limit=100`, fetchImpl);
+): Promise<Fetched<RevisionChildList>> =>
+  get(`${apiRevisionChildrenPath(organizationId, publisherId, capabilityId, revisionId)}?limit=100${cursor === null ? "" : `&after=${cursor}`}`, fetchImpl);
 
 export const listGenerations = (
   organizationId: string,

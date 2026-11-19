@@ -9,8 +9,9 @@ namespace Gozleme.Api.Persistence.Migrations;
 /// <list type="bullet">
 /// <item><c>capability_children</c>, <c>revision_children</c>, <c>projection_generations</c> (<c>TenantOwned</c>,
 /// forced RLS): member reads; inserts need <c>publisher</c> and a held claim, and members insert non-duplicate
-/// children and generation 1 only; the operator inserts install-step duplicates and later generations. All three are
-/// write-once for every login, including the owner (<c>immutable_row_guard</c>).</item>
+/// children and generation 1 only, for the revision they publish in this transaction (maintainer ruling F2); the
+/// operator inserts install-step duplicates and later generations. All three are write-once for every login,
+/// including the owner (<c>immutable_row_guard</c>).</item>
 /// <item>The database checks the C# assignment (R4): one matchable child per key (a partial unique index on the
 /// guard-derived <c>native_name_digest</c>, maintainer 2026-11-19 "native-name-bound"), a statement-level check of
 /// every child revision record against its projection entry, and deferred completeness triggers.</item>
@@ -174,7 +175,7 @@ internal sealed partial class ChildIdentities : Migration
               LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $fn$
             BEGIN
               IF NOT EXISTS (SELECT 1 FROM gozleme.revision_children rc WHERE rc.revision_id = NEW.first_revision_id AND rc.child_id = NEW.id) THEN
-                RAISE EXCEPTION 'capability child has no revision record' USING ERRCODE = 'integrity_constraint_violation';
+                RAISE EXCEPTION 'capability child has no revision record' USING ERRCODE = 'integrity_constraint_violation', CONSTRAINT = 'capability_children_recorded';
               END IF;
               RETURN NULL;
             END $fn$;
@@ -188,7 +189,7 @@ internal sealed partial class ChildIdentities : Migration
               IF NOT EXISTS (SELECT 1 FROM gozleme.projection_generations g WHERE g.revision_id = NEW.id AND g.generation = 1)
                  OR (SELECT count(*) FROM gozleme.revision_children rc WHERE rc.revision_id = NEW.id)
                     <> (CASE WHEN jsonb_typeof(entries) = 'array' THEN jsonb_array_length(entries) ELSE 0 END) THEN
-                RAISE EXCEPTION 'manifest revision has no complete children' USING ERRCODE = 'integrity_constraint_violation';
+                RAISE EXCEPTION 'manifest revision has no complete children' USING ERRCODE = 'integrity_constraint_violation', CONSTRAINT = 'manifest_revisions_children';
               END IF;
               RETURN NULL;
             END $fn$;
@@ -236,22 +237,28 @@ internal sealed partial class ChildIdentities : Migration
               WHEN gozleme.is_operator() THEN true ELSE organization_id IN (SELECT gozleme.account_organizations()) END);
 
             -- Inserts: publisher and a held claim for the capability's publisher, as for revisions (FR-018); members insert
-            -- non-duplicate children and generation 1 only.
+            -- non-duplicate children and generation 1 only, and only for the revision they publish in this transaction
+            -- (published_by and the trigger-set published_at = now(); maintainer ruling F2). The operator branch is unchanged.
             CREATE POLICY capability_children_insert ON gozleme.capability_children FOR INSERT WITH CHECK (CASE
               WHEN gozleme.is_operator() THEN true
               ELSE NOT is_duplicate AND gozleme.account_has_role(organization_id, 'publisher')
                AND EXISTS (SELECT 1 FROM gozleme.capabilities cap JOIN gozleme.handle_claims c ON c.publisher_id = cap.publisher_id
-                           WHERE cap.id = capability_children.capability_id AND c.status = 'held') END);
+                           WHERE cap.id = capability_children.capability_id AND c.status = 'held')
+               AND EXISTS (SELECT 1 FROM gozleme.manifest_revisions r
+                           WHERE r.id = capability_children.first_revision_id
+                             AND r.published_by = (SELECT gozleme.current_account_id()) AND r.published_at = now()) END);
             CREATE POLICY revision_children_insert ON gozleme.revision_children FOR INSERT WITH CHECK (CASE
               WHEN gozleme.is_operator() THEN true
               ELSE gozleme.account_has_role(organization_id, 'publisher')
                AND EXISTS (SELECT 1 FROM gozleme.manifest_revisions r JOIN gozleme.handle_claims c ON c.publisher_id = r.publisher_id
-                           WHERE r.id = revision_children.revision_id AND c.status = 'held') END);
+                           WHERE r.id = revision_children.revision_id AND c.status = 'held'
+                             AND r.published_by = (SELECT gozleme.current_account_id()) AND r.published_at = now()) END);
             CREATE POLICY projection_generations_insert ON gozleme.projection_generations FOR INSERT WITH CHECK (CASE
               WHEN gozleme.is_operator() THEN true
               ELSE generation = 1 AND gozleme.account_has_role(organization_id, 'publisher')
                AND EXISTS (SELECT 1 FROM gozleme.manifest_revisions r JOIN gozleme.handle_claims c ON c.publisher_id = r.publisher_id
-                           WHERE r.id = projection_generations.revision_id AND c.status = 'held') END);
+                           WHERE r.id = projection_generations.revision_id AND c.status = 'held'
+                             AND r.published_by = (SELECT gozleme.current_account_id()) AND r.published_at = now()) END);
 
             -- A2 (maintainer-approved, security-review item): the operator reads revisions for the install step and
             -- projection-regenerate. gozleme_app can never satisfy is_operator().

@@ -13,6 +13,9 @@ internal static class RegenerateRefusal
     public const string AdapterUnavailable = "adapter_unavailable";
     public const string ProjectionFailed = "projection_failed";
     public const string EntriesChanged = "entries_changed";
+
+    /// <summary>A known revision without generation 1 (the install step has not given it one; maintainer ruling F14).</summary>
+    public const string NotInstalled = "not_installed";
 }
 
 /// <summary>A re-projection: canonical bytes, or the refusal word.</summary>

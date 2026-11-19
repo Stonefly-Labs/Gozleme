@@ -15,7 +15,10 @@ export const FAMILIES: { id: Family; label: string; format: string }[] = [
   { id: "model", label: "Model card", format: "gozleme-model-card 1" },
 ];
 
-/** `projection` locations come from the GOZ-0008 publish-time rule `publish.duplicate_entry` (an `/entries/<i>` pointer). */
+/**
+ * `projection` locations come from the GOZ-0008 publish-time rules `publish.duplicate_entry` (an `/entries/<i>` pointer)
+ * and `publish.nul_character` (the pointer of the string, such as `/entries/0/title` or `/description`).
+ */
 export type ProblemPart = "envelope" | "native" | "projection";
 
 export type ProblemLocation = { part: ProblemPart; pointer: string } | { part: ProblemPart; line: number; column: number } | null;

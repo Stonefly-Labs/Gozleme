@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using Gozleme.Api.Children;
 using Gozleme.Api.Manifests;
 using Gozleme.Api.Manifests.Projection;
+using Gozleme.Api.Revisions;
 using Gozleme.Api.Tests.Manifests;
 
 namespace Gozleme.Api.Tests.Children;
@@ -10,6 +11,8 @@ namespace Gozleme.Api.Tests.Children;
 /// GOZ-0008 T014 (FR-005a, research R3, contracts/publish-delta.md): the publish-time duplicate rule reports every
 /// entry of a duplicate group, the first included, by index, at a <c>projection</c> location, with a fixed message,
 /// capped at 50 with <c>truncated</c>, and never echoes a name. Validate still accepts such bodies (GOZ-0006-IF-07).
+/// T069 (maintainer ruling F3): <c>publish.nul_character</c> reports every projection string holding U+0000 at its
+/// exact pointer, in document order, without the value.
 /// </summary>
 public sealed class ChildEntriesTests
 {
@@ -53,11 +56,31 @@ public sealed class ChildEntriesTests
     [Fact]
     public void The_publish_catalogue_is_separate_and_the_GOZ_0006_catalogue_is_unchanged()
     {
-        Assert.Equal(["publish.duplicate_entry"], PublishRules.All.Select(r => r.Id));
+        Assert.Equal(["publish.duplicate_entry", "publish.nul_character"], PublishRules.All.Select(r => r.Id));
         Assert.Equal("1", PublishRules.CatalogueVersion);
         Assert.Equal(40, ManifestRules.All.Count);
         Assert.DoesNotContain(ManifestRules.All, r => r.Id.StartsWith("publish.", StringComparison.Ordinal));
         Assert.Equal("1", ManifestRules.CatalogueVersion);
+    }
+
+    [Fact]
+    public void Every_projection_string_with_U0000_is_reported_at_its_pointer_without_the_value()
+    {
+        const string document = """
+            {"protocolRevision":"2026-07-28","serverInfo":{"name":"io.example/nul","version":"1.0.0","description":"D\u0000"},
+             "capabilities":{"tools":{}},"tools":[{"name":"ok","inputSchema":{"type":"object"}},{"name":"a\u0000b","title":"T\u0000","inputSchema":{"type":"object"}}]}
+            """;
+        var accepted = ManifestTestKit.Accepted(ManifestTestKit.Validate("mcp", "mcp-server-manifest", "1", "json", document));
+        var problems = ChildEntries.NulCharacters(ManifestJson.ProjectionNode(accepted.Projection));
+        Assert.Equal(["projection /description", "projection /entries/1/nativeName", "projection /entries/1/title"], problems.Select(p => ManifestTestKit.Where(p.Location)));
+        Assert.All(problems, p => Assert.Equal(PublishRules.NulCharacter, p.Rule));
+        var body = ManifestTestKit.Json(ChildEntries.Rejected(problems));
+        Assert.DoesNotContain("\\u0000", body, StringComparison.Ordinal);
+        Assert.Contains("\"rule\":\"publish.nul_character\"", body, StringComparison.Ordinal);
+
+        Assert.True(ChildEntries.HasNulCharacter(CanonicalJson.Canonicalize(ManifestJson.ProjectionNode(accepted.Projection))));
+        Assert.False(ChildEntries.HasNulCharacter("""{"entries":[{"kind":"tool","nativeName":"a0b"}],"title":"\\u0000 is text"}"""u8));
+        Assert.Empty(ChildEntries.NulCharacters(JsonNode.Parse("""{"entries":[],"title":null}""")));
     }
 
     [Fact]

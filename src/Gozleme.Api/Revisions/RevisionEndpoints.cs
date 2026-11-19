@@ -21,9 +21,9 @@ namespace Gozleme.Api.Revisions;
 /// <see cref="TenantTransaction"/> with <c>no-store</c>. The order is origin verified (503) → membership (identical
 /// empty 404) → permission (403) → target (the same empty 404 for malformed, unknown, foreign or misplaced IDs); a
 /// publication then checks suspension (409) → budget (429) → media type (415) → size (413) → GOZ-0006 validation,
-/// unchanged (a rejection answers exactly as validate) → duplicate projection entries (422 <c>publish.duplicate_entry</c>,
-/// GOZ-0008) → version (409) → signing key or rollout gap (503) → 201. The body is never
-/// read before the media-type step. There is no update or delete route: the router answers 405 on the revision.
+/// unchanged (a rejection answers exactly as validate) → duplicate projection entries or U+0000 strings (422
+/// <c>publish.duplicate_entry</c>, <c>publish.nul_character</c>, GOZ-0008) → version (409) → signing key, rollout gap
+/// or a child-table refusal (503) → 201. The body is never read before the media-type step. There is no update or delete route: the router answers 405 on the revision.
 /// </summary>
 internal static class RevisionEndpoints
 {
@@ -96,12 +96,13 @@ internal static class RevisionEndpoints
             return TypedResults.Bytes(ManifestJson.Serialize(run.Result), "application/json; charset=utf-8");
         }
 
-        // GOZ-0008 FR-005a: a publish-time rule, so validate (unchanged) can accept what publication refuses.
-        if (ChildEntries.Duplicates(accepted.Projection.Entries) is { Count: > 0 } duplicates)
+        // GOZ-0008 FR-005a: publish-time rules, so validate (unchanged) can accept what publication refuses.
+        if ((IReadOnlyList<ManifestProblem>)[.. ChildEntries.Duplicates(accepted.Projection.Entries), .. ChildEntries.NulCharacters(ManifestJson.ProjectionNode(accepted.Projection))]
+            is { Count: > 0 } problems)
         {
             RevisionTelemetry.RecordPublish(activity, PublishOutcome.Rejected, run.Family);
             http.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
-            return TypedResults.Bytes(ManifestJson.Serialize(ChildEntries.Rejected(duplicates)), "application/json; charset=utf-8");
+            return TypedResults.Bytes(ManifestJson.Serialize(ChildEntries.Rejected(problems)), "application/json; charset=utf-8");
         }
 
         var publication = await publisher.PublishAsync(owner, capability, accepted, origin, membership.UserId, ct);
@@ -120,6 +121,7 @@ internal static class RevisionEndpoints
         RevisionTelemetry.RecordPublish(activity, PublishOutcome.Published, run.Family);
         TenantTransaction.AfterCommit(http, () =>
         {
+            ChildTelemetry.RecordCommitted(stored.Revision.Family, publication.Assignment!);
             audit.RevisionPublished(stored.Revision.Id, capability.Id, owner.Id, owner.OrganizationId, membership.UserId);
             if (publication.KeyCreated)
             {

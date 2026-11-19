@@ -9,7 +9,7 @@ import { RevisionDetail } from "@/components/RevisionDetail";
 import { SignedInHeader } from "@/components/SignedInHeader";
 import { listGenerations, listRevisionChildren } from "@/lib/children-server";
 import { revisionsPage } from "@/lib/revisions";
-import { getRevision } from "@/lib/revisions-server";
+import { cursor, getRevision } from "@/lib/revisions-server";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +23,13 @@ export const metadata: Metadata = { title: "Revision — Gözleme" };
  */
 export default async function RevisionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ organizationId: string; publisherId: string; capabilityId: string; revisionId: string }>;
+  searchParams: Promise<{ after?: string | string[] }>;
 }) {
   const { organizationId, publisherId, capabilityId, revisionId } = await params;
+  const after = cursor((await searchParams).after);
   const listHref = revisionsPage(organizationId, publisherId, capabilityId);
   const returnTo = `/login?returnTo=${encodeURIComponent(`${listHref}/${encodeURIComponent(revisionId)}`)}`;
   const session = await getSession();
@@ -36,7 +39,7 @@ export default async function RevisionPage({
     session.state === "authenticated"
       ? await Promise.all([
           getRevision(organizationId, publisherId, capabilityId, revisionId),
-          listRevisionChildren(organizationId, publisherId, capabilityId, revisionId),
+          listRevisionChildren(organizationId, publisherId, capabilityId, revisionId, after),
           listGenerations(organizationId, publisherId, capabilityId, revisionId),
         ])
       : [{ state: "unavailable" } as const, { state: "unavailable" } as const, { state: "unavailable" } as const];
@@ -65,7 +68,7 @@ export default async function RevisionPage({
         ) : (
           <div className="stack">
             <RevisionDetail organizationId={organizationId} publisherId={publisherId} capabilityId={capabilityId} revision={revision.data} />
-            <RevisionChildren organizationId={organizationId} publisherId={publisherId} capabilityId={capabilityId} list={children.data} />
+            <RevisionChildren organizationId={organizationId} publisherId={publisherId} capabilityId={capabilityId} revisionId={revision.data.id} list={children.data} />
             <ProjectionGenerations organizationId={organizationId} publisherId={publisherId} capabilityId={capabilityId} revisionId={revision.data.id} list={generations.data} />
           </div>
         )}

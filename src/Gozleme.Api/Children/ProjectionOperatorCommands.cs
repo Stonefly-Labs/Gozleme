@@ -98,10 +98,10 @@ internal static class ProjectionOperatorCommands
 
             if (await LatestAsync(connection, tx, revision) is not { } latest)
             {
-                // Generation 1 is recorded by publication or the install step; without it there is nothing to follow.
-                audit.ProjectionGenerationRefused("failed");
-                await stderr.WriteLineAsync("failed");
-                return Failed;
+                // Generation 1 is recorded by publication or the install step; without it there is nothing to follow (F14).
+                audit.ProjectionGenerationRefused(RegenerateRefusal.NotInstalled);
+                await stderr.WriteLineAsync(RegenerateRefusal.NotInstalled);
+                return Refused;
             }
 
             var regeneration = ProjectionRegenerator.Regenerate(revision, ManifestAdapters.All);
@@ -124,6 +124,7 @@ internal static class ProjectionOperatorCommands
                 Projection = projection,
                 ProjectionDigest = RevisionVerifier.Digest(projection),
             };
+            using (ChildTelemetry.StartGeneration(generation.Generation))
             await using (var insert = new NpgsqlCommand("""
                 INSERT INTO gozleme.projection_generations (id, organization_id, revision_id, generation, adapter_id, adapter_version, projection_version, projection, projection_digest, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
@@ -140,7 +141,7 @@ internal static class ProjectionOperatorCommands
 
             await tx.CommitAsync();
             var compared = ChildEndpoints.Compare(latest.Generation, latest.Digest, generation, generation.ProjectionDigest);
-            ChildTelemetry.RecordGeneration(revision.Family, generation.Generation, compared == GenerationComparison.Identical ? ChildOutcome.Identical : ChildOutcome.Recorded);
+            ChildTelemetry.RecordGenerationOutcome(revision.Family, compared == GenerationComparison.Identical ? ChildOutcome.Identical : ChildOutcome.Recorded);
             audit.ProjectionGenerationRecorded(revision.Id, generation.Id, generation.Generation);
             var equals = compared switch
             {
@@ -154,7 +155,7 @@ internal static class ProjectionOperatorCommands
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             audit.ProjectionGenerationRefused("failed");
-            await stderr.WriteLineAsync($"failed ({ex.GetType().Name})");
+            await stderr.WriteLineAsync("failed"); // the fixed word only: no exception type or message
             return Failed;
         }
     }

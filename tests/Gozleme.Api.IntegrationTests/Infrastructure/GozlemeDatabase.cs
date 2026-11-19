@@ -39,18 +39,32 @@ public sealed class GozlemeDatabase : IAsyncDisposable
     /// <summary>Starts a dedicated container; <paramref name="migrate"/> false leaves it unmigrated (GOZ-0005 origin tests).</summary>
     public static async Task<GozlemeDatabase> StartAsync(string image = PgvectorImage, bool migrate = true)
     {
-        // A fixed host port keeps connection strings valid across stop/start in outage tests.
-        var hostPort = FreeTcpPort();
-        var container = new PostgreSqlBuilder(image)
-            .WithDatabase("gozleme")
-            .WithUsername("postgres")
-            .WithPassword(SuperuserPassword)
-            .WithEnvironment("GOZLEME_MIGRATOR_PASSWORD", MigratorPassword)
-            .WithEnvironment("GOZLEME_APP_PASSWORD", AppPassword)
-            .WithResourceMapping(new FileInfo(RepoPath("deploy/postgres/init/01-roles.sh")), "/docker-entrypoint-initdb.d/")
-            .WithPortBinding(hostPort, 5432)
-            .Build();
-        await container.StartAsync();
+        // A fixed host port keeps connection strings valid across stop/start in outage tests. The port is free when
+        // chosen but can be taken before Docker binds it (parallel suites, other workloads on the host): a fresh port then.
+        PostgreSqlContainer container;
+        int hostPort;
+        for (var attempt = 1; ; attempt++)
+        {
+            hostPort = FreeTcpPort();
+            container = new PostgreSqlBuilder(image)
+                .WithDatabase("gozleme")
+                .WithUsername("postgres")
+                .WithPassword(SuperuserPassword)
+                .WithEnvironment("GOZLEME_MIGRATOR_PASSWORD", MigratorPassword)
+                .WithEnvironment("GOZLEME_APP_PASSWORD", AppPassword)
+                .WithResourceMapping(new FileInfo(RepoPath("deploy/postgres/init/01-roles.sh")), "/docker-entrypoint-initdb.d/")
+                .WithPortBinding(hostPort, 5432)
+                .Build();
+            try
+            {
+                await container.StartAsync();
+                break;
+            }
+            catch (Docker.DotNet.DockerApiException ex) when (attempt < 5 && ex.Message.Contains("address already in use", StringComparison.Ordinal))
+            {
+                await container.DisposeAsync();
+            }
+        }
 
         var db = new GozlemeDatabase(container, hostPort);
         if (!migrate)

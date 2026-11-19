@@ -37,7 +37,13 @@ describe("ProblemList (GOZ-0006 US2)", () => {
 
   it("notes that more problems exist when truncated", () => {
     render(<ProblemList problems={problems.slice(0, 1)} truncated />);
-    expect(screen.getByTestId("problems-truncated")).toHaveTextContent("More problems exist");
+    expect(screen.getByTestId("problems-truncated")).toHaveTextContent("More problems exist. Fix these and validate again to see the rest.");
+  });
+
+  it("does not point publish-time problems back to validation when truncated (GOZ-0008)", () => {
+    render(<ProblemList problems={problems.slice(0, 1)} truncated context="publish" />);
+    expect(screen.getByTestId("problems-truncated")).toHaveTextContent("More problems exist. Fix these and publish again to see the rest.");
+    expect(screen.getByTestId("problems-truncated")).not.toHaveTextContent("validate");
   });
 
   it("names the root pointer and never renders fields outside the problem shape", () => {

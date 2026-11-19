@@ -21,8 +21,9 @@ namespace Gozleme.Api.IntegrationTests;
 /// position keeps the key and the other is a duplicate child absent from every later revision, one record per entry, a
 /// repeat run changes nothing, every revision verifies as before, and audit 1603 once per capability. T058
 /// (maintainer-approved A7): while a capability has a revision without generation 1, a publication answers
-/// <c>503 {"error":"unavailable"}</c> and stores nothing. The class owns its database: the install step spans every
-/// capability.
+/// <c>503 {"error":"unavailable"}</c> and stores nothing. T069 (ruling F3): a stored revision with U+0000 is skipped,
+/// audited by ID (1604) and keeps its capability's rollout gap. T070 (ruling F4): a commit-time child refusal at
+/// publication answers the same 503. The class owns its database: the install step spans every capability.
 /// </summary>
 public sealed class ChildInstallTests : IAsyncLifetime
 {
@@ -74,8 +75,9 @@ public sealed class ChildInstallTests : IAsyncLifetime
             new ManifestTarget(CanonicalId.Capability(GozlemeDatabase.Origin, Guid.Parse(capabilityId)), $"{_s.Handle}/{capability.GetProperty("name").GetString()}"));
         var accepted = Assert.IsType<AcceptedResult>(run.Result);
 
-        await using var connection = new NpgsqlConnection(_db.SuperuserConnectionString);
-        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        // Named: the process-wide Npgsql meter must not label pools with a connection string (TelemetryTests, T067).
+        await using var dataSource = new NpgsqlDataSourceBuilder(_db.SuperuserConnectionString) { Name = "integration-test-fixture" }.Build();
+        await using var connection = await dataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
         PublisherSigningKey key;
         await using (var select = new NpgsqlCommand($"""
             SELECT id, organization_id, publisher_id, generation, key_id, algorithm, public_key, encrypted_private_key FROM gozleme.publisher_signing_keys
@@ -276,6 +278,60 @@ public sealed class ChildInstallTests : IAsyncLifetime
         // After the install step the same publication succeeds.
         Assert.Equal(0, await _db.MigrateAsync());
         Assert.Equal(HttpStatusCode.Created, (await ManifestClient.SendAsync(_s.Carol, _s.Revisions(capabilityId), RevisionClient.Envelope(canonical, "2.0.0"))).Status);
+    }
+
+    [Fact]
+    public async Task The_install_step_skips_a_revision_with_U0000_audits_it_by_id_and_installs_the_others()
+    {
+        // T069 (maintainer ruling F3): publication now refuses U+0000 with publish.nul_character; a GOZ-0007 revision may hold it.
+        var (capabilityId, canonical) = await _s.NewCapabilityAsync();
+        var first = (await RevisionClient.PublishedAsync(_s.Carol, _s.Revisions(capabilityId), ChildClient.Mcp(canonical, "1.0.0", ("tool", "a", null)))).GetProperty("id").GetString()!;
+        var (otherId, otherCanonical) = await _s.NewCapabilityAsync();
+        await RevisionClient.PublishedAsync(_s.Carol, _s.Revisions(otherId), ChildClient.Mcp(otherCanonical, "1.0.0", ("tool", "a", null)));
+        await UninstallAsync();
+        var nul = await LegacyRevisionAsync(capabilityId, ChildClient.Mcp(canonical, "2.0.0", ("tool", "a\0b", "T\0")), 2);
+        var third = await LegacyRevisionAsync(capabilityId, ChildClient.Mcp(canonical, "3.0.0", ("tool", "a", null)), 3);
+
+        var logs = new ConcurrentQueue<string>();
+        using (var provider = new GozlemeApiFactory.CapturingLoggerProvider(logs))
+        {
+            Assert.Equal(0, await MigrateWithLogsAsync(provider));
+        }
+
+        Assert.Equal("1:0>1tool/a,3:0>1tool/a", await MappingAsync(capabilityId));
+        Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.projection_generations WHERE revision_id = '{nul}'"));
+        Assert.Equal(2, await CountAsync($"SELECT count(*) FROM gozleme.projection_generations WHERE revision_id IN ('{first}', '{third}', '{nul}')"));
+        Assert.Equal(1, await CountAsync($"SELECT count(*) FROM gozleme.revision_children rc JOIN gozleme.manifest_revisions r ON r.id = rc.revision_id WHERE r.capability_id = '{otherId}'"));
+        var skipped = logs.Where(l => l.Contains("children install skipped", StringComparison.OrdinalIgnoreCase)).ToArray();
+        Assert.Contains(nul, Assert.Single(skipped), StringComparison.Ordinal);
+        Assert.DoesNotContain("a\\u0000b", skipped[0], StringComparison.Ordinal);
+        Assert.Equal(2, logs.Count(l => l.Contains("Gozleme.Security.Audit", StringComparison.Ordinal) && l.Contains("children installed", StringComparison.OrdinalIgnoreCase)));
+
+        // The skipped revision keeps the rollout gap for its capability only.
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await ManifestClient.SendAsync(_s.Carol, _s.Revisions(capabilityId), RevisionClient.Envelope(canonical, "4.0.0"))).Status);
+        Assert.Equal(HttpStatusCode.Created, (await ManifestClient.SendAsync(_s.Carol, _s.Revisions(otherId), RevisionClient.Envelope(otherCanonical, "2.0.0"))).Status);
+    }
+
+    [Fact]
+    public async Task A_commit_time_child_refusal_at_publication_answers_503_and_stores_nothing()
+    {
+        // T070 (maintainer ruling F4): rows silently dropped by a planted trigger leave a child without its record, then a
+        // revision without generation 1; the deferred completeness checks refuse inside publication, not at commit (500).
+        var (capabilityId, canonical) = await _s.NewCapabilityAsync();
+        foreach (var (table, version) in new[] { ("revision_children", "1.0.0"), ("projection_generations", "2.0.0") })
+        {
+            await GozlemeDatabase.ExecuteAsync($"""
+                CREATE FUNCTION gozleme.test_drop_{table}() RETURNS trigger LANGUAGE plpgsql AS $fn$ BEGIN RETURN NULL; END $fn$;
+                CREATE TRIGGER test_drop_{table} BEFORE INSERT ON gozleme.{table} FOR EACH ROW EXECUTE FUNCTION gozleme.test_drop_{table}();
+                """, _db.SuperuserConnectionString);
+            var (status, text) = await ManifestClient.SendAsync(_s.Carol, _s.Revisions(capabilityId), ChildClient.Mcp(canonical, version, ("tool", "a", null)));
+            Assert.Equal((HttpStatusCode.ServiceUnavailable, """{"error":"unavailable"}"""), (status, text));
+            Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.manifest_revisions WHERE capability_id = '{capabilityId}'"));
+            Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.capability_children WHERE capability_id = '{capabilityId}'"));
+            await GozlemeDatabase.ExecuteAsync($"DROP TRIGGER test_drop_{table} ON gozleme.{table}; DROP FUNCTION gozleme.test_drop_{table}();", _db.SuperuserConnectionString);
+        }
+
+        Assert.Equal(HttpStatusCode.Created, (await ManifestClient.SendAsync(_s.Carol, _s.Revisions(capabilityId), ChildClient.Mcp(canonical, "1.0.0", ("tool", "a", null)))).Status);
     }
 
     private Task<int> MigrateWithLogsAsync(ILoggerProvider provider) => MigrationRunner.RunAsync(

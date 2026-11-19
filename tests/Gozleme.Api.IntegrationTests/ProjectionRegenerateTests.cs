@@ -10,8 +10,10 @@ namespace Gozleme.Api.IntegrationTests;
 /// <summary>
 /// GOZ-0008 T041 (FR-011, FR-011a, maintainer Q3 option B, clarify Q2, contracts/projection-generations.md): the operator
 /// command <c>projection-regenerate</c> records unattested generation N + 1 that keeps every child ID, even when
-/// byte-identical; generation 1 and the attestation never change; exit codes 0/2/3/64 with fixed words; the app login
-/// cannot use it; a suspended publisher's revision can be re-projected; output and audit carry opaque IDs only.
+/// byte-identical; generation 1 and the attestation never change; exit codes 0/1/2/3/64 with fixed words, among them
+/// <c>projection_failed</c>, <c>not_installed</c> (T077, maintainer ruling F14) and exactly <c>failed</c> for exit 1; the
+/// app login cannot use it; a suspended publisher's revision can be re-projected; <c>comparedToPrevious</c> reports
+/// <c>identical</c>, <c>different</c> and <c>not_comparable</c> (T074); output and audit carry opaque IDs only.
 /// </summary>
 public sealed partial class ProjectionRegenerateTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
@@ -131,6 +133,77 @@ public sealed partial class ProjectionRegenerateTests(PgvectorDatabaseFixture fi
         var result = await _s.RegenerateAsync(_logs, null, "--revision", revisionId);
         Assert.Equal((ProjectionOperatorCommands.Refused, RegenerateRefusal.AdapterUnavailable), (result.Code, result.Stderr.Trim()));
         Assert.Equal(1, await GenerationCountAsync(revisionId));
+    }
+
+    [Fact]
+    public async Task Unparseable_stored_native_bytes_with_a_matching_digest_are_refused_as_projection_failed()
+    {
+        var (_, revisionId, _, _) = await PublishedAsync();
+        await TamperAsync($"UPDATE gozleme.manifest_revisions SET native_document = convert_to('{{not json', 'UTF8'), native_digest = 'sha256:' || encode(sha256(convert_to('{{not json', 'UTF8')), 'hex'), native_byte_length = 9 WHERE id = '{revisionId}';");
+        var result = await _s.RegenerateAsync(_logs, null, "--revision", revisionId);
+        Assert.Equal((ProjectionOperatorCommands.Refused, RegenerateRefusal.ProjectionFailed), (result.Code, result.Stderr.Trim()));
+        Assert.Equal(1, await GenerationCountAsync(revisionId));
+        Assert.Contains(_logs, l => l.Contains("Operator projection generation refused (projection_failed)", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_known_revision_without_generation_1_exits_3_not_installed()
+    {
+        // T077 (maintainer ruling F14): the install step has not given the revision generation 1. Its own database: a
+        // migrate run on the shared one (MigrationAndRoleTests) would install the revision mid-test.
+        await using var db = await GozlemeDatabase.StartAsync();
+        await using var s = await RevisionScenario.CreateAsync(db);
+        var (_, _, revision) = await s.PublishedAsync();
+        var revisionId = revision.GetProperty("id").GetString()!;
+        await GozlemeDatabase.ExecuteAsync(
+            "SET session_replication_role = replica; DELETE FROM gozleme.revision_children; DELETE FROM gozleme.capability_children; DELETE FROM gozleme.projection_generations;",
+            db.SuperuserConnectionString);
+        var result = await s.RegenerateAsync(_logs, null, "--revision", revisionId);
+        Assert.Equal((ProjectionOperatorCommands.Refused, RegenerateRefusal.NotInstalled, ""), (result.Code, result.Stderr.Trim(), result.Stdout));
+        Assert.Equal(0, await db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.projection_generations WHERE revision_id = '{revisionId}'"));
+        Assert.Contains(_logs, l => l.Contains("Operator projection generation refused (not_installed)", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Without_a_usable_owner_login_the_command_exits_1_with_the_fixed_word_failed()
+    {
+        // T077: exactly "failed" on stderr, never an exception type or message.
+        var (_, revisionId, _, _) = await PublishedAsync();
+        var unreachable = new Npgsql.NpgsqlConnectionStringBuilder(_s.Db.MigratorConnectionString) { Password = "wrong-password", Timeout = 3 }.ConnectionString;
+        foreach (var connection in new[] { "", unreachable })
+        {
+            var result = await _s.RegenerateAsync(_logs, connection, "--revision", revisionId);
+            Assert.Equal((ProjectionOperatorCommands.Failed, "failed", ""), (result.Code, result.Stderr.Trim(), result.Stdout));
+        }
+
+        Assert.Equal(1, await GenerationCountAsync(revisionId));
+        Assert.Equal(2, _logs.Count(l => l.Contains("Operator projection generation refused (failed)", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task A_different_digest_and_another_adapter_version_are_reported_as_different_and_not_comparable()
+    {
+        // T074: generation 1 is the stored projection, here re-titled with its digest, so the re-projection differs.
+        var (capabilityId, revisionId, _, _) = await PublishedAsync();
+        await TamperAsync($"""
+            UPDATE gozleme.manifest_revisions SET projection = convert_to(replace(convert_from(projection, 'UTF8'), '"Search"', '"Search before"'), 'UTF8') WHERE id = '{revisionId}';
+            UPDATE gozleme.manifest_revisions SET projection_digest = 'sha256:' || encode(sha256(projection), 'hex') WHERE id = '{revisionId}';
+            """);
+        var different = await _s.RegenerateAsync(_logs, null, "--revision", revisionId);
+        Assert.Equal(ProjectionOperatorCommands.Ok, different.Code);
+        Assert.EndsWith("digest equals generation 1: no", different.Stdout.TrimEnd(), StringComparison.Ordinal);
+        Assert.Equal("different", (await GenerationsAsync(capabilityId, revisionId))[1].GetProperty("comparedToPrevious").GetString());
+
+        // Generation 2 now carries another adapter version than generation 3 will: digests are not compared across them.
+        await TamperAsync($"UPDATE gozleme.projection_generations SET adapter_version = '0' WHERE revision_id = '{revisionId}' AND generation = 2;");
+        var notComparable = await _s.RegenerateAsync(_logs, null, "--revision", revisionId);
+        Assert.Equal(ProjectionOperatorCommands.Ok, notComparable.Code);
+        Assert.EndsWith("digest equals generation 2: not_comparable", notComparable.Stdout.TrimEnd(), StringComparison.Ordinal);
+
+        var generations = await GenerationsAsync(capabilityId, revisionId);
+        Assert.Equal([JsonValueKind.Undefined, JsonValueKind.String, JsonValueKind.String],
+            generations.Select(g => g.TryGetProperty("comparedToPrevious", out var c) ? c.ValueKind : JsonValueKind.Undefined));
+        Assert.Equal("not_comparable", generations[2].GetProperty("comparedToPrevious").GetString());
     }
 
     [Fact]

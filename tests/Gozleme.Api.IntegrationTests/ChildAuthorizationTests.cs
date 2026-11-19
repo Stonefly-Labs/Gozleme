@@ -1,12 +1,15 @@
 using System.Net;
 using Gozleme.Api.IntegrationTests.Infrastructure;
+using Gozleme.Api.Organizations;
 
 namespace Gozleme.Api.IntegrationTests;
 
 /// <summary>
 /// GOZ-0008 T052 (FR-012, FR-013, SC-006, contracts/permissions-delta.md): every role reads the five child and
 /// projection routes; non-members and unknown, malformed, foreign or misplaced IDs get the same empty <c>404</c>; a
-/// suspended publisher's children stay readable; an unverified origin is <c>503</c> before membership.
+/// suspended publisher's children stay readable; an unverified origin is <c>503</c> before membership. T072: approver
+/// and reviewer read them too, a member removed between requests gets the empty <c>404</c>, and a signed-out request
+/// is <c>401</c>.
 /// </summary>
 public sealed class ChildAuthorizationTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
@@ -58,6 +61,45 @@ public sealed class ChildAuthorizationTests(PgvectorDatabaseFixture fixture) : I
             {
                 Assert.True((await GetAsync(client, path)).Status == HttpStatusCode.OK, path);
             }
+        }
+    }
+
+    [Fact]
+    public async Task Approver_and_reviewer_read_every_child_route_and_lose_it_when_removed()
+    {
+        // T072 (US4/AC3, FR-015): the remaining roles, then a member removed between two requests.
+        var (capabilityId, revisionId, childId, generationId) = await PublishedAsync();
+        var paths = Paths(_s.OrgA, _s.PublisherId, capabilityId, revisionId, childId, generationId);
+        foreach (var role in new[] { OrganizationRole.Approver, OrganizationRole.Reviewer })
+        {
+            var (client, id) = await TwoTenants.AddPublisherMemberAsync(_s.Factory, _s.Alice, Guid.Parse(_s.OrgA));
+            using var _c = client;
+            await OrgClient.SetRolesAsync(_s.Alice, _s.OrgA, id.ToString(), OrganizationRole.Member, role);
+            foreach (var path in paths)
+            {
+                Assert.True((await GetAsync(client, path)).Status == HttpStatusCode.OK, $"{role} {path}");
+            }
+
+            using (var removed = await OrgClient.RemoveAsync(_s.Alice, _s.OrgA, id.ToString()))
+            {
+                Assert.True(removed.IsSuccessStatusCode);
+            }
+
+            foreach (var path in paths)
+            {
+                Assert.True(await GetAsync(client, path) == (HttpStatusCode.NotFound, 0), $"removed {role} {path}");
+            }
+        }
+    }
+
+    [Fact]
+    public async Task A_signed_out_request_is_401_on_every_child_route()
+    {
+        var (capabilityId, revisionId, childId, generationId) = await PublishedAsync();
+        using var anonymous = _s.Factory.CreateClient();
+        foreach (var path in Paths(_s.OrgA, _s.PublisherId, capabilityId, revisionId, childId, generationId))
+        {
+            Assert.True((await GetAsync(anonymous, path)).Status == HttpStatusCode.Unauthorized, path);
         }
     }
 

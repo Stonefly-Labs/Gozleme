@@ -57,10 +57,13 @@ docker compose run --rm migrate projection-regenerate --revision <revision-uuid>
 | Exit | Meaning | stderr word |
 |---|---|---|
 | 0 | generation recorded | — |
-| 1 | failed (configuration, connection) | `failed` |
+| 1 | failed (configuration, connection, any unexpected error) | exactly `failed`: never an exception type or message |
 | 2 | unknown revision | `unknown_target` |
-| 3 | refused, nothing recorded | `native_digest_mismatch` · `adapter_unavailable` · `projection_failed` · `entries_changed` |
+| 3 | refused, nothing recorded | `native_digest_mismatch` · `adapter_unavailable` · `projection_failed` · `entries_changed` · `not_installed` |
 | 64 | usage | usage text |
+
+`not_installed` (maintainer ruling F14, 2026-11-19): the revision is known but has no generation 1, because the install
+step has not given it one (for example a revision skipped for U+0000, below). Audit 1602 carries the same word.
 
 stdout on success (opaque IDs only):
 
@@ -78,5 +81,14 @@ stdout on success (opaque IDs only):
 
 The last step of every `migrate` run assigns generation 1 and children to revisions that have no generation 1. It works
 per capability in `sequence` order under `gozleme.revisions:<capability>`, applies the duplicate rule for older
-revisions, and commits per capability. It is idempotent. It writes the span `gozleme.children.install` and audit 1603
-`children_installed` (capability, revision count). It changes no revision or attestation.
+revisions, and commits per capability. It is idempotent. It writes the span `gozleme.children.install` (revision and
+capability counts only) and audit 1603 `children_installed` (capability, revision count). It changes no revision or
+attestation.
+
+- **U+0000 skip** (maintainer ruling F3, 2026-11-19): PostgreSQL `text` and `jsonb` cannot hold U+0000, which JSON
+  allows as `\u0000`. A revision whose stored projection holds it in any string is skipped: it gets no children and no
+  generation 1, audit 1604 `children_install_skipped` records its revision ID only, and the step continues with the
+  capability's other revisions. Its capability keeps answering the rollout-gap `503` to publication, and
+  `projection-regenerate` answers it `not_installed`. Every later `migrate` run audits it again. Publication refuses
+  such bodies with `publish.nul_character` (publish-delta.md), so only revisions stored before GOZ-0008 can be skipped.
+- Counters are recorded after each capability's commit; the assignment and generation spans enclose their inserts.

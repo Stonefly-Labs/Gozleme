@@ -7,7 +7,7 @@ namespace Gozleme.Api.IntegrationTests;
 /// <summary>
 /// GOZ-0008 T050 (FR-003, FR-004, FR-017, US4): <c>UPDATE</c>, <c>DELETE</c> and <c>TRUNCATE</c> on the three child
 /// tables change nothing as <c>gozleme_app</c> with an account context or as <c>gozleme_migrator</c> (with or without
-/// one, so the operator too); the API has no write route on the child and projection paths (<c>405</c>).
+/// one, so the operator too) or as the superuser (T073); the API has no write route on the child and projection paths (<c>405</c>).
 /// </summary>
 public sealed class ChildImmutabilityTests(PgvectorDatabaseFixture fixture) : IAsyncLifetime
 {
@@ -60,6 +60,15 @@ public sealed class ChildImmutabilityTests(PgvectorDatabaseFixture fixture) : IA
                 await AssertChangesNothingAsync(login, setup, $"UPDATE gozleme.{table} SET {set} WHERE {where}");
                 await AssertChangesNothingAsync(login, setup, $"DELETE FROM gozleme.{table} WHERE {where}");
                 await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(login, setup, $"TRUNCATE gozleme.{table} CASCADE"));
+            }
+        }
+
+        // T073 (US4/AC1, FR-017): the superuser bypasses RLS, so every attempt reaches the guard and is refused outright.
+        foreach (var (table, set, where) in cases)
+        {
+            foreach (var sql in new[] { $"UPDATE gozleme.{table} SET {set} WHERE {where}", $"DELETE FROM gozleme.{table} WHERE {where}", $"TRUNCATE gozleme.{table} CASCADE" })
+            {
+                await Assert.ThrowsAsync<PostgresException>(() => GozlemeDatabase.InTransactionAsync<object>(_s.Db.SuperuserConnectionString, null, sql));
             }
         }
 

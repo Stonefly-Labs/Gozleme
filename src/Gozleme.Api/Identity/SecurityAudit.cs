@@ -131,4 +131,7 @@ internal sealed partial class SecurityAudit(ILoggerFactory loggers)
 
     [LoggerMessage(EventId = 1603, EventName = "gozleme.audit.children_installed", Level = LogLevel.Information, Message = "Children installed for {RevisionCount} revisions of {CapabilityId}")]
     public partial void ChildrenInstalled(Guid capabilityId, int revisionCount);
+
+    [LoggerMessage(EventId = 1604, EventName = "gozleme.audit.children_install_skipped", Level = LogLevel.Warning, Message = "Children install skipped revision {RevisionId}")]
+    public partial void ChildrenInstallSkipped(Guid revisionId);
 }

@@ -26,6 +26,17 @@ describe("ProjectionGenerations (GOZ-0008 US3)", () => {
     expect(within(rows[1]!).getByTestId("generation-comparison")).toHaveTextContent(COMPARISON_LABELS.identical);
   });
 
+  it("labels each comparison with the previous generation (FR-011)", () => {
+    renderSection([generation(1), generation(2), generation(3, { comparedToPrevious: "different" }), generation(4, { comparedToPrevious: "not_comparable" })]);
+    const rows = screen.getAllByTestId("generation-row");
+    expect(within(rows[0]!).queryByTestId("generation-comparison")).not.toBeInTheDocument();
+    expect(rows.slice(1).map((r) => within(r).getByTestId("generation-comparison").textContent)).toEqual([
+      "Same digest as the previous generation",
+      "Different digest from the previous generation",
+      "Not comparable with the previous generation (different adapter or projection version)",
+    ]);
+  });
+
   it("links each generation's download", () => {
     renderSection();
     const link = within(screen.getAllByTestId("generation-row")[0]!).getByTestId("generation-download");

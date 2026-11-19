@@ -51,41 +51,44 @@ internal static class ChildTelemetry
     private static readonly Counter<long> Generations = GozlemeTelemetry.Meter.CreateCounter<long>(
         "gozleme.projection.generations", unit: "{generation}", description: "Projection generations by family and bounded outcome");
 
-    /// <summary>Records one assignment: the span with its counts (duplicates in install mode only) and one count per entry.</summary>
-    public static void RecordAssign(string family, Assignment assignment, AssignMode mode)
-    {
-        using (var activity = GozlemeTelemetry.ActivitySource.StartActivity(AssignSpanName))
-        {
-            var counts = assignment.Counts;
-            activity?.SetTag(ManifestTelemetry.FamilyTag, family);
-            activity?.SetTag(DeclaredTag, counts.Declared);
-            activity?.SetTag(CreatedTag, counts.Created);
-            activity?.SetTag(MatchedTag, counts.Matched);
-            activity?.SetTag(AbsentTag, counts.Absent);
-            if (mode == AssignMode.Install)
-            {
-                activity?.SetTag(DuplicatesTag, counts.Duplicates);
-            }
-        }
+    /// <summary>The assignment span: it encloses the existing-children query, the matcher and the child inserts (T076).</summary>
+    public static Activity? StartAssign() => GozlemeTelemetry.ActivitySource.StartActivity(AssignSpanName);
 
+    /// <summary>The assignment span's counts (duplicates in install mode only).</summary>
+    public static void Assigned(Activity? activity, string family, Assignment assignment, AssignMode mode)
+    {
+        var counts = assignment.Counts;
+        activity?.SetTag(ManifestTelemetry.FamilyTag, family);
+        activity?.SetTag(DeclaredTag, counts.Declared);
+        activity?.SetTag(CreatedTag, counts.Created);
+        activity?.SetTag(MatchedTag, counts.Matched);
+        activity?.SetTag(AbsentTag, counts.Absent);
+        if (mode == AssignMode.Install)
+        {
+            activity?.SetTag(DuplicatesTag, counts.Duplicates);
+        }
+    }
+
+    /// <summary>One assignment count per entry and the generation 1 count; called only after the transaction commits.</summary>
+    public static void RecordCommitted(string family, Assignment assignment)
+    {
         var created = assignment.Created.ToDictionary(c => c.Id, c => c.IsDuplicate);
         foreach (var record in assignment.Records)
         {
             var outcome = !created.TryGetValue(record.ChildId, out var duplicate) ? ChildOutcome.Matched : duplicate ? ChildOutcome.Duplicate : ChildOutcome.Created;
             Assignments.Add(1, new(ManifestTelemetry.FamilyTag, family), new(KindTag, record.Kind), new(ChildOutcomeTag, outcome));
         }
+
+        RecordGenerationOutcome(family, ChildOutcome.Recorded);
     }
 
-    /// <summary>The generation span (number and attested flag only) and the generation count.</summary>
-    public static void RecordGeneration(string family, int generation, string outcome)
+    /// <summary>The generation span (number and attested flag only); it encloses the generation insert.</summary>
+    public static Activity? StartGeneration(int generation)
     {
-        using (var activity = GozlemeTelemetry.ActivitySource.StartActivity(GenerationSpanName))
-        {
-            activity?.SetTag(GenerationTag, generation);
-            activity?.SetTag(AttestedTag, generation == 1);
-        }
-
-        RecordGenerationOutcome(family, outcome);
+        var activity = GozlemeTelemetry.ActivitySource.StartActivity(GenerationSpanName);
+        activity?.SetTag(GenerationTag, generation);
+        activity?.SetTag(AttestedTag, generation == 1);
+        return activity;
     }
 
     public static void RecordGenerationOutcome(string family, string outcome) =>
