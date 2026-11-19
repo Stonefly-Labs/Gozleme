@@ -23,11 +23,16 @@ internal static partial class MigrationRunner
     public const string MigratorConnectionStringName = "GozlemeMigrator";
     public const string ServiceName = "gozleme-migrator";
 
-    public static async Task<int> RunAsync(string[] args)
+    public static async Task<int> RunAsync(string[] args, ILoggerProvider? logs = null)
     {
         var builder = Host.CreateApplicationBuilder(args);
         builder.Logging.ClearProviders();
         builder.Logging.AddJsonConsole(options => options.UseUtcTimestamp = true);
+        if (logs is not null)
+        {
+            builder.Logging.AddProvider(logs); // tests capture the audit events
+        }
+
         builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
         builder.AddGozlemeTelemetry(ServiceName);
         // EF probes for the history table before creating it on a fresh database and logs that as an error.

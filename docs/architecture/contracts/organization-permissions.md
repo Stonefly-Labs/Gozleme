@@ -27,8 +27,9 @@ this file in their own slice. The broader authorization architecture is `docs/ar
    For `manifest.publish` (GOZ-0007) the steps after permission are: target (`404`), suspension (`409
    {"error":"suspended"}`), the account's publication budget (`429`), media type and size (`415`/`413`), GOZ-0006
    validation unchanged (a rejection answers exactly as validate), version uniqueness by SemVer precedence (`409
-   {"error":"version_exists"}`), signing key available (`503`), then `201`. Reads (`manifest.list`, `manifest.read`)
-   check the target (`404`), then answer `200`.
+   {"error":"version_exists"}`), signing key available (`503`), then `201`; GOZ-0008 adds the publish-time rule
+   `publish.duplicate_entry` (`422`) after validation and before version uniqueness. Reads (`manifest.list`,
+   `manifest.read`) check the target (`404`: publisher, capability, revision, child or generation), then answer `200`.
 
 Inputs are exactly `(the caller's roles in this organization, action)`. There are no conditions,
 attributes, per-user or per-resource grants, deny rules or policy documents. A role is held only
@@ -79,6 +80,11 @@ with its role row unchanged; `manifest.publish` is held by `publisher` only and 
 suspended` in the handler, and the insert policies below); `manifest.list` and `manifest.read` are member-level. 22
 actions over 6 resources; 27 scoped endpoints.
 
+GOZ-0008 (contracts/permissions-delta.md): no new action or resource. The five child and projection-generation
+reads reuse the member-level `manifest.list` and `manifest.read`. 22 actions over 6 resources; 32 scoped endpoints.
+There is no write route on children or generations (`POST`, `PUT`, `PATCH`, `DELETE` answer `405`) and no route for
+re-projection.
+
 Account-level operations, outside this table and open to every signed-in account: create an
 organization (the creator holds `admin` and `member`) and redeem an invitation (the redeemer holds
 `member`).
@@ -112,6 +118,11 @@ organization (the creator holds `admin` and `member`) and redeem an invitation (
 | `GET …/revisions/{revisionId}/native` · `/projection` · `/statement` · `/signature` | `manifest.read` |
 | `GET …/publishers/{publisherId}/signing-keys` | `manifest.read` |
 | `GET …/publishers/{publisherId}/signing-keys/{keyId}/public-key` | `manifest.read` |
+| `GET …/publishers/{publisherId}/capabilities/{capabilityId}/children` | `manifest.list` |
+| `GET …/capabilities/{capabilityId}/children/{childId}` | `manifest.read` |
+| `GET …/capabilities/{capabilityId}/revisions/{revisionId}/children` | `manifest.read` |
+| `GET …/revisions/{revisionId}/projections` | `manifest.read` |
+| `GET …/revisions/{revisionId}/projections/{generationId}` | `manifest.read` |
 
 The `DELETE …/members/{userId}` endpoint declares both actions and picks one from the target.
 
@@ -133,6 +144,8 @@ The `DELETE …/members/{userId}` endpoint declares both actions and picks one f
 | reserve, release or reclaim a handle | the owner login only, through the operator commands; `handle_claims_guard` limits it to one-way transitions |
 | publish a revision (revision, attestation, first signing key) | `manifest_revisions_insert`, `revision_attestations_insert` and `publisher_signing_keys_insert` admit `publisher` holders, only while the publisher holds its handle claim; a member inserts key generation 1 only |
 | add a successor signing key; retire a key | `is_operator()` only (the owner login with no account context), through `signing-key-succession` |
+| record children and generation 1 of a published revision | `capability_children_insert`, `revision_children_insert` and `projection_generations_insert` admit `publisher` holders while the publisher holds its handle claim; members insert non-duplicate children and generation 1 only; the operator (`is_operator()`) inserts install-step children and later generations (`projection-regenerate`) |
+| change or delete a child, child record or projection generation | refused for every login, including the owner (`immutable_row_guard`); `gozleme_app` holds `SELECT, INSERT` only |
 | change or delete a revision, attestation, signing key or retirement | refused for every login, including the owner (`immutable_row_guard`); `gozleme_app` holds `SELECT, INSERT` only |
 
 Reads stay member-level at the database. The application withholds the invitation list from

@@ -52,5 +52,19 @@ public sealed class EndpointAuthorizationTests(PgvectorDatabaseFixture fixture) 
         Assert.Contains(endpoints, e => e.RoutePattern.RawText == "/api/v1/organizations/{organizationId}/members/{userId}/roles"
             && e.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods.SequenceEqual(["PUT"])
             && e.Metadata.GetMetadata<IAllowAnonymous>() is null); // GOZ-0004: session required
+
+        // GOZ-0008: the five child and projection routes are GET only and require a session.
+        const string capability = "/api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}";
+        foreach (var route in new[]
+        {
+            capability + "/children", capability + "/children/{childId}", capability + "/revisions/{revisionId}/children",
+            capability + "/revisions/{revisionId}/projections", capability + "/revisions/{revisionId}/projections/{generationId}",
+        })
+        {
+            var mapped = Assert.Single(endpoints, e => e.RoutePattern.RawText == route);
+            Assert.Equal(["GET"], mapped.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
+            Assert.NotNull(mapped.Metadata.GetMetadata<IAuthorizeData>());
+            Assert.Null(mapped.Metadata.GetMetadata<IAllowAnonymous>());
+        }
     }
 }
