@@ -1,6 +1,6 @@
 schemaVersion: '1.0'
 specId: GOZ-0008
-stage: plan
+stage: tasks
 status: in-progress
 promptRevision: 9
 branch: feature/goz-0008-child-identities
@@ -11,11 +11,19 @@ decisions:
 - {at: '2026-11-19', by: maintainer, topic: generation-scope, decision: 'Q3 option B: generation 1 recorded for every revision plus an owner-login operator re-projection command (no API route) adding additive unattested generation N+1 that keeps child IDs.'}
 - {at: '2026-11-19', by: maintainer, topic: preexisting-duplicates, decision: 'Clarify Q1 option A: at install, first duplicate entry by stored-projection position takes the kind + native name child; each further duplicate gets a new duplicate-marked child that matching never selects (FR-016a).'}
 - {at: '2026-11-19', by: maintainer, topic: identical-reprojection, decision: 'Clarify Q2 option A: byte-identical re-projection still records generation N+1, reports digest equal to previous generation, exits 0 (FR-011a, US3 scenario 7).'}
-agentChoices: []
+agentChoices:
+- {at: '2026-11-19', topic: assignment-layer, choice: 'A1: matching runs in C# (ChildAssigner) inside the publication transaction under the existing per-capability lock; the database verifies it with a partial unique index, a statement-level entry check and deferred completeness triggers (research R1, R4); disclosed for veto.'}
+- {at: '2026-11-19', topic: install-step, choice: 'A2: existing revisions get children and generation 1 in the last step of migrate, as the operator; adds an is_operator() read branch to manifest_revisions_select (research R6; security-review item); disclosed for veto.'}
+- {at: '2026-11-19', topic: duplicate-rule, choice: 'A3: publish.duplicate_entry in a separate publish rule catalogue v1, category invalid_value, location part projection with pointer /entries/<i>; GOZ-0006 catalogue unchanged (research R3); disclosed for veto.'}
+- {at: '2026-11-19', topic: regenerate-command, choice: 'A4: operator command projection-regenerate --revision <uuid>, exit codes 0/1/2/3/64; re-projects with the stored adapter without re-running validation rules (research R7); disclosed for veto.'}
+- {at: '2026-11-19', topic: endpoints, choice: 'A5: five GET endpoints on existing manifest.list/manifest.read (27 -> 32 scoped endpoints, no new action); publication 201 body unchanged (research R9); disclosed for veto.'}
+- {at: '2026-11-19', topic: ordinal, choice: 'A6: per-capability gap-free ordinal for the stable name-free children order and paging (research R4, R9); disclosed for veto.'}
+- {at: '2026-11-19', topic: rollout-gap, choice: 'A7: a publication to a capability that still has a revision without generation 1 answers 503 unavailable (mixed rolling upgrade only) (research R6); disclosed for veto.'}
+- {at: '2026-11-19', topic: generation-children, choice: 'A8: later generations map to children by key and occurrence rank; child records and child views use generation 1 titles (research R5); disclosed for veto.'}
 stages:
   specify: {status: complete, at: '2026-11-19', note: 'maintainer Q1-Q3 decided (verbatim "1: A, 2: A, 3: B"); two follow-up questions deferred to clarify'}
   clarify: {status: complete, at: '2026-11-19', note: '2 questions asked and answered (verbatim "A", "A"); spec FR-011a, FR-016a, US3, US5, edge cases, key entities updated'}
-  plan: {status: pending}
+  plan: {status: done, at: '2026-11-19', artifacts: [plan.md, research.md, data-model.md, quickstart.md, contracts/], decisions: [Q1, Q2, Q3, clarify-Q1, clarify-Q2], agentChoices: [A1, A2, A3, A4, A5, A6, A7, A8], securityReviewItems: ['is_operator() read branch on manifest_revisions_select', 'statement-level entry check and partial unique index as the matching guarantee', 'operator-only duplicate children', 'rollout gap 503', 'no-name scan of spans, logs and command output', 'projection-regenerate without validation rules']}
   tasks: {status: pending}
   implement: {status: pending}
   demo: {status: pending}
@@ -24,5 +32,5 @@ stages:
   roadmapSync: {status: pending}
 attempts: []
 blockers: []
-nextAction: 'Run /speckit-plan'
+nextAction: 'Run /speckit-tasks'
 evidence: {tests: [], demos: [], screenshots: [], reviews: []}

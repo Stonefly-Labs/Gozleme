@@ -502,13 +502,13 @@ specs:
   dependencies:
   - GOZ-0007
   status: in-progress
-  stage: plan
+  stage: tasks
   branch: feature/goz-0008-child-identities
   pullRequest: null
   promptRevision: 9
   gates:
     specification: passed
-    plan: pending
+    plan: passed
     tasks: pending
     implementation: pending
     tests: pending
@@ -525,7 +525,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Clarify complete (maintainer clarify Q1 A, Q2 A, 2026-11-19); run /speckit-plan'
+  nextAction: 'Plan complete 2026-11-19 (agent choices A1-A8 disclosed for veto); run /speckit-tasks'
 - id: GOZ-0009
   number: 9
   title: Filesystem artifact publication
