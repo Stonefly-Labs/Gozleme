@@ -115,7 +115,7 @@ install step runs in the existing `migrate` service and Job.
 | VI. Demo-first | Cumulative `goz-0008` browser demo with screenshots, the operator command, database refusals, isolation and Jaeger evidence, with earlier suites kept | PASS |
 | VII. Protected main | Feature branch; human merge only | PASS |
 | VIII. Converge → impact → hand-off | Through `drive-speckit` | PASS |
-| IX/X. Progress and decisions | Q1–Q3 and the two clarify answers are recorded in `progress.yaml` and the spec. Agent choices A1–A8 (research) are disclosed for veto, and none conflicts with the spec | PASS |
+| IX/X. Progress and decisions | Q1–Q3 and the two clarify answers are recorded in `progress.yaml` and the spec. Agent choices A1–A8 (research): A2, A4, A7, A8 approved by the maintainer 2026-11-19; A1, A3, A5, A6 disclosed for veto; none conflicts with the spec | PASS |
 
 **Post-design re-check (after Phase 1): PASS.**
 - **New surface**:
