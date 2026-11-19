@@ -1,7 +1,7 @@
 schemaVersion: '1.0'
 specId: GOZ-0007
-stage: pr-ready
-status: in-progress
+stage: merged
+status: complete
 promptRevision: 8
 branch: feature/goz-0007-immutable-revisions
 featureDirectory: docs/specs/007-immutable-revisions
@@ -66,9 +66,10 @@ stages:
   verify: {status: done, at: '2026-11-18', tests: 'make test: backend 944/944, web 254/254', lint: passed, build: passed, validate: passed, demo: {result: passed, commit: 1557796, suites: goz-0000..goz-0007, tests: 59, assertions: 60, screenshots: 97, record: docs/specs/007-immutable-revisions/evidence/demo-run.json}, timings: 'SC-007 publish median 75 ms, verify median 23 ms'}
   converge: {status: done, at: '2026-11-18', review: 'review-security (security-reviewer agent): SR1-SR7 pass; SEC-1 fixed per maintainer ruling, SEC-2 fixed, SEC-3 accepted per A9, SEC-4 not reproduced, SEC-5 documented', commits: [b035614, cae3eee]}
   impactAnalysis: {status: done, at: '2026-11-18', artifact: docs/specs/007-immutable-revisions/reviews/impact-analysis.md, findings: GOZ-0007-IF-01..IF-15, applied: 13, decidedByMaintainer: [GOZ-0007-IF-14, GOZ-0007-IF-15], commit: 6b17c9c}
+  merge: {status: verified, pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/23', mergeCommit: 70281315e5898826b0b6ac1957ef51bbab0d8859, head: 66a6bc310c4174279efa10d7305a6625b2751ad1, mergedBy: christopherhouse, mergedAt: '2026-11-18T22:53:15Z', verifiedBy: 'gh pr view + git merge-base --is-ancestor', ci: 'governance, backend, frontend, helm and gitleaks passed on head 66a6bc3; containers + Playwright demo job was still in progress at merge (agent demo run at 1557796 passed)', at: '2026-11-18'}
   roadmapSync: {status: done, at: '2026-11-18', promptRevisions: 'GOZ-0008..0039 8->9, GOZ-0040..0041 6->7', commit: 1557796}
 attempts: []
 blockers: []
 pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/23
-nextAction: 'Ready for human merge: PR #23 (https://github.com/Stonefly-Labs/Gozleme/pull/23). Maintainer reviews and merges; agents never merge.'
+nextAction: 'Complete — merged in 7028131 (PR #23). No open GOZ-0007 impact decisions; GOZ-0008 starts from prompt revision 9.'
 evidence: {tests: [tests/Gozleme.Api.Tests/Revisions/, tests/Gozleme.Api.IntegrationTests/, web/src/components/], demos: [docs/specs/007-immutable-revisions/evidence/demo-run.json, docs/specs/007-immutable-revisions/evidence/revision-evidence.json], screenshots: [docs/specs/007-immutable-revisions/evidence/screenshots/], reviews: [docs/specs/007-immutable-revisions/reviews/impact-analysis.md]}

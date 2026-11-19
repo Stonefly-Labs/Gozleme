@@ -443,8 +443,8 @@ specs:
   prompt: docs/prompts/spec-0007.md
   dependencies:
   - GOZ-0006
-  status: ready-for-human-merge
-  stage: pr-ready
+  status: complete
+  stage: merged
   branch: feature/goz-0007-immutable-revisions
   pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/23
   promptRevision: 8
@@ -458,8 +458,8 @@ specs:
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
-    humanReview: pending
-    merge: pending
+    humanReview: passed
+    merge: passed
   blockers: []
   impactFindings:
   - GOZ-0007-IF-01
@@ -492,7 +492,7 @@ specs:
     - docs/specs/007-immutable-revisions/reviews/impact-analysis.md
     - docs/specs/007-immutable-revisions/reviews/impact-findings.json
     - docs/specs/007-immutable-revisions/progress.yaml
-  nextAction: 'Ready for human merge: T001-T074 done; make test (944 backend, 254 web), lint, build, validate and the cumulative demo GOZ-0000..GOZ-0007 (59 tests, 60 assertions, 97 screenshots, commit 1557796) pass; security review SR1-SR7 pass, SEC-1/2 fixed; impact analysis IF-01..IF-15 (IF-14, IF-15 decided). Maintainer reviews and merges; not merged.'
+  nextAction: 'Complete — merged to main in 70281315e5898826b0b6ac1957ef51bbab0d8859 (PR #23, verified 2026-11-18); no open GOZ-0007 impact decisions (IF-14, IF-15 decided 2026-11-18).'
 - id: GOZ-0008
   number: 8
   title: Child capability identities and projections
@@ -525,7 +525,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Await prerequisites and create allowed working branch
+  nextAction: 'Prerequisite GOZ-0007 merged (PR #23); no open impact decision is due before GOZ-0008 (GOZ-0005-IF-02 before GOZ-0012 plan; IF-04, IF-05, IF-08 before GOZ-0039); prompt revision 9 carries the immutable revision conventions (GOZ-0007-IF-01..IF-06, IF-08, IF-11); start on feature/goz-0008-*'
 - id: GOZ-0009
   number: 9
   title: Filesystem artifact publication
