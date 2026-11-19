@@ -39,3 +39,16 @@ Changing anything here is a contract change.
 
 These handles are refused as a validation error for every caller, including operator reservations. The
 list is separate from the operator's blocked and earmarked reservations.
+
+## Child IDs (GOZ-0008)
+
+Additive section (GOZ-0005-IF-12). Maintainer decision Q1, 2026-11-19, option A.
+
+- Form: `gz://<origin>/cap/<capability-uuid>/<kind>/<child-uuid>`. It is anchored on the canonical capability ID above.
+- `<kind>` is the projection v1 entry kind: `tool`, `resource`, `resource-template`, `prompt`, `skill`, `operation`,
+  `webhook` or `channel`.
+- Only the child UUID (UUIDv7) is stored. The ID never embeds a native name, title, alias, handle, organization ID,
+  entry position, revision, sequence or projection generation.
+- Children have no friendly alias and no alias reservation.
+- Match key, duplicates and the rest of the contract:
+  [`docs/specs/008-child-identities/contracts/child-identity.md`](../../008-child-identities/contracts/child-identity.md).

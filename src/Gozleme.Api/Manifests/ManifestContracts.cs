@@ -10,6 +10,9 @@ internal static class ManifestPart
 {
     public const string Envelope = "envelope";
     public const string Native = "native";
+
+    /// <summary>The projection that validate returns for the same body; used by publish rules only (GOZ-0008 contracts/publish-delta.md).</summary>
+    public const string Projection = "projection";
 }
 
 /// <summary>

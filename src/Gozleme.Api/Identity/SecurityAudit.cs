@@ -120,4 +120,15 @@ internal sealed partial class SecurityAudit(ILoggerFactory loggers)
 
     [LoggerMessage(EventId = 1504, EventName = "gozleme.audit.signing_key_succession_refused", Level = LogLevel.Warning, Message = "Operator signing key succession refused ({Category})")]
     public partial void SigningKeySuccessionRefused(string category);
+
+    // Child identities and projection generations (GOZ-0008): 1601–1610. Opaque ids, counts and fixed words only: never
+    // a name, title, native name, digest or document. Written after commit. The next free range is 1701.
+    [LoggerMessage(EventId = 1601, EventName = "gozleme.audit.projection_generation_recorded", Level = LogLevel.Warning, Message = "Operator recorded projection generation {Generation} {GenerationId} of revision {RevisionId}")]
+    public partial void ProjectionGenerationRecorded(Guid revisionId, Guid generationId, int generation);
+
+    [LoggerMessage(EventId = 1602, EventName = "gozleme.audit.projection_generation_refused", Level = LogLevel.Warning, Message = "Operator projection generation refused ({Category})")]
+    public partial void ProjectionGenerationRefused(string category);
+
+    [LoggerMessage(EventId = 1603, EventName = "gozleme.audit.children_installed", Level = LogLevel.Information, Message = "Children installed for {RevisionCount} revisions of {CapabilityId}")]
+    public partial void ChildrenInstalled(Guid capabilityId, int revisionCount);
 }

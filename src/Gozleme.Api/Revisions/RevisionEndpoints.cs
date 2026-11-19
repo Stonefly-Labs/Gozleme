@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
+using Gozleme.Api.Children;
 using Gozleme.Api.Identity;
 using Gozleme.Api.Manifests;
 using Gozleme.Api.Manifests.Adapters;
@@ -20,7 +21,8 @@ namespace Gozleme.Api.Revisions;
 /// <see cref="TenantTransaction"/> with <c>no-store</c>. The order is origin verified (503) → membership (identical
 /// empty 404) → permission (403) → target (the same empty 404 for malformed, unknown, foreign or misplaced IDs); a
 /// publication then checks suspension (409) → budget (429) → media type (415) → size (413) → GOZ-0006 validation,
-/// unchanged (a rejection answers exactly as validate) → version (409) → signing key (503) → 201. The body is never
+/// unchanged (a rejection answers exactly as validate) → duplicate projection entries (422 <c>publish.duplicate_entry</c>,
+/// GOZ-0008) → version (409) → signing key or rollout gap (503) → 201. The body is never
 /// read before the media-type step. There is no update or delete route: the router answers 405 on the revision.
 /// </summary>
 internal static class RevisionEndpoints
@@ -92,6 +94,14 @@ internal static class RevisionEndpoints
             RevisionTelemetry.RecordPublish(activity, PublishOutcome.Rejected, run.Family);
             http.Response.StatusCode = ManifestEndpoints.StatusOf(run.Result);
             return TypedResults.Bytes(ManifestJson.Serialize(run.Result), "application/json; charset=utf-8");
+        }
+
+        // GOZ-0008 FR-005a: a publish-time rule, so validate (unchanged) can accept what publication refuses.
+        if (ChildEntries.Duplicates(accepted.Projection.Entries) is { Count: > 0 } duplicates)
+        {
+            RevisionTelemetry.RecordPublish(activity, PublishOutcome.Rejected, run.Family);
+            http.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+            return TypedResults.Bytes(ManifestJson.Serialize(ChildEntries.Rejected(duplicates)), "application/json; charset=utf-8");
         }
 
         var publication = await publisher.PublishAsync(owner, capability, accepted, origin, membership.UserId, ct);
@@ -224,6 +234,12 @@ internal static class RevisionEndpoints
     /// Origin (503) → membership (identical empty 404) → permission (403) → publisher and, when named, capability
     /// (the same empty 404). The decision point records a denial (audit 1301); IDs go on the span only after membership.
     /// </summary>
+    /// <summary>The read form of <see cref="ResolveAsync"/>, shared with the GOZ-0008 child endpoints (no publication span).</summary>
+    internal static Task<Target> ResolveReadAsync(
+        string action, string organizationId, string publisherId, string capabilityId, HttpContext http, GozlemeDbContext db,
+        PublisherStore publishers, RegistryOriginReader origins, CancellationToken ct) =>
+        ResolveAsync(action, organizationId, publisherId, capabilityId, http, db, publishers, origins, null, ct);
+
     private static async Task<Target> ResolveAsync(
         string action, string organizationId, string publisherId, string? capabilityId, HttpContext http, GozlemeDbContext db,
         PublisherStore publishers, RegistryOriginReader origins, Publish? publish, CancellationToken ct)
@@ -305,7 +321,7 @@ internal static class RevisionEndpoints
         }
     }
 
-    private static FileContentHttpResult Attachment(HttpContext http, byte[] bytes, string mediaType, string file)
+    internal static FileContentHttpResult Attachment(HttpContext http, byte[] bytes, string mediaType, string file)
     {
         http.Response.Headers.ContentDisposition = $"attachment; filename=\"{file}\"";
         http.Response.Headers.XContentTypeOptions = "nosniff";
@@ -344,5 +360,5 @@ internal static class RevisionEndpoints
         public void Record(string outcome, string family = ManifestValidator.UnknownFamily) => RevisionTelemetry.RecordPublish(Activity, outcome, family);
     }
 
-    private sealed record Target(IResult? Failure, string? Origin = null, Membership? Membership = null, Publisher? Publisher = null, Capability? Capability = null);
+    internal sealed record Target(IResult? Failure, string? Origin = null, Membership? Membership = null, Publisher? Publisher = null, Capability? Capability = null);
 }

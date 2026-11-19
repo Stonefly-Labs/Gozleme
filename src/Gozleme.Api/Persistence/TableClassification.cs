@@ -14,6 +14,7 @@ internal static class TableClassification
     {
         "organizations", "memberships", "invitations", "publishers", "capabilities",
         "manifest_revisions", "revision_attestations", "publisher_signing_keys", "signing_key_retirements",
+        "capability_children", "revision_children", "projection_generations",
     };
 
     /// <summary>
