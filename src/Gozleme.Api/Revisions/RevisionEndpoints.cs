@@ -97,7 +97,10 @@ internal static class RevisionEndpoints
         }
 
         // GOZ-0008 FR-005a: publish-time rules, so validate (unchanged) can accept what publication refuses.
-        if ((IReadOnlyList<ManifestProblem>)[.. ChildEntries.Duplicates(accepted.Projection.Entries), .. ChildEntries.NulCharacters(ManifestJson.ProjectionNode(accepted.Projection))]
+        if ((IReadOnlyList<ManifestProblem>)[
+                .. ChildEntries.Duplicates(accepted.Projection.Entries),
+                .. ChildEntries.NulCharacters(ManifestJson.ProjectionNode(accepted.Projection)),
+                .. ChildEntries.EnvelopeNulCharacters(accepted.Envelope)]
             is { Count: > 0 } problems)
         {
             RevisionTelemetry.RecordPublish(activity, PublishOutcome.Rejected, run.Family);

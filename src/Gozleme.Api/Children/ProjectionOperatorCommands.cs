@@ -99,6 +99,7 @@ internal static class ProjectionOperatorCommands
             if (await LatestAsync(connection, tx, revision) is not { } latest)
             {
                 // Generation 1 is recorded by publication or the install step; without it there is nothing to follow (F14).
+                ChildTelemetry.RecordGenerationOutcome(revision.Family, ChildOutcome.Refused);
                 audit.ProjectionGenerationRefused(RegenerateRefusal.NotInstalled);
                 await stderr.WriteLineAsync(RegenerateRefusal.NotInstalled);
                 return Refused;

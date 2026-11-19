@@ -41,6 +41,7 @@ internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store
     public async Task<Publication> PublishAsync(
         Publisher publisher, Capability capability, AcceptedResult accepted, string origin, Guid accountId, CancellationToken ct)
     {
+        var recordingChildren = false;
         try
         {
             // now() is the transaction's start time: the trigger writes the same value as published_at (R4).
@@ -118,11 +119,12 @@ internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store
             await db.SaveChangesAsync(ct);
             db.ChangeTracker.Clear();
 
+            recordingChildren = true;
             var assignment = await children.RecordAsync(revision, accepted.Projection.Entries, AssignMode.Publish, null, ct);
             await children.CheckCompleteAsync(ct);
             return new Publication(PublishResult.Published, new StoredRevision(revision, attestation, PublicPart(key), null), created, assignment);
         }
-        catch (Exception ex) when (Classify(ex) is { } result)
+        catch (Exception ex) when (Classify(ex, recordingChildren) is { } result)
         {
             db.ChangeTracker.Clear();
             return await RefuseAsync(result, ct);
@@ -187,9 +189,10 @@ internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store
     /// refusal by a GOZ-0008 child table (an assignment the database does not accept) or by its completeness checks,
     /// run before return (<c>23000</c>), fails closed as <c>unavailable</c> (maintainer ruling F4). So does text the
     /// database cannot hold (<c>22P05</c>, <c>22021</c>: U+0000, which <c>publish.nul_character</c> refuses first, F3);
-    /// those carry no table name.
+    /// those carry no table name. Neither does a row-level <c>WITH CHECK</c> refusal (<c>42501</c>), so one raised while
+    /// <paramref name="recordingChildren"/> (the child inserts, after the revision insert) is also <c>unavailable</c>.
     /// </summary>
-    internal static PublishResult? Classify(Exception ex) =>
+    internal static PublishResult? Classify(Exception ex, bool recordingChildren = false) =>
         (ex as PostgresException ?? ex.InnerException as PostgresException) switch
         {
             { SqlState: PostgresErrorCodes.UniqueViolation, TableName: "manifest_revisions" } => PublishResult.VersionExists,
@@ -197,7 +200,7 @@ internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store
                 => PublishResult.Unavailable,
             { SqlState: PostgresErrorCodes.IntegrityConstraintViolation, ConstraintName: "capability_children_recorded" or "manifest_revisions_children" } => PublishResult.Unavailable,
             { SqlState: PostgresErrorCodes.UntranslatableCharacter or PostgresErrorCodes.CharacterNotInRepertoire } => PublishResult.Unavailable,
-            { SqlState: PostgresErrorCodes.InsufficientPrivilege } => PublishResult.Suspended,
+            { SqlState: PostgresErrorCodes.InsufficientPrivilege } => recordingChildren ? PublishResult.Unavailable : PublishResult.Suspended,
             _ => null,
         };
 }

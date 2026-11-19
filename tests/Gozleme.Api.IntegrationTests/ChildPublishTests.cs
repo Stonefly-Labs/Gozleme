@@ -249,6 +249,32 @@ public sealed class ChildPublishTests(PgvectorDatabaseFixture fixture) : IAsyncL
     }
 
     [Fact]
+    public async Task Envelope_U0000_strings_are_accepted_by_validate_and_refused_by_publish_after_projection_problems_with_nothing_stored()
+    {
+        // T082 (maintainer ruling envelope-nul): envelope title and summary are stored in envelope_summary jsonb; this answered 503.
+        var (capabilityId, canonical) = await _s.NewCapabilityAsync();
+        var envelope = System.Text.Json.Nodes.JsonNode.Parse(ChildClient.Mcp(canonical, "1.0.0", ("tool", "ok", null), ("tool", "a\0b", null)))!.AsObject();
+        envelope["title"] = "Env\0title";
+        envelope["summary"] = "Env\0summary";
+        var body = System.Text.Encoding.UTF8.GetBytes(envelope.ToJsonString());
+
+        var (validateStatus, validated) = await ManifestClient.SendAsync(_s.Carol, ManifestClient.Validate(_s.OrgA, _s.PublisherId, capabilityId), body);
+        Assert.Equal((HttpStatusCode.OK, "accepted"), (validateStatus, ManifestClient.Json(validated).GetProperty("outcome").GetString()));
+
+        var (status, text) = await ManifestClient.SendAsync(_s.Carol, _s.Revisions(capabilityId), body);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, status);
+        var problems = ManifestClient.Json(text).GetProperty("problems").EnumerateArray().ToArray();
+        Assert.Equal(["projection /entries/1/nativeName", "envelope /title", "envelope /summary"],
+            problems.Select(p => $"{p.GetProperty("location").GetProperty("part").GetString()} {p.GetProperty("location").GetProperty("pointer").GetString()}"));
+        Assert.All(problems, p => Assert.Equal("publish.nul_character", p.GetProperty("rule").GetString()));
+        Assert.DoesNotContain("\\u0000", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Env", text, StringComparison.Ordinal);
+
+        Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.manifest_revisions WHERE capability_id = '{capabilityId}'"));
+        Assert.Equal(0, await CountAsync($"SELECT count(*) FROM gozleme.capability_children WHERE capability_id = '{capabilityId}'"));
+    }
+
+    [Fact]
     public async Task The_publication_response_body_is_unchanged()
     {
         var (capabilityId, canonical) = await _s.NewCapabilityAsync();

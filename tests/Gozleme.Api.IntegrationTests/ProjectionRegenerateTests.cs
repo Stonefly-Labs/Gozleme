@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -158,10 +159,34 @@ public sealed partial class ProjectionRegenerateTests(PgvectorDatabaseFixture fi
         await GozlemeDatabase.ExecuteAsync(
             "SET session_replication_role = replica; DELETE FROM gozleme.revision_children; DELETE FROM gozleme.capability_children; DELETE FROM gozleme.projection_generations;",
             db.SuperuserConnectionString);
+        // T084: the refusal is counted. Other suites record this counter alongside, so only this test's async flow is kept.
+        var outcomes = new ConcurrentQueue<string>();
+        var ours = new AsyncLocal<bool>();
+        using var meters = new MeterListener
+        {
+            InstrumentPublished = (instrument, listener) =>
+            {
+                if (instrument.Meter.Name == Gozleme.Api.Telemetry.GozlemeTelemetry.Meter.Name && instrument.Name == "gozleme.projection.generations")
+                {
+                    listener.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        meters.SetMeasurementEventCallback<long>((_, value, tags, _) =>
+        {
+            if (ours.Value)
+            {
+                outcomes.Enqueue(string.Join(';', tags.ToArray().Select(t => $"{t.Key}={t.Value}").Order(StringComparer.Ordinal)) + $" {value}");
+            }
+        });
+        meters.Start();
+        ours.Value = true;
         var result = await s.RegenerateAsync(_logs, null, "--revision", revisionId);
+        ours.Value = false;
         Assert.Equal((ProjectionOperatorCommands.Refused, RegenerateRefusal.NotInstalled, ""), (result.Code, result.Stderr.Trim(), result.Stdout));
         Assert.Equal(0, await db.ScalarAsync<long>($"SELECT count(*) FROM gozleme.projection_generations WHERE revision_id = '{revisionId}'"));
         Assert.Contains(_logs, l => l.Contains("Operator projection generation refused (not_installed)", StringComparison.Ordinal));
+        Assert.Equal([$"gozleme.manifest.family={revision.GetProperty("envelope").GetProperty("family").GetString()};gozleme.projection.outcome=refused 1"], outcomes);
     }
 
     [Fact]

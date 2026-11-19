@@ -84,6 +84,18 @@ public sealed class ChildEntriesTests
     }
 
     [Fact]
+    public void Every_envelope_string_with_U0000_is_reported_at_part_envelope_without_the_value()
+    {
+        var envelope = new EnvelopeSummary(1, "mcp", ManifestTestKit.CanonicalId, "1.0.0", "T\0", "S\0", new NativeDeclaration("mcp-server-manifest", "1", "json"));
+        var problems = ChildEntries.EnvelopeNulCharacters(envelope);
+        Assert.Equal(["envelope /title", "envelope /summary"], problems.Select(p => ManifestTestKit.Where(p.Location)));
+        Assert.All(problems, p => Assert.Equal(PublishRules.NulCharacter, p.Rule));
+        Assert.DoesNotContain("\\u0000", ManifestTestKit.Json(ChildEntries.Rejected(problems)), StringComparison.Ordinal);
+
+        Assert.Empty(ChildEntries.EnvelopeNulCharacters(envelope with { Title = "T", Summary = null }));
+    }
+
+    [Fact]
     public void An_a2a_card_with_two_skills_of_one_id_is_accepted_by_validate_and_has_a_duplicate_group()
     {
         var sample = ManifestSamples.Get("valid-agent-card");

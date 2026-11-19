@@ -14,14 +14,17 @@ not check `operationId` uniqueness or a derived `"<METHOD> <path>"` that equals 
 | Rule | Category | Location | Message |
 |---|---|---|---|
 | `publish.duplicate_entry` | `invalid_value` | `{part: "projection", pointer: "/entries/<i>"}` | Two or more projection entries have the same kind and native name. |
-| `publish.nul_character` | `invalid_value` | `{part: "projection", pointer: <the string>}` | A projection string contains the character U+0000. |
+| `publish.nul_character` | `invalid_value` | `{part: "projection" \| "envelope", pointer: <the string>}` | A projection or envelope string contains the character U+0000. |
 
 `publish.nul_character` (maintainer ruling F3 and the "nul-pointer" decision, 2026-11-19): PostgreSQL `text` and
 `jsonb` cannot hold U+0000, which JSON allows as `\u0000` and validate accepts. Without the rule such a publication
 answered an unhandled `500`. One problem is reported for every string of the projection that holds U+0000, in document
 order, at that string's exact pointer, for example `/title`, `/description`, `/entries/3/nativeName`,
-`/entries/3/title` or `/attributes/transports/0`. When both rules apply, the duplicate problems come first, then the
-U+0000 problems, in one `422` body capped at 50 problems.
+`/entries/3/title` or `/attributes/transports/0`. The envelope strings a revision stores in `envelope_summary` are
+checked the same way (maintainer ruling "envelope-nul", 2026-11-19): one problem per envelope string that holds U+0000,
+at `{part: "envelope", pointer: <the string>}`, for example `/title` or `/summary`. When several apply, the duplicate
+problems come first, then the projection U+0000 problems, then the envelope U+0000 problems, in one `422` body capped at
+50 problems. Validate is unchanged and accepts such a body.
 
 - `publish.duplicate_entry`: one problem is reported for **every** entry of a duplicate group, the first one included, ordered by index. The cap
   is 50 problems, with `truncated`.
