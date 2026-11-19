@@ -5,8 +5,8 @@
     "nativeBytes": 524288,
     "format": "openapi 3.1 json",
     "runs": 3,
-    "medianMs": 77,
-    "worstMs": 87,
+    "medianMs": 58,
+    "worstMs": 65,
     "limitMs": 2000,
     "environment": "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)"
   },
