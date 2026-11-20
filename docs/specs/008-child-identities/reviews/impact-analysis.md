@@ -57,9 +57,9 @@ No finding is critical. None changes the DAG, an outcome, a prerequisite or an i
   - bump `promptRevision` 9 → 10 for GOZ-0009 to GOZ-0039, and 7 → 8 for GOZ-0040 and GOZ-0041;
   - list GOZ-0008-IF-01..IF-16 in GOZ-0008 `impactFindings`;
   - add this review and `impact-findings.json` to GOZ-0008 `evidence.reviews`;
-  - record IF-13, IF-14, IF-15 and IF-16 as open pending maintainer decisions, not as resolved.
+  - record IF-13, IF-14, IF-15 and IF-16 as decided by the maintainer on 2026-11-19 (see the resolved list below).
 
-Nothing was edited in completed specs, `docs/architecture/**`, `docs/decisions/**`, `.gozleme/spec-registry.yaml`, the generated register or any GOZ-0008 code.
+The analyst edited nothing in completed specs, `docs/architecture/**`, `docs/decisions/**`, `.gozleme/spec-registry.yaml`, the generated register or any GOZ-0008 code. The maintainer-approved IF-13..IF-16 changes were applied afterwards in `d74bbcd`.
 
 ## Needs maintainer decision (not edited by the analyst)
 
