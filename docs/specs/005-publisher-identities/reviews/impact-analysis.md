@@ -93,6 +93,8 @@ No finding is critical. None changes the DAG, an outcome, a prerequisite or an i
 
 ## Maintainer decisions requested
 
+**Resolved 2026-11-19 by maintainer ruling:** IF-02, option **B**. Alias resolution goes only through a pinned `SECURITY DEFINER` resolver that returns visible canonical IDs; it is built and security-reviewed in GOZ-0012. The living prompts GOZ-0009 to GOZ-0039 were updated (revision 10 → 11).
+
 1. **IF-02, alias read path.** Decide before the GOZ-0012 plan.
    - **A.** A `SELECT` grant plus a policy joined to visibility.
    - **B.** A pinned `SECURITY DEFINER` resolver that returns only visible canonical IDs.

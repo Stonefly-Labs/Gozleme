@@ -362,7 +362,7 @@ specs:
   - GOZ-0005-IF-13
   - GOZ-0005-IF-14
   pendingHumanDecisions:
-  - {finding: GOZ-0005-IF-02, status: open, decideBefore: 'GOZ-0012 plan', topic: 'alias resolution read path (SELECT grant with visibility policy / pinned definer resolver / none in MVP)'}
+  - {finding: GOZ-0005-IF-02, status: decided, decidedAt: '2026-11-19', decidedBy: maintainer, option: B-pinned-definer-resolver, topic: 'alias resolution only through a pinned SECURITY DEFINER resolve_alias(alias) returning a canonical ID only when visible; gozleme_app keeps INSERT only on alias_reservations; resolver security review during GOZ-0012'}
   - {finding: GOZ-0005-IF-04, status: open, decideBefore: 'GOZ-0039 clarification (earlier if a spec adds another owner-login operator command)', topic: 'least-privilege operator role instead of the owner login for handle commands', note: 'trigger fired in GOZ-0007 (signing-key-succession, GOZ-0007-IF-14); maintainer 2026-11-18 accepted the second owner-login command for MVP and kept this decision open until GOZ-0039 clarification'}
   - {finding: GOZ-0005-IF-05, status: open, decideBefore: 'GOZ-0039 clarification', topic: 'rate-limit storage across replicas (GOZ-0001/0002 in-process vs PostgreSQL-backed publisher registration)'}
   - {finding: GOZ-0005-IF-08, status: open, decideBefore: 'GOZ-0039 clarification (semantics per spec: GOZ-0007 plan first)', topic: 'permanent suspension after reclaim; whether and how it can be lifted'}
@@ -566,7 +566,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -599,7 +599,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -632,7 +632,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -666,7 +666,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -686,7 +686,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: 'Prerequisites GOZ-0003 and GOZ-0008 merged (PR #25); GOZ-0005-IF-02 (alias resolution read path) must be decided before the GOZ-0012 plan; prompt revision 10 carries the child identity conventions (GOZ-0008-IF-01..IF-06); start on feature/goz-0012-*'
+  nextAction: 'Prerequisites GOZ-0003 and GOZ-0008 merged (PR #25); GOZ-0005-IF-02 decided 2026-11-19 (option B: pinned definer alias resolver, built and security-reviewed in GOZ-0012); prompt revision 11 carries the child identity conventions (GOZ-0008-IF-01..IF-06); start on feature/goz-0012-*'
 - id: GOZ-0013
   number: 13
   title: PostgreSQL lexical search
@@ -699,7 +699,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -732,7 +732,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -766,7 +766,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -799,7 +799,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -833,7 +833,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -867,7 +867,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -901,7 +901,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -935,7 +935,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -969,7 +969,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1003,7 +1003,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1038,7 +1038,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1072,7 +1072,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1106,7 +1106,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1140,7 +1140,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1174,7 +1174,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1208,7 +1208,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1242,7 +1242,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1276,7 +1276,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1310,7 +1310,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1343,7 +1343,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1377,7 +1377,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1411,7 +1411,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1444,7 +1444,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1478,7 +1478,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1512,7 +1512,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1546,7 +1546,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
@@ -1582,7 +1582,7 @@ specs:
   stage: null
   branch: null
   pullRequest: null
-  promptRevision: 10
+  promptRevision: 11
   gates:
     specification: pending
     plan: pending
