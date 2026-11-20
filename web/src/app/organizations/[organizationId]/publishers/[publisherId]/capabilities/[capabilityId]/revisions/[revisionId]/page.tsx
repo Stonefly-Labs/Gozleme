@@ -3,10 +3,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AccountBar } from "@/components/AccountBar";
 import { OrganizationsUnavailable } from "@/components/OrganizationsUnavailable";
+import { ProjectionGenerations } from "@/components/ProjectionGenerations";
+import { RevisionChildren } from "@/components/RevisionChildren";
 import { RevisionDetail } from "@/components/RevisionDetail";
 import { SignedInHeader } from "@/components/SignedInHeader";
+import { listGenerations, listRevisionChildren } from "@/lib/children-server";
 import { revisionsPage } from "@/lib/revisions";
-import { getRevision } from "@/lib/revisions-server";
+import { cursor, getRevision } from "@/lib/revisions-server";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -16,21 +19,32 @@ export const metadata: Metadata = { title: "Revision — Gözleme" };
 /**
  * One signed revision (GOZ-0007 User Stories 1 and 3): Native, Projection and Attestation tabs. The API verifies it
  * from the stored bytes on every load; unknown, malformed, foreign or misplaced ids all get the same "not found".
+ * GOZ-0008 adds its **Children** and **Projection generations** sections.
  */
 export default async function RevisionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ organizationId: string; publisherId: string; capabilityId: string; revisionId: string }>;
+  searchParams: Promise<{ after?: string | string[] }>;
 }) {
   const { organizationId, publisherId, capabilityId, revisionId } = await params;
+  const after = cursor((await searchParams).after);
   const listHref = revisionsPage(organizationId, publisherId, capabilityId);
   const returnTo = `/login?returnTo=${encodeURIComponent(`${listHref}/${encodeURIComponent(revisionId)}`)}`;
   const session = await getSession();
   if (session.state === "anonymous") redirect(returnTo);
 
-  const revision = session.state === "authenticated" ? await getRevision(organizationId, publisherId, capabilityId, revisionId) : ({ state: "unavailable" } as const);
-  if (revision.state === "anonymous") redirect(returnTo);
-  if (revision.state === "not_found") notFound();
+  const [revision, children, generations] =
+    session.state === "authenticated"
+      ? await Promise.all([
+          getRevision(organizationId, publisherId, capabilityId, revisionId),
+          listRevisionChildren(organizationId, publisherId, capabilityId, revisionId, after),
+          listGenerations(organizationId, publisherId, capabilityId, revisionId),
+        ])
+      : [{ state: "unavailable" } as const, { state: "unavailable" } as const, { state: "unavailable" } as const];
+  if (revision.state === "anonymous" || children.state === "anonymous" || generations.state === "anonymous") redirect(returnTo);
+  if (revision.state === "not_found" || children.state === "not_found" || generations.state === "not_found") notFound();
 
   return (
     <>
@@ -49,10 +63,14 @@ export default async function RevisionPage({
           </div>
           {session.state === "authenticated" && <AccountBar email={session.session.email} />}
         </header>
-        {revision.state !== "ok" ? (
+        {revision.state !== "ok" || children.state !== "ok" || generations.state !== "ok" ? (
           <OrganizationsUnavailable />
         ) : (
-          <RevisionDetail organizationId={organizationId} publisherId={publisherId} capabilityId={capabilityId} revision={revision.data} />
+          <div className="stack">
+            <RevisionDetail organizationId={organizationId} publisherId={publisherId} capabilityId={capabilityId} revision={revision.data} />
+            <RevisionChildren organizationId={organizationId} publisherId={publisherId} capabilityId={capabilityId} revisionId={revision.data.id} list={children.data} />
+            <ProjectionGenerations organizationId={organizationId} publisherId={publisherId} capabilityId={capabilityId} revisionId={revision.data.id} list={generations.data} />
+          </div>
         )}
       </main>
     </>

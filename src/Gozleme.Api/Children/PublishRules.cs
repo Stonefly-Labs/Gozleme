@@ -1,0 +1,28 @@
+using Gozleme.Api.Manifests;
+
+namespace Gozleme.Api.Children;
+
+/// <summary>
+/// Publish rule catalogue v1 (GOZ-0008 contracts/publish-delta.md, agent choice A3): rules that publication applies
+/// after GOZ-0006 validation accepts. It is separate from <see cref="ManifestRules"/>, whose 40 rules and catalogue
+/// version are unchanged, so validate is unchanged (FR-005a) and can answer <c>200</c> for a body publish refuses.
+/// Publication reports both rules' problems together: duplicates first, then projection U+0000 strings, then envelope
+/// U+0000 strings, each in document order.
+/// </summary>
+internal static class PublishRules
+{
+    public const string CatalogueVersion = "1";
+
+    public static readonly ManifestRule DuplicateEntry = new(
+        "publish.duplicate_entry", ProblemCategory.InvalidValue, "Two or more projection entries have the same kind and native name.");
+
+    /// <summary>
+    /// Maintainer ruling F3 and "nul-pointer" (2026-11-19): PostgreSQL text and jsonb cannot hold U+0000, which JSON
+    /// allows as <c>\u0000</c> and validate accepts. One problem per projection string that holds it, at that string, and
+    /// ("envelope-nul") per stored envelope string (<c>title</c>, <c>summary</c>) that holds it, at part <c>envelope</c>.
+    /// </summary>
+    public static readonly ManifestRule NulCharacter = new(
+        "publish.nul_character", ProblemCategory.InvalidValue, "A projection or envelope string contains the character U+0000.");
+
+    public static readonly IReadOnlyList<ManifestRule> All = [DuplicateEntry, NulCharacter];
+}

@@ -30,15 +30,19 @@ public sealed class OrganizationPermissionContractTests(PgvectorDatabaseFixture 
     public void Every_organization_scoped_endpoint_declares_known_actions()
     {
         var endpoints = _factory.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().ToList();
-        Assert.Equal(27, endpoints.Count(IsScoped)); // read, select, rename, members, remove/leave, roles, invitations ×3, publishers ×4, capabilities ×4, manifest validate, revisions: publish, list, read, 4 downloads, keys, public key
+        Assert.Equal(32, endpoints.Count(IsScoped)); // read, select, rename, members, remove/leave, roles, invitations ×3, publishers ×4, capabilities ×4, manifest validate, revisions: publish, list, read, 4 downloads, keys, public key; children: list, read, revision children, generations, generation download
         Assert.Empty(Undeclared(endpoints));
 
         var actions = endpoints.Where(IsScoped).SelectMany(e => e.Metadata.GetMetadata<OrgActionAttribute>()!.Actions).ToList();
         Assert.Equal(OrgAction.All.Select(a => a.Action).Order(StringComparer.Ordinal), actions.Distinct().Order(StringComparer.Ordinal));
 
         // GOZ-0007 (contracts/permissions-delta.md): manifest.read guards the detail, the 4 downloads, the key list and the public key.
-        Assert.Equal(7, actions.Count(a => a == OrgAction.ManifestRead));
-        Assert.All(actions.Where(a => a != OrgAction.ManifestRead).GroupBy(a => a), g => Assert.Single(g));
+        // GOZ-0008 (contracts/permissions-delta.md): manifest.list also guards the children list; manifest.read the child, the
+        // revision's children, its generations and a generation download. No new action (22 actions over 6 resources).
+        Assert.Equal(11, actions.Count(a => a == OrgAction.ManifestRead));
+        Assert.Equal(2, actions.Count(a => a == OrgAction.ManifestList));
+        Assert.Equal(22, OrgAction.All.Count);
+        Assert.All(actions.Where(a => a is not (OrgAction.ManifestRead or OrgAction.ManifestList)).GroupBy(a => a), g => Assert.Single(g));
     }
 
     [Fact]

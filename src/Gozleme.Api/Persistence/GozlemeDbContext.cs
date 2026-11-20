@@ -1,4 +1,5 @@
 using System.Text;
+using Gozleme.Api.Children;
 using Gozleme.Api.Identity;
 using Gozleme.Api.Organizations;
 using Gozleme.Api.Publishers;
@@ -71,6 +72,12 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
     public DbSet<PublisherSigningKey> PublisherSigningKeys => Set<PublisherSigningKey>();
 
     public DbSet<SigningKeyRetirement> SigningKeyRetirements => Set<SigningKeyRetirement>();
+
+    public DbSet<CapabilityChild> CapabilityChildren => Set<CapabilityChild>();
+
+    public DbSet<RevisionChild> RevisionChildren => Set<RevisionChild>();
+
+    public DbSet<ProjectionGeneration> ProjectionGenerations => Set<ProjectionGeneration>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -231,6 +238,46 @@ internal sealed class GozlemeDbContext(DbContextOptions<GozlemeDbContext> option
                 .HasPrincipalKey<ManifestRevision>(r => new { r.Id, r.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
             attestation.HasOne<PublisherSigningKey>().WithMany().HasForeignKey(a => new { a.SigningKeyId, a.OrganizationId })
                 .HasPrincipalKey(k => new { k.Id, k.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Tenant-owned (GOZ-0008), RLS forced, write-once for every login (migration ChildIdentities). The match index,
+        // guards, entry check, deferred completeness triggers and policies live in the migration's SQL.
+        builder.Entity<CapabilityChild>(child =>
+        {
+            child.ToTable("capability_children");
+            child.HasAlternateKey(c => new { c.Id, c.OrganizationId });
+            child.HasIndex(c => new { c.CapabilityId, c.Ordinal }).IsUnique();
+            child.HasIndex(c => c.OrganizationId);
+            child.HasIndex(c => c.FirstRevisionId);
+            child.HasOne<Organization>().WithMany().HasForeignKey(c => c.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            child.HasOne<Capability>().WithMany().HasForeignKey(c => new { c.CapabilityId, c.OrganizationId })
+                .HasPrincipalKey(c => new { c.Id, c.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+            child.HasOne<ManifestRevision>().WithMany().HasForeignKey(c => new { c.FirstRevisionId, c.OrganizationId })
+                .HasPrincipalKey(r => new { r.Id, r.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<RevisionChild>(record =>
+        {
+            record.ToTable("revision_children");
+            record.HasKey(r => new { r.RevisionId, r.EntryIndex });
+            record.HasIndex(r => new { r.RevisionId, r.ChildId }).IsUnique();
+            record.HasIndex(r => r.ChildId);
+            record.HasIndex(r => r.OrganizationId);
+            record.HasOne<Organization>().WithMany().HasForeignKey(r => r.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            record.HasOne<ManifestRevision>().WithMany().HasForeignKey(r => new { r.RevisionId, r.OrganizationId })
+                .HasPrincipalKey(r => new { r.Id, r.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+            record.HasOne<CapabilityChild>().WithMany().HasForeignKey(r => new { r.ChildId, r.OrganizationId })
+                .HasPrincipalKey(c => new { c.Id, c.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<ProjectionGeneration>(generation =>
+        {
+            generation.ToTable("projection_generations");
+            generation.HasIndex(g => new { g.RevisionId, g.Generation }).IsUnique();
+            generation.HasIndex(g => g.OrganizationId);
+            generation.HasOne<Organization>().WithMany().HasForeignKey(g => g.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+            generation.HasOne<ManifestRevision>().WithMany().HasForeignKey(g => new { g.RevisionId, g.OrganizationId })
+                .HasPrincipalKey(r => new { r.Id, r.OrganizationId }).OnDelete(DeleteBehavior.Restrict);
         });
 
         ApplySnakeCaseNames(builder);

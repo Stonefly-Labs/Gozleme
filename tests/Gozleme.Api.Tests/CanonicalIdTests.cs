@@ -5,7 +5,8 @@ namespace Gozleme.Api.Tests;
 
 /// <summary>
 /// GOZ-0005 FR-004, FR-013 (contracts/namespace.md): identifiers are the origin plus a lowercase, hyphenated,
-/// 36-character UUID, and never embed an organization id, a handle, a capability name or a display name.
+/// 36-character UUID, and never embed an organization id, a handle, a capability name or a display name. GOZ-0008 adds
+/// the child ID (maintainer Q1): the capability ID, the closed entry kind and the child UUID, never a native name.
 /// </summary>
 public sealed partial class CanonicalIdTests
 {
@@ -34,16 +35,38 @@ public sealed partial class CanonicalIdTests
     [Fact]
     public void An_identifier_never_embeds_the_organization_or_a_name()
     {
-        // The renderer takes only the origin and the id: an organization, handle or name cannot reach it.
+        // The renderer takes only the origin and ids (and, for a child, its closed kind): an organization, handle or name cannot reach it.
         foreach (var method in typeof(CanonicalId).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static))
         {
-            Assert.Equal([typeof(string), typeof(Guid)], method.GetParameters().Select(p => p.ParameterType));
+            Type[] expected = method.Name == nameof(CanonicalId.Child) ? [typeof(string), typeof(Guid), typeof(string), typeof(Guid)] : [typeof(string), typeof(Guid)];
+            Assert.Equal(expected, method.GetParameters().Select(p => p.ParameterType));
         }
 
         var organization = Guid.CreateVersion7();
         var id = Guid.CreateVersion7();
         Assert.DoesNotContain(organization.ToString(), CanonicalId.Capability(Origin, id), StringComparison.OrdinalIgnoreCase);
     }
+
+    [Theory]
+    [InlineData("tool")]
+    [InlineData("resource")]
+    [InlineData("resource-template")]
+    [InlineData("prompt")]
+    [InlineData("skill")]
+    [InlineData("operation")]
+    [InlineData("webhook")]
+    [InlineData("channel")]
+    public void A_child_id_is_the_capability_id_its_kind_and_the_child_uuid(string kind)
+    {
+        var (capability, child) = (Guid.CreateVersion7(), Guid.CreateVersion7());
+        var rendered = CanonicalId.Child(Origin, capability, kind, child);
+        Assert.Equal($"{CanonicalId.Capability(Origin, capability)}/{kind}/{child:D}", rendered);
+        Assert.Matches(ChildRendered(), rendered);
+        Assert.NotEqual(CanonicalId.Child(Origin, capability, kind, Guid.CreateVersion7()), rendered);
+    }
+
+    [GeneratedRegex("^gz://registry\\.demo\\.gozleme\\.test/cap/[0-9a-f-]{36}/(tool|resource|resource-template|prompt|skill|operation|webhook|channel)/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
+    private static partial Regex ChildRendered();
 
     [GeneratedRegex("^gz://registry\\.demo\\.gozleme\\.test/(pub|cap)/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
     private static partial Regex Rendered();

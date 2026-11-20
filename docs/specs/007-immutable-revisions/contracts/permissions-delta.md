@@ -33,6 +33,8 @@ suspended`) and in the insert policies of `manifest_revisions`, `revision_attest
 - **Publish**: target (`404`) → suspension (`409 suspended`) → publication budget (`429`) → media type (`415`) → size
   (`413`) → GOZ-0006 validation (`400`/`413`/`422` with the result body) → version (`409 version_exists`) → signing
   key (`503`) → `201`.
+  GOZ-0008 extends this order (publish rule catalogue v1 `422`, rollout-gap and child-refusal `503`); see
+  [GOZ-0008 publish-delta.md](../../008-child-identities/contracts/publish-delta.md) (GOZ-0008-IF-15).
 - **Reads**: target (`404`) → `200`.
 
 ## Boundary

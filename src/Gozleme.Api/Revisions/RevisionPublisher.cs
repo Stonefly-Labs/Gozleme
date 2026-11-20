@@ -1,3 +1,4 @@
+using Gozleme.Api.Children;
 using Gozleme.Api.Manifests;
 using Gozleme.Api.Persistence;
 using Gozleme.Api.Publishers;
@@ -15,8 +16,11 @@ internal enum PublishResult
     Unavailable,
 }
 
-/// <summary>A committed-on-success publication: the stored revision, its attestation and key, and whether the key is new.</summary>
-internal sealed record Publication(PublishResult Result, StoredRevision? Revision = null, bool KeyCreated = false);
+/// <summary>
+/// A committed-on-success publication: the stored revision, its attestation and key, whether the key is new, and the
+/// child assignment, whose counters the endpoint records after commit.
+/// </summary>
+internal sealed record Publication(PublishResult Result, StoredRevision? Revision = null, bool KeyCreated = false, Assignment? Assignment = null);
 
 /// <summary>
 /// Publishes an accepted manifest in the request's tenant transaction (GOZ-0007 research R7, R8, R12 steps 10–12):
@@ -24,15 +28,20 @@ internal sealed record Publication(PublishResult Result, StoredRevision? Revisio
 /// version uniqueness by SemVer precedence (contents never compared, identical replays included); the gap-free next
 /// sequence; the publisher's active key, created lazily as generation 1 inside this transaction; the canonical
 /// projection and its digest; statement v1, signed; then the revision and its attestation. Everything commits together
-/// or not at all, and a refusal rolls the transaction back so <c>TenantTransaction</c> commits nothing.
+/// or not at all, and a refusal rolls the transaction back so <c>TenantTransaction</c> commits nothing. GOZ-0008 adds,
+/// in the same transaction and under the same lock: a capability with a revision that has no generation 1 answers
+/// <c>unavailable</c> (the rollout gap, maintainer-approved A7), then the revision's children are assigned in publish
+/// mode and recorded with generation 1 (research R1); the database checks the assignment (R4), and its deferred
+/// completeness checks run before return so a refusal answers here (F4).
 /// </summary>
-internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store, SigningKeyVault vault)
+internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store, ChildStore children, SigningKeyVault vault)
 {
     public const string VersionKeyIndex = "ix_manifest_revisions_capability_id_version_key";
 
     public async Task<Publication> PublishAsync(
         Publisher publisher, Capability capability, AcceptedResult accepted, string origin, Guid accountId, CancellationToken ct)
     {
+        var recordingChildren = false;
         try
         {
             // now() is the transaction's start time: the trigger writes the same value as published_at (R4).
@@ -44,6 +53,11 @@ internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store
             if (await db.ManifestRevisions.AnyAsync(r => r.CapabilityId == capability.Id && r.VersionKey == versionKey, ct))
             {
                 return await RefuseAsync(PublishResult.VersionExists, ct);
+            }
+
+            if (await children.HasUninstalledRevisionAsync(capability.Id, ct))
+            {
+                return await RefuseAsync(PublishResult.Unavailable, ct);
             }
 
             var sequence = 1 + (await db.ManifestRevisions.Where(r => r.CapabilityId == capability.Id).MaxAsync(r => (int?)r.Sequence, ct) ?? 0);
@@ -104,9 +118,13 @@ internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store
             db.RevisionAttestations.Add(attestation);
             await db.SaveChangesAsync(ct);
             db.ChangeTracker.Clear();
-            return new Publication(PublishResult.Published, new StoredRevision(revision, attestation, PublicPart(key), null), created);
+
+            recordingChildren = true;
+            var assignment = await children.RecordAsync(revision, accepted.Projection.Entries, AssignMode.Publish, null, ct);
+            await children.CheckCompleteAsync(ct);
+            return new Publication(PublishResult.Published, new StoredRevision(revision, attestation, PublicPart(key), null), created, assignment);
         }
-        catch (Exception ex) when (Classify(ex) is { } result)
+        catch (Exception ex) when (Classify(ex, recordingChildren) is { } result)
         {
             db.ChangeTracker.Clear();
             return await RefuseAsync(result, ct);
@@ -167,13 +185,22 @@ internal sealed class RevisionPublisher(GozlemeDbContext db, RevisionStore store
 
     /// <summary>
     /// The defence-in-depth answers (R8, R12): a unique violation on the revision keys is <c>version_exists</c>, and a
-    /// row-level refusal (<c>42501</c>, for example a reclaim that raced the suspension check) is <c>suspended</c>.
+    /// row-level refusal (<c>42501</c>, for example a reclaim that raced the suspension check) is <c>suspended</c>. A
+    /// refusal by a GOZ-0008 child table (an assignment the database does not accept) or by its completeness checks,
+    /// run before return (<c>23000</c>), fails closed as <c>unavailable</c> (maintainer ruling F4). So does text the
+    /// database cannot hold (<c>22P05</c>, <c>22021</c>: U+0000, which <c>publish.nul_character</c> refuses first, F3);
+    /// those carry no table name. Neither does a row-level <c>WITH CHECK</c> refusal (<c>42501</c>), so one raised while
+    /// <paramref name="recordingChildren"/> (the child inserts, after the revision insert) is also <c>unavailable</c>.
     /// </summary>
-    internal static PublishResult? Classify(Exception ex) =>
+    internal static PublishResult? Classify(Exception ex, bool recordingChildren = false) =>
         (ex as PostgresException ?? ex.InnerException as PostgresException) switch
         {
             { SqlState: PostgresErrorCodes.UniqueViolation, TableName: "manifest_revisions" } => PublishResult.VersionExists,
-            { SqlState: PostgresErrorCodes.InsufficientPrivilege } => PublishResult.Suspended,
+            { SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.InsufficientPrivilege, TableName: "capability_children" or "revision_children" or "projection_generations" }
+                => PublishResult.Unavailable,
+            { SqlState: PostgresErrorCodes.IntegrityConstraintViolation, ConstraintName: "capability_children_recorded" or "manifest_revisions_children" } => PublishResult.Unavailable,
+            { SqlState: PostgresErrorCodes.UntranslatableCharacter or PostgresErrorCodes.CharacterNotInRepertoire } => PublishResult.Unavailable,
+            { SqlState: PostgresErrorCodes.InsufficientPrivilege } => recordingChildren ? PublishResult.Unavailable : PublishResult.Suspended,
             _ => null,
         };
 }

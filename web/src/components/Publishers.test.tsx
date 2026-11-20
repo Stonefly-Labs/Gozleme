@@ -180,6 +180,15 @@ describe("CapabilityList", () => {
   });
 });
 
+describe("CapabilityList children (GOZ-0008)", () => {
+  it("links Children beside Revisions for callers holding manifest.list, also while suspended", () => {
+    const { rerender } = render(<CapabilityList organizationId={ORG} publisherId={PUB} capabilities={[capability]} canRename={false} />);
+    expect(screen.queryByTestId("children-link")).not.toBeInTheDocument();
+    rerender(<CapabilityList organizationId={ORG} publisherId={PUB} capabilities={[{ ...capability, state: "suspended" }]} canRename={false} canListRevisions />);
+    expect(screen.getByTestId("children-link")).toHaveAttribute("href", `/organizations/${ORG}/publishers/${PUB}/capabilities/${capability.id}/children`);
+  });
+});
+
 describe("RenameDisplayNameForm", () => {
   it("sends only the display name", async () => {
     const path = `/api/organizations/${ORG}/publishers/${PUB}/capabilities/${CAP}`;

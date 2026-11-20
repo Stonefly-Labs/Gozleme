@@ -1,0 +1,322 @@
+openapi: 3.1.0
+info:
+  title: Gözleme Child Identities and Projection Generations API — GOZ-0008
+  version: "1"
+  description: >
+    Read-only views of a capability's child identities and of each revision's projection generations, organization-scoped
+    under the Organizations API v1. Inherited from GOZ-0007 (contracts/revision-api.openapi.yaml): session required,
+    Cache-Control no-store, the identical empty 404 for a malformed, unknown or non-member organization and for unknown,
+    malformed, foreign or misplaced publisher, capability, revision, child or generation IDs, 503 {"error":"unavailable"}
+    while PostgreSQL is unreachable or the registry origin is not verified, 403 {"error":"forbidden"} when the caller's
+    roles lack the action. There are no create, update, replace or delete operations (405). Children are declared by the
+    publisher and are not verified behaviour. Child ID form: contracts/child-identity.md. Generations:
+    contracts/projection-generations.md. Publication changes: contracts/publish-delta.md.
+servers:
+  - url: http://api:8080
+security:
+  - session: []
+paths:
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/revisions:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+    post:
+      operationId: publishRevision
+      x-gozleme-action: manifest.publish
+      x-gozleme-delta: >
+        GOZ-0008 publication delta (contracts/publish-delta.md), additive to
+        ../../007-immutable-revisions/contracts/revision-api.openapi.yaml#publishRevision. Only the 422 and 503
+        responses change; every other response, the request body and the 201 body are those of GOZ-0007, and the
+        GOZ-0006 and GOZ-0007 contracts are unchanged (FR-005a, FR-021).
+      description: >
+        Order (GOZ-0007, updated): … → GOZ-0006 validation, unchanged (400/413/422 with the GOZ-0006 Rejected body,
+        byte-identical to validate) → publish rule catalogue v1 (422 publish.duplicate_entry, publish.nul_character)
+        → version uniqueness (409 version_exists) → 503 unavailable (no usable signing key, the rollout gap, or a
+        child-table refusal) → 201. The revision, its attestation, generation 1, its new children and its child
+        revision records commit together or not at all.
+      responses:
+        '422':
+          description: >
+            Either the GOZ-0006 Rejected body (validation, byte-identical to validate) or a PublishRejected body from
+            publish rule catalogue v1. Validate accepts what the publish rules refuse. When several publish rules apply,
+            the duplicate problems come first, then the projection U+0000 problems, then the envelope U+0000 problems,
+            in one body capped at 50 problems. No name or value is echoed.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '../../006-typed-manifests/contracts/manifest-api.openapi.yaml#/components/schemas/Rejected'
+                  - $ref: '#/components/schemas/PublishRejected'
+              examples:
+                duplicateEntry:
+                  value:
+                    outcome: rejected
+                    truncated: false
+                    problems:
+                      - { category: invalid_value, rule: publish.duplicate_entry, location: { part: projection, pointer: /entries/0 }, message: 'Two or more projection entries have the same kind and native name.' }
+                      - { category: invalid_value, rule: publish.duplicate_entry, location: { part: projection, pointer: /entries/2 }, message: 'Two or more projection entries have the same kind and native name.' }
+                nulCharacter:
+                  value:
+                    outcome: rejected
+                    truncated: false
+                    problems:
+                      - { category: invalid_value, rule: publish.nul_character, location: { part: projection, pointer: /entries/3/nativeName }, message: 'A projection or envelope string contains the character U+0000.' }
+                      - { category: invalid_value, rule: publish.nul_character, location: { part: envelope, pointer: /summary }, message: 'A projection or envelope string contains the character U+0000.' }
+        '503':
+          description: >
+            {"error":"unavailable"}, nothing stored. Causes: PostgreSQL unreachable or the origin not verified
+            (GOZ-0007); no usable signing key (GOZ-0007); the rollout gap, an earlier revision of the capability
+            without generation 1 because the install step has not run (maintainer ruling A7, research R6); a child-table
+            refusal at insert (23505 match index, 42501 guard, entry check or insert policy) or in the completeness
+            checks run with SET CONSTRAINTS … IMMEDIATE (23000 from capability_children_recorded or
+            manifest_revisions_children) (maintainer ruling F4); text the database cannot hold (22P05, 22021), which
+            publish.nul_character refuses first (maintainer ruling F3). The span outcome is unavailable.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: unavailable } } }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/children:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+    get:
+      operationId: listChildren
+      x-gozleme-action: manifest.list
+      description: The capability's children in creation order (ordinal), independent of names.
+      parameters:
+        - { name: after, in: query, schema: { type: integer, minimum: 0 }, description: 'Ordinal cursor.' }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        '200': { description: 'A page.', content: { application/json: { schema: { $ref: '#/components/schemas/ChildList' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/children/{childId}:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+      - $ref: '#/components/parameters/childId'
+    get:
+      operationId: readChild
+      x-gozleme-action: manifest.read
+      description: One child with a page of its history over every revision of the capability, by sequence.
+      parameters:
+        - { name: after, in: query, schema: { type: integer, minimum: 0 }, description: 'Revision sequence cursor.' }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        '200': { description: 'The child.', content: { application/json: { schema: { $ref: '#/components/schemas/ChildDetail' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/revisions/{revisionId}/children:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+      - $ref: '#/components/parameters/revisionId'
+    get:
+      operationId: listRevisionChildren
+      x-gozleme-action: manifest.read
+      description: The children a revision declares, by entry index in its stored projection.
+      parameters:
+        - { name: after, in: query, schema: { type: integer, minimum: -1 }, description: 'Entry index cursor (exclusive).' }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        '200': { description: 'A page.', content: { application/json: { schema: { $ref: '#/components/schemas/RevisionChildList' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/revisions/{revisionId}/projections:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+      - $ref: '#/components/parameters/revisionId'
+    get:
+      operationId: listProjectionGenerations
+      x-gozleme-action: manifest.read
+      responses:
+        '200': { description: 'All generations, by number.', content: { application/json: { schema: { $ref: '#/components/schemas/GenerationList' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/v1/organizations/{organizationId}/publishers/{publisherId}/capabilities/{capabilityId}/revisions/{revisionId}/projections/{generationId}:
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/publisherId'
+      - $ref: '#/components/parameters/capabilityId'
+      - $ref: '#/components/parameters/revisionId'
+      - $ref: '#/components/parameters/generationId'
+    get:
+      operationId: downloadProjectionGeneration
+      x-gozleme-action: manifest.read
+      description: >
+        The exact generation bytes (RFC 8785 canonical projection v1), Content-Disposition attachment, nosniff. For
+        generation 1 these are the revision's stored, attested projection bytes.
+      responses:
+        '200': { description: 'The bytes.', content: { application/json: { schema: { type: string, format: binary } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+components:
+  securitySchemes:
+    session: { type: apiKey, in: cookie, name: gozleme_session }
+  parameters:
+    organizationId: { name: organizationId, in: path, required: true, schema: { type: string } }
+    publisherId: { name: publisherId, in: path, required: true, schema: { type: string } }
+    capabilityId: { name: capabilityId, in: path, required: true, schema: { type: string } }
+    revisionId: { name: revisionId, in: path, required: true, schema: { type: string } }
+    childId: { name: childId, in: path, required: true, schema: { type: string }, description: 'The child UUID (not the gz:// form).' }
+    generationId: { name: generationId, in: path, required: true, schema: { type: string }, description: 'The generation UUID; never a child UUID.' }
+  responses:
+    Forbidden: { description: 'The caller lacks the action.', content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: forbidden } } } }
+    NotFound: { description: 'Unknown, malformed, non-member, foreign or misplaced IDs. Empty body.' }
+    Unavailable: { description: 'Database unreachable or origin not verified.', content: { application/json: { schema: { $ref: '#/components/schemas/Error' }, example: { error: unavailable } } } }
+  schemas:
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties: { error: { type: string } }
+    Kind:
+      type: string
+      enum: [tool, resource, resource-template, prompt, skill, operation, webhook, channel]
+    ChildSummary:
+      type: object
+      additionalProperties: false
+      required: [id, canonicalId, kind, ordinal, duplicate, firstRevisionId, latest, presentIn, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        canonicalId: { type: string, description: 'gz://<origin>/cap/<capability-uuid>/<kind>/<child-uuid>' }
+        kind: { $ref: '#/components/schemas/Kind' }
+        ordinal: { type: integer, minimum: 1 }
+        duplicate: { type: boolean, description: 'Install-step duplicate (FR-016a); never matched by later revisions.' }
+        firstRevisionId: { type: string, format: uuid }
+        latest:
+          type: object
+          description: The latest revision (highest sequence) in which the child is present.
+          additionalProperties: false
+          required: [revisionId, sequence, version, nativeName]
+          properties:
+            revisionId: { type: string, format: uuid }
+            sequence: { type: integer }
+            version: { type: string }
+            nativeName: { type: string }
+            title: { type: [string, 'null'] }
+        presentIn: { type: integer, description: 'Number of revisions that declare the child.' }
+        createdAt: { type: string, format: date-time }
+    ChildList:
+      type: object
+      additionalProperties: false
+      required: [items, declaredNotVerified]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/ChildSummary' } }
+        next: { type: [integer, 'null'] }
+        declaredNotVerified: { const: true }
+    ChildDetail:
+      type: object
+      additionalProperties: false
+      required: [child, capability, history, declaredNotVerified]
+      properties:
+        child: { $ref: '#/components/schemas/ChildSummary' }
+        capability:
+          type: object
+          additionalProperties: false
+          required: [id, canonicalId, displayName]
+          properties:
+            id: { type: string, format: uuid }
+            canonicalId: { type: string }
+            displayName: { type: string }
+        history:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [revisionId, sequence, version, present]
+            properties:
+              revisionId: { type: string, format: uuid }
+              sequence: { type: integer }
+              version: { type: string }
+              present: { type: boolean }
+              nativeName: { type: [string, 'null'] }
+              title: { type: [string, 'null'] }
+        next: { type: [integer, 'null'] }
+        declaredNotVerified: { const: true }
+    RevisionChildList:
+      type: object
+      additionalProperties: false
+      required: [items, declaredNotVerified]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [entryIndex, childId, canonicalId, kind, nativeName, duplicate]
+            properties:
+              entryIndex: { type: integer, minimum: 0 }
+              childId: { type: string, format: uuid }
+              canonicalId: { type: string }
+              kind: { $ref: '#/components/schemas/Kind' }
+              nativeName: { type: string }
+              title: { type: [string, 'null'] }
+              duplicate: { type: boolean }
+        next: { type: [integer, 'null'] }
+        declaredNotVerified: { const: true }
+    Generation:
+      type: object
+      additionalProperties: false
+      required: [id, generation, adapter, projectionVersion, digest, byteLength, attested, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        generation: { type: integer, minimum: 1 }
+        adapter:
+          type: object
+          additionalProperties: false
+          required: [id, version]
+          properties: { id: { type: string }, version: { type: string } }
+        projectionVersion: { type: string }
+        digest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        byteLength: { type: integer }
+        attested: { type: boolean, description: 'True for generation 1 only (statement v1 covers the publication projection).' }
+        comparedToPrevious: { type: string, enum: [identical, different, not_comparable] }
+        createdAt: { type: string, format: date-time }
+    PublishRejected:
+      type: object
+      description: GOZ-0006 Rejected shape for publish rule catalogue v1 (contracts/publish-delta.md); status 422.
+      additionalProperties: false
+      required: [outcome, problems, truncated]
+      properties:
+        outcome: { const: rejected }
+        problems:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: '#/components/schemas/PublishProblem' }
+        truncated: { type: boolean }
+    PublishProblem:
+      type: object
+      additionalProperties: false
+      required: [category, rule, location, message]
+      properties:
+        category: { const: invalid_value }
+        rule: { enum: [publish.duplicate_entry, publish.nul_character] }
+        message: { type: string, description: 'Fixed catalogue text; never contains submitted values.' }
+        location:
+          type: object
+          additionalProperties: false
+          required: [part, pointer]
+          properties:
+            part:
+              enum: [projection, envelope]
+              description: >
+                projection (new in GOZ-0008): a pointer into the projection that validate returns for the same body;
+                publish.duplicate_entry uses /entries/<i>. envelope: a pointer into the envelope (publish.nul_character
+                only).
+            pointer: { type: string, description: 'RFC 6901 JSON Pointer.' }
+    GenerationList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Generation' } }

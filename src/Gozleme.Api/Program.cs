@@ -12,6 +12,9 @@ switch (args.FirstOrDefault())
     case var command when Gozleme.Api.Revisions.SigningKeyOperatorCommands.Handles(command):
         // Operator-only signing-key succession: --publisher <uuid> | --undecryptable (GOZ-0007, owner login + KEK).
         return await Gozleme.Api.Revisions.SigningKeyOperatorCommands.RunAsync(args[1..], Console.Out, Console.Error);
+    case var command when Gozleme.Api.Children.ProjectionOperatorCommands.Handles(command):
+        // Operator-only re-projection: --revision <uuid> adds an unattested generation N + 1 (GOZ-0008, owner login).
+        return await Gozleme.Api.Children.ProjectionOperatorCommands.RunAsync(args[1..], Console.Out, Console.Error);
     case var command when OperatorCommands.Handles(command):
         // Operator-only account maintenance: seed | reset-password | unlock (never exposed over HTTP).
         return await OperatorCommands.RunAsync(command!, args[1..], Console.In, Console.Out, Console.Error);

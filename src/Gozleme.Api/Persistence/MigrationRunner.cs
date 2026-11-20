@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Text;
+using Gozleme.Api.Children;
+using Gozleme.Api.Identity;
 using Gozleme.Api.Publishers;
 using Gozleme.Api.Telemetry;
 using Gozleme.Api.Tenancy;
@@ -13,18 +15,24 @@ namespace Gozleme.Api.Persistence;
 /// (<c>ConnectionStrings:GozlemeMigrator</c>) so the serving process never holds DDL rights.
 /// Since GOZ-0005 it also records the registry origin once (research R6): validate the configured value,
 /// compare it with any recorded value <b>before</b> migrating, migrate, record, then verify. A recorded
-/// origin is never overwritten.
+/// origin is never overwritten. Since GOZ-0008 its last step, after the origin is verified, gives revisions without
+/// generation 1 their children and generation 1 (<see cref="ChildInstaller"/>, research R6).
 /// </summary>
 internal static partial class MigrationRunner
 {
     public const string MigratorConnectionStringName = "GozlemeMigrator";
     public const string ServiceName = "gozleme-migrator";
 
-    public static async Task<int> RunAsync(string[] args)
+    public static async Task<int> RunAsync(string[] args, ILoggerProvider? logs = null)
     {
         var builder = Host.CreateApplicationBuilder(args);
         builder.Logging.ClearProviders();
         builder.Logging.AddJsonConsole(options => options.UseUtcTimestamp = true);
+        if (logs is not null)
+        {
+            builder.Logging.AddProvider(logs); // tests capture the audit events
+        }
+
         builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
         builder.AddGozlemeTelemetry(ServiceName);
         // EF probes for the history table before creating it on a fresh database and logs that as an error.
@@ -41,6 +49,7 @@ internal static partial class MigrationRunner
         var dataSource = new NpgsqlDataSourceBuilder(connectionString) { Name = ServiceName }.Build();
         builder.Services.AddSingleton(dataSource);
         builder.Services.AddDbContext<GozlemeDbContext>(options => GozlemeDbContext.Configure(options, dataSource));
+        builder.Services.AddSingleton<SecurityAudit>();
 
         var tenancy = builder.Configuration.GetSection(TenancyOptions.Section).Get<TenancyOptions>() ?? new TenancyOptions();
         var origin = builder.Configuration.GetSection(RegistryOriginOptions.Section).Get<RegistryOriginOptions>()?.Origin;
@@ -102,6 +111,8 @@ internal static partial class MigrationRunner
                 }
 
                 LogOriginRecorded(logger, recorded > 0 ? "recorded" : "verified");
+                var installed = await ChildInstaller.RunAsync(db, scope.ServiceProvider.GetRequiredService<SecurityAudit>());
+                LogChildrenInstalled(logger, installed.Revisions, installed.Capabilities);
                 await host.StopAsync();
                 return 0;
             }
@@ -131,6 +142,9 @@ internal static partial class MigrationRunner
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Registry origin {Outcome}")]
     private static partial void LogOriginRecorded(ILogger logger, string outcome);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Children installed for {RevisionCount} revisions of {CapabilityCount} capabilities")]
+    private static partial void LogChildrenInstalled(ILogger logger, int revisionCount, int capabilityCount);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Database migrated; latest migration {MigrationId}")]
     private static partial void LogMigrated(ILogger logger, string migrationId);

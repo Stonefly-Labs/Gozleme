@@ -72,6 +72,9 @@ internal static class CanonicalId
     public static string Publisher(string origin, Guid id) => $"gz://{origin}/pub/{id:D}";
 
     public static string Capability(string origin, Guid id) => $"gz://{origin}/cap/{id:D}";
+
+    /// <summary>A child ID (GOZ-0008 maintainer Q1, contracts/child-identity.md): only the child UUID is stored; no alias.</summary>
+    public static string Child(string origin, Guid capabilityId, string kind, Guid childId) => $"gz://{origin}/cap/{capabilityId:D}/{kind}/{childId:D}";
 }
 
 /// <summary>Whether the recorded origin matches the configured one.</summary>

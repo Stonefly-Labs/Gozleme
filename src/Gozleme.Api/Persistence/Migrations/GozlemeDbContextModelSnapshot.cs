@@ -23,6 +23,188 @@ namespace Gozleme.Api.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Gozleme.Api.Children.CapabilityChild", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CapabilityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("capability_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("FirstRevisionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("first_revision_id");
+
+                    b.Property<bool>("IsDuplicate")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_duplicate");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("NativeName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("native_name");
+
+                    b.Property<int>("Ordinal")
+                        .HasColumnType("integer")
+                        .HasColumnName("ordinal");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_capability_children");
+
+                    b.HasAlternateKey("Id", "OrganizationId")
+                        .HasName("ak_capability_children_id_organization_id");
+
+                    b.HasIndex("FirstRevisionId")
+                        .HasDatabaseName("ix_capability_children_first_revision_id");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_capability_children_organization_id");
+
+                    b.HasIndex("CapabilityId", "Ordinal")
+                        .IsUnique()
+                        .HasDatabaseName("ix_capability_children_capability_id_ordinal");
+
+                    b.HasIndex("CapabilityId", "OrganizationId")
+                        .HasDatabaseName("ix_capability_children_capability_id_organization_id");
+
+                    b.HasIndex("FirstRevisionId", "OrganizationId")
+                        .HasDatabaseName("ix_capability_children_first_revision_id_organization_id");
+
+                    b.ToTable("capability_children", "gozleme");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Children.ProjectionGeneration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AdapterId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("adapter_id");
+
+                    b.Property<string>("AdapterVersion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("adapter_version");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Generation")
+                        .HasColumnType("integer")
+                        .HasColumnName("generation");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<byte[]>("Projection")
+                        .HasColumnType("bytea")
+                        .HasColumnName("projection");
+
+                    b.Property<string>("ProjectionDigest")
+                        .HasColumnType("text")
+                        .HasColumnName("projection_digest");
+
+                    b.Property<string>("ProjectionVersion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("projection_version");
+
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("revision_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_projection_generations");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_projection_generations_organization_id");
+
+                    b.HasIndex("RevisionId", "Generation")
+                        .IsUnique()
+                        .HasDatabaseName("ix_projection_generations_revision_id_generation");
+
+                    b.HasIndex("RevisionId", "OrganizationId")
+                        .HasDatabaseName("ix_projection_generations_revision_id_organization_id");
+
+                    b.ToTable("projection_generations", "gozleme");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Children.RevisionChild", b =>
+                {
+                    b.Property<Guid>("RevisionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("revision_id");
+
+                    b.Property<int>("EntryIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("entry_index");
+
+                    b.Property<Guid>("ChildId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("child_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("NativeName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("native_name");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text")
+                        .HasColumnName("title");
+
+                    b.HasKey("RevisionId", "EntryIndex")
+                        .HasName("pk_revision_children");
+
+                    b.HasIndex("ChildId")
+                        .HasDatabaseName("ix_revision_children_child_id");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_revision_children_organization_id");
+
+                    b.HasIndex("ChildId", "OrganizationId")
+                        .HasDatabaseName("ix_revision_children_child_id_organization_id");
+
+                    b.HasIndex("RevisionId", "ChildId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_revision_children_revision_id_child_id");
+
+                    b.HasIndex("RevisionId", "OrganizationId")
+                        .HasDatabaseName("ix_revision_children_revision_id_organization_id");
+
+                    b.ToTable("revision_children", "gozleme");
+                });
+
             modelBuilder.Entity("Gozleme.Api.Identity.AuthSession", b =>
                 {
                     b.Property<byte[]>("KeyHash")
@@ -845,6 +1027,76 @@ namespace Gozleme.Api.Persistence.Migrations
                         .HasName("pk_user_tokens");
 
                     b.ToTable("user_tokens", "gozleme");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Children.CapabilityChild", b =>
+                {
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_capability_children_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Publishers.Capability", null)
+                        .WithMany()
+                        .HasForeignKey("CapabilityId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_capability_children_capabilities_capability_id_organization~");
+
+                    b.HasOne("Gozleme.Api.Revisions.ManifestRevision", null)
+                        .WithMany()
+                        .HasForeignKey("FirstRevisionId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_capability_children_manifest_revisions_first_revision_id_or~");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Children.ProjectionGeneration", b =>
+                {
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_projection_generations_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Revisions.ManifestRevision", null)
+                        .WithMany()
+                        .HasForeignKey("RevisionId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_projection_generations_manifest_revisions_revision_id_organ~");
+                });
+
+            modelBuilder.Entity("Gozleme.Api.Children.RevisionChild", b =>
+                {
+                    b.HasOne("Gozleme.Api.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_revision_children_organizations_organization_id");
+
+                    b.HasOne("Gozleme.Api.Children.CapabilityChild", null)
+                        .WithMany()
+                        .HasForeignKey("ChildId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_revision_children_capability_children_child_id_organization~");
+
+                    b.HasOne("Gozleme.Api.Revisions.ManifestRevision", null)
+                        .WithMany()
+                        .HasForeignKey("RevisionId", "OrganizationId")
+                        .HasPrincipalKey("Id", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_revision_children_manifest_revisions_revision_id_organizati~");
                 });
 
             modelBuilder.Entity("Gozleme.Api.Identity.AuthSession", b =>

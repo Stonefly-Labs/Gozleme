@@ -41,9 +41,10 @@ public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IA
     public async Task Manifest_validation_adds_only_its_rate_limit_counter()
     {
         // GOZ-0006 FR-017 as clarified (T099): validation stores no manifest, only its shared counter. GOZ-0007 R19
-        // adds exactly the publication counter, the write-once revisions and their attestations (deliberate pin).
+        // adds exactly the publication counter, the write-once revisions and their attestations; GOZ-0008 R13 adds
+        // the projection generations and child revision records (capability_children is in the table list below).
         var db = fixture.Database;
-        Assert.Equal("manifest_publication_attempts,manifest_revisions,manifest_validation_attempts,revision_attestations", await db.ScalarAsync<string>(
+        Assert.Equal("manifest_publication_attempts,manifest_revisions,manifest_validation_attempts,projection_generations,revision_attestations,revision_children", await db.ScalarAsync<string>(
             "SELECT string_agg(tablename, ',' ORDER BY tablename) FROM pg_tables WHERE tablename ~ '(manifest|revision|projection)'"));
         foreach (var counter in new[] { "manifest_validation_attempts", "manifest_publication_attempts" })
         {
@@ -51,7 +52,7 @@ public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IA
                 $"SELECT string_agg(column_name, ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema = 'gozleme' AND table_name = '{counter}'"));
         }
 
-        Assert.Equal("20261121000000_ManifestRevisions", await db.ScalarAsync<string>("""SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """));
+        Assert.Equal("20261122000000_ChildIdentities", await db.ScalarAsync<string>("""SELECT max("MigrationId") FROM public."__EFMigrationsHistory" """));
     }
 
     [Fact]
@@ -60,7 +61,7 @@ public sealed class BootstrapBoundaryTests(PgvectorDatabaseFixture fixture) : IA
         var db = fixture.Database;
         Assert.Equal(1, await db.ScalarAsync<long>("SELECT count(*) FROM pg_namespace WHERE nspname = 'gozleme'"));
         var tables = await db.ScalarAsync<string>("SELECT string_agg(tablename, ',' ORDER BY tablename) FROM pg_tables WHERE schemaname = 'gozleme'");
-        Assert.Equal("alias_reservations,auth_sessions,capabilities,data_protection_keys,handle_claims,invitations,manifest_publication_attempts,manifest_revisions,manifest_validation_attempts,memberships,organizations,publisher_registration_attempts,publisher_signing_keys,publishers,registry_origin,revision_attestations,signing_key_retirements,user_claims,user_logins,user_tokens,users", tables);
+        Assert.Equal("alias_reservations,auth_sessions,capabilities,capability_children,data_protection_keys,handle_claims,invitations,manifest_publication_attempts,manifest_revisions,manifest_validation_attempts,memberships,organizations,projection_generations,publisher_registration_attempts,publisher_signing_keys,publishers,registry_origin,revision_attestations,revision_children,signing_key_retirements,user_claims,user_logins,user_tokens,users", tables);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { childrenPage } from "@/lib/children";
 import type { Capability } from "@/lib/publishers";
 import { revisionsPage } from "@/lib/revisions";
 import { CanonicalId } from "./CanonicalId";
@@ -9,7 +10,8 @@ import { StateBadge } from "./StateBadge";
  * A publisher's capabilities with their canonical ids and aliases (FR-013, FR-014). The rename form appears only
  * for callers holding `capability.rename` while the publisher is active, and **Validate manifest** for callers holding
  * `manifest.validate` (GOZ-0006). **Revisions** appears for callers holding `manifest.list`, also while the publisher
- * is suspended, because revisions stay readable (GOZ-0007); the API still decides every request.
+ * is suspended, because revisions stay readable (GOZ-0007), and **Children** beside it (GOZ-0008); the API still
+ * decides every request.
  */
 export function CapabilityList({
   organizationId,
@@ -72,6 +74,11 @@ export function CapabilityList({
                   {canListRevisions && (
                     <Link className="button" href={revisionsPage(organizationId, publisherId, c.id)} data-testid="revisions-link">
                       Revisions
+                    </Link>
+                  )}
+                  {canListRevisions && (
+                    <Link className="button" href={childrenPage(organizationId, publisherId, c.id)} data-testid="children-link">
+                      Children
                     </Link>
                   )}
                 </p>

@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace Gozleme.Api.Manifests;
 
-/// <summary><c>Gozleme:Manifests</c> options (data-model.md "Configuration"; GOZ-0007 adds publication and paging).</summary>
+/// <summary><c>Gozleme:Manifests</c> options (data-model.md "Configuration"; GOZ-0007 adds publication and paging, GOZ-0008 child paging).</summary>
 internal sealed class ManifestOptions
 {
     public const string Section = "Gozleme:Manifests";
@@ -19,6 +19,10 @@ internal sealed class ManifestOptions
     /// <summary>Default revisions per list page; a request may ask for at most 100 (GOZ-0007 data-model.md).</summary>
     [Range(1, 100)]
     public int RevisionPageSize { get; set; } = 50;
+
+    /// <summary>Default children, child-history and revision-children page size; a request may ask for at most 100 (GOZ-0008 data-model.md).</summary>
+    [Range(1, 100)]
+    public int ChildPageSize { get; set; } = 50;
 }
 
 /// <summary>

@@ -62,6 +62,25 @@ describe("PublishRevision (GOZ-0007 US1, US2, US5)", () => {
     expect(screen.queryByTestId("publish-revisions-link")).not.toBeInTheDocument();
   });
 
+  it("shows the problem list of a publish-time rejection (GOZ-0008 publish.duplicate_entry)", async () => {
+    const problem = { category: "invalid_value", rule: "publish.duplicate_entry", message: "Two or more projection entries have the same kind and native name." };
+    respond(422, { outcome: "rejected", problems: [0, 3].map((i) => ({ ...problem, location: { part: "projection", pointer: `/entries/${i}` } })), truncated: false });
+    renderPublish();
+    fireEvent.click(screen.getByTestId("publish"));
+    expect(await screen.findByTestId("publish-error")).toHaveTextContent(REVISION_MESSAGES.rejected);
+    expect(screen.getAllByTestId("problem-location").map((l) => l.textContent)).toEqual(["projection /entries/0", "projection /entries/3"]);
+    expect(screen.getAllByTestId("problem-rule").map((l) => l.textContent)).toEqual(["publish.duplicate_entry", "publish.duplicate_entry"]);
+  });
+
+  it("gives a truncated publish-time problem list the publish note (GOZ-0008 publish.nul_character)", async () => {
+    const problem = { category: "invalid_value", rule: "publish.nul_character", location: { part: "projection", pointer: "/entries/0/title" }, message: "A projection or envelope string contains the character U+0000." };
+    respond(422, { outcome: "rejected", problems: [problem], truncated: true });
+    renderPublish();
+    fireEvent.click(screen.getByTestId("publish"));
+    expect(await screen.findByTestId("problems-truncated")).toHaveTextContent("More problems exist. Fix these and publish again to see the rest.");
+    expect(screen.getByTestId("problem-location")).toHaveTextContent("projection /entries/0/title");
+  });
+
   it("reads a network failure as unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("offline"));
     renderPublish();
