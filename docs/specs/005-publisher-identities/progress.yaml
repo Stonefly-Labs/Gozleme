@@ -43,5 +43,5 @@ stages:
 attempts: []
 blockers: []
 pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/19
-nextAction: 'Complete — merged in 2f63e01 (PR #19). Open impact decisions IF-02 (before GOZ-0012 plan), IF-04, IF-05, IF-08 (before GOZ-0039) carry forward. Residual follow-up: OrganizationEndpoints echoes 7-digit timestamps that PostgreSQL stores at microseconds (see ciFix).'
+nextAction: 'Complete — merged in 2f63e01 (PR #19). IF-02 decided 2026-11-19 by the maintainer (option B: pinned definer alias resolver, built in GOZ-0012); open impact decisions IF-04, IF-05, IF-08 (before GOZ-0039) carry forward. Residual follow-up: OrganizationEndpoints echoes 7-digit timestamps that PostgreSQL stores at microseconds (see ciFix).'
 evidence: {tests: [docs/specs/005-publisher-identities/progress.yaml], demos: [docs/specs/005-publisher-identities/evidence/demo-run.json, docs/specs/005-publisher-identities/evidence/publisher-evidence.json], screenshots: [docs/specs/005-publisher-identities/evidence/screenshots/], reviews: [docs/specs/005-publisher-identities/reviews/impact-analysis.md, docs/specs/005-publisher-identities/reviews/impact-findings.json]}

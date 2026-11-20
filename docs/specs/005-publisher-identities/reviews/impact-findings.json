@@ -72,8 +72,8 @@
     "GOZ-0028"
    ],
    "recommendation": "Maintainer decides before the GOZ-0012 plan, after a security review. Option A: grant gozleme_app SELECT on alias_reservations with a policy limited to aliases whose capability the caller can see (needs GOZ-0012 visibility; still leaks reservation existence of private aliases unless the policy joins visibility). Option B: a narrow SECURITY DEFINER helper resolve_alias(alias) returning a canonical ID only when visible, added to DefinerHelpers and pinned. Option C: no alias resolution in MVP; inputs require canonical IDs and aliases stay display-only. Recommended: B or C. Each option changes RlsCatalogTests pins deliberately.",
-   "disposition": "needs-human-decision",
-   "status": "open",
+   "disposition": "decided 2026-11-19 by maintainer: option B (pinned SECURITY DEFINER resolver returning only visible canonical IDs); built and security-reviewed in GOZ-0012; prompts GOZ-0009..0039 updated (revision 10 -> 11)",
+   "status": "resolved",
    "decideBefore": "GOZ-0012 plan",
    "options": [
     "A: SELECT grant + visibility-joined policy on alias_reservations",
