@@ -1,7 +1,7 @@
 schemaVersion: '1.0'
 specId: GOZ-0008
-stage: pr-ready
-status: in-progress
+stage: merged
+status: complete
 promptRevision: 9
 branch: feature/goz-0008-child-identities
 featureDirectory: docs/specs/008-child-identities
@@ -40,10 +40,12 @@ stages:
   demo: {status: done, at: '2026-11-19', note: 'T096 at a98b4f6 (clean tree): 65 passed (goz-0000 to goz-0008), result passed, 66 assertions, 106 screenshots, stack startup 18 s; step 5 paged 70 revisions of the seeded capability, 48 earlier verified, tampered and current-run revisions recorded as excluded. Earlier: T085 at 7b8576f (clean tree): first run failed (45 passed, 1 failed, 19 not run; goz-0005 observability metrics poll timed out under host contention, 15-min load 12 from co-located CI runner containers; unrelated to Phase 10); re-run passed 65/65 (stack startup 2,760 s), 106 screenshots. Earlier: make demo GOZ-0008: 65 passed (goz-0000 to goz-0008), result passed, 106 screenshots; earlier runs fixed in the spec only (history paging from the run sequence, absent count on a capability with earlier runs)'}
   converge: {status: converged, at: '2026-11-19', note: 'pass 4 (e867590): converged, 0 findings, tasks.md unchanged; 25 FRs, 7 SCs, 31 acceptance scenarios, 13 edge cases, 24 plan decisions, 10/10 constitution principles checked, no MUST violation; Phase 11 T086-T096 verified in code; security review items 1-9 pass, 0 findings, SEC-1..SEC-4 not regressed (informational: Postgres server log would carry the native-name digest in a unique-violation DETAIL only on an assigner bypass; optional hardening log_error_verbosity=terse, maintainer judgement). pass 1: 18 findings, Phase 9 T067-T081 implemented. pass 2: 4 findings (1 MEDIUM, 3 LOW, all partial; 25 FRs, 7 SCs, 16 plan decisions, 10/10 constitution principles checked, no MUST violation); review-security on 1954177: items 1-6 pass apart from SEC-3 (envelope U+0000, = C2-1) and SEC-4 (RLS 42501 without table classified suspended), both LOW; maintainer ruled envelope-nul; Phase 10 T082-T085 appended. pass 3 (473313a): 0 security findings (items 1-8 pass, SEC-3/SEC-4 closed); 11 findings (1 MEDIUM contradicts: publish 422/503 delta missing from OpenAPI; 10 LOW: contract/doc drift, weak test assertions, real upgrade-path install test, demo US5/AC3 paging, ChildList presentIn); 60 requirements/ACs, 24 plan decisions, 10/10 constitution principles checked, no MUST violation; Phase 11 T086-T096 appended'}
   impactAnalysis: {status: done, at: '2026-11-19', artifact: docs/specs/008-child-identities/reviews/impact-analysis.md, findings: GOZ-0008-IF-01..IF-16, applied: 12, decidedByMaintainer: [GOZ-0008-IF-13, GOZ-0008-IF-14, GOZ-0008-IF-15, GOZ-0008-IF-16], commits: [27e6608, d74bbcd]}
-  roadmapSync: {status: done, at: '2026-11-19', promptRevisions: 'GOZ-0009..0039 9->10, GOZ-0040..0041 7->8'}
+  roadmapSync: {status: done, at: '2026-11-19', promptRevisions: 'GOZ-0009..0039 9->10, GOZ-0040..0041 7->8', commit: d96b397}
+  merge: {status: verified, pullRequest: 'https://github.com/Stonefly-Labs/Gozleme/pull/25', mergeCommit: d079c8b44b301eae35d28136caab2ede198bb646, head: 3a3baf79d12adc7db8e97ff8af5815ca016eaa5a, mergedBy: christopherhouse, mergedAt: '2026-11-20T02:08:02Z', verifiedBy: 'gh pr view + git merge-base --is-ancestor', ci: 'governance, backend, frontend, helm and gitleaks passed on head 3a3baf7 (push run); the pull_request backend run and the containers + Playwright demo job were still pending at verification (agent demo run at a2f49db passed 65/65)', at: '2026-11-20'}
 attempts: []
 blockers: []
-nextAction: 'Impact analysis and roadmap sync done (IF-13..IF-16 decided by the maintainer 2026-11-19); prepare PR for human review. Not merged.'
+pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/25
+nextAction: 'Complete — merged in d079c8b (PR #25). No open GOZ-0008 impact decisions; downstream specs start from prompt revision 10 (GOZ-0040/0041: 8).'
 evidence:
   tests:
   - {suite: 'make test backend (Gozleme.Api.Tests + IntegrationTests)', result: '1051 passed, 0 failed (post-impact re-run at d96b397, adds SpecEvidenceTests; T096: 1050 at e21d833)'}
