@@ -3,7 +3,7 @@
 **Source spec:** GOZ-0008, Child capability identities and projections
 **Implementation revision:** `a1b3e66` on `feature/goz-0008-child-identities` (convergence pass 4: converged, 0 findings; security review items 1–9 pass). The analyst did not re-run the tests or the demo; the T096 evidence in `progress.yaml` (1050 backend tests, 284 web tests, `make demo` 65/65) is at `a98b4f6`/`e21d833`, and `a1b3e66` changes only docs on top of it. `make validate` passed after the prompt edits.
 **Analyst:** Spec Impact Analyst (`analyze-spec-impact`), 2026-11-19
-**Structured findings:** `docs/specs/008-child-identities/reviews/impact-findings.json` (15 findings, shape of `.gozleme/schemas/impact-findings.schema.json`)
+**Structured findings:** `docs/specs/008-child-identities/reviews/impact-findings.json` (16 findings, shape of `.gozleme/schemas/impact-findings.schema.json`)
 
 ## Scope inspected
 
@@ -35,6 +35,7 @@ The architecture baseline already names "typed child IDs and separately versione
 | GOZ-0008-IF-13 | low | **Question:** the child summary member `latest` (highest-sequence appearance) may read as a latest-revision designation, which the GOZ-0007 ruling excludes | 0008, 0012, 0026, 0027 | **needs-human** (guard note applied) |
 | GOZ-0008-IF-14 | medium | The decision register does not record the GOZ-0008 rulings that change contracts or the security posture (Q1, Q2 publish catalogue, A2, A4, F3, F4) | 0008, 0012, 0021, 0028, 0030, 0039 | **needs-human** |
 | GOZ-0008-IF-15 | low | The completed GOZ-0007 contract files predate the `422` publish rules and the two new `503` causes | 0007, 0009 | **needs-human** (optional) |
+| GOZ-0008-IF-16 | low | The branch changes the evidence of completed specs GOZ-0006 and GOZ-0007: the performance tests rewrite their evidence files (commit `a98b4f6`). The GOZ-0007 publish worst time goes from 478 ms to 1,463 ms (limit 2,000 ms) | 0006, 0007, 0008, 0009, 0039 | **needs-human** |
 
 No finding is critical. None changes the DAG, an outcome, a prerequisite or an invariant. **No GOZ-0008 defect requires code repair.** IF-13 is a naming question; if the maintainer chooses a rename, that becomes a bounded GOZ-0008 code change through `drive-speckit`. The IF-11 restore behaviour was inferred from the migration code and not reproduced.
 
@@ -54,13 +55,21 @@ No finding is critical. None changes the DAG, an outcome, a prerequisite or an i
 - **Spec-specific `### Implementation alignment (GOZ-0008-…)` sections:** 0009, 0012, 0013, 0014, 0015, 0017, 0019, 0021, 0022, 0024, 0026, 0027, 0028, 0030, 0031, 0032, 0034, 0036, 0038 and 0039. Every clarification question is marked as such and left undecided.
 - **Roadmap Steward:**
   - bump `promptRevision` 9 → 10 for GOZ-0009 to GOZ-0039, and 7 → 8 for GOZ-0040 and GOZ-0041;
-  - list GOZ-0008-IF-01..IF-15 in GOZ-0008 `impactFindings`;
+  - list GOZ-0008-IF-01..IF-16 in GOZ-0008 `impactFindings`;
   - add this review and `impact-findings.json` to GOZ-0008 `evidence.reviews`;
-  - record IF-13, IF-14 and IF-15 as open pending maintainer decisions, not as resolved.
+  - record IF-13, IF-14, IF-15 and IF-16 as open pending maintainer decisions, not as resolved.
 
 Nothing was edited in completed specs, `docs/architecture/**`, `docs/decisions/**`, `.gozleme/spec-registry.yaml`, the generated register or any GOZ-0008 code.
 
 ## Needs maintainer decision (not edited by the analyst)
+
+**Resolved 2026-11-19 by maintainer ruling:**
+- **IF-13:** option (a). `latest` stays, and `contracts/child-identity.md` now says it means "last declared in", not a latest-revision designation. No code change.
+- **IF-14:** approved as proposed. Four rows added to `docs/decisions/decision-register.md` under "Maintainer rulings from spec delivery".
+- **IF-15:** approved. A one-line pointer to `publish-delta.md` added to the GOZ-0007 `revision-api.openapi.yaml` and `permissions-delta.md`.
+- **IF-16:** revert + fix the harness. Both completed-spec evidence files are restored to their `main` versions. The new `Infrastructure/SpecEvidence.cs` skips writing evidence for a spec the registry marks `complete`, while its tests still assert their limits; `SpecEvidenceTests` pins this. A targeted run of the three performance tests left the GOZ-0006 and GOZ-0007 files byte-identical to `main`.
+
+Original escalations:
 
 1. **GOZ-0008-IF-13 (question).** The `ChildSummary.latest` member is described in the API contract as "the latest revision (highest sequence) in which the child is present", and the child list links it as `child-latest`. GOZ-0007's ruling is that there is "no latest designation" (GOZ-0026 and GOZ-0027 own that). Options:
    - **(a)** Accept it as a per-child "last declared in" display and add one sentence saying so to `contracts/child-identity.md`. No code change.
@@ -73,5 +82,10 @@ Nothing was edited in completed specs, `docs/architecture/**`, `docs/decisions/*
    - *GOZ-0008 A2/A4 (operator surface):* `is_operator()` reads every tenant's revisions and child rows, and `projection-regenerate` is a third owner-login command. This extends the GOZ-0007-IF-14 acceptance, and GOZ-0005-IF-04 stays open to GOZ-0039. Specs: GOZ-0008, 0039.
    - *GOZ-0008 F3/F4:* a pre-GOZ-0008 revision holding U+0000 is skipped at install, and its capability answers `503` to publication permanently. Child-table refusals answer `503`. Specs: GOZ-0008, 0039.
 3. **GOZ-0008-IF-15 (optional).** Approve a one-line pointer from `docs/specs/007-immutable-revisions/contracts/revision-api.openapi.yaml` (publish description) and `permissions-delta.md` to `docs/specs/008-child-identities/contracts/publish-delta.md`. The living architecture contract is already current.
+
+4. **GOZ-0008-IF-16 (completed-spec evidence).** Commit `a98b4f6` rewrites the `performance` blocks of `docs/specs/006-typed-manifests/evidence/manifest-evidence.json` and `docs/specs/007-immutable-revisions/evidence/revision-evidence.json`. The cause is that `ManifestPerformanceTests.cs:82` and `RevisionPerformanceTests.cs:57` write to those completed-spec files on every `make test`. For GOZ-0007, the publish median goes from 200 to 350 ms and the worst time from 478 to 1,463 ms, against a 2,000 ms limit. The analyst did not measure whether child assignment or host load (noted in `progress.yaml`) caused this. GOZ-0008 SC-006 passed (worst 392 ms for 1,000 entries). Options:
+   - **(A)** Revert the two files to their `main` versions on this branch.
+   - **(B)** Accept them as regression evidence and say so in the PR.
+   - **(C)** Also schedule a bounded test-harness change so that the performance tests stop writing to completed specs' evidence.
 
 Still open and not reopened here: GOZ-0005-IF-04 (least-privilege operator role, at GOZ-0039 clarification), GOZ-0007 SEC-3, and the optional `log_error_verbosity=terse` hardening from the pass-4 security review (routed to GOZ-0039 as maintainer judgement).

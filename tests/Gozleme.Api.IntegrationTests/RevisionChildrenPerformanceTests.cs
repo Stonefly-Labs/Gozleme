@@ -56,10 +56,7 @@ public sealed class RevisionChildrenPerformanceTests(PgvectorDatabaseFixture fix
 
     private static void Record(List<double> create, List<double> match)
     {
-        var file = GozlemeDatabase.RepoPath("docs/specs/008-child-identities/evidence/children-evidence.json");
-        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-        var evidence = File.Exists(file) ? JsonNode.Parse(File.ReadAllText(file))!.AsObject() : new JsonObject { ["spec"] = "GOZ-0008" };
-        evidence["performance"] = new JsonObject
+        SpecEvidence.Record("GOZ-0008", "docs/specs/008-child-identities/evidence/children-evidence.json", "performance", new JsonObject
         {
             ["criterion"] = "SC-006",
             ["entries"] = ManifestValidator.MaxEntries,
@@ -71,8 +68,6 @@ public sealed class RevisionChildrenPerformanceTests(PgvectorDatabaseFixture fix
             ["matchWorstMs"] = Math.Round(match.Max()),
             ["limitMs"] = LimitMs,
             ["environment"] = "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)",
-        };
-        var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
-        File.WriteAllText(file, evidence.ToJsonString(options) + "\n");
+        });
     }
 }

@@ -45,6 +45,11 @@ Children are declared by the publisher in the manifest and are not verified beha
 no approval, trust, safety, lifecycle or verification state in this version. Its only per-revision state is
 `present` or `absent`.
 
+The child summary member `latest` (and the `child-latest` link) means **last declared in**: the highest-sequence
+revision of the capability in which this child is present. It is a per-child display fact, not a latest-revision
+designation for the capability; GOZ-0007 defines none, and GOZ-0026 and GOZ-0027 own that question (GOZ-0008-IF-13,
+maintainer ruling 2026-11-19).
+
 ## Portability
 
 A child ID is anchored on the canonical capability ID (GOZ-0007-IF-08). Portable references to children in

@@ -443,8 +443,8 @@
     "GOZ-0027"
    ],
    "recommendation": "Maintainer to choose: (a) accept as a per-child display and document it as 'last declared in' (no code change), or (b) rename the member before merge (API, web, tests; a GOZ-0008 code change through drive-speckit). Downstream guard note added to 0012, 0026, 0027 either way.",
-   "disposition": "needs-human (question; guard note applied)",
-   "status": "open"
+   "disposition": "decided 2026-11-19 by maintainer: (a) keep `latest`, documented as 'last declared in' in contracts/child-identity.md; no code change",
+   "status": "resolved"
   },
   {
    "id": "GOZ-0008-IF-14",
@@ -463,8 +463,8 @@
     "GOZ-0039"
    ],
    "recommendation": "Approve an additive set of rows in 'Maintainer rulings from spec delivery' (proposed text in the impact analysis). The analyst does not edit the decision register.",
-   "disposition": "needs-human",
-   "status": "open"
+   "disposition": "decided 2026-11-19 by maintainer: approved as proposed; four rows added to docs/decisions/decision-register.md",
+   "status": "resolved"
   },
   {
    "id": "GOZ-0008-IF-15",
@@ -480,8 +480,29 @@
     "GOZ-0009"
    ],
    "recommendation": "Optional: approve a one-line pointer note in the two GOZ-0007 contract files to docs/specs/008-child-identities/contracts/publish-delta.md. Downstream prompts already cite the delta.",
-   "disposition": "needs-human (optional)",
-   "status": "open"
+   "disposition": "decided 2026-11-19 by maintainer: pointer added to GOZ-0007 revision-api.openapi.yaml and permissions-delta.md",
+   "status": "resolved"
+  },
+  {
+   "id": "GOZ-0008-IF-16",
+   "severity": "low",
+   "title": "The GOZ-0008 branch changes the evidence of two completed specs: commit a98b4f6 rewrites the performance blocks of docs/specs/006-typed-manifests/evidence/manifest-evidence.json and docs/specs/007-immutable-revisions/evidence/revision-evidence.json, because ManifestPerformanceTests and RevisionPerformanceTests write to those files on every run. The GOZ-0007 publish worst time on a 512 KiB document goes from 478 ms to 1,463 ms (limit 2,000 ms); the median goes from 200 ms to 350 ms",
+   "evidence": [
+    "git show a98b4f6 --stat (006 manifest-evidence.json, 007 revision-evidence.json, 008 children-evidence.json)",
+    "tests/Gozleme.Api.IntegrationTests/ManifestPerformanceTests.cs:82",
+    "tests/Gozleme.Api.IntegrationTests/RevisionPerformanceTests.cs:57",
+    "docs/specs/007-immutable-revisions/evidence/revision-evidence.json (publishMedianMs 200->350, publishWorstMs 478->1463, verifyWorstMs 192->229)"
+   ],
+   "affectedSpecs": [
+    "GOZ-0006",
+    "GOZ-0007",
+    "GOZ-0008",
+    "GOZ-0009",
+    "GOZ-0039"
+   ],
+   "recommendation": "Maintainer decides (completed-spec evidence). Option A: revert the two completed-spec evidence files on this branch to their main versions and keep the regression numbers only in GOZ-0008 evidence. Option B: accept the overwrite as regression evidence and note it in the PR. Option C: a later bounded test-harness change makes the performance tests write to the running spec's evidence (or a scratch path) instead of a completed spec's files. Separately, the GOZ-0007 publish worst-case has 27% headroom on a contended host; the analyst did not measure whether child assignment or host load caused the increase (GOZ-0008 SC-006 itself passed: 1,000 entries, worst 392 ms).",
+   "disposition": "decided 2026-11-19 by maintainer: revert + fix harness; GOZ-0006/0007 evidence restored to main, SpecEvidence skips specs the registry marks complete (SpecEvidenceTests)",
+   "status": "resolved"
   }
  ]
 }

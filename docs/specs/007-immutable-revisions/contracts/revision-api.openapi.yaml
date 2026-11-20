@@ -12,6 +12,8 @@ info:
     replace or delete operations. Statement and verification: contracts/attestation-statement-v1.md. Keys:
     contracts/signing-keys.md. Attestations prove registry acceptance with a registry-held per-publisher key; no
     delegation, transfer, chain or transparency claim exists in v1.
+    GOZ-0008 extends publication (422 publish rule catalogue v1, rollout-gap and child-refusal 503):
+    docs/specs/008-child-identities/contracts/publish-delta.md (GOZ-0008-IF-15).
 servers:
   - url: http://api:8080
 security:

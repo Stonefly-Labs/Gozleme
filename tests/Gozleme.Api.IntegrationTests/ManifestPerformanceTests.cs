@@ -79,10 +79,7 @@ public sealed class ManifestPerformanceTests(PgvectorDatabaseFixture fixture) : 
 
     private static void Record(double worstMs, double medianMs)
     {
-        var file = GozlemeDatabase.RepoPath("docs/specs/006-typed-manifests/evidence/manifest-evidence.json");
-        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-        var evidence = File.Exists(file) ? JsonNode.Parse(File.ReadAllText(file))!.AsObject() : new JsonObject { ["spec"] = "GOZ-0006" };
-        evidence["performance"] = new JsonObject
+        SpecEvidence.Record("GOZ-0006", "docs/specs/006-typed-manifests/evidence/manifest-evidence.json", "performance", new JsonObject
         {
             ["criterion"] = "SC-006",
             ["nativeBytes"] = MaxNativeBytes,
@@ -92,9 +89,6 @@ public sealed class ManifestPerformanceTests(PgvectorDatabaseFixture fixture) : 
             ["worstMs"] = Math.Round(worstMs),
             ["limitMs"] = 2000,
             ["environment"] = "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)",
-        };
-        // Relaxed escaping keeps the e2e-written text (e.g. "+") byte-identical; this is a local evidence file, not HTML.
-        var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
-        File.WriteAllText(file, evidence.ToJsonString(options) + "\n");
+        });
     }
 }

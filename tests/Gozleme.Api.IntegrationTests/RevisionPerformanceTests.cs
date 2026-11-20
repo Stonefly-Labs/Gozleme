@@ -54,10 +54,7 @@ public sealed class RevisionPerformanceTests(PgvectorDatabaseFixture fixture) : 
 
     private static void Record(List<double> publish, List<double> verify)
     {
-        var file = GozlemeDatabase.RepoPath("docs/specs/007-immutable-revisions/evidence/revision-evidence.json");
-        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-        var evidence = File.Exists(file) ? JsonNode.Parse(File.ReadAllText(file))!.AsObject() : new JsonObject { ["spec"] = "GOZ-0007" };
-        evidence["performance"] = new JsonObject
+        SpecEvidence.Record("GOZ-0007", "docs/specs/007-immutable-revisions/evidence/revision-evidence.json", "performance", new JsonObject
         {
             ["criterion"] = "SC-007",
             ["nativeBytes"] = MaxNativeBytes,
@@ -70,8 +67,6 @@ public sealed class RevisionPerformanceTests(PgvectorDatabaseFixture fixture) : 
             ["verifyWorstMs"] = Math.Round(verify.Max()),
             ["verifyLimitMs"] = 1000,
             ["environment"] = "integration test host (WebApplicationFactory, Testcontainers PostgreSQL)",
-        };
-        var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
-        File.WriteAllText(file, evidence.ToJsonString(options) + "\n");
+        });
     }
 }
