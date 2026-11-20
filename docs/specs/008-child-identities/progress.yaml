@@ -52,7 +52,7 @@ evidence:
   - {suite: make build, result: passed}
   - {suite: 'Release build (CTJ001 analyzer)', result: passed}
   - {suite: make validate, result: passed}
-  - {suite: 'make demo GOZ-0008 (T096 at a98b4f6, clean tree)', result: '65 passed (goz-0000 to goz-0008), result passed, 106 screenshots'}
+  - {suite: 'make demo GOZ-0008 (re-run at a2f49db, clean tree, PR head evidence)', result: '65 passed (goz-0000 to goz-0008), result passed, 66 assertions, 106 screenshots, no secret-scan findings; T096 at a98b4f6 had the same counts'}
   - {suite: RevisionChildrenPerformanceTests, result: 'SC-006: 1,000 entries, create worst 673 ms (median 616), match worst 273 ms (median 245) vs 3,000 ms limit (re-run at d96b397; T096: 392/154 ms)'}
   demos: [docs/specs/008-child-identities/evidence/demo-run.json, docs/specs/008-child-identities/evidence/children-evidence.json]
   screenshots: [docs/specs/008-child-identities/evidence/screenshots/]

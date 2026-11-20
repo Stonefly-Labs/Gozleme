@@ -1,6 +1,6 @@
 {
   "spec": "GOZ-0006",
-  "capturedAt": "2026-11-19T23:04:48.116Z",
+  "capturedAt": "2026-11-20T01:53:07.129Z",
   "origin": "registry.demo.gozleme.test",
   "organization": "0193a000-0000-7000-8000-000000000002",
   "publisher": "0193a000-0000-7000-8000-000000000010",
@@ -115,7 +115,7 @@
     "rateLimit": {
       "allowed": 30,
       "thirty_first": 429,
-      "retryAfterSeconds": 57
+      "retryAfterSeconds": 56
     },
     "observability": {
       "span": "gozleme.manifest.validate",

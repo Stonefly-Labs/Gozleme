@@ -1,6 +1,6 @@
 {
   "specId": "GOZ-0008",
-  "commit": "a98b4f643395d842401d01892706019905ad4e1f",
+  "commit": "a2f49db24c4128722fb2009b2a979c24e7c88aa7",
   "branch": "feature/goz-0008-child-identities",
   "workingTreeCleanAtStart": true,
   "environment": {
@@ -9,9 +9,9 @@
     "compose": "5.5.0",
     "node": "v24.10.0"
   },
-  "startedAt": "2026-11-19T22:57:59Z",
-  "finishedAt": "2026-11-19T23:07:11Z",
-  "stackStartupSeconds": 18,
+  "startedAt": "2026-11-20T01:45:59Z",
+  "finishedAt": "2026-11-20T01:56:18Z",
+  "stackStartupSeconds": 5,
   "commands": [
     "docker compose up -d --build --wait",
     "pnpm install --frozen-lockfile",
@@ -288,8 +288,8 @@
     }
   ],
   "timings": [
-    "register\u2192dashboard 229 ms",
-    "sign-in\u2192dashboard 162 ms"
+    "register\u2192dashboard 377 ms",
+    "sign-in\u2192dashboard 315 ms"
   ],
   "evidence": [
     "docs/specs/008-child-identities/evidence/screenshots/01-revision-children.png",
