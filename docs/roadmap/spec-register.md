@@ -2,7 +2,7 @@
 
 **Generated from `.gozleme/spec-registry.yaml`; do not edit directly.**
 
-**Specs:** 42 · **Complete on main:** 8 · **Blocked:** 0 · **Ready for human merge:** 0
+**Specs:** 42 · **Complete on main:** 9 · **Blocked:** 0 · **Ready for human merge:** 0
 
 | Spec | Phase | Status | Stage | Dependencies | Next action |
 |---|---|---|---|---|---|
@@ -14,11 +14,11 @@
 | [GOZ-0005](../prompts/spec-0005.md) — Publisher identities and canonical capability IDs | publishing | complete | merged | GOZ-0004 | Complete — merged to main in 2f63e016d5676734ff88ca6cf9b0917db4528d60 (PR #19, verified 2026-11-17); 4 open impact decisions (IF-02, IF-04, IF-05, IF-08) carry decideBefore dates. |
 | [GOZ-0006](../prompts/spec-0006.md) — Typed manifests for capability families | publishing | complete | merged | GOZ-0005 | Complete — merged to main in ffc4112c2f5fc1694f5f6d2a94a07583f985434f (PR #21, verified 2026-11-18); no open GOZ-0006 impact decisions (IF-05 and IF-13 decided 2026-11-18). |
 | [GOZ-0007](../prompts/spec-0007.md) — Immutable revisions and signed attestations | publishing | complete | merged | GOZ-0006 | Complete — merged to main in 70281315e5898826b0b6ac1957ef51bbab0d8859 (PR #23, verified 2026-11-18); no open GOZ-0007 impact decisions (IF-14, IF-15 decided 2026-11-18). |
-| [GOZ-0008](../prompts/spec-0008.md) — Child capability identities and projections | publishing | in-progress | pr-ready | GOZ-0007 | Converged at pass 4 (e867590); demo passed 65/65 (goz-0000 to goz-0008, T096 at a98b4f6); impact analysis done (GOZ-0008-IF-01..12 applied, IF-13..IF-16 decided by the maintainer 2026-11-19, d74bbcd); living prompts GOZ-0009..0041 revised (27e6608). Next: prepare PR for human review. Not merged. |
+| [GOZ-0008](../prompts/spec-0008.md) — Child capability identities and projections | publishing | complete | merged | GOZ-0007 | Complete — merged to main in d079c8b44b301eae35d28136caab2ede198bb646 (PR #25, verified 2026-11-20); no open GOZ-0008 impact decisions (IF-13..IF-16 decided 2026-11-19). |
 | [GOZ-0009](../prompts/spec-0009.md) — Filesystem artifact publication | publishing | not-started | — | GOZ-0007 | Await prerequisites and create allowed working branch |
 | [GOZ-0010](../prompts/spec-0010.md) — S3-compatible artifact adapter | publishing | not-started | — | GOZ-0009 | Await prerequisites and create allowed working branch |
 | [GOZ-0011](../prompts/spec-0011.md) — Azure Blob artifact adapter | publishing | not-started | — | GOZ-0009 | Await prerequisites and create allowed working branch |
-| [GOZ-0012](../prompts/spec-0012.md) — Canonical visibility and private discovery | discovery | not-started | — | GOZ-0003, GOZ-0008 | Await prerequisites and create allowed working branch |
+| [GOZ-0012](../prompts/spec-0012.md) — Canonical visibility and private discovery | discovery | not-started | — | GOZ-0003, GOZ-0008 | Prerequisites GOZ-0003 and GOZ-0008 merged (PR #25); GOZ-0005-IF-02 (alias resolution read path) must be decided before the GOZ-0012 plan; prompt revision 10 carries the child identity conventions (GOZ-0008-IF-01..IF-06); start on feature/goz-0012-* |
 | [GOZ-0013](../prompts/spec-0013.md) — PostgreSQL lexical search | discovery | not-started | — | GOZ-0012 | Await prerequisites and create allowed working branch |
 | [GOZ-0014](../prompts/spec-0014.md) — Organization-specific catalog overlays | discovery | not-started | — | GOZ-0012 | Await prerequisites and create allowed working branch |
 | [GOZ-0015](../prompts/spec-0015.md) — Opt-in local pgvector semantic search | discovery | not-started | — | GOZ-0013, GOZ-0014 | Await prerequisites and create allowed working branch |

@@ -501,10 +501,10 @@ specs:
   prompt: docs/prompts/spec-0008.md
   dependencies:
   - GOZ-0007
-  status: in-progress
-  stage: pr-ready
+  status: complete
+  stage: merged
   branch: feature/goz-0008-child-identities
-  pullRequest: null
+  pullRequest: https://github.com/Stonefly-Labs/Gozleme/pull/25
   promptRevision: 9
   gates:
     specification: passed
@@ -516,8 +516,8 @@ specs:
     convergence: passed
     impactAnalysis: passed
     roadmapSync: passed
-    humanReview: pending
-    merge: pending
+    humanReview: passed
+    merge: passed
   blockers: []
   impactFindings:
   - GOZ-0008-IF-01
@@ -553,7 +553,7 @@ specs:
     - docs/specs/008-child-identities/reviews/impact-analysis.md
     - docs/specs/008-child-identities/reviews/impact-findings.json
     - docs/specs/008-child-identities/progress.yaml
-  nextAction: 'Converged at pass 4 (e867590); demo passed 65/65 (goz-0000 to goz-0008, T096 at a98b4f6); impact analysis done (GOZ-0008-IF-01..12 applied, IF-13..IF-16 decided by the maintainer 2026-11-19, d74bbcd); living prompts GOZ-0009..0041 revised (27e6608). Next: prepare PR for human review. Not merged.'
+  nextAction: 'Complete — merged to main in d079c8b44b301eae35d28136caab2ede198bb646 (PR #25, verified 2026-11-20); no open GOZ-0008 impact decisions (IF-13..IF-16 decided 2026-11-19).'
 - id: GOZ-0009
   number: 9
   title: Filesystem artifact publication
@@ -686,7 +686,7 @@ specs:
     demos: []
     screenshots: []
     reviews: []
-  nextAction: Await prerequisites and create allowed working branch
+  nextAction: 'Prerequisites GOZ-0003 and GOZ-0008 merged (PR #25); GOZ-0005-IF-02 (alias resolution read path) must be decided before the GOZ-0012 plan; prompt revision 10 carries the child identity conventions (GOZ-0008-IF-01..IF-06); start on feature/goz-0012-*'
 - id: GOZ-0013
   number: 13
   title: PostgreSQL lexical search
