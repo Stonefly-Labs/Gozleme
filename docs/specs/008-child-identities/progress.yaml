@@ -46,14 +46,14 @@ blockers: []
 nextAction: 'Impact analysis and roadmap sync done (IF-13..IF-16 decided by the maintainer 2026-11-19); prepare PR for human review. Not merged.'
 evidence:
   tests:
-  - {suite: 'make test backend (Gozleme.Api.Tests + IntegrationTests)', result: '1050 passed, 0 failed (T096, e21d833)'}
-  - {suite: web vitest, result: '284 passed (T096)'}
+  - {suite: 'make test backend (Gozleme.Api.Tests + IntegrationTests)', result: '1051 passed, 0 failed (post-impact re-run at d96b397, adds SpecEvidenceTests; T096: 1050 at e21d833)'}
+  - {suite: web vitest, result: '284 passed (T096; re-run at d96b397)'}
   - {suite: 'make lint (dotnet format, eslint, e2e tsc)', result: passed}
   - {suite: make build, result: passed}
   - {suite: 'Release build (CTJ001 analyzer)', result: passed}
   - {suite: make validate, result: passed}
   - {suite: 'make demo GOZ-0008 (T096 at a98b4f6, clean tree)', result: '65 passed (goz-0000 to goz-0008), result passed, 106 screenshots'}
-  - {suite: RevisionChildrenPerformanceTests, result: 'SC-006: 1,000 entries, create worst 392 ms, match worst 154 ms vs 3,000 ms limit (T096)'}
+  - {suite: RevisionChildrenPerformanceTests, result: 'SC-006: 1,000 entries, create worst 673 ms (median 616), match worst 273 ms (median 245) vs 3,000 ms limit (re-run at d96b397; T096: 392/154 ms)'}
   demos: [docs/specs/008-child-identities/evidence/demo-run.json, docs/specs/008-child-identities/evidence/children-evidence.json]
   screenshots: [docs/specs/008-child-identities/evidence/screenshots/]
   reviews: [docs/specs/008-child-identities/reviews/impact-analysis.md, docs/specs/008-child-identities/reviews/impact-findings.json]
